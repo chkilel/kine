@@ -25,7 +25,4 @@ logs
 
 # VSC
 .history
-.ignore/architecture.md
-.ignore/prd copy.md
-.ignore/ux-spec-one.md
-.ignore/ux-spec.md
+.ignore
