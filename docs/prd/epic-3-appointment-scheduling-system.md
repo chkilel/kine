@@ -9,6 +9,7 @@ I want a visual calendar interface with multiple view options,
 so that I can easily see appointment schedules and manage bookings efficiently.
 
 ### Acceptance Criteria
+
 1. **Multiple calendar views** (day, week, month) with smooth transitions
 2. **Color-coded appointments** by therapist, appointment type, or status
 3. **Drag-and-drop functionality** for rescheduling appointments
@@ -23,6 +24,7 @@ I want to create, edit, and manage appointments with all necessary details,
 so that I can efficiently schedule patient visits with complete information.
 
 ### Acceptance Criteria
+
 1. **Appointment creation form** with patient selection, date/time, duration
 2. **Therapist assignment** with availability checking
 3. **Appointment type selection** (initial consultation, follow-up, etc.)
@@ -37,6 +39,7 @@ I want to track and update appointment statuses throughout the patient journey,
 so that I can monitor attendance patterns and manage clinic workflow.
 
 ### Acceptance Criteria
+
 1. **Status tracking** (scheduled, confirmed, in-progress, completed, cancelled, no-show)
 2. **Status update interface** with timestamp logging
 3. **Bulk status updates** for multiple appointments
@@ -51,6 +54,7 @@ I want an automated reminder system for appointments,
 so that I can reduce no-show rates and improve patient attendance.
 
 ### Acceptance Criteria
+
 1. **Email reminders** sent 24 hours and 2 hours before appointments
 2. **Customizable reminder templates** per organization
 3. **Patient opt-out mechanism** for reminder preferences
@@ -65,6 +69,7 @@ I want to manage appointment cancellations and maintain a waitlist,
 so that I can optimize schedule utilization and accommodate more patients.
 
 ### Acceptance Criteria
+
 1. **Cancellation workflow** with reason tracking
 2. **Waitlist management** for popular time slots
 3. **Automatic waitlist notifications** when slots become available

@@ -3,6 +3,7 @@
 ## Repository Structure: Unified Nuxt 4 application
 
 The project will be structured as a unified Nuxt 4 application, where both the frontend and backend (via Nitro server routes) coexist in a single codebase. This approach allows:
+
 - Shared TypeScript configuration and consistent linting across the entire app
 - Seamless coordination between client and server deployments
 - Centralized dependency management with a single package tree
@@ -12,15 +13,16 @@ The project will be structured as a unified Nuxt 4 application, where both the f
 
 **Unified Nuxt 4 Architecture with Clear Layer Separation**:
 The application will follow a monolithic structure built entirely within the Nuxt 4 framework, leveraging its full-stack capabilities while maintaining clean boundaries between layers:
+
 - Frontend — Nuxt 4 pages, layouts, and components handling UI and UX
 - Backend API — implemented through Nitro server routes with modular middleware and service layers
 - Database layer — powered by PostgreSQL using Drizzle ORM for schema management and type-safe queries
 - Authentication — integrated via better-auth (with organization and admin plugins) to support multi-tenant identity and access control
 
-
 ## Testing Requirements
 
 **Full Testing Pyramid** with comprehensive test coverage:
+
 - **Unit Tests**: 80%+ coverage for business logic and utilities
 - **Integration Tests**: API endpoints, database interactions, and service integrations
 - **E2E Tests**: Critical user workflows using Playwright or Cypress

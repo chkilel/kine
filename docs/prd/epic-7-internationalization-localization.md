@@ -9,6 +9,7 @@ I want the entire application interface in French,
 so that I can use the system comfortably in my native language.
 
 ### Acceptance Criteria
+
 1. **Complete French translation** for all UI elements, messages, and labels
 2. **French date and time formatting** following local conventions
 3. **French number formatting** with proper decimal separators
@@ -23,6 +24,7 @@ I want patient-facing interfaces available in Arabic with proper RTL layout,
 so that I can interact with the system in my preferred language.
 
 ### Acceptance Criteria
+
 1. **Arabic translation** for patient-facing forms and communications
 2. **RTL (right-to-left) layout** with proper text direction
 3. **Arabic date formatting** with Hijri calendar support option
@@ -37,6 +39,7 @@ I want to easily switch between languages and have my preference remembered,
 so that I can use the application in my preferred language consistently.
 
 ### Acceptance Criteria
+
 1. **Language selector** in the user interface with flag icons
 2. **Preference persistence** across sessions and devices
 3. **Seamless switching** without losing current work or data
@@ -51,6 +54,7 @@ I want region-specific adaptations and compliance features,
 so that the system meets local regulatory and cultural requirements.
 
 ### Acceptance Criteria
+
 1. **Regional date formats** and calendar systems
 2. **Local currency support** with exchange rate handling
 3. **Regulatory compliance** adaptations for different healthcare systems

@@ -9,6 +9,7 @@ I want an executive dashboard with key performance indicators,
 so that I can quickly assess my practice's overall health and performance.
 
 ### Acceptance Criteria
+
 1. **KPI overview** with revenue, patient count, and utilization metrics
 2. **Trend visualization** with month-over-month and year-over-year comparisons
 3. **Real-time updates** with current day statistics
@@ -23,6 +24,7 @@ I want detailed patient analytics and demographic reports,
 so that I can understand my patient population and improve service delivery.
 
 ### Acceptance Criteria
+
 1. **Patient demographic analysis** with age, gender, and location breakdowns
 2. **New patient tracking** with referral source analysis
 3. **Patient retention metrics** and churn analysis
@@ -37,6 +39,7 @@ I want operational performance reports covering appointments and staff productiv
 so that I can optimize clinic operations and resource allocation.
 
 ### Acceptance Criteria
+
 1. **Appointment metrics** including no-show rates, cancellations, and utilization
 2. **Staff productivity reports** with patient volume and revenue per therapist
 3. **Schedule optimization analysis** identifying peak times and capacity gaps
@@ -51,6 +54,7 @@ I want custom report building capabilities and data export options,
 so that I can create specialized reports and integrate with external systems.
 
 ### Acceptance Criteria
+
 1. **Report builder interface** with drag-and-drop functionality
 2. **Custom date ranges** and filtering options
 3. **Multiple export formats** (PDF, CSV, Excel)

@@ -1,6 +1,7 @@
 # Epic List
 
 ## Phase 1 - MVP Foundation (Priority: Critical)
+
 1. **Epic 1: Foundation & Multi-Tenant Infrastructure** ⭐ **[P0 - Critical]** - Establish project setup, authentication system, organization management, and core security framework
    - **Dependencies**: None (foundational)
    - **Timeline**: Weeks 1-4
@@ -17,6 +18,7 @@
    - **Risk Level**: Medium
 
 ## Phase 1 - MVP Core Features (Priority: High)
+
 4. **Epic 4: Clinical Documentation** 🔥 **[P1 - High]** - Treatment plan management, clinical assessment forms, and progress tracking
    - **Dependencies**: Epic 2 (patient records), Epic 3 (appointments)
    - **Timeline**: Weeks 10-16
@@ -28,6 +30,7 @@
    - **Risk Level**: High (payment integration complexity)
 
 ## Phase 2 - Enhanced Features (Priority: Medium)
+
 6. **Epic 6: Reporting & Analytics** 📊 **[P2 - Medium]** - Dashboards, metrics visualization, and business intelligence features
    - **Dependencies**: All previous epics (data sources)
    - **Timeline**: Weeks 18-24
@@ -39,12 +42,14 @@
    - **Risk Level**: Low
 
 ## Phase 2 - Localization (Priority: Medium)
+
 8. **Epic 7: Internationalization & Localization** 🌍 **[P2 - Medium]** - French and Arabic language support, RTL layout, and regional adaptations
    - **Dependencies**: All UI-related epics (1-6, 8)
    - **Timeline**: Weeks 20-26
    - **Risk Level**: Medium (RTL complexity)
 
 **Priority Legend:**
+
 - **P0 (Critical)**: Must-have for MVP launch, blocks other features
 - **P1 (High)**: Core business functionality, required for market viability
 - **P2 (Medium)**: Important enhancements, can be delivered post-MVP

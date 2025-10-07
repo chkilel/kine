@@ -9,6 +9,7 @@ I want to create and manage detailed treatment plans for my patients,
 so that I can provide structured, goal-oriented care with clear session tracking.
 
 ### Acceptance Criteria
+
 1. **Treatment plan creation form** with goals, interventions, and session count
 2. **Session tracking** with automatic decrement on completion
 3. **Treatment templates** for common conditions and protocols
@@ -23,6 +24,7 @@ I want comprehensive assessment forms for patient evaluation,
 so that I can document baseline conditions and track improvement over time.
 
 ### Acceptance Criteria
+
 1. **Initial assessment form** with medical history and current symptoms
 2. **Pain assessment tools** including visual analog scale and body diagrams
 3. **Functional assessment tests** with standardized scoring
@@ -37,6 +39,7 @@ I want to document each treatment session with detailed progress notes,
 so that I can track patient improvement and adjust treatment accordingly.
 
 ### Acceptance Criteria
+
 1. **Session note templates** with structured fields for consistency
 2. **SOAP note format** (Subjective, Objective, Assessment, Plan)
 3. **Treatment intervention logging** with techniques and modalities used
@@ -51,6 +54,7 @@ I want outcome measurement tools and clinical reporting capabilities,
 so that I can demonstrate treatment effectiveness and improve care quality.
 
 ### Acceptance Criteria
+
 1. **Standardized outcome measures** (functional scales, pain scores)
 2. **Progress visualization** with charts and graphs
 3. **Treatment effectiveness reports** comparing pre/post assessments

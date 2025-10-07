@@ -1,6 +1,7 @@
 # Assumptions & Dependencies
 
 ## Technical Assumptions
+
 - PostgreSQL Row Level Security (RLS) can effectively isolate tenant data at scale
 - Better-auth library will maintain stability and multi-tenant support
 - Nuxt.js v4 has reached stable release
@@ -8,6 +9,7 @@
 - PDF generation performance will be acceptable for clinical reports
 
 ## Business Assumptions
+
 - Target market (Moroccan physiotherapy practices) has sufficient digital readiness
 - French language interface will be acceptable for initial market entry
 - Practices are willing to migrate from existing tools/processes
@@ -15,6 +17,7 @@
 - Initial pricing model will be competitive with existing solutions
 
 ## External Dependencies
+
 - **Regulatory Compliance**: HIPAA guidelines and local healthcare data regulations
 - **Third-party Integrations**: Email service providers, payment processors
 - **Infrastructure**: Cloud hosting provider reliability and compliance certifications
@@ -22,6 +25,7 @@
 - **Market Research**: Ongoing validation of feature priorities with target users
 
 ## Critical Success Dependencies
+
 - Early user feedback from pilot physiotherapy practices
 - Successful implementation of tenant isolation security model
 - Timely completion of compliance certification process
@@ -259,12 +263,14 @@
    - Consistent error response format and HTTP status codes
 
 10. **NFR10: Monitoring & Alerting**
-   - Application performance monitoring and error tracking
 
-   **Acceptance Criteria:**
-   - Real-time application performance monitoring (APM)
-   - Error tracking and alerting for application exceptions
-   - Infrastructure monitoring (CPU, memory, disk, network)
-   - Uptime monitoring with 99.5% availability target
-   - Custom dashboards for key business metrics
-   - Automated alerting via email, Slack/discord and SMS for critical issues
+- Application performance monitoring and error tracking
+
+**Acceptance Criteria:**
+
+- Real-time application performance monitoring (APM)
+- Error tracking and alerting for application exceptions
+- Infrastructure monitoring (CPU, memory, disk, network)
+- Uptime monitoring with 99.5% availability target
+- Custom dashboards for key business metrics
+- Automated alerting via email, Slack/discord and SMS for critical issues

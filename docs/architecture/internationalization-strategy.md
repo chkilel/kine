@@ -3,6 +3,7 @@
 ## Vue I18n Configuration
 
 ### 1. Nuxt I18n Setup
+
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
@@ -20,10 +21,11 @@ export default defineNuxtConfig({
       redirectOn: 'root'
     }
   }
-});
+})
 ```
 
 ### 2. RTL Layout Support
+
 ```vue
 <!-- layouts/default.vue -->
 <template>
@@ -33,12 +35,12 @@ export default defineNuxtConfig({
 </template>
 
 <script setup>
-const { $i18n } = useNuxtApp();
+const { $i18n } = useNuxtApp()
 
 const rtlClasses = computed(() => ({
-  'rtl': $i18n.localeProperties.dir === 'rtl',
-  'ltr': $i18n.localeProperties.dir === 'ltr'
-}));
+  rtl: $i18n.localeProperties.dir === 'rtl',
+  ltr: $i18n.localeProperties.dir === 'ltr'
+}))
 </script>
 
 <style>
@@ -55,6 +57,7 @@ const rtlClasses = computed(() => ({
 ```
 
 ### 3. Translation Structure
+
 ```json
 // locales/fr.json
 {

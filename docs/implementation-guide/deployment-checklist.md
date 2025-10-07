@@ -1,6 +1,7 @@
 # Deployment Checklist
 
 ## 1. Production Environment Variables
+
 ```bash
 # Production .env
 NODE_ENV=production
@@ -15,6 +16,7 @@ SMTP_PASS="your-mailgun-password"
 ```
 
 ## 2. Database Migration
+
 ```bash
 # Generate and run migrations
 pnpm drizzle-kit generate:pg
@@ -22,6 +24,7 @@ pnpm drizzle-kit push:pg
 ```
 
 ## 3. Docker Production Build
+
 ```bash
 # Build and deploy
 docker build -t kine-app:latest .
@@ -29,6 +32,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ## 4. Health Checks
+
 - Database connectivity: `/api/health`
 - Redis connectivity: `/api/health`
 - Authentication service: `/api/auth/session`

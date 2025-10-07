@@ -9,6 +9,7 @@ I want to create and manage patient records with comprehensive demographic infor
 so that I have complete patient profiles for treatment and billing purposes.
 
 ### Acceptance Criteria
+
 1. **Patient creation form** with required demographic fields
 2. **Patient search functionality** with filters and quick search
 3. **Patient profile view** with tabbed interface for different data sections
@@ -23,6 +24,7 @@ I want to record and access patient medical history and clinical information,
 so that I can make informed treatment decisions based on complete patient context.
 
 ### Acceptance Criteria
+
 1. **Medical history form** with conditions, allergies, and medications
 2. **Referring physician information** with contact details
 3. **Clinical notes system** with rich text support
@@ -37,6 +39,7 @@ I want to upload, store, and manage patient documents securely,
 so that important medical records and documents are properly organized and accessible.
 
 ### Acceptance Criteria
+
 1. **File upload interface** with drag-and-drop support
 2. **Document categorization** by type (prescriptions, scans, reports, etc.)
 3. **Secure file storage** with encryption at rest
@@ -51,6 +54,7 @@ I want powerful search and filtering capabilities across patient records,
 so that I can quickly find patients based on various criteria.
 
 ### Acceptance Criteria
+
 1. **Full-text search** across patient names and notes
 2. **Advanced filtering** by demographic criteria, appointment history, etc.
 3. **Saved search queries** for frequently used filters

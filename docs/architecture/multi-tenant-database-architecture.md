@@ -3,6 +3,7 @@
 ## Schema Design Strategy
 
 ### 1. Row-Level Security (RLS) Pattern
+
 ```sql
 -- Core tenant isolation
 CREATE TABLE organizations (
@@ -26,6 +27,7 @@ CREATE POLICY tenant_isolation ON patients
 ```
 
 ### 2. Core Entity Relationships
+
 ```mermaid
 erDiagram
     organizations ||--o{ users : "has many"
@@ -47,7 +49,7 @@ Based on Better Auth documentation requirements <mcreference link="https://www.b
 
 ```typescript
 // schema/auth.ts - Better Auth Core Tables
-import { pgTable, text, timestamp, boolean, uuid, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, uuid, varchar } from 'drizzle-orm/pg-core'
 
 // Core Better Auth Tables
 export const user = pgTable('user', {
@@ -58,7 +60,7 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
@@ -68,17 +70,21 @@ export const session = pgTable('session', {
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   ipAddress: text('ipAddress'),
   userAgent: text('userAgent'),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   // Organization plugin additions
   activeOrganizationId: text('activeOrganizationId').references(() => organization.id),
   activeTeamId: text('activeTeamId').references(() => team.id)
-});
+})
 
 export const account = pgTable('account', {
   id: text('id').primaryKey(),
   accountId: text('accountId').notNull(),
   providerId: text('providerId').notNull(),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('accessToken'),
   refreshToken: text('refreshToken'),
   idToken: text('idToken'),
@@ -88,7 +94,7 @@ export const account = pgTable('account', {
   password: text('password'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),
@@ -97,7 +103,7 @@ export const verification = pgTable('verification', {
   expiresAt: timestamp('expiresAt').notNull(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 // Organization Plugin Tables
 export const organization = pgTable('organization', {
@@ -108,50 +114,66 @@ export const organization = pgTable('organization', {
   metadata: text('metadata'), // JSON string for additional data
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 export const member = pgTable('member', {
   id: text('id').primaryKey(),
-  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 export const invitation = pgTable('invitation', {
   id: text('id').primaryKey(),
-  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').notNull().default('member'),
   status: text('status').notNull().default('pending'),
   expiresAt: timestamp('expiresAt').notNull(),
-  inviterId: text('inviterId').notNull().references(() => user.id),
+  inviterId: text('inviterId')
+    .notNull()
+    .references(() => user.id),
   teamId: text('teamId').references(() => team.id), // Optional team assignment
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 // Team functionality (optional)
 export const team = pgTable('team', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
-  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow()
-});
+})
 
 export const teamMember = pgTable('teamMember', {
   id: text('id').primaryKey(),
-  teamId: text('teamId').notNull().references(() => team.id, { onDelete: 'cascade' }),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  teamId: text('teamId')
+    .notNull()
+    .references(() => team.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   createdAt: timestamp('createdAt').notNull().defaultNow()
-});
+})
 
 // Healthcare-specific tables with tenant isolation
 export const patients = pgTable('patients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: text('organization_id').references(() => organization.id).notNull(),
+  organizationId: text('organization_id')
+    .references(() => organization.id)
+    .notNull(),
   firstName: varchar('first_name', { length: 100 }).notNull(),
   lastName: varchar('last_name', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }),
@@ -160,32 +182,34 @@ export const patients = pgTable('patients', {
   medicalHistory: text('medical_history'), // JSON string
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
-});
+})
 ```
 
 ## Data Isolation Strategies
 
 ### 1. Tenant Context Middleware
+
 ```typescript
 // middleware/tenant.ts
 export default defineEventHandler(async (event) => {
   if (event.node.req.url?.startsWith('/api/')) {
-    const session = await getSession(event);
+    const session = await getSession(event)
     if (session?.user?.organizationId) {
       // Set tenant context for RLS
       await $fetch('/api/_internal/set-tenant', {
         method: 'POST',
         body: { organizationId: session.user.organizationId }
-      });
+      })
     }
   }
-});
+})
 ```
 
 ### 2. Database Connection Pool per Tenant
+
 ```typescript
 // utils/database.ts
-const connectionPools = new Map<string, Pool>();
+const connectionPools = new Map<string, Pool>()
 
 export function getTenantDb(organizationId: string) {
   if (!connectionPools.has(organizationId)) {
@@ -193,9 +217,9 @@ export function getTenantDb(organizationId: string) {
       connectionString: process.env.DATABASE_URL,
       application_name: `tenant_${organizationId}`,
       max: 10
-    });
-    connectionPools.set(organizationId, pool);
+    })
+    connectionPools.set(organizationId, pool)
   }
-  return connectionPools.get(organizationId)!;
+  return connectionPools.get(organizationId)!
 }
 ```

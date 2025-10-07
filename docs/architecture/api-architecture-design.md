@@ -3,6 +3,7 @@
 ## RESTful API Structure
 
 ### 1. Versioning Strategy
+
 ```
 /api/organizations/{orgId}/patients
 /api/organizations/{orgId}/appointments
@@ -10,6 +11,7 @@
 ```
 
 ### 2. Middleware Stack
+
 ```typescript
 // server/middleware/
 ├── 01.cors.ts          // CORS configuration
@@ -21,6 +23,7 @@
 ```
 
 ### 3. API Route Structure
+
 ```typescript
 // server/api/organizations/[orgId]/patients/
 ├── index.get.ts        // GET /patients (list with pagination)
@@ -34,18 +37,24 @@
 ```
 
 ### 4. Validation Schema Example
+
 ```typescript
 // schemas/patient.ts
 export const createPatientSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   email: z.string().email().optional(),
-  phone: z.string().regex(/^\+?[\d\s-()]+$/).optional(),
+  phone: z
+    .string()
+    .regex(/^\+?[\d\s-()]+$/)
+    .optional(),
   dateOfBirth: z.string().date().optional(),
-  medicalHistory: z.object({
-    conditions: z.array(z.string()).default([]),
-    allergies: z.array(z.string()).default([]),
-    medications: z.array(z.string()).default([])
-  }).optional()
-});
+  medicalHistory: z
+    .object({
+      conditions: z.array(z.string()).default([]),
+      allergies: z.array(z.string()).default([]),
+      medications: z.array(z.string()).default([])
+    })
+    .optional()
+})
 ```

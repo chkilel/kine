@@ -9,6 +9,7 @@ I want to generate professional invoices from completed appointments,
 so that I can bill patients accurately and maintain proper financial records.
 
 ### Acceptance Criteria
+
 1. **Automated invoice generation** from completed appointments
 2. **Customizable invoice templates** with clinic branding
 3. **Multi-session invoicing** for treatment packages
@@ -23,6 +24,7 @@ I want to process and track payments through multiple methods,
 so that I can efficiently handle patient payments and maintain accurate records.
 
 ### Acceptance Criteria
+
 1. **Multiple payment methods** (cash, check, card, bank transfer)
 2. **Payment recording interface** with receipt generation
 3. **Partial payment support** with balance tracking
@@ -37,6 +39,7 @@ I want to track outstanding balances and manage collections,
 so that I can maintain healthy cash flow and reduce bad debt.
 
 ### Acceptance Criteria
+
 1. **Outstanding balance dashboard** with aging reports
 2. **Automated balance notifications** to patients
 3. **Collection workflow** with escalation procedures
@@ -51,6 +54,7 @@ I want comprehensive financial reports and analytics,
 so that I can understand my practice's financial performance and make informed decisions.
 
 ### Acceptance Criteria
+
 1. **Revenue reports** by date range, therapist, and service type
 2. **Accounts receivable aging** with collection metrics
 3. **Payment method analysis** and processing fee tracking
