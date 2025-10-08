@@ -121,3 +121,60 @@ The `pre-commit` hook is configured to run `lint-staged`. This means that before
 - `.js`, `.ts`, `.vue`, `.json`, `.md`, `.yaml` files will be formatted using Prettier (`prettier --write`).
 
 This helps maintain code style and prevents common errors from being committed.
+
+## 7. Developer Workflow
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+
+# Type check
+pnpm typecheck
+
+# Lint (check and fix)
+pnpm lint
+pnpm lint --fix
+
+# Format with Prettier
+pnpm format
+```
+
+## 8. Docker: Local Development
+
+```bash
+# Build and run locally
+docker compose up --build
+
+# Stop and remove containers
+docker compose down
+```
+
+- Environment variables for local development are defined in `.env` (see Environment Configuration above).
+- The local service is exposed on port `3000` by default as defined in <mcfile name="docker-compose.yml" path="/Users/adil/Dev/01-Projects/02-kine/web-app/docker-compose.yml"></mcfile>.
+
+## 9. Docker: Production
+
+Production build and deployment commands are outlined in the Deployment Checklist:
+
+- See <mcfile name="deployment-checklist.md" path="/Users/adil/Dev/01-Projects/02-kine/web-app/docs/implementation-guide/deployment-checklist.md"></mcfile>
+- See deployment strategy in <mcfile name="deployment-strategy.md" path="/Users/adil/Dev/01-Projects/02-kine/web-app/docs/architecture/deployment-strategy.md"></mcfile>
+
+Key commands:
+
+```bash
+# Build production image
+docker build -t kine-app:latest .
+
+# Bring up production stack (example)
+docker compose -f docker-compose.prod.yml up -d
+```
+
+## 10. References
+
+- Git Hooks setup: see section above and <mcfile name=".husky/pre-commit" path="/Users/adil/Dev/01-Projects/02-kine/web-app/.husky/pre-commit"></mcfile>
+- Docker usage: see sections 8 and 9
+- TypeScript workflow: see section 4
+- Linting & formatting: see section 5
