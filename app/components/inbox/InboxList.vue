@@ -43,23 +43,17 @@ defineShortcuts({
 </script>
 
 <template>
-  <div class="divide-default divide-y overflow-y-auto">
+  <div class="overflow-y-auto divide-y divide-default">
     <div
       v-for="(mail, index) in mails"
       :key="index"
-      :ref="
-        (el) => {
-          mailsRefs[mail.id] = el as Element
-        }
-      "
+      :ref="el => { mailsRefs[mail.id] = el as Element }"
     >
       <div
-        class="cursor-pointer border-l-2 p-4 text-sm transition-colors sm:px-6"
+        class="p-4 sm:px-6 text-sm cursor-pointer border-l-2 transition-colors"
         :class="[
           mail.unread ? 'text-highlighted' : 'text-toned)',
-          selectedMail && selectedMail.id === mail.id
-            ? 'border-primary bg-primary/10'
-            : 'hover:border-primary hover:bg-primary/5 border-(--ui-bg)'
+          selectedMail && selectedMail.id === mail.id ? 'border-primary bg-primary/10' : 'border-(--ui-bg) hover:border-primary hover:bg-primary/5'
         ]"
         @click="selectedMail = mail"
       >
@@ -70,11 +64,7 @@ defineShortcuts({
             <UChip v-if="mail.unread" />
           </div>
 
-          <span>{{
-            isToday(new Date(mail.date))
-              ? format(new Date(mail.date), 'HH:mm')
-              : format(new Date(mail.date), 'dd MMM')
-          }}</span>
+          <span>{{ isToday(new Date(mail.date)) ? format(new Date(mail.date), 'HH:mm') : format(new Date(mail.date), 'dd MMM') }}</span>
         </div>
         <p class="truncate" :class="[mail.unread && 'font-semibold']">
           {{ mail.subject }}

@@ -18,7 +18,11 @@ const ranges = [
 ]
 
 const toCalendarDate = (date: Date) => {
-  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+  return new CalendarDate(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate()
+  )
 }
 
 const calendarRange = computed({
@@ -90,20 +94,19 @@ const selectRange = (range: { days?: number, months?: number, years?: number }) 
             {{ df.format(selected.start) }}
           </template>
         </template>
-        <template v-else> Pick a date </template>
+        <template v-else>
+          Pick a date
+        </template>
       </span>
 
       <template #trailing>
-        <UIcon
-          name="i-lucide-chevron-down"
-          class="text-dimmed size-5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
-        />
+        <UIcon name="i-lucide-chevron-down" class="shrink-0 text-dimmed size-5 group-data-[state=open]:rotate-180 transition-transform duration-200" />
       </template>
     </UButton>
 
     <template #content>
-      <div class="divide-default flex items-stretch sm:divide-x">
-        <div class="hidden flex-col justify-center sm:flex">
+      <div class="flex items-stretch sm:divide-x divide-default">
+        <div class="hidden sm:flex flex-col justify-center">
           <UButton
             v-for="(range, index) in ranges"
             :key="index"

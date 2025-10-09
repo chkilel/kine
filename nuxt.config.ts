@@ -14,6 +14,13 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    databaseUrl: process.env.DATABASE_URL,
+    public: {
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL
+    }
+  },
+
   compatibilityDate: '2024-07-11',
 
   eslint: {
