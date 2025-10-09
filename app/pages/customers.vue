@@ -14,12 +14,10 @@ const UCheckbox = resolveComponent('UCheckbox')
 const toast = useToast()
 const table = useTemplateRef('table')
 
-const columnFilters = ref([
-  {
-    id: 'email',
-    value: ''
-  }
-])
+const columnFilters = ref([{
+  id: 'email',
+  value: ''
+}])
 const columnVisibility = ref()
 const rowSelection = ref({ 1: true })
 
@@ -146,7 +144,9 @@ const columns: TableColumn<User>[] = [
         bounced: 'warning' as const
       }[row.original.status]
 
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () => row.original.status)
+      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
+        row.original.status
+      )
     }
   },
   {
@@ -178,21 +178,18 @@ const columns: TableColumn<User>[] = [
 
 const statusFilter = ref('all')
 
-watch(
-  () => statusFilter.value,
-  (newVal) => {
-    if (!table?.value?.tableApi) return
+watch(() => statusFilter.value, (newVal) => {
+  if (!table?.value?.tableApi) return
 
-    const statusColumn = table.value.tableApi.getColumn('status')
-    if (!statusColumn) return
+  const statusColumn = table.value.tableApi.getColumn('status')
+  if (!statusColumn) return
 
-    if (newVal === 'all') {
-      statusColumn.setFilterValue(undefined)
-    } else {
-      statusColumn.setFilterValue(newVal)
-    }
+  if (newVal === 'all') {
+    statusColumn.setFilterValue(undefined)
+  } else {
+    statusColumn.setFilterValue(newVal)
   }
-)
+})
 
 const pagination = ref({
   pageIndex: 0,
@@ -217,7 +214,7 @@ const pagination = ref({
     <template #body>
       <div class="flex flex-wrap items-center justify-between gap-1.5">
         <UInput
-          :model-value="table?.tableApi?.getColumn('email')?.getFilterValue() as string"
+          :model-value="(table?.tableApi?.getColumn('email')?.getFilterValue() as string)"
           class="max-w-sm"
           icon="i-lucide-search"
           placeholder="Filter emails..."
@@ -249,9 +246,7 @@ const pagination = ref({
               { label: 'Unsubscribed', value: 'unsubscribed' },
               { label: 'Bounced', value: 'bounced' }
             ]"
-            :ui="{
-              trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-            }"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
             placeholder="Filter status"
             class="min-w-28"
           />
@@ -306,8 +301,8 @@ const pagination = ref({
         }"
       />
 
-      <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
-        <div class="text-muted text-sm">
+      <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+        <div class="text-sm text-muted">
           {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
           {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
         </div>

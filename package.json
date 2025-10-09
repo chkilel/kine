@@ -1,5 +1,5 @@
 {
-  "name": "web-app",
+  "name": "kine-web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,14 +8,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "typecheck": "nuxt typecheck",
-    "prepare": "husky",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push:pg",
-    "db:migrate": "tsx server/scripts/migrate.ts",
-    "seed:rls": "tsx server/scripts/verify-rls.ts",
-    "db:setup": "pnpm exec drizzle-kit push && pnpm db:migrate && pnpm seed:rls"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.68",
@@ -25,30 +18,14 @@
     "@unovis/vue": "^1.6.1",
     "@vueuse/nuxt": "^13.9.0",
     "date-fns": "^4.1.0",
-    "drizzle-orm": "^0.44.6",
     "nuxt": "^4.1.2",
-    "pg": "^8.16.3",
     "zod": "^4.1.11"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0",
     "@nuxt/eslint": "^1.9.0",
-    "@types/node": "^24.7.0",
-    "@types/pg": "^8.15.5",
-    "drizzle-kit": "^0.31.5",
     "eslint": "^9.37.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.3",
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.1.0"
-  },
-  "lint-staged": {
-    "*.{js,ts,vue}": "eslint --fix",
-    "*.{js,ts,vue,json,md,yaml}": "prettier --write"
   },
   "resolutions": {
     "unimport": "4.1.1"
