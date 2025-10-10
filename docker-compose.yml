@@ -53,10 +53,33 @@ services:
     networks:
       - kine-network
 
-volumes:
-  postgres_data:
-  redis_data:
+  # MinIO Object Storage (for file attachments in dev)
+  minio:
+    image: minio/minio:latest
+    container_name: kine-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    command: server /data --console-address ':9001'
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console UI
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 100s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kine-network
 
 networks:
   kine-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
