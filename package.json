@@ -8,7 +8,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.68",
@@ -19,13 +20,15 @@
     "@vueuse/nuxt": "^13.9.0",
     "date-fns": "^4.1.0",
     "nuxt": "^4.1.2",
-    "zod": "^4.1.11"
+    "zod": "^4.1.11",
+    "@nuxtjs/i18n": "^8.3.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.9.0",
     "eslint": "^9.37.0",
     "typescript": "^5.9.3",
-    "vue-tsc": "^3.1.0"
+    "vue-tsc": "^3.1.0",
+    "vitest": "^2.0.5"
   },
   "resolutions": {
     "unimport": "4.1.1"

@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    '@nuxtjs/i18n'
   ],
 
   devtools: {
@@ -18,7 +19,16 @@ export default defineNuxtConfig({
     }
   },
 
-  compatibilityDate: '2024-07-11',
+  i18n: {
+    locales: [
+      { code: 'fr', name: 'Français' },
+      { code: 'ar', name: 'العربية', dir: 'rtl' }
+    ],
+    defaultLocale: process.env.I18N_DEFAULT_LOCALE || 'fr',
+    detectBrowserLanguage: false,
+    vueI18n: './i18n.config.ts'
+  },
+
 
   eslint: {
     config: {
