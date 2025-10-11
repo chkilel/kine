@@ -24,6 +24,10 @@ const links = [[{
   to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
   target: '_blank'
 }]] satisfies NavigationMenuItem[][]
+
+definePageMeta({
+  middleware: ['auth']
+})
 </script>
 
 <template>
