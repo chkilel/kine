@@ -9,6 +9,19 @@ export default defineNuxtConfig({
     cloudflare: {
       deployConfig: true,
       nodeCompat: true
+    },
+
+    experimental: {
+      database: true
+    },
+
+    database: {
+      kineDB: {
+        connector: 'cloudflare-d1',
+        options: {
+          bindingName: 'DB'
+        }
+      }
     }
   },
 
