@@ -23,5 +23,7 @@ logs
 .env.*
 !.env.example
 
-# VSC
-.history
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
