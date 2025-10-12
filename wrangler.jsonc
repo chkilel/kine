@@ -16,7 +16,7 @@
   },
   "d1_databases": [
     {
-      "binding": "BD",
+      "binding": "DB",
       "database_name": "kine",
       "database_id": "d75d0b80-ed0e-4007-914b-cec7c041f1c7",
       "remote": true,

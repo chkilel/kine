@@ -1,9 +1,19 @@
-export default defineEventHandler(async(event)=>{
+import { users } from '../database/schema'
+import { useDrizzle } from '../utils/database'
 
-    const requestBody = await readBody(event);
+export default defineEventHandler(async (event) => {
+  const requestBody = await readBody(event)
+  const { name, email } = requestBody
 
-    const db = useDB();
+  if (!name || !email) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Name and email are required'
+    })
+  }
 
-    const result = await db.sql`INSERT INTO users (name,email) VALUES (${requestBody.name},${requestBody.email})`;
-    return result;
-});
+  const db = useDrizzle(event)
+  const result = await db.insert(users).values({ name, email }).run()
+
+  return result
+})
