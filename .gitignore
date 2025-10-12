@@ -27,4 +27,3 @@ logs
 .wrangler
 .dev.vars*
 !.dev.vars.example
-pnpm-workspace.yaml
