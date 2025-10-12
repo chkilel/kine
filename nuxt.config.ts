@@ -1,7 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  modules: ['nitro-cloudflare-dev'],
   devtools: { enabled: true },
+  runtimeConfig: {
+    betterAuthSecret: 'your-secret-key',
+    public: {
+      betterAuthUrl: 'http://localhost:3000'
+    }
+  },
   nitro: {
     preset: 'cloudflare_module',
     experimental: {
@@ -17,6 +24,5 @@ export default defineNuxtConfig({
         options: { bindingName: 'BD' }
       }
     }
-  },
-  modules: ['nitro-cloudflare-dev']
+  }
 })
