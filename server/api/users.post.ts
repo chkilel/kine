@@ -1,9 +1,16 @@
-export default defineEventHandler(async(event)=>{
+export default defineEventHandler(async (event) => {
+  const requestBody = await readBody(event)
+  const { name, email } = requestBody
 
-    const requestBody = await readBody(event);
+  if (!name || !email) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Name and email are required'
+    })
+  }
 
-    const db = useDB();
+  const db = useDB(event)
+  const result = await db.prepare('INSERT INTO users (name, email) VALUES (?, ?)').bind(name, email).run()
 
-    const result = await db.sql`INSERT INTO users (name,email) VALUES (${requestBody.name},${requestBody.email})`;
-    return result;
-});
+  return { success: true, result }
+})
