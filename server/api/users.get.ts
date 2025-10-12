@@ -1,9 +1,9 @@
-import { useDB } from '../utils/db'
+import { users } from '../database/schema'
+import { useDrizzle } from '../utils/database'
 
 export default defineEventHandler(async (event) => {
-  const db = useDB(event)
-  const stmt = await db.prepare('SELECT * FROM users')
-  const results = await stmt.all()
+  const db = useDrizzle(event)
+  const results = await db.select().from(users)
   console.log('✅ results', results)
   return results
 })

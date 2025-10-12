@@ -10,9 +10,10 @@
     "postinstall": "nuxt prepare",
     "deploy": "pnpm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
-    "migrate": "wrangler d1 migrations apply kine",
-    "migrate-remote": "wrangler d1 migrations apply kine --remote",
-    "migrate-prev": "wrangler d1 migrations apply kine --prev"
+    "db:gen": "drizzle-kit generate",
+    "db:mig": "wrangler d1 migrations apply kine",
+    "db:mig-remote": "wrangler d1 migrations apply kine --remote",
+    "db:mig-prev": "wrangler d1 migrations apply kine --prev"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.6",

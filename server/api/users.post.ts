@@ -1,3 +1,6 @@
+import { users } from '../database/schema'
+import { useDrizzle } from '../utils/database'
+
 export default defineEventHandler(async (event) => {
   const requestBody = await readBody(event)
   const { name, email } = requestBody
@@ -9,8 +12,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const db = useDB(event)
-  const result = await db.prepare('INSERT INTO users (name, email) VALUES (?, ?)').bind(name, email).run()
+  const db = useDrizzle(event)
+  const result = await db.insert(users).values({ name, email }).run()
 
-  return { success: true, result }
+  return result
 })
