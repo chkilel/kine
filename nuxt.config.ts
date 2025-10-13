@@ -1,10 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  modules: ['nitro-cloudflare-dev'],
+  modules: ['nitro-cloudflare-dev', '@nuxt/ui'],
   devtools: { enabled: true },
+  css: ['~/assets/css/main.css'],
   runtimeConfig: {
-    betterAuthSecret: 'your-secret-key',
+    betterAuthSecret: 'your-secret-key-for-better-auth',
     public: {
       betterAuthUrl: 'http://localhost:3000'
     }
