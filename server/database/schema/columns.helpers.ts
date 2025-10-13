@@ -1,0 +1,13 @@
+import { integer } from 'drizzle-orm/sqlite-core'
+
+export const timestamps = {
+  createdAt: integer({ mode: 'timestamp_ms' })
+    .$default(() => new Date())
+    .notNull(),
+  updatedAt: integer({ mode: 'timestamp_ms' }).notNull()
+}
+
+export const timestampsSoftDelete = {
+  ...timestamps,
+  deletedAt: integer({ mode: 'timestamp_ms' })
+}
