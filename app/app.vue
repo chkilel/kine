@@ -1,6 +1,12 @@
+<script lang="ts" setup>
+  import { fr } from '@nuxt/ui/locale'
+</script>
 <template>
-  <div>
-    <NuxtRouteAnnouncer />
-    <NuxtWelcome />
-  </div>
+  <NuxtRouteAnnouncer />
+  <NuxtLoadingIndicator />
+  <UApp :locale="fr">
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+  </UApp>
 </template>
