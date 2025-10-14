@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { AuthFormField, FormSubmitEvent } from '#ui/types'
-  import * as z from 'zod/v4'
 
   definePageMeta({
     auth: true,
@@ -41,29 +40,18 @@
     }
   ]
 
-  const { signUp } = await useAuth()
-
-  const schema = z.object({
-    firstName: z.string().min(1, 'Le prénom est requis'),
-    lastName: z.string().min(1, 'Le nom de famille est requis'),
-    email: z.email('Adresse email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-  })
-
-  type Schema = z.output<typeof schema>
-
   const pending = ref(false)
-
   const toast = useToast()
-  async function onSubmit(event: FormSubmitEvent<Schema>) {
-    console.log('Register form submitted', event.data)
-    await signUp.email(
+
+  async function onSubmit(event: FormSubmitEvent<SignUpSchema>) {
+    const { firstName, lastName, email, password } = event.data
+    await authClient.signUp.email(
       {
-        name: `${event.data.firstName} ${event.data.lastName}`,
-        firstName: event.data.firstName,
-        lastName: event.data.lastName,
-        email: event.data.email,
-        password: event.data.password
+        name: `${firstName} ${lastName}`,
+        firstName,
+        lastName,
+        email,
+        password
       },
       {
         onRequest: () => {
@@ -73,13 +61,7 @@
           pending.value = false
         },
         onSuccess: () => {
-          toast.add({
-            title: 'Success',
-            description: 'You have successfully signed up!',
-            color: 'success'
-          })
-
-          navigateTo('/app')
+          navigateTo('/')
         },
         onError: (errorContext) => {
           toast.add({
@@ -97,7 +79,7 @@
   <div class="bg-muted flex min-h-svh flex-col items-center justify-center gap-4 p-6 md:p-10">
     <UPageCard class="w-full max-w-md">
       <UAuthForm
-        :schema="schema"
+        :schema="signUpSchema"
         title="Inscription"
         description="Entrez vos identifiants pour vous inscrire."
         icon="i-lucide-user"
