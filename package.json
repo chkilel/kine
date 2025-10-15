@@ -13,7 +13,7 @@
     "db:gen": "drizzle-kit generate",
     "db:mig": "wrangler d1 migrations apply kine",
     "db:mig-remote": "wrangler d1 migrations apply kine --remote",
-    "db:mig-prev": "wrangler d1 migrations apply kine --prev"
+    "db:mig-prev": "wrangler d1 migrations apply kine --remote --preview"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
