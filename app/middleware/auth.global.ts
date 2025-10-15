@@ -8,13 +8,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Get current session
   const { data: session } = await authClient.useSession(useFetch)
 
-  // Refresh session only if it's not yet defined (first load or stale)
-  if (!session.value) {
-    await authClient.getSession({
-      fetchOptions: { headers }
-    })
-  }
-
   const isLoggedIn = !!session.value
 
   // 🧭 If user is logged in and tries to access a guest page → redirect home
