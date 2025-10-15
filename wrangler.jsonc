@@ -19,7 +19,8 @@
       "binding": "DB",
       "database_name": "kine",
       "database_id": "dce23fa8-bf5c-4a5a-9922-0a47703754b7",
-      "remote": true,
+      "preview_database_id": "7fee97f4-195a-4936-a972-64a7cb14b4c4",
+      // "remote": true,
       "migrations_dir": "server/database/migrations"
     }
   ]
