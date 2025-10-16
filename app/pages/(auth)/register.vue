@@ -36,7 +36,8 @@
       label: 'Mot de passe',
       type: 'password' as const,
       placeholder: 'Entrez votre mot de passe',
-      required: true
+      required: true,
+      defaultValue: ''
     }
   ]
 
