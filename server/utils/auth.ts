@@ -34,6 +34,12 @@ export function createAuth(event: H3Event) {
       // Optionally set baseURL if provided via environment
       baseURL: getBaseURL(event),
       secret: betterAuthSecret,
+      trustedOrigins: [
+        'http://localhost:3000',
+        'https://*.physio.workers.dev',
+        'https://kinedesk.com',
+        'https://*.kinedesk.com'
+      ],
       // Enable username/password auth; you can add social providers later
       emailAndPassword: { enabled: true },
       // Bind Better Auth to Drizzle (Cloudflare D1 via drizzle-orm/d1)
