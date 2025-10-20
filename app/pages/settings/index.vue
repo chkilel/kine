@@ -5,9 +5,9 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 const fileRef = ref<HTMLInputElement>()
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Too short'),
-  email: z.string().email('Invalid email'),
-  username: z.string().min(2, 'Too short'),
+  name: z.string().min(2, 'Trop court'),
+  email: z.string().email('Email invalide'),
+  username: z.string().min(2, 'Trop court'),
   avatar: z.string().optional(),
   bio: z.string().optional()
 })
@@ -24,8 +24,8 @@ const profile = reactive<Partial<ProfileSchema>>({
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
   toast.add({
-    title: 'Success',
-    description: 'Your settings have been updated.',
+    title: 'Succès',
+    description: 'Vos paramètres ont été mis à jour.',
     icon: 'i-lucide-check',
     color: 'success'
   })
@@ -55,15 +55,15 @@ function onFileClick() {
     @submit="onSubmit"
   >
     <UPageCard
-      title="Profile"
-      description="These informations will be displayed publicly."
+      title="Profil"
+      description="Ces informations seront affichées publiquement."
       variant="naked"
       orientation="horizontal"
       class="mb-4"
     >
       <UButton
         form="settings"
-        label="Save changes"
+        label="Enregistrer les modifications"
         color="neutral"
         type="submit"
         class="w-fit lg:ms-auto"
@@ -87,7 +87,7 @@ function onFileClick() {
       <UFormField
         name="email"
         label="Email"
-        description="Used to sign in, for email receipts and product updates."
+        description="Utilisé pour se connecter, pour les reçus par email et les mises à jour produit."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
@@ -100,8 +100,8 @@ function onFileClick() {
       <USeparator />
       <UFormField
         name="username"
-        label="Username"
-        description="Your unique username for logging in and your profile URL."
+        label="Nom d’utilisateur"
+        description="Votre nom d’utilisateur unique pour la connexion et votre URL de profil."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
@@ -115,7 +115,7 @@ function onFileClick() {
       <UFormField
         name="avatar"
         label="Avatar"
-        description="JPG, GIF or PNG. 1MB Max."
+        description="JPG, GIF ou PNG. 1 Mo max."
         class="flex max-sm:flex-col justify-between sm:items-center gap-4"
       >
         <div class="flex flex-wrap items-center gap-3">
@@ -125,7 +125,7 @@ function onFileClick() {
             size="lg"
           />
           <UButton
-            label="Choose"
+            label="Choisir"
             color="neutral"
             @click="onFileClick"
           />
@@ -142,7 +142,7 @@ function onFileClick() {
       <UFormField
         name="bio"
         label="Bio"
-        description="Brief description for your profile. URLs are hyperlinked."
+        description="Brève description pour votre profil. Les URL sont liées."
         class="flex max-sm:flex-col justify-between items-start gap-4"
         :ui="{ container: 'w-full' }"
       >

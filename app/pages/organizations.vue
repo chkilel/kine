@@ -39,8 +39,8 @@
   async function createOrganization() {
     if (!name.value || !slug.value) {
       toast.add({
-        title: 'Validation Error',
-        description: 'Name and slug are required',
+        title: 'Erreur de validation',
+        description: 'Le nom et le slug sont requis',
         color: 'error'
       })
       return
@@ -59,14 +59,14 @@
 
       if (error) {
         toast.add({
-          title: 'Error',
-          description: error.message || 'Failed to create organization',
+          title: 'Erreur',
+          description: error.message || 'Échec de la création de l’organisation',
           color: 'error'
         })
       } else {
         toast.add({
-          title: 'Success',
-          description: 'Organization created successfully',
+          title: 'Succès',
+          description: 'Organisation créée avec succès',
           color: 'success'
         })
 
@@ -82,8 +82,8 @@
       }
     } catch (err) {
       toast.add({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: 'Erreur',
+        description: 'Une erreur inattendue s’est produite',
         color: 'error'
       })
     } finally {
@@ -95,14 +95,14 @@
   const columns: TableColumn<any>[] = [
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: 'Nom',
       cell: ({ row }) => {
         const org = row.original
         return h('div', { class: 'flex items-center gap-3' }, [
           org.logo
             ? h('img', {
                 src: org.logo,
-                alt: `${org.name} logo`,
+                alt: `logo de ${org.name}`,
                 class: 'w-8 h-8 rounded-lg object-cover'
               })
             : h(
@@ -121,15 +121,15 @@
     },
     {
       accessorKey: 'memberCount',
-      header: 'Members',
+      header: 'Membres',
       cell: ({ row }) => {
         const count = row.original.memberCount || 0
-        return h(UBadge, { variant: 'subtle', color: 'neutral' }, () => `${count} members`)
+        return h(UBadge, { variant: 'subtle', color: 'neutral' }, () => `${count} membres`)
       }
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: 'Créée',
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
         return h('div', { class: 'text-sm text-muted' }, date.toLocaleDateString())
@@ -147,23 +147,23 @@
             label: 'Actions'
           },
           {
-            label: 'View members',
+            label: 'Voir les membres',
             icon: 'i-lucide-users',
             onSelect: () => {
               toast.add({
-                title: 'Navigate',
-                description: `Viewing members of ${org.name}`,
+                title: 'Navigation',
+                description: `Affichage des membres de ${org.name}`,
                 color: 'info'
               })
             }
           },
           {
-            label: 'Settings',
+            label: 'Paramètres',
             icon: 'i-lucide-settings',
             onSelect: () => {
               toast.add({
-                title: 'Navigate',
-                description: `Opening settings for ${org.name}`,
+                title: 'Navigation',
+                description: `Ouverture des paramètres pour ${org.name}`,
                 color: 'info'
               })
             }
@@ -172,7 +172,7 @@
             type: 'separator'
           },
           {
-            label: 'Set as active',
+            label: 'Définir comme active',
             icon: 'i-lucide-check',
             onSelect: async () => {
               try {
@@ -183,21 +183,21 @@
 
                 if (error) {
                   toast.add({
-                    title: 'Error',
-                    description: error.message || 'Failed to set active organization',
+                    title: 'Erreur',
+                    description: error.message || 'Impossible de définir l’organisation active',
                     color: 'error'
                   })
                 } else {
                   toast.add({
-                    title: 'Success',
-                    description: `${org.name} is now your active organization`,
+                    title: 'Succès',
+                    description: `${org.name} est désormais votre organisation active`,
                     color: 'success'
                   })
                 }
               } catch (err) {
                 toast.add({
-                  title: 'Error',
-                  description: 'An unexpected error occurred',
+                  title: 'Erreur',
+                  description: 'Une erreur inattendue s’est produite',
                   color: 'error'
                 })
               }
@@ -213,7 +213,7 @@
             {
               content: { align: 'end' },
               items,
-              'aria-label': 'Actions dropdown'
+              'aria-label': 'Menu d’actions'
             },
             () =>
               h(UButton, {
@@ -221,7 +221,7 @@
                 color: 'neutral',
                 variant: 'ghost',
                 class: 'ml-auto',
-                'aria-label': 'Actions dropdown'
+                'aria-label': 'Menu d’actions'
               })
           )
         )
@@ -240,14 +240,14 @@
 
       if (error) {
         toast.add({
-          title: 'Error',
-          description: error.message || 'Failed to check slug availability',
+          title: 'Erreur',
+          description: error.message || 'Échec de la vérification de la disponibilité du slug',
           color: 'error'
         })
       } else if (data?.status === false) {
         toast.add({
-          title: 'Slug Taken',
-          description: 'This slug is already taken. Please choose another.',
+          title: 'Slug déjà utilisé',
+          description: 'Ce slug est déjà utilisé. Veuillez en choisir un autre.',
           color: 'warning'
         })
       }
@@ -265,13 +265,13 @@
 <template>
   <UDashboardPanel id="organizations">
     <template #header>
-      <UDashboardNavbar title="Organizations">
+      <UDashboardNavbar title="Organisations">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
         <template #right>
-          <UButton label="Create Organization" icon="i-lucide-plus" @click="isOpen = true" />
+          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="isOpen = true" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -282,38 +282,38 @@
           :data="organizations"
           :columns="columns"
           :loading="isPending"
-          empty="No organizations found. Create your first organization to get started."
+          empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
           class="flex-1"
         />
       </UCard>
 
       <!-- Create Organization Modal -->
-      <UModal v-model:open="isOpen" title="Create Organization">
+      <UModal v-model:open="isOpen" title="Créer une organisation">
         <template #body>
           <div class="space-y-4">
-            <UFormField label="Name" description="The name of your organization">
+            <UFormField label="Nom" description="Le nom de votre organisation">
               <UInput v-model="name" placeholder="Acme Corporation" :disabled="isCreating" required />
             </UFormField>
 
-            <UFormField label="Slug" description="Unique identifier for your organization">
+            <UFormField label="Slug" description="Identifiant unique de votre organisation">
               <UInput v-model="slug" placeholder="acme-corporation" :disabled="isCreating" required />
             </UFormField>
 
-            <UFormField label="Logo" description="URL to your organization logo (optional)">
+            <UFormField label="Logo" description="URL du logo de votre organisation (optionnel)">
               <UInput v-model="logo" placeholder="https://example.com/logo.png" :disabled="isCreating" />
             </UFormField>
 
-            <UFormField label="Metadata" description="Additional metadata as JSON (optional)">
+            <UFormField label="Métadonnées" description="Métadonnées supplémentaires au format JSON (optionnel)">
               <UTextarea
                 :model-value="JSON.stringify(metadata, null, 2)"
-                placeholder='{"industry": "technology", "size": "startup"}'
+                placeholder='{"industrie": "technologie", "taille": "startup"}'
                 :disabled="isCreating"
                 @update:model-value="
                   (val: string) => {
                     try {
                       metadata = JSON.parse(val || '{}')
                     } catch {
-                      // Invalid JSON, ignore
+                      // JSON invalide, ignoré
                     }
                   }
                 "
@@ -324,9 +324,9 @@
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton label="Cancel" color="neutral" variant="outline" :disabled="isCreating" @click="isOpen = false" />
+            <UButton label="Annuler" color="neutral" variant="outline" :disabled="isCreating" @click="isOpen = false" />
             <UButton
-              label="Create Organization"
+              label="Créer une organisation"
               :loading="isCreating"
               :disabled="!name || !slug || isCreating"
               @click="createOrganization"

@@ -32,13 +32,13 @@ function getRowItems(row: Row<User>) {
       label: 'Actions'
     },
     {
-      label: 'Copy customer ID',
+      label: 'Copier l’ID du client',
       icon: 'i-lucide-copy',
       onSelect() {
         navigator.clipboard.writeText(row.original.id.toString())
         toast.add({
-          title: 'Copied to clipboard',
-          description: 'Customer ID copied to clipboard'
+          title: 'Copié dans le presse-papiers',
+          description: 'ID du client copié dans le presse-papiers'
         })
       }
     },
@@ -46,24 +46,24 @@ function getRowItems(row: Row<User>) {
       type: 'separator'
     },
     {
-      label: 'View customer details',
+      label: 'Voir les détails du client',
       icon: 'i-lucide-list'
     },
     {
-      label: 'View customer payments',
+      label: 'Voir les paiements du client',
       icon: 'i-lucide-wallet'
     },
     {
       type: 'separator'
     },
     {
-      label: 'Delete customer',
+      label: 'Supprimer le client',
       icon: 'i-lucide-trash',
       color: 'error',
       onSelect() {
         toast.add({
-          title: 'Customer deleted',
-          description: 'The customer has been deleted.'
+          title: 'Client supprimé',
+          description: 'Le client a été supprimé.'
         })
       }
     }
@@ -80,13 +80,13 @@ const columns: TableColumn<User>[] = [
           : table.getIsAllPageRowsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
           table.toggleAllPageRowsSelected(!!value),
-        'ariaLabel': 'Select all'
+        'ariaLabel': 'Tout sélectionner'
       }),
     cell: ({ row }) =>
       h(UCheckbox, {
         'modelValue': row.getIsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'ariaLabel': 'Select row'
+        'ariaLabel': 'Sélectionner la ligne'
       })
   },
   {
@@ -95,7 +95,7 @@ const columns: TableColumn<User>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'Name',
+    header: 'Nom',
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center gap-3' }, [
         h(UAvatar, {
@@ -130,12 +130,12 @@ const columns: TableColumn<User>[] = [
   },
   {
     accessorKey: 'location',
-    header: 'Location',
+    header: 'Localisation',
     cell: ({ row }) => row.original.location
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: 'Statut',
     filterFn: 'equals',
     cell: ({ row }) => {
       const color = {
@@ -145,7 +145,7 @@ const columns: TableColumn<User>[] = [
       }[row.original.status]
 
       return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-        row.original.status
+        ({ subscribed: 'Abonné', unsubscribed: 'Désabonné', bounced: 'Non distribué' }[row.original.status] ?? row.original.status)
       )
     }
   },
@@ -200,7 +200,7 @@ const pagination = ref({
 <template>
   <UDashboardPanel id="customers">
     <template #header>
-      <UDashboardNavbar title="Customers">
+      <UDashboardNavbar title="Clients">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -217,7 +217,7 @@ const pagination = ref({
           :model-value="(table?.tableApi?.getColumn('email')?.getFilterValue() as string)"
           class="max-w-sm"
           icon="i-lucide-search"
-          placeholder="Filter emails..."
+          placeholder="Filtrer les emails..."
           @update:model-value="table?.tableApi?.getColumn('email')?.setFilterValue($event)"
         />
 
@@ -225,7 +225,7 @@ const pagination = ref({
           <CustomersDeleteModal :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length">
             <UButton
               v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-              label="Delete"
+              label="Supprimer"
               color="error"
               variant="subtle"
               icon="i-lucide-trash"
@@ -241,13 +241,13 @@ const pagination = ref({
           <USelect
             v-model="statusFilter"
             :items="[
-              { label: 'All', value: 'all' },
-              { label: 'Subscribed', value: 'subscribed' },
-              { label: 'Unsubscribed', value: 'unsubscribed' },
-              { label: 'Bounced', value: 'bounced' }
+              { label: 'Tous', value: 'all' },
+              { label: 'Abonné', value: 'subscribed' },
+              { label: 'Désabonné', value: 'unsubscribed' },
+              { label: 'Non distribué', value: 'bounced' }
             ]"
             :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-            placeholder="Filter status"
+            placeholder="Filtrer le statut"
             class="min-w-28"
           />
           <UDropdownMenu
@@ -270,7 +270,7 @@ const pagination = ref({
             :content="{ align: 'end' }"
           >
             <UButton
-              label="Display"
+              label="Affichage"
               color="neutral"
               variant="outline"
               trailing-icon="i-lucide-settings-2"
@@ -303,8 +303,8 @@ const pagination = ref({
 
       <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
         <div class="text-sm text-muted">
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} sur
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} ligne(s) sélectionnée(s).
         </div>
 
         <div class="flex items-center gap-1.5">

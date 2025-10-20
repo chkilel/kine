@@ -62,26 +62,26 @@
     ],
     [
       {
-        label: 'Profile',
+        label: 'Profil',
         icon: 'i-lucide-user'
       },
       {
-        label: 'Billing',
+        label: 'Facturation',
         icon: 'i-lucide-credit-card'
       },
       {
-        label: 'Settings',
+        label: 'Paramètres',
         icon: 'i-lucide-settings',
         to: '/settings'
       }
     ],
     [
       {
-        label: 'Theme',
+        label: 'Thème',
         icon: 'i-lucide-palette',
         children: [
           {
-            label: 'Primary',
+            label: 'Primaire',
             slot: 'chip',
             chip: appConfig.ui.colors.primary,
             content: {
@@ -102,7 +102,7 @@
             }))
           },
           {
-            label: 'Neutral',
+            label: 'Neutre',
             slot: 'chip',
             chip: appConfig.ui.colors.neutral === 'neutral' ? 'old-neutral' : appConfig.ui.colors.neutral,
             content: {
@@ -125,11 +125,11 @@
         ]
       },
       {
-        label: 'Appearance',
+        label: 'Apparence',
         icon: 'i-lucide-sun-moon',
         children: [
           {
-            label: 'Light',
+            label: 'Clair',
             icon: 'i-lucide-sun',
             type: 'checkbox',
             checked: colorMode.value === 'light',
@@ -140,7 +140,7 @@
             }
           },
           {
-            label: 'Dark',
+            label: 'Sombre',
             icon: 'i-lucide-moon',
             type: 'checkbox',
             checked: colorMode.value === 'dark',
@@ -158,7 +158,7 @@
     ],
     [
       {
-        label: 'Log out',
+        label: 'Se déconnecter',
         icon: 'i-lucide-log-out',
         onSelect: handleSignOut
       }
