@@ -1,8 +1,17 @@
 import type { H3Event } from 'h3'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { organization } from 'better-auth/plugins'
 import { useDrizzle } from './database'
-import { users, accounts, verifications, sessions } from '~~/server/database/schema'
+import {
+  users,
+  accounts,
+  verifications,
+  sessions,
+  organizations,
+  members,
+  invitations
+} from '~~/server/database/schema'
 
 /**
  * Creates (or reuses) a singleton Better Auth instance configured for the
@@ -31,7 +40,15 @@ export function createAuth(event: H3Event) {
       database: drizzleAdapter(db, {
         provider: 'sqlite',
         usePlural: true,
-        schema: { users, accounts, verifications, sessions }
+        schema: {
+          users,
+          accounts,
+          verifications,
+          sessions,
+          organizations,
+          members,
+          invitations
+        }
       }),
       // Optional: Add secondary storage for session management
       // secondaryStorage: {
@@ -51,7 +68,10 @@ export function createAuth(event: H3Event) {
             input: true
           }
         }
-      }
+      },
+
+      // Organization plugin configuration
+      plugins: [organization()]
     })
   }
 
