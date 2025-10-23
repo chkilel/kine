@@ -5,8 +5,6 @@
   const UButton = resolveComponent('UButton')
   const UBadge = resolveComponent('UBadge')
   const UDropdownMenu = resolveComponent('UDropdownMenu')
-  const UFormField = resolveComponent('UFormField')
-  const UTextarea = resolveComponent('UTextarea')
 
   const toast = useToast()
 
@@ -18,13 +16,41 @@
   const name = ref('')
   const slug = ref('')
   const logo = ref('')
+  const logoFile = ref<File | null>(null)
   const metadata = ref({})
 
+  const { uploadFile } = useUploads()
   // Table data
   const orgList = authClient.useListOrganizations()
-  const organizations = computed<any[]>(() => Array.from(orgList.value?.data ?? []))
-  const isPending = computed(() => orgList.value?.isPending ?? false)
+  const organizations = computed(() => Array.from(orgList.value?.data ?? []))
 
+  const logoUrlMap = ref<Record<string, string>>({})
+  const logoKeys = computed(() => (organizations.value || []).map((org) => org.logo).filter((k) => !!k))
+
+  watch(
+    logoKeys,
+    async (keys) => {
+      const newKeys = keys.filter((k) => k && !(k in logoUrlMap.value))
+      if (!newKeys.length) return
+
+      try {
+        const response = await $fetch('/api/r2/blobs', {
+          params: { keys: newKeys }
+        })
+
+        if (response?.urls) {
+          for (const [k, u] of Object.entries(response.urls)) {
+            if (u) {
+              logoUrlMap.value[k] = u
+            }
+          }
+        }
+      } catch {
+        // Ignore logo fetch errors
+      }
+    },
+    { immediate: true }
+  )
   // Generate slug from name
   watch(name, (newName, oldName) => {
     if (newName != oldName) {
@@ -49,6 +75,12 @@
     isCreating.value = true
 
     try {
+      // Upload logo to R2 if provided
+      if (logoFile.value) {
+        const result = await uploadFile({ file: logoFile.value, folder: 'org-logos', name: `${slug.value}-logo` })
+        // Store only the object key in DB
+        logo.value = result.key
+      }
       const { data, error } = await authClient.organization.create({
         name: name.value,
         slug: slug.value,
@@ -74,6 +106,7 @@
         name.value = ''
         slug.value = ''
         logo.value = ''
+        logoFile.value = null
         metadata.value = {}
         isOpen.value = false
 
@@ -98,10 +131,14 @@
       header: 'Nom',
       cell: ({ row }) => {
         const org = row.original
+        const logoKey = org.logo
+        const logoUrl = logoKey ? logoUrlMap.value[logoKey] : undefined
+        console.log('✅ logoKey',{logoUrl, logoKey})
+
         return h('div', { class: 'flex items-center gap-3' }, [
-          org.logo
+          logoUrl
             ? h('img', {
-                src: org.logo,
+                src: logoUrl,
                 alt: `logo de ${org.name}`,
                 class: 'w-8 h-8 rounded-lg object-cover'
               })
@@ -281,7 +318,7 @@
         <UTable
           :data="organizations"
           :columns="columns"
-          :loading="isPending"
+          :loading="orgList.isPending"
           empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
           class="flex-1"
         />
@@ -292,15 +329,21 @@
         <template #body>
           <div class="space-y-4">
             <UFormField label="Nom" description="Le nom de votre organisation">
-              <UInput v-model="name" placeholder="Acme Corporation" :disabled="isCreating" required />
+              <UInput v-model="name" placeholder="Acme Corporation" :disabled="isCreating" required class="w-full" />
             </UFormField>
 
             <UFormField label="Slug" description="Identifiant unique de votre organisation">
-              <UInput v-model="slug" placeholder="acme-corporation" :disabled="isCreating" required />
+              <UInput v-model="slug" placeholder="acme-corporation" :disabled="isCreating" required class="w-full" />
             </UFormField>
 
-            <UFormField label="Logo" description="URL du logo de votre organisation (optionnel)">
-              <UInput v-model="logo" placeholder="https://example.com/logo.png" :disabled="isCreating" />
+            <UFormField label="Logo" description="Image du logo de votre organisation (optionnel)">
+              <UFileUpload
+                v-model="logoFile"
+                accept="image/*"
+                :disabled="isCreating"
+                variant="button"
+                label="Choisir le logo"
+              />
             </UFormField>
 
             <UFormField label="Métadonnées" description="Métadonnées supplémentaires au format JSON (optionnel)">
