@@ -3,6 +3,7 @@
   import { upperFirst } from 'scule'
   import { getPaginationRowModel } from '@tanstack/table-core'
   import type { Row } from '@tanstack/table-core'
+  import { LazyOrganizationsCreateModal } from '#components'
 
   const UButton = resolveComponent('UButton')
   const UBadge = resolveComponent('UBadge')
@@ -11,34 +12,31 @@
   const UCheckbox = resolveComponent('UCheckbox')
 
   const toast = useToast()
-  const { uploadFile } = useUploads()
   const table = useTemplateRef('table')
+  const overlay = useOverlay()
 
   // Logo map
   const logoUrlMap = ref<Record<string, string>>({})
   const logoKeys = computed(() => (organizations.value || []).map((org) => org.logo).filter((k) => !!k))
-
-  // Modal state
-  const isOpen = ref(false)
-  const isCreating = ref(false)
 
   // Table state
   const columnFilters = ref([{ id: 'name', value: '' }])
   const columnVisibility = ref()
   const rowSelection = ref({})
 
-  // ✅ Unified reactive form state
-  const form = reactive({
-    name: '',
-    slug: '',
-    logo: '',
-    logoFile: null as File | null,
-    metadata: {} as Record<string, any>
-  })
-
   // Table data
   const orgList = authClient.useListOrganizations()
   const organizations = computed(() => Array.from(orgList.value?.data ?? []))
+
+  // Create modal instance
+  const createOrganizationModal = overlay.create(LazyOrganizationsCreateModal)
+
+  // Function to open the create organization modal
+  async function openCreateOrganizationModal() {
+    const result = await createOrganizationModal.open({
+      title: 'Créer une organisation'
+    })
+  }
 
   watch(
     logoKeys,
@@ -47,9 +45,7 @@
       if (!newKeys.length) return
 
       try {
-        const response = await $fetch('/api/r2/blobs', {
-          params: { keys: newKeys }
-        })
+        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
 
         if (response?.urls) {
           for (const [k, u] of Object.entries(response.urls)) {
@@ -62,100 +58,6 @@
     },
     { immediate: true }
   )
-
-  // ✅ Auto-generate slug from name
-  watch(
-    () => form.name,
-    (newName, oldName) => {
-      if (newName != oldName) {
-        form.slug = slugify(newName)
-      }
-    }
-  )
-
-  // ✅ Create organization
-  async function createOrganization() {
-    isCreating.value = true
-
-    try {
-      // Upload logo if provided
-      if (form.logoFile) {
-        const result = await uploadFile({
-          file: form.logoFile,
-          folder: 'org-logos',
-          name: `${form.slug}-logo`
-        })
-        form.logo = result.key
-      }
-
-      const { error } = await authClient.organization.create({
-        name: form.name,
-        slug: form.slug,
-        logo: form.logo || undefined,
-        metadata: form.metadata || undefined,
-        keepCurrentActiveOrganization: false
-      })
-
-      if (error) {
-        toast.add({
-          title: 'Erreur',
-          description: error.message || "Échec de la création de l'organisation",
-          color: 'error'
-        })
-      } else {
-        toast.add({
-          title: 'Succès',
-          description: 'Organisation créée avec succès',
-          color: 'success'
-        })
-
-        // ✅ Reset form & modal
-        Object.assign(form, { name: '', slug: '', logo: '', logoFile: null, metadata: {} })
-        isOpen.value = false
-
-        orgList.value?.refetch?.()
-      }
-    } catch {
-      toast.add({
-        title: 'Erreur',
-        description: "Une erreur inattendue s'est produite",
-        color: 'error'
-      })
-    } finally {
-      isCreating.value = false
-    }
-  }
-
-  // ✅ Check if slug is available
-  async function checkSlugAvailability() {
-    if (!form.slug) return
-
-    try {
-      const { data, error } = await authClient.organization.checkSlug({
-        slug: form.slug
-      })
-
-      if (error) {
-        toast.add({
-          title: 'Erreur',
-          description: error.message || 'Échec de la vérification du slug',
-          color: 'error'
-        })
-      } else if (data?.status === false) {
-        toast.add({
-          title: 'Slug déjà utilisé',
-          description: 'Ce slug est déjà pris, choisissez-en un autre.',
-          color: 'warning'
-        })
-      }
-    } catch {
-      // Ignore network errors here
-    }
-  }
-
-  // Debounce slug check
-  const debouncedSlugCheck = useDebounceFn(checkSlugAvailability, 500)
-  watch(() => form.slug, debouncedSlugCheck)
 
   // Row actions
   function getRowItems(row: Row<any>) {
@@ -320,21 +222,13 @@
         return h(
           'div',
           { class: 'text-right' },
-          h(
-            UDropdownMenu,
-            {
-              content: {
-                align: 'end'
-              },
-              items: getRowItems(row)
-            },
-            () =>
-              h(UButton, {
-                icon: 'i-lucide-ellipsis-vertical',
-                color: 'neutral',
-                variant: 'ghost',
-                class: 'ml-auto'
-              })
+          h(UDropdownMenu, { content: { align: 'end' }, items: getRowItems(row) }, () =>
+            h(UButton, {
+              icon: 'i-lucide-ellipsis-vertical',
+              color: 'neutral',
+              variant: 'ghost',
+              class: 'ml-auto'
+            })
           )
         )
       }
@@ -372,7 +266,7 @@
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="isOpen = true" />
+          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="openCreateOrganizationModal" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -421,7 +315,6 @@
             placeholder="Filtrer par taille"
             class="min-w-28"
           />
-          {{ statusFilter }}
           <UDropdownMenu
             :items="
               table?.tableApi
@@ -486,58 +379,6 @@
           />
         </div>
       </div>
-
-      <!-- ✅ Create Organization Modal -->
-      <UModal v-model:open="isOpen" title="Créer une organisation">
-        <template #body>
-          <div class="space-y-4">
-            <UFormField label="Nom" description="Le nom de votre organisation">
-              <UInput v-model="form.name" placeholder="Acme Corporation" :disabled="isCreating" required />
-            </UFormField>
-
-            <UFormField label="Slug" description="Identifiant unique de votre organisation">
-              <UInput v-model="form.slug" placeholder="acme-corporation" :disabled="isCreating" required />
-            </UFormField>
-
-            <UFormField label="Logo" description="Image du logo (optionnel)">
-              <UFileUpload
-                v-model="form.logoFile"
-                accept="image/*"
-                :disabled="isCreating"
-                variant="button"
-                label="Choisir le logo"
-              />
-            </UFormField>
-
-            <UFormField label="Métadonnées" description="Format JSON (optionnel)">
-              <UTextarea
-                :model-value="JSON.stringify(form.metadata, null, 2)"
-                placeholder='{"industrie": "technologie", "taille": "startup"}'
-                :disabled="isCreating"
-                @update:model-value="
-                  (val: string) => {
-                    try {
-                      form.metadata = JSON.parse(val || '{}')
-                    } catch {}
-                  }
-                "
-              />
-            </UFormField>
-          </div>
-        </template>
-
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton label="Annuler" color="neutral" variant="outline" :disabled="isCreating" @click="isOpen = false" />
-            <UButton
-              label="Créer une organisation"
-              :loading="isCreating"
-              :disabled="!form.name || !form.slug || isCreating"
-              @click="createOrganization"
-            />
-          </div>
-        </template>
-      </UModal>
     </template>
   </UDashboardPanel>
 </template>
