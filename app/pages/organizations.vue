@@ -14,17 +14,16 @@
   const { uploadFile } = useUploads()
   const table = useTemplateRef('table')
 
+  // Logo map
+  const logoUrlMap = ref<Record<string, string>>({})
+  const logoKeys = computed(() => (organizations.value || []).map((org) => org.logo).filter((k) => !!k))
+
   // Modal state
   const isOpen = ref(false)
   const isCreating = ref(false)
 
   // Table state
-  const columnFilters = ref([
-    {
-      id: 'name',
-      value: ''
-    }
-  ])
+  const columnFilters = ref([{ id: 'name', value: '' }])
   const columnVisibility = ref()
   const rowSelection = ref({})
 
@@ -40,10 +39,6 @@
   // Table data
   const orgList = authClient.useListOrganizations()
   const organizations = computed(() => Array.from(orgList.value?.data ?? []))
-
-  // Logo map
-  const logoUrlMap = ref<Record<string, string>>({})
-  const logoKeys = computed(() => (organizations.value || []).map((org) => org.logo).filter((k) => !!k))
 
   watch(
     logoKeys,
@@ -228,6 +223,22 @@
     createdAt: 'Créée'
   }
 
+  // Custom filter function for member count
+  const memberCountFilterFn = (row: any, columnId: string, filterValue: string) => {
+    const memberCount = row.original.memberCount || 0
+
+    switch (filterValue) {
+      case '0':
+        return memberCount === 0
+      case '1-5':
+        return memberCount >= 1 && memberCount <= 5
+      case '6+':
+        return memberCount >= 6
+      default:
+        return true
+    }
+  }
+
   // ✅ Table columns with selection
   const columns: TableColumn<any>[] = [
     {
@@ -288,6 +299,7 @@
     {
       accessorKey: 'memberCount',
       header: columnLabels.memberCount,
+      filterFn: memberCountFilterFn,
       cell: ({ row }) => {
         const count = row.original.memberCount || 0
         return h(UBadge, { variant: 'subtle', color: 'neutral' }, () => `${count} membres`)
@@ -331,11 +343,9 @@
 
   // Status filter (for member count ranges)
   const statusFilter = ref('all')
-  console.log('🚀 >>> ', 'statusFilter.value', ': ', statusFilter.value)
 
   watch(statusFilter, (newVal) => {
     if (!table?.value?.tableApi) return
-    console.log('🚀 >>> ', 'newVal', ': ', newVal)
 
     const memberCountColumn = table.value.tableApi.getColumn('memberCount')
     if (!memberCountColumn) return
@@ -343,22 +353,7 @@
     if (newVal === 'all') {
       memberCountColumn.setFilterValue(undefined)
     } else {
-      // Custom filter logic for member count ranges
-      memberCountColumn.setFilterValue((value: number) => {
-        console.log('🚀 >>> ', 'value', ': ', value)
-
-        const count = value ?? 0 // Use nullish coalescing to handle 0 properly
-        switch (newVal) {
-          case '0':
-            return count === 0
-          case '1-5':
-            return count >= 1 && count <= 5
-          case '6+':
-            return count >= 6
-          default:
-            return true
-        }
-      })
+      memberCountColumn.setFilterValue(newVal)
     }
   })
 
