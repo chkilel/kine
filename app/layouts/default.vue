@@ -157,7 +157,7 @@
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <OrganizationMenu />
+        <OrganizationMenu :collapsed />
       </template>
 
       <template #default="{ collapsed }">

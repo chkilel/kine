@@ -4,19 +4,57 @@
 
   defineProps<{ collapsed?: boolean }>()
 
-  const selectedOrganization = ref<OrganizationSchema>()
+  // Better Auth organization hooks
+  const organizations = authClient.useListOrganizations()
+  const activeOrganization = authClient.useActiveOrganization()
+
   const toast = useToast()
 
   // Logo map for organization logos
   const logoUrlMap = ref<Record<string, string>>({})
-
-  // Use Better Auth organization hooks
-  const organizations = authClient.useListOrganizations()
-  const activeOrganization = authClient.useActiveOrganization()
-  const session = await authClient.useSession(useFetch)
-
-  // Extract logo keys from organizations
   const logoKeys = computed(() => (organizations.value?.data ?? []).map((org) => org.logo).filter((k) => !!k))
+
+  // Computed items for dropdown
+  const organizationItems = computed<DropdownMenuItem[][]>(() => {
+    if (!organizations.value.data) return [[]]
+    const items = organizations.value.data.map((org) => {
+      const logoKey = org.logo
+      const logoUrl = logoKey ? logoUrlMap.value[logoKey] : undefined
+
+      return {
+        label: org.name,
+        avatar: {
+          src: logoUrl ?? undefined,
+          alt: org.name
+        },
+        onSelect: () => switchOrganization(org.id)
+      }
+    })
+
+    // Add "Create Organization" option if user has no organizations
+    const createOrgItem = { label: 'Créer une équipe', icon: 'i-lucide-circle-plus' }
+    const manageOrgItem = { label: 'Gérer les équipes', icon: 'i-lucide-cog' }
+
+    if (organizations.value.data.length === 0) {
+      return [items, [createOrgItem, manageOrgItem]]
+    }
+
+    return [items, [manageOrgItem]]
+  })
+
+  // Active organization item for dropdown
+  const activeOrg = computed(() => {
+    if (!activeOrganization.value?.data) return null
+    const logoKey = activeOrganization.value?.data.logo
+    const logoUrl = logoKey ? logoUrlMap.value[logoKey] : undefined
+    return {
+      label: activeOrganization.value?.data.name || 'Select Organization',
+      avatar: {
+        src: logoUrl ?? undefined,
+        alt: activeOrganization.value?.data.name || 'Select Organization'
+      }
+    }
+  })
 
   // Watch for logo keys and fetch URLs
   watch(
@@ -40,38 +78,18 @@
     { immediate: true }
   )
 
-  // Debug logs to understand the data structure
-  console.log('🚀 >>> ', 'activeOrganization ', ': ', activeOrganization.value)
-  console.log('🚀 >>> ', 'session', ': ', session.data.value)
-
-  // Watch for changes to active organization and update UI
-  watch(
-    activeOrganization,
-    (newVal) => {
-      console.log('🚀 >>> ', 'activeOrganization changed:', newVal)
-      // Force UI update when active organization changes
-    },
-    { deep: true }
-  )
-
   // Switch organization using Better Auth
   async function switchOrganization(organizationId: string) {
     try {
       const { data, error } = await authClient.organization.setActive({ organizationId })
-
-      console.log('🚀 >>> ', 'switch organization response:', data)
-
       if (error) {
         console.error('Failed to switch organization:', error)
-        // Show error toast notification
         toast.add({
           title: 'Erreur',
           description: "Impossible de changer d'organisation",
           color: 'error'
         })
       } else {
-        console.log('🚀 >>> ', 'activeOrganization after switch:', activeOrganization.value)
-        // Show success toast notification
         toast.add({
           title: 'Succès',
           description: 'Organisation changée avec succès',
@@ -88,35 +106,7 @@
     }
   }
 
-  // TODO Create organization using the same approach as in the organisation page
-
-  // Computed items for dropdown
-  const organizationItems = computed<DropdownMenuItem[][]>(() => {
-    if (!organizations.value.data) return [[]]
-    const items = organizations.value.data.map((org) => {
-      const logoKey = org.logo
-      const logoUrl = logoKey ? logoUrlMap.value[logoKey] : undefined
-      
-      return {
-        label: org.name,
-        avatar: {
-          src: logoUrl ?? undefined,
-          alt: org.name
-        },
-        onSelect: () => switchOrganization(org.id)
-      }
-    })
-
-    // Add "Create Organization" option if user has no organizations
-    const createOrg = { label: 'Créer une équipe', icon: 'i-lucide-circle-plus' }
-    const manageOrg = { label: 'Gérer les équipes', icon: 'i-lucide-cog' }
-
-    if (organizations.value.data.length === 0) {
-      return [items, [createOrg, manageOrg]]
-    }
-
-    return [items, [manageOrg]]
-  })
+  // TODO: Create organization using the same approach as in the organisation page
 </script>
 
 <template>
@@ -127,7 +117,7 @@
   >
     <UButton
       v-bind="{
-        ...activeOrganization.data,
+        ...activeOrg,
         label: collapsed ? undefined : activeOrganization.data?.name || 'Select Organization',
         trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
       }"
@@ -141,22 +131,6 @@
         trailingIcon: 'text-dimmed'
       }"
       :loading="organizations.isPending"
-    >
-      <template v-if="collapsed && activeOrganization.data" #leading>
-        <UAvatar
-          :src="activeOrganization.data.logo ? logoUrlMap[activeOrganization.data.logo] : undefined"
-          :alt="activeOrganization.data.name"
-          :text="activeOrganization.data.name.charAt(0).toUpperCase()"
-          size="sm"
-        />
-      </template>
-    </UButton>
+    />
   </UDropdownMenu>
-
-  <div>
-    <div v-if="!activeOrganization.data">No active organization.</div>
-    <div v-else>
-      {{ activeOrganization.data?.name }}
-    </div>
-  </div>
 </template>
