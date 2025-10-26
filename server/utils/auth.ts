@@ -100,7 +100,7 @@ export function createAuth(event: H3Event) {
             // For now, return true to allow creation
             return true
           },
-          organizationLimit: 1 // Users can only create one organization
+          organizationLimit: 2 // Users can create up to two organizations
         })
       ]
     })
