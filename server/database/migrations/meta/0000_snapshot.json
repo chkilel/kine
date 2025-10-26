@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "88c1b9d2-1e54-4b8c-90db-0a162adcbdc2",
+  "id": "3c947e4e-0714-457e-a809-5aeb28eec8b6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -209,6 +209,32 @@
           "tableTo": "users",
           "columnsFrom": [
             "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sessions_activeOrganizationId_organizations_id_fk": {
+          "name": "sessions_activeOrganizationId_organizations_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "activeOrganizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sessions_activeTeamId_teams_id_fk": {
+          "name": "sessions_activeTeamId_teams_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "activeTeamId"
           ],
           "columnsTo": [
             "id"
