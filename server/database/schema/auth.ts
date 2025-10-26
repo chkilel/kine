@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { timestamps, timestampsSoftDelete } from './columns.helpers'
+import { organizations, teams } from './organization'
 
 export const users = sqliteTable('users', {
   id: text().primaryKey().$defaultFn(createId),
@@ -24,6 +25,8 @@ export const sessions = sqliteTable('sessions', {
   userId: text()
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  activeOrganizationId: text().references(() => organizations.id, { onDelete: 'cascade' }),
+  activeTeamId: text().references(() => teams.id, { onDelete: 'cascade' }),
   ...timestamps
 })
 

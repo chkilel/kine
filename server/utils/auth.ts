@@ -31,6 +31,21 @@ export function createAuth(event: H3Event) {
   }
   if (!_auth) {
     _auth = betterAuth({
+      // databaseHooks: {
+      //   session: {
+      //     create: {
+      //       before: async (session) => {
+      //         const organization = await getActiveOrganization(session.userId)
+      //         return {
+      //           data: {
+      //             ...session,
+      //             activeOrganizationId: organization.id
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // },
       // Optionally set baseURL if provided via environment
       baseURL: getBaseURL(event),
       secret: betterAuthSecret,
@@ -77,7 +92,17 @@ export function createAuth(event: H3Event) {
       },
 
       // Organization plugin configuration
-      plugins: [organization()]
+      plugins: [
+        organization({
+          // Restrict users to create only one organization as per spec
+          allowUserToCreateOrganization: async () => {
+            // TODO: Implement proper logic to check if user already has an organization
+            // For now, return true to allow creation
+            return true
+          },
+          organizationLimit: 2 // Users can create up to two organizations
+        })
+      ]
     })
   }
 

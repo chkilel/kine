@@ -1,117 +1,196 @@
 <script setup lang="ts">
-  import { h, resolveComponent } from 'vue'
   import type { TableColumn } from '@nuxt/ui'
+  import { upperFirst } from 'scule'
+  import { getPaginationRowModel } from '@tanstack/table-core'
+  import type { Row } from '@tanstack/table-core'
+  import { LazyOrganizationsCreateModal } from '#components'
 
   const UButton = resolveComponent('UButton')
   const UBadge = resolveComponent('UBadge')
   const UDropdownMenu = resolveComponent('UDropdownMenu')
-  const UFormField = resolveComponent('UFormField')
-  const UTextarea = resolveComponent('UTextarea')
+  const UAvatar = resolveComponent('UAvatar')
+  const UCheckbox = resolveComponent('UCheckbox')
 
   const toast = useToast()
+  const table = useTemplateRef('table')
+  const overlay = useOverlay()
 
-  // Modal state
-  const isOpen = ref(false)
-  const isCreating = ref(false)
+  // Logo map
+  const logoUrlMap = ref<Record<string, string>>({})
+  const logoKeys = computed(() => (organizations.value || []).map((org) => org.logo).filter((k) => !!k))
 
-  // Form state
-  const name = ref('')
-  const slug = ref('')
-  const logo = ref('')
-  const metadata = ref({})
+  // Table state
+  const columnFilters = ref([{ id: 'name', value: '' }])
+  const columnVisibility = ref()
+  const rowSelection = ref({})
 
   // Table data
   const orgList = authClient.useListOrganizations()
-  const organizations = computed<any[]>(() => Array.from(orgList.value?.data ?? []))
-  const isPending = computed(() => orgList.value?.isPending ?? false)
+  const organizations = computed(() => Array.from(orgList.value?.data ?? []))
 
-  // Generate slug from name
-  watch(name, (newName, oldName) => {
-    if (newName != oldName) {
-      slug.value = newName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
-    }
-  })
+  // Create modal instance
+  const createOrganizationModal = overlay.create(LazyOrganizationsCreateModal)
 
-  // Create organization
-  async function createOrganization() {
-    if (!name.value || !slug.value) {
-      toast.add({
-        title: 'Erreur de validation',
-        description: 'Le nom et le slug sont requis',
-        color: 'error'
-      })
-      return
-    }
+  // Function to open the create organization modal
+  async function openCreateOrganizationModal() {
+    const result = await createOrganizationModal.open({
+      title: 'Créer une organisation'
+    })
+  }
 
-    isCreating.value = true
+  watch(
+    logoKeys,
+    async (keys) => {
+      const newKeys = keys.filter((k) => k && !(k in logoUrlMap.value))
+      if (!newKeys.length) return
 
-    try {
-      const { data, error } = await authClient.organization.create({
-        name: name.value,
-        slug: slug.value,
-        logo: logo.value || undefined,
-        metadata: metadata.value || undefined,
-        keepCurrentActiveOrganization: false
-      })
+      try {
+        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
 
-      if (error) {
-        toast.add({
-          title: 'Erreur',
-          description: error.message || 'Échec de la création de l’organisation',
-          color: 'error'
-        })
-      } else {
-        toast.add({
-          title: 'Succès',
-          description: 'Organisation créée avec succès',
-          color: 'success'
-        })
-
-        // Reset form and close modal
-        name.value = ''
-        slug.value = ''
-        logo.value = ''
-        metadata.value = {}
-        isOpen.value = false
-
-        // Optionally refetch organizations list
-        orgList.value?.refetch?.()
+        if (response?.urls) {
+          for (const [k, u] of Object.entries(response.urls)) {
+            if (u) logoUrlMap.value[k] = u
+          }
+        }
+      } catch {
+        // Ignore logo fetch errors
       }
-    } catch (err) {
-      toast.add({
-        title: 'Erreur',
-        description: 'Une erreur inattendue s’est produite',
-        color: 'error'
-      })
-    } finally {
-      isCreating.value = false
+    },
+    { immediate: true }
+  )
+
+  // Row actions
+  function getRowItems(row: Row<any>) {
+    const org = row.original
+    return [
+      { type: 'label', label: 'Actions' },
+      {
+        label: "Copier l'ID de l'organisation",
+        icon: 'i-lucide-copy',
+        onSelect() {
+          navigator.clipboard.writeText(org.id.toString())
+          toast.add({
+            title: 'Copié dans le presse-papiers',
+            description: "ID de l'organisation copié dans le presse-papiers"
+          })
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Voir les membres',
+        icon: 'i-lucide-users',
+        onSelect: () => toast.add({ title: 'Navigation', description: `Membres de ${org.name}`, color: 'info' })
+      },
+      {
+        label: 'Paramètres',
+        icon: 'i-lucide-settings',
+        onSelect: () => toast.add({ title: 'Navigation', description: `Paramètres de ${org.name}`, color: 'info' })
+      },
+      { type: 'separator' },
+      {
+        label: 'Définir comme active',
+        icon: 'i-lucide-check',
+        onSelect: async () => {
+          try {
+            const { error } = await authClient.organization.setActive({
+              organizationId: org.id,
+              organizationSlug: org.slug
+            })
+            if (error) throw new Error(error.message)
+            toast.add({ title: 'Succès', description: `${org.name} est maintenant active`, color: 'success' })
+          } catch {
+            toast.add({ title: 'Erreur', description: 'Impossible de définir comme active', color: 'error' })
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: "Supprimer l'organisation",
+        icon: 'i-lucide-trash',
+        color: 'error',
+        onSelect() {
+          toast.add({
+            title: 'Organisation supprimée',
+            description: "L'organisation a été supprimée."
+          })
+        }
+      }
+    ]
+  }
+
+  // Column labels mapping for localized names
+  const columnLabels: Record<string, string> = {
+    name: 'Nom',
+    memberCount: 'Membres',
+    createdAt: 'Créée'
+  }
+
+  // Custom filter function for member count
+  const memberCountFilterFn = (row: any, columnId: string, filterValue: string) => {
+    const memberCount = row.original.memberCount || 0
+
+    switch (filterValue) {
+      case '0':
+        return memberCount === 0
+      case '1-5':
+        return memberCount >= 1 && memberCount <= 5
+      case '6+':
+        return memberCount >= 6
+      default:
+        return true
     }
   }
 
-  // Table columns
+  // ✅ Table columns with selection
   const columns: TableColumn<any>[] = [
     {
+      id: 'select',
+      header: ({ table }) =>
+        h(UCheckbox, {
+          modelValue: table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
+          ariaLabel: 'Tout sélectionner'
+        }),
+      cell: ({ row }) =>
+        h(UCheckbox, {
+          modelValue: row.getIsSelected(),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+          ariaLabel: 'Sélectionner la ligne'
+        })
+    },
+    {
       accessorKey: 'name',
-      header: 'Nom',
+      header: ({ column }) => {
+        const isSorted = column.getIsSorted()
+
+        return h(UButton, {
+          color: 'neutral',
+          variant: 'ghost',
+          label: columnLabels.name,
+          icon: isSorted
+            ? isSorted === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down',
+          class: '-mx-2.5',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+        })
+      },
       cell: ({ row }) => {
         const org = row.original
+        const logoKey = org.logo
+        const logoUrl = logoKey ? logoUrlMap.value[logoKey] : undefined
+
         return h('div', { class: 'flex items-center gap-3' }, [
-          org.logo
-            ? h('img', {
-                src: org.logo,
-                alt: `logo de ${org.name}`,
-                class: 'w-8 h-8 rounded-lg object-cover'
-              })
-            : h(
-                'div',
-                {
-                  class: 'w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center'
-                },
-                h('span', { class: 'text-primary text-sm font-medium' }, org.name.charAt(0).toUpperCase())
-              ),
+          h(UAvatar, {
+            src: logoUrl,
+            alt: `logo de ${org.name}`,
+            text: org.name.charAt(0).toUpperCase(),
+            size: 'lg',
+            ui: {
+              fallback: 'text-primary'
+            }
+          }),
           h('div', [
             h('p', { class: 'font-medium text-highlighted' }, org.name),
             h('p', { class: 'text-muted text-sm' }, org.slug)
@@ -121,7 +200,8 @@
     },
     {
       accessorKey: 'memberCount',
-      header: 'Membres',
+      header: columnLabels.memberCount,
+      filterFn: memberCountFilterFn,
       cell: ({ row }) => {
         const count = row.original.memberCount || 0
         return h(UBadge, { variant: 'subtle', color: 'neutral' }, () => `${count} membres`)
@@ -129,7 +209,7 @@
     },
     {
       accessorKey: 'createdAt',
-      header: 'Créée',
+      header: columnLabels.createdAt,
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
         return h('div', { class: 'text-sm text-muted' }, date.toLocaleDateString())
@@ -139,127 +219,43 @@
       id: 'actions',
       enableHiding: false,
       cell: ({ row }) => {
-        const org = row.original
-
-        const items = [
-          {
-            type: 'label',
-            label: 'Actions'
-          },
-          {
-            label: 'Voir les membres',
-            icon: 'i-lucide-users',
-            onSelect: () => {
-              toast.add({
-                title: 'Navigation',
-                description: `Affichage des membres de ${org.name}`,
-                color: 'info'
-              })
-            }
-          },
-          {
-            label: 'Paramètres',
-            icon: 'i-lucide-settings',
-            onSelect: () => {
-              toast.add({
-                title: 'Navigation',
-                description: `Ouverture des paramètres pour ${org.name}`,
-                color: 'info'
-              })
-            }
-          },
-          {
-            type: 'separator'
-          },
-          {
-            label: 'Définir comme active',
-            icon: 'i-lucide-check',
-            onSelect: async () => {
-              try {
-                const { error } = await authClient.organization.setActive({
-                  organizationId: org.id,
-                  organizationSlug: org.slug
-                })
-
-                if (error) {
-                  toast.add({
-                    title: 'Erreur',
-                    description: error.message || 'Impossible de définir l’organisation active',
-                    color: 'error'
-                  })
-                } else {
-                  toast.add({
-                    title: 'Succès',
-                    description: `${org.name} est désormais votre organisation active`,
-                    color: 'success'
-                  })
-                }
-              } catch (err) {
-                toast.add({
-                  title: 'Erreur',
-                  description: 'Une erreur inattendue s’est produite',
-                  color: 'error'
-                })
-              }
-            }
-          }
-        ]
-
         return h(
           'div',
           { class: 'text-right' },
-          h(
-            UDropdownMenu,
-            {
-              content: { align: 'end' },
-              items,
-              'aria-label': 'Menu d’actions'
-            },
-            () =>
-              h(UButton, {
-                icon: 'i-lucide-ellipsis-vertical',
-                color: 'neutral',
-                variant: 'ghost',
-                class: 'ml-auto',
-                'aria-label': 'Menu d’actions'
-              })
+          h(UDropdownMenu, { content: { align: 'end' }, items: getRowItems(row) }, () =>
+            h(UButton, {
+              icon: 'i-lucide-ellipsis-vertical',
+              color: 'neutral',
+              variant: 'ghost',
+              class: 'ml-auto'
+            })
           )
         )
       }
     }
   ]
 
-  // Check if slug is available
-  async function checkSlugAvailability() {
-    if (!slug.value) return
+  // Status filter (for member count ranges)
+  const statusFilter = ref('all')
 
-    try {
-      const { data, error } = await authClient.organization.checkSlug({
-        slug: slug.value
-      })
+  watch(statusFilter, (newVal) => {
+    if (!table?.value?.tableApi) return
 
-      if (error) {
-        toast.add({
-          title: 'Erreur',
-          description: error.message || 'Échec de la vérification de la disponibilité du slug',
-          color: 'error'
-        })
-      } else if (data?.status === false) {
-        toast.add({
-          title: 'Slug déjà utilisé',
-          description: 'Ce slug est déjà utilisé. Veuillez en choisir un autre.',
-          color: 'warning'
-        })
-      }
-    } catch (err) {
-      // Ignore errors for slug checking
+    const memberCountColumn = table.value.tableApi.getColumn('memberCount')
+    if (!memberCountColumn) return
+
+    if (newVal === 'all') {
+      memberCountColumn.setFilterValue(undefined)
+    } else {
+      memberCountColumn.setFilterValue(newVal)
     }
-  }
+  })
 
-  // Debounce slug check
-  const debouncedSlugCheck = useDebounceFn(checkSlugAvailability, 500)
-
-  watch(slug, debouncedSlugCheck)
+  // Pagination
+  const pagination = ref({
+    pageIndex: 0,
+    pageSize: 10
+  })
 </script>
 
 <template>
@@ -269,71 +265,120 @@
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
-
         <template #right>
-          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="isOpen = true" />
+          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="openCreateOrganizationModal" />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <UCard>
-        <UTable
-          :data="organizations"
-          :columns="columns"
-          :loading="isPending"
-          empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
-          class="flex-1"
+      <div class="flex flex-wrap items-center justify-between gap-1.5">
+        <UInput
+          :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
+          class="max-w-sm"
+          icon="i-lucide-search"
+          placeholder="Filtrer les noms..."
+          @update:model-value="table?.tableApi?.getColumn('name')?.setFilterValue($event)"
         />
-      </UCard>
 
-      <!-- Create Organization Modal -->
-      <UModal v-model:open="isOpen" title="Créer une organisation">
-        <template #body>
-          <div class="space-y-4">
-            <UFormField label="Nom" description="Le nom de votre organisation">
-              <UInput v-model="name" placeholder="Acme Corporation" :disabled="isCreating" required />
-            </UFormField>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <UButton
+            v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+            label="Supprimer"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-trash"
+            @click="
+              toast.add({
+                title: 'Suppression',
+                description: 'Organisations sélectionnées supprimées',
+                color: 'success'
+              })
+            "
+          >
+            <template #trailing>
+              <UKbd>
+                {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
+              </UKbd>
+            </template>
+          </UButton>
 
-            <UFormField label="Slug" description="Identifiant unique de votre organisation">
-              <UInput v-model="slug" placeholder="acme-corporation" :disabled="isCreating" required />
-            </UFormField>
-
-            <UFormField label="Logo" description="URL du logo de votre organisation (optionnel)">
-              <UInput v-model="logo" placeholder="https://example.com/logo.png" :disabled="isCreating" />
-            </UFormField>
-
-            <UFormField label="Métadonnées" description="Métadonnées supplémentaires au format JSON (optionnel)">
-              <UTextarea
-                :model-value="JSON.stringify(metadata, null, 2)"
-                placeholder='{"industrie": "technologie", "taille": "startup"}'
-                :disabled="isCreating"
-                @update:model-value="
-                  (val: string) => {
-                    try {
-                      metadata = JSON.parse(val || '{}')
-                    } catch {
-                      // JSON invalide, ignoré
+          <USelect
+            v-model="statusFilter"
+            :items="[
+              { label: 'Toutes', value: 'all' },
+              { label: '0 membres', value: '0' },
+              { label: '1-5 membres', value: '1-5' },
+              { label: '6+ membres', value: '6+' }
+            ]"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+            placeholder="Filtrer par taille"
+            class="min-w-28"
+          />
+          <UDropdownMenu
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return {
+                    label: columnLabels[column.id] || upperFirst(column.id),
+                    type: 'checkbox' as const,
+                    checked: column.getIsVisible(),
+                    onUpdateChecked(checked: boolean) {
+                      table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+                    },
+                    onSelect(e?: Event) {
+                      e?.preventDefault()
                     }
                   }
-                "
-              />
-            </UFormField>
-          </div>
-        </template>
+                })
+            "
+            :content="{ align: 'end' }"
+          >
+            <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
+          </UDropdownMenu>
+        </div>
+      </div>
 
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton label="Annuler" color="neutral" variant="outline" :disabled="isCreating" @click="isOpen = false" />
-            <UButton
-              label="Créer une organisation"
-              :loading="isCreating"
-              :disabled="!name || !slug || isCreating"
-              @click="createOrganization"
-            />
-          </div>
-        </template>
-      </UModal>
+      <UTable
+        ref="table"
+        v-model:column-filters="columnFilters"
+        v-model:column-visibility="columnVisibility"
+        v-model:row-selection="rowSelection"
+        v-model:pagination="pagination"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel()
+        }"
+        class="shrink-0"
+        :data="organizations"
+        :columns="columns"
+        :loading="orgList.isPending"
+        empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
+        :ui="{
+          base: 'table-fixed border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0',
+          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default'
+        }"
+      />
+
+      <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
+        <div class="text-muted text-sm">
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} sur
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} ligne(s) sélectionnée(s).
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <UPagination
+            :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+          />
+        </div>
+      </div>
     </template>
   </UDashboardPanel>
 </template>
