@@ -46,3 +46,4 @@ export type UpdateOrganizationSchema = z.output<typeof updateOrganizationSchema>
 // OrganizationSelectSchema
 export const organizationSelectSchema = createSelectSchema(organizations)
 export type OrganizationSelectSchema = z.output<typeof organizationSelectSchema>
+export type OrganizationSchema = Omit<z.output<typeof organizationSelectSchema>, 'createdAt' | 'updatedAt'>
