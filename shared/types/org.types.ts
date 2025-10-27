@@ -1,6 +1,8 @@
 import { createInsertSchema, createUpdateSchema, createSelectSchema } from 'drizzle-zod'
-import z from 'zod'
+import * as z from 'zod'
 import { organizations } from '~~/server/database/schema'
+
+z.config(z.locales.fr())
 
 // Organization Insert Schema
 export const organizationInsertSchema = createInsertSchema(organizations).extend({

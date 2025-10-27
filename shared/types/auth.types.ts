@@ -1,6 +1,9 @@
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod'
 import { users } from '~~/server/database/schema'
-import { z } from 'zod'
+import * as z from 'zod'
+import { authClient } from '../../app/utils/auth-client'
+
+z.config(z.locales.fr())
 
 // SignUp Schema
 export const signUpSchema = z.object({
@@ -42,3 +45,10 @@ export type UpdateUserSchema = z.output<typeof updateUserSchema>
 // User SelectSchema
 export const userSelectSchema = createSelectSchema(users)
 export type UserSelectSchema = z.output<typeof userSelectSchema>
+
+// Session types
+export type UseSessionReturn = Awaited<ReturnType<typeof authClient.useSession>>
+type SessionData = NonNullable<UseSessionReturn>['data']['value']
+
+export type User = NonNullable<SessionData>['user']
+export type Session = SessionData
