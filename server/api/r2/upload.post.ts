@@ -1,8 +1,6 @@
-import { PutObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { defineEventHandler, readBody } from 'h3'
 import z from 'zod'
-import { getR2Client, getR2BucketName } from '~~/server/utils/r2'
+import { getR2Client, getR2BucketName, getR2Endpoint } from '~~/server/utils/r2'
 
 const schema = z.object({
   key: z.string(),
@@ -25,10 +23,28 @@ export default defineEventHandler(async (event) => {
 
   const client = getR2Client(event)
   const bucket = getR2BucketName(event)
+  const endpoint = getR2Endpoint(event)
 
-  const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType })
   try {
-    const signedUrl = await getSignedUrl(client, command, { expiresIn })
+    // Create a presigned URL using aws4fetch
+    const url = new URL(`/${bucket}/${key}`, endpoint)
+    
+    // Create a request that will be signed
+    const request = new Request(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType
+      }
+    })
+
+    // Sign the request
+    const signedRequest = await client.sign(request, {
+      aws: { signQuery: true }
+    })
+
+    // The signed URL is in the signed request
+    const signedUrl = signedRequest.url
+    
     return { url: signedUrl }
   } catch (err: any) {
     console.log('Failed to generate signed URL in POST /api/r2/blob', err)

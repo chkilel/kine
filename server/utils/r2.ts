@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3'
+import { AwsClient } from 'aws4fetch'
 import type { H3Event } from 'h3'
 
 export function getR2Client(event: H3Event) {
@@ -14,13 +14,11 @@ export function getR2Client(event: H3Event) {
     )
   }
 
-  return new S3Client({
-    region: 'auto',
-    endpoint: r2Url,
-    credentials: {
-      accessKeyId,
-      secretAccessKey
-    }
+  return new AwsClient({
+    accessKeyId,
+    secretAccessKey,
+    service: 's3',
+    region: 'auto'
   })
 }
 
@@ -31,4 +29,13 @@ export function getR2BucketName(event: H3Event) {
     throw new Error('R2 bucket name is not configured. Please set R2_BUCKET_NAME in .env')
   }
   return bucket
+}
+
+export function getR2Endpoint(event: H3Event) {
+  const config = useRuntimeConfig(event)
+  const r2Url = config.r2Url
+  if (!r2Url) {
+    throw new Error('R2 URL is not configured. Please set R2_URL in .env')
+  }
+  return r2Url.replace(/\/$/, '') // Remove trailing slash if present
 }

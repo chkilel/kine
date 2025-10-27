@@ -9,7 +9,10 @@ export function useUploads() {
 
   async function getPresignUrl(key: string, expiresIn?: number): Promise<string> {
     try {
-      const { url } = await $fetch<{ url: string }>('/api/r2/blob', { params: { key, expiresIn } })
+      const { url } = await $fetch<{ url: string }>('/api/r2/signed-urls', {
+        method: 'POST',
+        params: { key, expiresIn }
+      })
       return url
     } catch (err: any) {
       throw createError({
@@ -22,7 +25,7 @@ export function useUploads() {
 
   async function putPresignUrl(key: string, contentType?: string, expiresIn?: number): Promise<string> {
     try {
-      const { url } = await $fetch<{ url: string }>('/api/r2/blob', {
+      const { url } = await $fetch<{ url: string }>('/api/r2/upload', {
         method: 'POST',
         body: { key, contentType, expiresIn }
       })

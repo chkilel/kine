@@ -64,7 +64,10 @@
       if (!newKeys.length) return
 
       try {
-        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
+        const response = await $fetch('/api/r2/signed-urls', {
+          method: 'POST',
+          params: { keys: newKeys }
+        })
 
         if (response?.urls) {
           for (const [k, u] of Object.entries(response.urls)) {

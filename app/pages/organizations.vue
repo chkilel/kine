@@ -33,7 +33,7 @@
 
   // Function to open the create organization modal
   async function openCreateOrganizationModal() {
-    const result = await createOrganizationModal.open({
+    createOrganizationModal.open({
       title: 'Créer une organisation'
     })
   }
@@ -45,7 +45,10 @@
       if (!newKeys.length) return
 
       try {
-        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
+        const response = await $fetch('/api/r2/signed-urls', {
+          method: 'POST',
+          params: { keys: newKeys }
+        })
 
         if (response?.urls) {
           for (const [k, u] of Object.entries(response.urls)) {
