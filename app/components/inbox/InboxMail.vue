@@ -30,7 +30,7 @@ const loading = ref(false)
 function onSubmit() {
   loading.value = true
 
-  setTimeout(() => {
+  // setTimeout(() => {
     reply.value = ''
 
     toast.add({
@@ -41,7 +41,7 @@ function onSubmit() {
     })
 
     loading.value = false
-  }, 1000)
+  // }, 1000)
 }
 </script>
 

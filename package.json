@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' nuxt build",
+    "build": "NODE_OPTIONS='--max-old-space-size=2048' nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "pnpm run build && wrangler dev",
