@@ -16,7 +16,6 @@
     "db:mig-prev": "wrangler d1 migrations apply kine --remote --preview"
   },
   "dependencies": {
-    "@paralleldrive/cuid2": "^3.1.0",
     "@unovis/ts": "^1.6.1",
     "@unovis/vue": "^1.6.1",
     "@vueuse/nuxt": "^14.0.0",
@@ -25,6 +24,7 @@
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
+    "nanoid": "^5.1.6",
     "nuxt": "^4.2.0",
     "vue": "^3.5.22",
     "zod": "^4.1.12"
