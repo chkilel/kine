@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     database: {
       default: {
         connector: 'cloudflare-d1',
-        options: { bindingName: 'BD' }
+        options: { bindingName: 'DB' }
       }
     }
   }
