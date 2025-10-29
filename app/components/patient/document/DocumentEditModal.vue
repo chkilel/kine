@@ -42,8 +42,8 @@
       })
 
       toast.add({
-        title: 'Success',
-        description: 'Document updated successfully',
+        title: 'Succès',
+        description: 'Document mis à jour avec succès',
         color: 'success'
       })
 
@@ -51,8 +51,8 @@
       open.value = false
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to update document',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la mise à jour du document',
         color: 'error'
       })
     } finally {
@@ -68,8 +68,8 @@
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Edit Document" description="Update document information">
-    <UButton icon="i-lucide-edit" size="sm" color="neutral" variant="ghost" @click="openModal">Edit</UButton>
+  <UModal v-model:open="open" title="Modifier le document" description="Mettre à jour les informations du document">
+    <UButton icon="i-lucide-edit" size="sm" color="neutral" variant="ghost" @click="openModal">Modifier</UButton>
 
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
@@ -77,33 +77,33 @@
         <div class="bg-muted rounded-lg p-3">
           <p class="font-medium">{{ document.originalName }}</p>
           <p class="text-muted-foreground text-sm">
-            {{ document.mimeType }} • {{ Math.round(document.fileSize / 1024) }} KB
+            {{ document.mimeType }} • {{ Math.round(document.fileSize / 1024) }} Ko
           </p>
         </div>
 
         <!-- Document Category -->
-        <UFormField label="Category" name="category">
+        <UFormField label="Catégorie" name="category">
           <USelect
             v-model="state.category"
             class="w-full"
             :items="[
-              { label: 'Referral', value: 'referral' },
-              { label: 'Imaging', value: 'imaging' },
-              { label: 'Lab Results', value: 'lab_results' },
-              { label: 'Treatment Notes', value: 'treatment_notes' },
-              { label: 'Other', value: 'other' }
+              { label: 'Références', value: 'referral' },
+              { label: 'Imagerie', value: 'imaging' },
+              { label: 'Résultats de laboratoire', value: 'lab_results' },
+              { label: 'Notes de traitement', value: 'treatment_notes' },
+              { label: 'Autre', value: 'other' }
             ]"
           />
         </UFormField>
 
         <!-- Description -->
-        <UFormField label="Description" placeholder="Optional description of the document" name="description">
+        <UFormField label="Description" placeholder="Description facultative du document" name="description">
           <UTextarea v-model="state.description" class="w-full" :rows="3" />
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
-          <UButton label="Update" color="primary" variant="solid" type="submit" :loading="isUpdating" />
+          <UButton label="Annuler" color="neutral" variant="subtle" @click="open = false" />
+          <UButton label="Mettre à jour" color="primary" variant="solid" type="submit" :loading="isUpdating" />
         </div>
       </UForm>
     </template>

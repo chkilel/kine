@@ -40,8 +40,8 @@
   async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (!selectedFile.value) {
       toast.add({
-        title: 'Error',
-        description: 'Please select a file to upload',
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un fichier à téléverser',
         color: 'error'
       })
       return
@@ -76,8 +76,8 @@
       })
 
       toast.add({
-        title: 'Success',
-        description: 'Document uploaded successfully',
+        title: 'Succès',
+        description: 'Document téléversé avec succès',
         color: 'success'
       })
 
@@ -90,8 +90,8 @@
       open.value = false
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to upload document',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec du téléversement du document',
         color: 'error'
       })
     } finally {
@@ -100,23 +100,23 @@
   }
 
   function formatFileSize(bytes: number) {
-    if (bytes === 0) return '0 Bytes'
+    if (bytes === 0) return '0 octet'
     const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const sizes = ['octets', 'Ko', 'Mo', 'Go']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Upload Document" description="Upload a new document for this patient">
-    <UButton label="Upload Document" icon="i-lucide-upload" />
+  <UModal v-model:open="open" title="Téléverser un document" description="Téléverser un nouveau document pour ce patient">
+    <UButton label="Téléverser un document" icon="i-lucide-upload" />
 
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <!-- File Upload -->
         <div>
-          <label class="mb-2 block text-sm font-medium">Select File</label>
+          <label class="mb-2 block text-sm font-medium">Sélectionner un fichier</label>
           <input
             type="file"
             @change="onFileSelect"
@@ -132,29 +132,29 @@
         </div>
 
         <!-- Document Category -->
-        <UFormField label="Category" name="category">
+        <UFormField label="Catégorie" name="category">
           <USelect
             v-model="state.category"
             class="w-full"
             :items="[
-              { label: 'Referral', value: 'referral' },
-              { label: 'Imaging', value: 'imaging' },
-              { label: 'Lab Results', value: 'lab_results' },
-              { label: 'Treatment Notes', value: 'treatment_notes' },
-              { label: 'Other', value: 'other' }
+              { label: 'Références', value: 'referral' },
+              { label: 'Imagerie', value: 'imaging' },
+              { label: 'Résultats de laboratoire', value: 'lab_results' },
+              { label: 'Notes de traitement', value: 'treatment_notes' },
+              { label: 'Autre', value: 'other' }
             ]"
           />
         </UFormField>
 
         <!-- Description -->
-        <UFormField label="Description" placeholder="Optional description of the document" name="description">
+        <UFormField label="Description" placeholder="Description facultative du document" name="description">
           <UTextarea v-model="state.description" class="w-full" :rows="3" />
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
+          <UButton label="Annuler" color="neutral" variant="subtle" @click="open = false" />
           <UButton
-            label="Upload"
+            label="Téléverser"
             color="primary"
             variant="solid"
             type="submit"

@@ -9,7 +9,7 @@
   if (error.value) {
     throw createError({
       statusCode: error.value?.statusCode || 404,
-      statusMessage: error.value?.statusMessage || 'Patient not found'
+      statusMessage: error.value?.statusMessage || 'Patient introuvable'
     })
   }
 
@@ -26,10 +26,10 @@
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Patient Profile'">
+      <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Profil du patient'">
         <template #leading>
           <UDashboardSidebarCollapse />
-          <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="$router.back()">Back</UButton>
+          <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="$router.back()">Retour</UButton>
         </template>
 
         <template #right>
@@ -54,12 +54,12 @@
               />
               <div>
                 <h2 class="text-2xl font-bold">{{ formatFullName(patient) }}</h2>
-                <p class="text-muted-foreground">{{ patient.email || 'No email' }}</p>
+                <p class="text-muted-foreground">{{ patient.email || 'Aucun e‑mail' }}</p>
                 <UBadge
                   :color="patient.status === 'active' ? 'success' : patient.status === 'inactive' ? 'warning' : 'error'"
                   variant="subtle"
                 >
-                  {{ patient.status.charAt(0).toUpperCase() + patient.status.slice(1) }}
+                  {{ ({ active: 'Actif', inactive: 'Inactif', discharged: 'Sorti' } as Record<string, string>)[patient.status] || patient.status }}
                 </UBadge>
               </div>
             </div>
@@ -68,20 +68,20 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <!-- Basic Information -->
             <div>
-              <h3 class="mb-4 text-lg font-semibold">Basic Information</h3>
+              <h3 class="mb-4 text-lg font-semibold">Informations de base</h3>
               <div class="space-y-3">
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Date of Birth</label>
+                  <label class="text-muted-foreground text-sm font-medium">Date de naissance</label>
                   <p class="text-sm">{{ formatDate(patient.dateOfBirth) }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Gender</label>
+                  <label class="text-muted-foreground text-sm font-medium">Sexe</label>
                   <p class="text-sm">
                     {{ patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : '-' }}
                   </p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Phone</label>
+                  <label class="text-muted-foreground text-sm font-medium">Téléphone</label>
                   <p class="text-sm">{{ patient.phone || '-' }}</p>
                 </div>
               </div>
@@ -89,22 +89,22 @@
 
             <!-- Address Information -->
             <div>
-              <h3 class="mb-4 text-lg font-semibold">Address</h3>
+              <h3 class="mb-4 text-lg font-semibold">Adresse</h3>
               <div class="space-y-3">
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Address</label>
+                  <label class="text-muted-foreground text-sm font-medium">Adresse</label>
                   <p class="text-sm">{{ patient.address || '-' }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">City</label>
+                  <label class="text-muted-foreground text-sm font-medium">Ville</label>
                   <p class="text-sm">{{ patient.city || '-' }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Postal Code</label>
+                  <label class="text-muted-foreground text-sm font-medium">Code postal</label>
                   <p class="text-sm">{{ patient.postalCode || '-' }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Country</label>
+                  <label class="text-muted-foreground text-sm font-medium">Pays</label>
                   <p class="text-sm">{{ patient.country || '-' }}</p>
                 </div>
               </div>
@@ -112,18 +112,18 @@
 
             <!-- Emergency Contact -->
             <div>
-              <h3 class="mb-4 text-lg font-semibold">Emergency Contact</h3>
+              <h3 class="mb-4 text-lg font-semibold">Contact d’urgence</h3>
               <div class="space-y-3">
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Contact Name</label>
+                  <label class="text-muted-foreground text-sm font-medium">Nom du contact</label>
                   <p class="text-sm">{{ patient.emergencyContactName || '-' }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Contact Phone</label>
+                  <label class="text-muted-foreground text-sm font-medium">Téléphone du contact</label>
                   <p class="text-sm">{{ patient.emergencyContactPhone || '-' }}</p>
                 </div>
                 <div>
-                  <label class="text-muted-foreground text-sm font-medium">Relationship</label>
+                  <label class="text-muted-foreground text-sm font-medium">Relation</label>
                   <p class="text-sm">{{ patient.emergencyContactRelationship || '-' }}</p>
                 </div>
               </div>
@@ -134,15 +134,15 @@
         <!-- Insurance Information -->
         <UCard>
           <template #header>
-            <h3 class="text-lg font-semibold">Insurance Information</h3>
+            <h3 class="text-lg font-semibold">Informations d’assurance</h3>
           </template>
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label class="text-muted-foreground text-sm font-medium">Insurance Provider</label>
+              <label class="text-muted-foreground text-sm font-medium">Assureur</label>
               <p class="text-sm">{{ patient.insuranceProvider || '-' }}</p>
             </div>
             <div>
-              <label class="text-muted-foreground text-sm font-medium">Insurance Number</label>
+              <label class="text-muted-foreground text-sm font-medium">Numéro d’assurance</label>
               <p class="text-sm">{{ patient.insuranceNumber || '-' }}</p>
             </div>
           </div>
@@ -251,13 +251,12 @@
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold">Documents</h3>
               <UButton icon="i-lucide-plus" size="sm" @click="$router.push(`/patients/${route.params.id}/documents`)">
-                Manage Documents
+                Gérer les documents
               </UButton>
             </div>
           </template>
           <p class="text-muted-foreground text-sm">
-            Click "Manage Documents" to view, upload, and manage patient documents including referrals, imaging, lab
-            results, and treatment notes.
+            Cliquez sur « Gérer les documents » pour afficher, téléverser et gérer les documents du patient, y compris les lettres de recommandation, l’imagerie, les résultats d’analyses et les notes de traitement.
           </p>
         </UCard>
       </div>

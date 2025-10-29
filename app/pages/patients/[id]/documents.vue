@@ -13,7 +13,7 @@
   if (patientStatus.value === 'error') {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Patient not found'
+      statusMessage: 'Patient introuvable'
     })
   }
 
@@ -43,10 +43,10 @@
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar :title="patient ? `${formatFullName(patient)} - Documents` : 'Patient Documents'">
+      <UDashboardNavbar :title="patient ? `${formatFullName(patient)} - Documents` : 'Documents du patient'">
         <template #leading>
           <UDashboardSidebarCollapse />
-          <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="$router.back()">Back</UButton>
+          <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="$router.back()">Retour</UButton>
         </template>
 
         <template #right>
@@ -71,7 +71,7 @@
               />
               <div>
                 <h2 class="text-xl font-bold">{{ formatFullName(patient) }}</h2>
-                <p class="text-muted-foreground">{{ patient.email || 'No email' }}</p>
+                <p class="text-muted-foreground">{{ patient.email || 'Aucun e‑mail' }}</p>
               </div>
             </div>
           </template>
@@ -79,25 +79,25 @@
           <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div class="text-center">
               <p class="text-primary text-2xl font-bold">{{ documents?.length || 0 }}</p>
-              <p class="text-muted-foreground text-sm">Total Documents</p>
+              <p class="text-muted-foreground text-sm">Documents au total</p>
             </div>
             <div class="text-center">
               <p class="text-2xl font-bold text-blue-600">
                 {{ documents?.filter((d) => d.category === 'referral').length || 0 }}
               </p>
-              <p class="text-muted-foreground text-sm">Referrals</p>
+              <p class="text-muted-foreground text-sm">Références</p>
             </div>
             <div class="text-center">
               <p class="text-2xl font-bold text-green-600">
                 {{ documents?.filter((d) => d.category === 'imaging').length || 0 }}
               </p>
-              <p class="text-muted-foreground text-sm">Imaging</p>
+              <p class="text-muted-foreground text-sm">Imagerie</p>
             </div>
             <div class="text-center">
               <p class="text-2xl font-bold text-orange-600">
                 {{ documents?.filter((d) => d.category === 'lab_results').length || 0 }}
               </p>
-              <p class="text-muted-foreground text-sm">Lab Results</p>
+              <p class="text-muted-foreground text-sm">Résultats de laboratoire</p>
             </div>
           </div>
         </UCard>
@@ -108,16 +108,16 @@
             <USelect
               v-model="categoryFilter"
               :items="[
-                { label: 'All Documents', value: 'all' },
-                { label: 'Referrals', value: 'referral' },
-                { label: 'Imaging', value: 'imaging' },
-                { label: 'Lab Results', value: 'lab_results' },
-                { label: 'Treatment Notes', value: 'treatment_notes' },
-                { label: 'Other', value: 'other' }
+                { label: 'Tous les documents', value: 'all' },
+                { label: 'Références', value: 'referral' },
+                { label: 'Imagerie', value: 'imaging' },
+                { label: 'Résultats de laboratoire', value: 'lab_results' },
+                { label: 'Notes de traitement', value: 'treatment_notes' },
+                { label: 'Autre', value: 'other' }
               ]"
-              placeholder="Filter by category"
-              class="w-48"
-            />
+              placeholder="Filtrer par catégorie"
+            class="w-48"
+          />
           </div>
 
           <PatientDocumentUpload :patient-id="patientId" @uploaded="onDocumentUploaded" />

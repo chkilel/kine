@@ -18,7 +18,7 @@
   const isDownloading = ref<string | null>(null)
 
   async function deleteDocument(document: PatientDocument) {
-    if (!confirm(`Are you sure you want to delete "${document.originalName}"? This action cannot be undone.`)) {
+    if (!confirm(`Êtes‑vous sûr de vouloir supprimer "${document.originalName}" ? Cette action est irréversible.`)) {
       return
     }
 
@@ -30,16 +30,16 @@
       })
 
       toast.add({
-        title: 'Success',
-        description: 'Document deleted successfully',
+        title: 'Succès',
+        description: 'Document supprimé avec succès',
         color: 'success'
       })
 
       emit('deleted', document.id)
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to delete document',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la suppression du document',
         color: 'error'
       })
     } finally {
@@ -63,8 +63,8 @@
       document.body.removeChild(link)
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to download document',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec du téléchargement du document',
         color: 'error'
       })
     } finally {
@@ -73,9 +73,9 @@
   }
 
   function formatFileSize(bytes: number) {
-    if (bytes === 0) return '0 Bytes'
+    if (bytes === 0) return '0 octet'
     const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const sizes = ['octets', 'Ko', 'Mo', 'Go']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
@@ -107,13 +107,24 @@
     }
     return icons[category as keyof typeof icons] || 'i-lucide-file'
   }
+
+  function getCategoryLabel(category: string) {
+    const labels: Record<string, string> = {
+      referral: 'Références',
+      imaging: 'Imagerie',
+      lab_results: 'Résultats de laboratoire',
+      treatment_notes: 'Notes de traitement',
+      other: 'Autre'
+    }
+    return labels[category] || category.replace('_', ' ')
+  }
 </script>
 
 <template>
   <div v-if="documents.length === 0" class="py-8 text-center">
     <UIcon name="i-lucide-file-text" class="text-muted-foreground mb-4 text-4xl" />
-    <h3 class="mb-2 text-lg font-medium">No documents</h3>
-    <p class="text-muted-foreground mb-4">No documents have been uploaded for this patient yet.</p>
+    <h3 class="mb-2 text-lg font-medium">Aucun document</h3>
+    <p class="text-muted-foreground mb-4">Aucun document n’a encore été téléversé pour ce patient.</p>
     <PatientDocumentUpload :patient-id="props.patientId" @uploaded="(doc: PatientDocument) => emit('updated', doc)" />
   </div>
 
@@ -135,7 +146,7 @@
 
             <div class="text-muted-foreground mt-2 flex items-center gap-4 text-sm">
               <UBadge :color="getCategoryColor(document.category)" variant="subtle" size="xs">
-                {{ document.category.replace('_', ' ') }}
+                {{ getCategoryLabel(document.category) }}
               </UBadge>
               <span>{{ formatFileSize(document.fileSize) }}</span>
               <span>{{ formatDate(document.uploadedAt) }}</span>
@@ -152,7 +163,7 @@
             :loading="isDownloading === document.id"
             @click="downloadDocument(document)"
           >
-            Download
+            Télécharger
           </UButton>
 
           <PatientDocumentEditModal
@@ -169,7 +180,7 @@
             :loading="isDeleting === document.id"
             @click="deleteDocument(document)"
           >
-            Delete
+            Supprimer
           </UButton>
         </div>
       </div>

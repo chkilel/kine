@@ -12,8 +12,8 @@
   async function onSubmit() {
     if (props.selectedIds.length === 0) {
       toast.add({
-        title: 'Error',
-        description: 'No patients selected for deletion',
+        title: 'Erreur',
+        description: 'Aucun patient sélectionné pour la suppression',
         color: 'error'
       })
       return
@@ -28,8 +28,8 @@
       }
 
       toast.add({
-        title: 'Success',
-        description: `${props.selectedIds.length} patient${props.selectedIds.length > 1 ? 's' : ''} deleted successfully`,
+        title: 'Succès',
+        description: `${props.selectedIds.length} patient${props.selectedIds.length > 1 ? 's' : ''} supprimé${props.selectedIds.length > 1 ? 's' : ''} avec succès`,
         color: 'success'
       })
 
@@ -39,8 +39,8 @@
       await refreshNuxtData()
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to delete patients',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la suppression des patients',
         color: 'error'
       })
     }
@@ -50,15 +50,15 @@
 <template>
   <UModal
     v-model:open="open"
-    :title="`Delete ${count} patient${count > 1 ? 's' : ''}`"
-    :description="`Are you sure? This action cannot be undone and will remove all patient records.`"
+    :title="`Supprimer ${count} patient${count > 1 ? 's' : ''}`"
+    :description="`Êtes‑vous sûr ? Cette action est irréversible et supprimera toutes les fiches patient.`"
   >
     <slot />
 
     <template #body>
       <div class="flex justify-end gap-2">
-        <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
-        <UButton label="Delete" color="error" variant="solid" loading-auto @click="onSubmit" />
+        <UButton label="Annuler" color="neutral" variant="subtle" @click="open = false" />
+        <UButton label="Supprimer" color="error" variant="solid" loading-auto @click="onSubmit" />
       </div>
     </template>
   </UModal>

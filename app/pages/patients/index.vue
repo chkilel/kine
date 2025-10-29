@@ -55,7 +55,7 @@
         }
       },
       {
-        label: 'View patient documents',
+        label: 'Voir les documents du patient',
         icon: 'i-lucide-file-text',
         onSelect() {
           navigateTo(`/patients/${row.original.id}/documents`)
@@ -65,13 +65,13 @@
         type: 'separator'
       },
       {
-        label: 'Delete patient',
+        label: 'Supprimer le patient',
         icon: 'i-lucide-trash',
         color: 'error',
         onSelect: async () => {
           if (
             confirm(
-              `Are you sure you want to delete ${row.original.firstName} ${row.original.lastName}? This action cannot be undone.`
+              `Êtes‑vous sûr de vouloir supprimer ${row.original.firstName} ${row.original.lastName} ? Cette action est irréversible.`
             )
           ) {
             try {
@@ -80,8 +80,8 @@
               })
 
               toast.add({
-                title: 'Patient deleted',
-                description: 'The patient has been deleted.',
+                title: 'Patient supprimé',
+                description: 'Le patient a été supprimé.',
                 color: 'success'
               })
 
@@ -89,8 +89,8 @@
               await refreshNuxtData()
             } catch (error: any) {
               toast.add({
-                title: 'Error',
-                description: error.data?.statusMessage || 'Failed to delete patient',
+                title: 'Erreur',
+                description: error.data?.statusMessage || 'Échec de la suppression du patient',
                 color: 'error'
               })
             }
@@ -107,14 +107,16 @@
         h(UCheckbox, {
           modelValue: table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
           'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
-          ariaLabel: 'Select all'
+          ariaLabel: 'Tout sélectionner'
+          
         }),
       cell: ({ row }) =>
         h(UCheckbox, {
           modelValue: row.getIsSelected(),
           'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-          ariaLabel: 'Select row'
-        })
+          ariaLabel: 'Sélectionner la ligne'
+        }),
+      
     },
     {
       accessorKey: 'id',
@@ -122,7 +124,7 @@
     },
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: 'Nom',
       cell: ({ row }) => {
         const fullName = `${row.original.firstName} ${row.original.lastName}`
         return h('div', { class: 'flex items-center gap-3' }, [
@@ -159,12 +161,12 @@
     },
     {
       accessorKey: 'phone',
-      header: 'Phone',
+      header: 'Téléphone',
       cell: ({ row }) => row.original.phone || '-'
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: 'Statut',
       filterFn: 'equals',
       cell: ({ row }) => {
         const statusColors: Record<string, 'success' | 'warning' | 'error'> = {
@@ -174,9 +176,9 @@
         }
 
         const statusLabels: Record<string, string> = {
-          active: 'Active',
-          inactive: 'Inactive',
-          discharged: 'Discharged'
+          active: 'Actif',
+          inactive: 'Inactif',
+          discharged: 'Sorti'
         }
 
         const color = statusColors[row.original.status] || 'neutral'
@@ -187,7 +189,7 @@
     },
     {
       accessorKey: 'insuranceProvider',
-      header: 'Insurance',
+      header: 'Assurance',
       cell: ({ row }) => row.original.insuranceProvider || '-'
     },
     {
@@ -261,7 +263,7 @@
           :model-value="table?.tableApi?.getColumn('email')?.getFilterValue() as string"
           class="max-w-sm"
           icon="i-lucide-search"
-          placeholder="Filter patients..."
+          placeholder="Filtrer les patients..."
           @update:model-value="table?.tableApi?.getColumn('email')?.setFilterValue($event)"
         />
 
@@ -272,7 +274,7 @@
           >
             <UButton
               v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-              label="Delete"
+              label="Supprimer"
               color="error"
               variant="subtle"
               icon="i-lucide-trash"
@@ -288,13 +290,13 @@
           <USelect
             v-model="statusFilter"
             :items="[
-              { label: 'All', value: 'all' },
-              { label: 'Active', value: 'active' },
-              { label: 'Inactive', value: 'inactive' },
-              { label: 'Discharged', value: 'discharged' }
+              { label: 'Tous', value: 'all' },
+              { label: 'Actif', value: 'active' },
+              { label: 'Inactif', value: 'inactive' },
+              { label: 'Sorti', value: 'discharged' }
             ]"
             :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-            placeholder="Filter status"
+            placeholder="Filtrer par statut"
             class="min-w-28"
           />
           <UDropdownMenu
@@ -316,7 +318,7 @@
             "
             :content="{ align: 'end' }"
           >
-            <UButton label="Display" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
+            <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
           </UDropdownMenu>
         </div>
       </div>

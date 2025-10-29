@@ -4,9 +4,9 @@
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
 
   const schema = z.object({
-    firstName: z.string().min(2, 'First name must be at least 2 characters'),
-    lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-    email: z.email('Invalid email').optional().or(z.literal('')),
+    firstName: z.string().min(2, 'Le prénom doit comporter au moins 2 caractères'),
+    lastName: z.string().min(2, 'Le nom doit comporter au moins 2 caractères'),
+    email: z.email('E‑mail invalide').optional().or(z.literal('')),
     phone: z.string().optional(),
     dateOfBirth: z.date().optional(),
     gender: z.enum(['male', 'female']).optional(),
@@ -70,8 +70,8 @@
       })
 
       toast.add({
-        title: 'Success',
-        description: `New patient ${event.data.firstName} ${event.data.lastName} added`,
+        title: 'Succès',
+        description: `Nouveau patient ${event.data.firstName} ${event.data.lastName} ajouté`,
         color: 'success'
       })
 
@@ -81,8 +81,8 @@
       await refreshNuxtData()
     } catch (error: any) {
       toast.add({
-        title: 'Error',
-        description: error.data?.statusMessage || 'Failed to create patient',
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la création du patient',
         color: 'error'
       })
     }
@@ -90,35 +90,35 @@
 </script>
 
 <template>
-  <UModal v-model:open="open" title="New patient" description="Add a new patient to the database">
-    <UButton label="New patient" icon="i-lucide-plus" />
+  <UModal v-model:open="open" title="Nouveau patient" description="Ajouter un nouveau patient à la base de données">
+    <UButton label="Nouveau patient" icon="i-lucide-plus" />
 
     <template #body>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <!-- Basic Information -->
         <div class="grid grid-cols-2 gap-4">
-          <UFormField label="First Name" placeholder="John" name="firstName">
+          <UFormField label="Prénom" placeholder="Jean" name="firstName">
             <UInput v-model="state.firstName" class="w-full" />
           </UFormField>
-          <UFormField label="Last Name" placeholder="Doe" name="lastName">
+          <UFormField label="Nom" placeholder="Dupont" name="lastName">
             <UInput v-model="state.lastName" class="w-full" />
           </UFormField>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Email" placeholder="john.doe@example.com" name="email">
+          <UFormField label="E‑mail" placeholder="john.doe@example.com" name="email">
             <UInput v-model="state.email" class="w-full" type="email" />
           </UFormField>
-          <UFormField label="Phone" placeholder="+1 (555) 123-4567" name="phone">
+          <UFormField label="Téléphone" placeholder="+1 (555) 123-4567" name="phone">
             <UInput v-model="state.phone" class="w-full" type="tel" />
           </UFormField>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Date of Birth" name="dateOfBirth">
+          <UFormField label="Date de naissance" name="dateOfBirth">
             <UPopover>
               <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
-                {{ dobModel ? df.format(dobModel.toDate(getLocalTimeZone())) : 'Select a date' }}
+                {{ dobModel ? df.format(dobModel.toDate(getLocalTimeZone())) : 'Sélectionner une date' }}
               </UButton>
 
               <template #content>
@@ -126,59 +126,59 @@
               </template>
             </UPopover>
           </UFormField>
-          <UFormField label="Gender" name="gender">
+          <UFormField label="Sexe" name="gender">
             <USelect
               v-model="state.gender"
               class="w-full"
               :items="[
-                { label: 'Male', value: 'male' },
-                { label: 'Female', value: 'female' }
+                { label: 'Homme', value: 'male' },
+                { label: 'Femme', value: 'female' }
               ]"
             />
           </UFormField>
         </div>
 
         <!-- Address Information -->
-        <UFormField label="Address" placeholder="123 Main St" name="address">
+        <UFormField label="Adresse" placeholder="123 rue Principale" name="address">
           <UInput v-model="state.address" class="w-full" />
         </UFormField>
 
         <div class="grid grid-cols-3 gap-4">
-          <UFormField label="City" placeholder="New York" name="city">
+          <UFormField label="Ville" placeholder="Paris" name="city">
             <UInput v-model="state.city" class="w-full" />
           </UFormField>
-          <UFormField label="Postal Code" placeholder="10001" name="postalCode">
+          <UFormField label="Code postal" placeholder="10001" name="postalCode">
             <UInput v-model="state.postalCode" class="w-full" />
           </UFormField>
-          <UFormField label="Country" placeholder="USA" name="country">
+          <UFormField label="Pays" placeholder="France" name="country">
             <UInput v-model="state.country" class="w-full" />
           </UFormField>
         </div>
 
         <!-- Emergency Contact -->
         <div class="border-t pt-4">
-          <h3 class="mb-4 text-lg font-medium">Emergency Contact</h3>
+          <h3 class="mb-4 text-lg font-medium">Contact d’urgence</h3>
           <div class="grid grid-cols-2 gap-4">
-            <UFormField label="Contact Name" placeholder="Jane Doe" name="emergencyContactName">
+            <UFormField label="Nom du contact" placeholder="Jeanne Dupont" name="emergencyContactName">
               <UInput v-model="state.emergencyContactName" class="w-full" />
             </UFormField>
-            <UFormField label="Contact Phone" placeholder="+1 (555) 987-6543" name="emergencyContactPhone">
+            <UFormField label="Téléphone du contact" placeholder="+1 (555) 987-6543" name="emergencyContactPhone">
               <UInput v-model="state.emergencyContactPhone" class="w-full" type="tel" />
             </UFormField>
           </div>
-          <UFormField label="Relationship" placeholder="Spouse" name="emergencyContactRelationship">
+          <UFormField label="Relation" placeholder="Conjoint" name="emergencyContactRelationship">
             <UInput v-model="state.emergencyContactRelationship" class="w-full" />
           </UFormField>
         </div>
 
         <!-- Insurance Information -->
         <div class="border-t pt-4">
-          <h3 class="mb-4 text-lg font-medium">Insurance Information</h3>
+          <h3 class="mb-4 text-lg font-medium">Informations d’assurance</h3>
           <div class="grid grid-cols-2 gap-4">
-            <UFormField label="Insurance Provider" placeholder="Blue Cross" name="insuranceProvider">
+            <UFormField label="Assureur" placeholder="Assureur" name="insuranceProvider">
               <UInput v-model="state.insuranceProvider" class="w-full" />
             </UFormField>
-            <UFormField label="Insurance Number" placeholder="123456789" name="insuranceNumber">
+            <UFormField label="Numéro d’assurance" placeholder="123456789" name="insuranceNumber">
               <UInput v-model="state.insuranceNumber" class="w-full" />
             </UFormField>
           </div>
@@ -186,15 +186,15 @@
 
         <!-- Referral Information -->
         <div class="border-t pt-4">
-          <h3 class="mb-4 text-lg font-medium">Referral Information</h3>
+          <h3 class="mb-4 text-lg font-medium">Informations de recommandation</h3>
           <div class="grid grid-cols-2 gap-4">
-            <UFormField label="Referral Source" placeholder="Dr. Smith" name="referralSource">
+            <UFormField label="Source de recommandation" placeholder="Dr. Martin" name="referralSource">
               <UInput v-model="state.referralSource" class="w-full" />
             </UFormField>
-            <UFormField label="Referral Date" name="referralDate">
+            <UFormField label="Date de recommandation" name="referralDate">
               <UPopover>
                 <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
-                  {{ referralModel ? df.format(referralModel.toDate(getLocalTimeZone())) : 'Select a date' }}
+                  {{ referralModel ? df.format(referralModel.toDate(getLocalTimeZone())) : 'Sélectionner une date' }}
                 </UButton>
 
                 <template #content>
@@ -206,13 +206,13 @@
         </div>
 
         <!-- Notes -->
-        <UFormField label="Notes" placeholder="Additional notes about the patient" name="notes">
+        <UFormField label="Notes" placeholder="Notes supplémentaires sur le patient" name="notes">
           <UTextarea v-model="state.notes" class="w-full" :rows="3" />
         </UFormField>
 
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
-          <UButton label="Create" color="primary" variant="solid" type="submit" />
+          <UButton label="Annuler" color="neutral" variant="subtle" @click="open = false" />
+          <UButton label="Créer" color="primary" variant="solid" type="submit" />
         </div>
       </UForm>
     </template>
