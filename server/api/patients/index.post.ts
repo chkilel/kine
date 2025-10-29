@@ -1,5 +1,5 @@
 import { Session } from '~~/shared/types/auth.types'
-import { patients } from '../database/schema'
+import { patients } from '~~/server/database/schema'
 
 // POST /api/patients - Create new patient
 export default defineEventHandler(async (event) => {
