@@ -6,48 +6,12 @@
 
   const { data: patient, status, error } = await useFetch<Patient>(`/api/patients/${route.params.id}`)
 
-  console.log({
-    data: patient.value,
-    status: status.value,
-    error: error.value
-  })
-
   if (error.value) {
     throw createError({
       statusCode: error.value?.statusCode || 404,
       statusMessage: error.value?.statusMessage || 'Patient not found'
     })
   }
-
-  const isEditing = ref(false)
-
-  function toggleEdit() {
-    isEditing.value = !isEditing.value
-  }
-
-  // async function savePatient(updatedData: Partial<Patient>) {
-  //   try {
-  //     const response = await $fetch(`/api/patients/${route.params.id}`, {
-  //       method: 'PUT',
-  //       body: updatedData
-  //     })
-
-  //     patient.value = response
-  //     isEditing.value = false
-
-  //     toast.add({
-  //       title: 'Success',
-  //       description: 'Patient information updated successfully',
-  //       color: 'success'
-  //     })
-  //   } catch (error: any) {
-  //     toast.add({
-  //       title: 'Error',
-  //       description: error.data?.statusMessage || 'Failed to update patient',
-  //       color: 'error'
-  //     })
-  //   }
-  // }
 
   function formatDate(dateString?: string) {
     if (!dateString) return '-'
@@ -69,12 +33,7 @@
         </template>
 
         <template #right>
-          <UButton
-            :icon="isEditing ? 'i-lucide-x' : 'i-lucide-edit'"
-            :label="isEditing ? 'Cancel' : 'Edit'"
-            :color="isEditing ? 'neutral' : 'primary'"
-            @click="toggleEdit"
-          />
+          <PatientEditModal v-if="patient" :patient="patient" @updated="() => refreshNuxtData()" />
         </template>
       </UDashboardNavbar>
     </template>

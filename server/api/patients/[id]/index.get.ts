@@ -1,9 +1,17 @@
-import type { Session } from '~~/shared/types/auth.types'
+import { eq, and, isNull } from 'drizzle-orm'
 import { patients } from '~~/server/database/schema'
 
-// POST /api/patients - Create new patient
+// GET /api/patients/[id] - Get patient details
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
+  const id = getRouterParam(event, 'id')
+
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Patient ID is required'
+    })
+  }
 
   // Get current user and organization from session
   const auth = createAuth(event)
@@ -28,30 +36,28 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Validate input
-    const body = await readBody(event)
+    const [patient] = await db
+      .select()
+      .from(patients)
+      .where(and(eq(patients.id, id), eq(patients.organizationId, activeOrganizationId), isNull(patients.deletedAt)))
+      .limit(1)
 
-    const validatedData = patientInsertSchema.parse({
-      ...body,
-      organizationId: activeOrganizationId
-    })
-
-    // Create patient
-    const [newPatient] = await db.insert(patients).values(validatedData).returning()
-
-    return newPatient
-  } catch (error: any) {
-    console.error('Error creating patient:', error)
-    if (error.name === 'ZodError') {
+    if (!patient) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid patient data',
-        data: error.errors
+        statusCode: 404,
+        statusMessage: 'Patient not found'
       })
     }
+
+    return patient
+  } catch (error: any) {
+    if (error.statusCode) {
+      throw error
+    }
+    console.error('Error fetching patient:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create patient'
+      statusMessage: 'Failed to fetch patient'
     })
   }
 })

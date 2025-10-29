@@ -1,6 +1,6 @@
 import { eq, and, desc, or, ilike, isNull } from 'drizzle-orm'
 import { patients } from '~~/server/database/schema'
-import { Session } from '~~/shared/types/auth.types'
+import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients - List patients with filtering
 export default defineEventHandler(async (event) => {
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // For now, we'll use a mock organization ID since organization plugin isn't fully set up
+  // Get active organization ID from session
   const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
   if (!activeOrganizationId) {
     throw createError({

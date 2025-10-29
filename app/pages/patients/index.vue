@@ -68,11 +68,33 @@
         label: 'Delete patient',
         icon: 'i-lucide-trash',
         color: 'error',
-        onSelect() {
-          toast.add({
-            title: 'Patient deleted',
-            description: 'The patient has been deleted.'
-          })
+        onSelect: async () => {
+          if (
+            confirm(
+              `Are you sure you want to delete ${row.original.firstName} ${row.original.lastName}? This action cannot be undone.`
+            )
+          ) {
+            try {
+              await $fetch(`/api/patients/${row.original.id}`, {
+                method: 'DELETE'
+              })
+
+              toast.add({
+                title: 'Patient deleted',
+                description: 'The patient has been deleted.',
+                color: 'success'
+              })
+
+              // Refresh the patient list
+              await refreshNuxtData()
+            } catch (error: any) {
+              toast.add({
+                title: 'Error',
+                description: error.data?.statusMessage || 'Failed to delete patient',
+                color: 'error'
+              })
+            }
+          }
         }
       }
     ]
@@ -244,7 +266,10 @@
         />
 
         <div class="flex flex-wrap items-center gap-1.5">
-          <PatientDeleteModal :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length">
+          <PatientDeleteModal
+            :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+            :selected-ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map((row) => row.original.id) || []"
+          >
             <UButton
               v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
               label="Delete"

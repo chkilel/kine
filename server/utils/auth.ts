@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { betterAuth, BetterAuthOptions } from 'better-auth'
+import { betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { customSession, organization } from 'better-auth/plugins'
 import { useDrizzle } from './database'
