@@ -1,8 +1,9 @@
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod'
-import * as z from 'zod'
+import { z } from 'zod'
 import { patients, patientDocuments } from '~~/server/database/schema'
+import { fr } from 'zod/locales'
 
-z.config(z.locales.fr())
+z.config(fr())
 
 // Medical history item interface
 export interface MedicalHistoryItem {

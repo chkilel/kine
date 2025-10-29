@@ -1,9 +1,10 @@
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod'
 import { users } from '~~/server/database/schema'
-import * as z from 'zod'
+import { z } from 'zod'
 import { authClient } from '../../app/utils/auth-client'
+import { fr } from 'zod/locales'
 
-z.config(z.locales.fr())
+z.config(fr())
 
 // SignUp Schema
 export const signUpSchema = z.object({
