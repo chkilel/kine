@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { PatientDocument } from '~~/shared/types/patient.types'
+  import PatientDocumentEditModal from './DocumentEditModal.vue'
 
   const props = defineProps<{
     patientId: string
@@ -8,15 +9,20 @@
 
   const emit = defineEmits<{
     deleted: [documentId: string]
+    updated: [document: any]
     refreshed: []
   }>()
 
   const toast = useToast()
+  const isDeleting = ref<string | null>(null)
+  const isDownloading = ref<string | null>(null)
 
   async function deleteDocument(document: PatientDocument) {
     if (!confirm(`Are you sure you want to delete "${document.originalName}"? This action cannot be undone.`)) {
       return
     }
+
+    isDeleting.value = document.id
 
     try {
       await $fetch(`/api/patients/${props.patientId}/documents/${document.id}`, {
@@ -36,10 +42,14 @@
         description: error.data?.statusMessage || 'Failed to delete document',
         color: 'error'
       })
+    } finally {
+      isDeleting.value = null
     }
   }
 
   async function downloadDocument(doc: PatientDocument) {
+    isDownloading.value = doc.id
+
     try {
       const response = await $fetch(`/api/patients/${props.patientId}/documents/${doc.id}`)
 
@@ -57,6 +67,8 @@
         description: error.data?.statusMessage || 'Failed to download document',
         color: 'error'
       })
+    } finally {
+      isDownloading.value = null
     }
   }
 
@@ -101,7 +113,8 @@
   <div v-if="documents.length === 0" class="py-8 text-center">
     <UIcon name="i-lucide-file-text" class="text-muted-foreground mb-4 text-4xl" />
     <h3 class="mb-2 text-lg font-medium">No documents</h3>
-    <p class="text-muted-foreground">No documents have been uploaded for this patient yet.</p>
+    <p class="text-muted-foreground mb-4">No documents have been uploaded for this patient yet.</p>
+    <PatientDocumentUpload :patient-id="props.patientId" @uploaded="(doc: PatientDocument) => emit('updated', doc)" />
   </div>
 
   <div v-else class="space-y-4">
@@ -136,12 +149,26 @@
             size="sm"
             color="neutral"
             variant="ghost"
+            :loading="isDownloading === document.id"
             @click="downloadDocument(document)"
           >
             Download
           </UButton>
 
-          <UButton icon="i-lucide-trash" size="sm" color="error" variant="ghost" @click="deleteDocument(document)">
+          <PatientDocumentEditModal
+            :document="document"
+            :patient-id="props.patientId"
+            @updated="(updatedDoc: PatientDocument) => emit('updated', updatedDoc)"
+          />
+
+          <UButton
+            icon="i-lucide-trash"
+            size="sm"
+            color="error"
+            variant="ghost"
+            :loading="isDeleting === document.id"
+            @click="deleteDocument(document)"
+          >
             Delete
           </UButton>
         </div>

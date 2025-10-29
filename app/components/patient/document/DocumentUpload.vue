@@ -50,21 +50,21 @@
     isUploading.value = true
 
     try {
-      // First upload file to R2 using existing upload infrastructure
+      // First upload file to R2 using new upload endpoint
       const formData = new FormData()
       formData.append('file', selectedFile.value)
 
-      const uploadResponse = (await $fetch('/api/r2/blob.post', {
+      const uploadResponse = (await $fetch('/api/r2/upload', {
         method: 'POST',
         body: formData
-      })) as { fileName: string; storageKey: string }
+      })) as { fileName: string; storageKey: string; originalName: string; mimeType: string; fileSize: number }
 
       // Then create document record in database
       const documentData = {
         fileName: uploadResponse.fileName,
-        originalName: selectedFile.value.name,
-        mimeType: selectedFile.value.type,
-        fileSize: selectedFile.value.size,
+        originalName: uploadResponse.originalName,
+        mimeType: uploadResponse.mimeType,
+        fileSize: uploadResponse.fileSize,
         storageKey: uploadResponse.storageKey,
         category: event.data.category,
         description: event.data.description

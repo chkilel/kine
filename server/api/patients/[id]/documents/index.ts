@@ -1,6 +1,7 @@
 import { eq, and, desc, isNull } from 'drizzle-orm'
 import { patientDocuments } from '../../../../database/schema'
 import { patientDocumentInsertSchema } from '~~/shared/types/patient.types'
+import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients/[id]/documents - List patient documents
 // POST /api/patients/[id]/documents - Upload patient document
@@ -29,8 +30,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // For now, we'll use a mock organization ID since organization plugin isn't fully set up
-  const activeOrganizationId = 'org-1' // TODO: Get from session when organization plugin is ready
+  // Get active organization ID from session
+  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
+  if (!activeOrganizationId) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden'
+    })
+  }
 
   switch (method) {
     case 'GET':

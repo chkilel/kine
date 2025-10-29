@@ -1,15 +1,14 @@
 <script setup lang="ts">
-  import type { Patient, PatientDocument } from '~~/shared/types/patient.types'
-
   const route = useRoute()
   const toast = useToast()
 
-  const { data: patient, status: patientStatus } = await useFetch<Patient>(`/api/patients/${route.params.id}`)
+  const patientId = (Array.isArray(route.params.id) ? route.params.id[0] : route.params.id) || ''
+  const { data: patient, status: patientStatus } = await useFetch<Patient>(`/api/patients/${patientId}`)
   const {
     data: documents,
     status: documentsStatus,
     refresh: refreshDocuments
-  } = await useFetch<PatientDocument[]>(`/api/patients/${route.params.id}/documents`)
+  } = await useFetch<PatientDocument[]>(`/api/patients/${patientId}/documents`)
 
   if (patientStatus.value === 'error') {
     throw createError({
@@ -32,6 +31,10 @@
     refreshDocuments()
   }
 
+  function onDocumentUpdated() {
+    refreshDocuments()
+  }
+
   function formatFullName(patient: Patient) {
     return `${patient.firstName} ${patient.lastName}`
   }
@@ -47,7 +50,7 @@
         </template>
 
         <template #right>
-          <PatientDocumentUpload :patient-id="route.params.id" @uploaded="onDocumentUploaded" />
+          <PatientDocumentUpload :patient-id="patientId" @uploaded="onDocumentUploaded" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -99,28 +102,33 @@
           </div>
         </UCard>
 
-        <!-- Filters -->
-        <div class="flex items-center gap-4">
-          <USelect
-            v-model="categoryFilter"
-            :items="[
-              { label: 'All Documents', value: 'all' },
-              { label: 'Referrals', value: 'referral' },
-              { label: 'Imaging', value: 'imaging' },
-              { label: 'Lab Results', value: 'lab_results' },
-              { label: 'Treatment Notes', value: 'treatment_notes' },
-              { label: 'Other', value: 'other' }
-            ]"
-            placeholder="Filter by category"
-            class="w-48"
-          />
+        <!-- Filters and Actions -->
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <USelect
+              v-model="categoryFilter"
+              :items="[
+                { label: 'All Documents', value: 'all' },
+                { label: 'Referrals', value: 'referral' },
+                { label: 'Imaging', value: 'imaging' },
+                { label: 'Lab Results', value: 'lab_results' },
+                { label: 'Treatment Notes', value: 'treatment_notes' },
+                { label: 'Other', value: 'other' }
+              ]"
+              placeholder="Filter by category"
+              class="w-48"
+            />
+          </div>
+
+          <PatientDocumentUpload :patient-id="patientId" @uploaded="onDocumentUploaded" />
         </div>
 
         <!-- Documents List -->
         <PatientDocumentList
-          :patient-id="route.params.id"
+          :patient-id="patientId"
           :documents="documents?.filter((d) => categoryFilter === 'all' || d.category === categoryFilter) || []"
           @deleted="onDocumentDeleted"
+          @updated="onDocumentUpdated"
         />
       </div>
     </template>

@@ -1,5 +1,6 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { patients } from '~~/server/database/schema'
+import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients/[id] - Get patient details
 export default defineEventHandler(async (event) => {
