@@ -108,15 +108,13 @@
           modelValue: table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
           'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
           ariaLabel: 'Tout sélectionner'
-          
         }),
       cell: ({ row }) =>
         h(UCheckbox, {
           modelValue: row.getIsSelected(),
           'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
           ariaLabel: 'Sélectionner la ligne'
-        }),
-      
+        })
     },
     {
       accessorKey: 'id',
@@ -252,7 +250,7 @@
         </template>
 
         <template #right>
-          <PatientAddModal />
+          <UButton label="Nouveau patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
         </template>
       </UDashboardNavbar>
     </template>

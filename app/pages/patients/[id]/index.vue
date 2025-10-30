@@ -59,7 +59,7 @@
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel class="bg-elevated">
     <template #header>
       <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Profil du patient'">
         <template #leading>

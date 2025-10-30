@@ -116,7 +116,14 @@ export const patientInsertSchema = createInsertSchema(patients).extend({
     return undefined
   }, z.date().optional()),
   status: z.enum(['active', 'inactive', 'discharged']).default('active'),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+
+  mainComplaint: z.string().optional(),
+  diagnosis: z.string().optional(),
+  conditions: z.string().optional(),
+  surgeries: z.string().optional(),
+  insuranceDetails: z.string().optional(),
+  billingNotes: z.string().optional()
 })
 
 export const patientUpdateSchema = createUpdateSchema(patients).extend({
