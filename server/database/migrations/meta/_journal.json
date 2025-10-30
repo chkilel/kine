@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1761501575764,
-      "tag": "0000_good_jigsaw",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1761572817599,
-      "tag": "0001_living_tiger_shark",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1761572954079,
-      "tag": "0002_lumpy_madelyne_pryor",
+      "when": 1761842345358,
+      "tag": "0000_plain_inhumans",
       "breakpoints": true
     }
   ]
