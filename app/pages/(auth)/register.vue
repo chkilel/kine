@@ -79,14 +79,13 @@
 <template>
   <div class="bg-muted flex min-h-svh flex-col items-center justify-center gap-4 p-6 md:p-10">
     <UPageCard class="w-full max-w-md">
-      <UAuthForm
-        :schema="signUpSchema"
-        title="Inscription"
-        description="Entrez vos identifiants pour vous inscrire."
-        icon="i-lucide-user"
-        :fields="fields"
-        @submit="onSubmit"
-      />
+      <UAuthForm :schema="signUpSchema" title="Inscription" icon="i-lucide-user" :fields="fields" @submit="onSubmit">
+        <template #description>
+          Entrez vos identifiants pour vous inscrire. Déjà un compte?
+          <ULink to="/login" class="text-primary font-medium">Connectez-vous</ULink>
+          .
+        </template>
+      </UAuthForm>
     </UPageCard>
   </div>
 </template>

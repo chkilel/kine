@@ -28,7 +28,7 @@
     {
       name: 'rememberMe',
       label: 'Se souvenir de moi',
-      type: 'checkbox' as const,
+      type: 'checkbox' as const
     }
   ]
 
@@ -74,12 +74,17 @@
       <UAuthForm
         :schema="loginSchema"
         title="Connexion"
-        description="Entrez vos identifiants pour accéder à votre compte."
         icon="i-lucide-user"
         :fields="fields"
         :providers="providers"
         @submit="onSubmit"
-      />
+      >
+        <template #description>
+          Entrez vos identifiants pour accéder à votre compte. Pas de compte?
+          <ULink to="/register" class="text-primary font-medium">Inscrivez-vous</ULink>
+          .
+        </template>
+      </UAuthForm>
     </UPageCard>
   </div>
 </template>
