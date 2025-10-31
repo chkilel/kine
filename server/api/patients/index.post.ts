@@ -1,6 +1,5 @@
 import type { Session } from '~~/shared/types/auth.types'
 import { patients } from '~~/server/database/schema'
-import { patientInsertSchema } from '~~/shared/types/patient.types'
 
 // POST /api/patients - Create new patient
 export default defineEventHandler(async (event) => {
@@ -29,13 +28,23 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Validate input
-    const body = await readBody(event)
+    // Read raw body first to preprocess dates
+    const rawBody = await readBody(event)
 
-    const validatedData = patientInsertSchema.parse({
+    // Convert date strings to Date objects before validation
+    const processedBody = {
+      ...rawBody,
+      dateOfBirth: rawBody.dateOfBirth ? new Date(rawBody.dateOfBirth) : undefined,
+      referralDate: rawBody.referralDate ? new Date(rawBody.referralDate) : undefined
+    }
+
+    // Validate input
+    const body = patientCreateSchema.parse(processedBody)
+
+    const validatedData = {
       ...body,
       organizationId: activeOrganizationId
-    })
+    }
 
     // Create patient
     const [newPatient] = await db.insert(patients).values(validatedData).returning()

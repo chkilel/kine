@@ -1,12 +1,11 @@
 import { eq, and, desc, isNull } from 'drizzle-orm'
 import { patientDocuments } from '../../../../database/schema'
-import { patientDocumentInsertSchema } from '~~/shared/types/patient.types'
 import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients/[id]/documents - List patient documents
 // POST /api/patients/[id]/documents - Upload patient document
 export default defineEventHandler(async (event) => {
-  const method = getMethod(event)
+  const method = event.method
   const db = useDrizzle(event)
   const patientId = getRouterParam(event, 'id')
 
@@ -90,7 +89,7 @@ async function handleGetDocuments(db: any, patientId: string, organizationId: st
 async function handleUploadDocument(db: any, patientId: string, organizationId: string, uploadedBy: string, body: any) {
   try {
     // Validate input
-    const validatedData = patientDocumentInsertSchema.parse({
+    const validatedData = patientCreateSchema.parse({
       ...body,
       patientId,
       organizationId,
