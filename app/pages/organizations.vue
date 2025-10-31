@@ -45,11 +45,11 @@
       if (!newKeys.length) return
 
       try {
-        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
+        const response = await $fetch('/api/r2/signed-url', { params: { keys: newKeys } })
 
         if (response?.urls) {
           for (const [k, u] of Object.entries(response.urls)) {
-            if (u) logoUrlMap.value[k] = u
+            if (typeof u === 'string') logoUrlMap.value[k] = u
           }
         }
       } catch {
