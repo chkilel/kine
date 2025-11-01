@@ -316,9 +316,10 @@
             class="mb-6"
             :ui="{
               root: 'space-y-2',
-              item: 'rounded-lg bg-default ring ring-default divide-y divide-default',
-              header: 'px-4 sm:px-6',
-              leadingIcon: 'text-primary'
+              item: 'rounded-lg bg-default ring ring-default',
+              trigger: 'px-4 sm:px-6',
+              leadingIcon: 'text-primary',
+              content: 'border-t border-default'
             }"
           >
             <!-- Medical History -->
