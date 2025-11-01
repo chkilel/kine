@@ -3,6 +3,7 @@
 
 @theme static {
   --font-sans: 'Geist', 'Public Sans', sans-serif;
+  --font-title: 'Manrope', 'Public Sans', sans-serif;
 
   --color-green-50: #EFFDF5;
   --color-green-100: #D9FBE8;
@@ -16,6 +17,12 @@
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
 }
+
 :root {
   --ui-radius: 0.2rem;
+}
+
+
+h2 {
+  @apply font-title;
 }
