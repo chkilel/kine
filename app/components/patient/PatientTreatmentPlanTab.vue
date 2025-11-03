@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import CreateTreatmentPlanSlideover from './CreateTreatmentPlanSlideover.vue'
+
   interface TreatmentPlan {
     id: string
     title: string
@@ -196,6 +198,19 @@
       newNote.value = ''
     }
   }
+
+  const createSlideoverOpen = ref(false)
+
+  const patient = {
+    id: '1',
+    name: 'Jean Dupont',
+    birthDate: '01/01/1980'
+  }
+
+  function handleCreatePlan(plan: any) {
+    console.log('Creating treatment plan:', plan)
+    // In a real app, this would save to the API
+  }
 </script>
 
 <template>
@@ -205,21 +220,21 @@
       <!-- Treatment Plan Card -->
       <UCard>
         <div class="mb-4 flex items-start justify-between">
-          <h2 class="text-default text-lg font-bold">{{ treatmentPlan.title }}</h2>
+          <h2 class="text-lg font-bold">{{ treatmentPlan.title }}</h2>
           <UBadge color="success" variant="soft" class="rounded-full">Actif</UBadge>
         </div>
         <div class="text-muted space-y-3 text-sm">
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-calendar" class="text-toned text-base" />
+            <UIcon name="i-lucide-calendar" class="text-toned" />
             <span>Début: {{ treatmentPlan.startDate }} - Fin: {{ treatmentPlan.endDate }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-user" class="text-toned text-base" />
+            <UIcon name="i-lucide-user" class="text-toned" />
             <span>Thérapeute: {{ treatmentPlan.therapist }}</span>
           </div>
         </div>
         <div class="mt-5">
-          <div class="text-toned mb-1 flex items-center justify-between text-sm">
+          <div class="text-muted mb-1 flex items-center justify-between text-sm">
             <span>Progression ({{ treatmentPlan.completedSessions }}/{{ treatmentPlan.totalSessions }} séances)</span>
             <span>{{ treatmentPlan.progress }}%</span>
           </div>
@@ -228,7 +243,9 @@
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
           <UButton icon="i-lucide-archive" variant="outline" color="neutral" size="md" class="flex-1">Clôturer</UButton>
-          <UButton icon="i-lucide-plus" color="primary" size="md" class="flex-1">Nouveau</UButton>
+          <UButton icon="i-lucide-plus" color="primary" size="md" class="flex-1" @click="createSlideoverOpen = true">
+            Nouveau
+          </UButton>
         </div>
       </UCard>
 
@@ -247,37 +264,37 @@
             trailing-icon="i-lucide-chevron-down"
             block
           >
-            <h3 class="text-default text-base font-bold">Détails du plan</h3>
+            <h3 class="text-base font-bold">Détails du plan</h3>
           </UButton>
 
           <template #content>
             <div class="border-default space-y-5 border-t p-4 sm:p-6">
               <div>
-                <h4 class="text-default mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
+                <h4 class="mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
                 <p class="text-muted text-sm">{{ treatmentPlan.objective }}</p>
               </div>
               <div>
-                <h4 class="text-default mb-2 text-sm font-semibold">Contexte pathologique</h4>
+                <h4 class="mb-2 text-sm font-semibold">Contexte pathologique</h4>
                 <p class="text-muted text-sm">{{ treatmentPlan.context }}</p>
               </div>
               <div>
-                <h4 class="text-default mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
+                <h4 class="mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
                 <div class="flex items-center gap-3">
                   <USlider :model-value="treatmentPlan.painLevel" :max="10" :min="0" disabled />
-                  <span class="text-primary font-semibold">{{ treatmentPlan.painLevel }}/10</span>
+                  <span class="font-semibold">{{ treatmentPlan.painLevel }}/10</span>
                 </div>
               </div>
               <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
-                  <h4 class="text-default font-semibold">Fréquence</h4>
+                  <h4 class="font-semibold">Fréquence</h4>
                   <p class="text-muted">{{ treatmentPlan.frequency }}</p>
                 </div>
                 <div>
-                  <h4 class="text-default font-semibold">Médecin prescripteur</h4>
+                  <h4 class="font-semibold">Médecin prescripteur</h4>
                   <p class="text-muted">{{ treatmentPlan.prescribingDoctor }}</p>
                 </div>
                 <div>
-                  <h4 class="text-default font-semibold">Assurance</h4>
+                  <h4 class="font-semibold">Assurance</h4>
                   <p class="text-muted">{{ treatmentPlan.insurance }}</p>
                 </div>
               </div>
@@ -292,7 +309,7 @@
       <!-- Sessions Overview -->
       <UCard>
         <div class="mb-5 flex items-center justify-between">
-          <h3 class="text-default text-base font-bold">Aperçu des séances</h3>
+          <h3 class="text-base font-bold">Aperçu des séances</h3>
           <UButton icon="i-lucide-plus" color="primary" size="sm" square label="Séance" />
         </div>
         <div class="overflow-x-auto">
@@ -310,13 +327,13 @@
             }"
           >
             <template #date-cell="{ row }">
-              <span class="text-default text-sm">{{ row.getValue('date') }}, {{ row.original.time }}</span>
+              <span class="text-sm">{{ row.getValue('date') }}, {{ row.original.time }}</span>
             </template>
             <template #type-cell="{ row }">
-              <span class="text-toned text-sm">{{ row.getValue('type') }}</span>
+              <span class="text-muted text-sm">{{ row.getValue('type') }}</span>
             </template>
             <template #duration-cell="{ row }">
-              <span class="text-toned text-sm">
+              <span class="text-muted text-sm">
                 {{ row.getValue('duration') }}
               </span>
             </template>
@@ -352,7 +369,7 @@
 
       <!-- Notes & Follow-up -->
       <UCard>
-        <h3 class="text-default mb-5! text-base font-bold">Notes &amp; Suivi</h3>
+        <h3 class="mb-5 text-base font-bold">Notes &amp; Suivi</h3>
         <div class="space-y-4">
           <div>
             <UTextarea
@@ -366,11 +383,11 @@
           </div>
           <div class="border-default space-y-3 border-t pt-4">
             <div v-for="note in notes" :key="note.id" class="text-sm">
-              <p class="text-default">
+              <p>
                 <strong class="font-semibold">{{ note.session }}:</strong>
                 {{ note.content }}
               </p>
-              <p class="text-toned text-xs">{{ note.author }} - {{ note.date }}</p>
+              <p class="text-muted text-xs">{{ note.author }} - {{ note.date }}</p>
             </div>
           </div>
         </div>
@@ -379,7 +396,7 @@
       <!-- Documents -->
       <UCard>
         <div class="mb-5 flex items-center justify-between">
-          <h3 class="text-default text-base font-bold">Documents du plan de traitement</h3>
+          <h3 class="text-base font-bold">Documents du plan de traitement</h3>
           <UButton icon="i-lucide-plus" color="primary" size="sm">Ajouter un document</UButton>
         </div>
         <div class="space-y-4">
@@ -400,8 +417,8 @@
                   square
                 />
                 <div>
-                  <p class="text-default font-semibold">{{ doc.name }}</p>
-                  <p class="text-toned text-xs">Téléversé le {{ doc.uploadDate }} par {{ doc.uploadedBy }}</p>
+                  <p class="font-semibold">{{ doc.name }}</p>
+                  <p class="text-muted text-xs">Téléversé le {{ doc.uploadDate }} par {{ doc.uploadedBy }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -415,4 +432,12 @@
       </UCard>
     </div>
   </div>
+
+  <!-- Create Treatment Plan Slideover -->
+  <CreateTreatmentPlanSlideover
+    :patient="patient"
+    :open="createSlideoverOpen"
+    @update:open="createSlideoverOpen = $event"
+    @create="handleCreatePlan"
+  />
 </template>
