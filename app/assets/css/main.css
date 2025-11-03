@@ -22,7 +22,14 @@
   --ui-radius: 0.2rem;
 }
 
+h1 {
+  @apply font-title;
+}
 
 h2 {
   @apply font-title;
+}
+
+h3 {
+  @apply font-title mb-0.5;
 }
