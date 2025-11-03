@@ -232,201 +232,27 @@
         <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="informations" class="w-full">
           <!-- Informations Tab -->
           <template #informations>
-            <div class="mt-6 space-y-6">
-              <!-- Quick Summary -->
-              <h2 class="text-default mb-3 text-lg font-bold">Résumé rapide</h2>
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <UCard>
-                  <p class="text-muted text-sm font-medium">Pathologie principale</p>
-                  <p class="text-default mt-1 text-base font-bold">
-                    {{ staticPatientData.pathology }}
-                  </p>
-                </UCard>
-                <UCard>
-                  <p class="text-muted text-sm font-medium">Objectif du traitement</p>
-                  <p class="text-default mt-1 text-base font-bold">
-                    {{ staticPatientData.treatmentGoal }}
-                  </p>
-                </UCard>
-                <UCard>
-                  <p class="text-muted text-sm font-medium">Séances</p>
-                  <p class="text-default mt-1 text-base font-bold">
-                    {{ staticPatientData.sessionsCompleted }} / {{ staticPatientData.sessionsTotal }} effectuées
-                  </p>
-                </UCard>
-                <UCard>
-                  <p class="text-muted mb-2 text-sm font-medium">Niveau de douleur actuel</p>
-                  <div class="flex items-center gap-1.5">
-                    <div class="bg-muted h-2.5 flex-1 rounded-full">
-                      <div
-                        class="bg-warning h-2.5 rounded-full"
-                        :style="`width: ${staticPatientData.painLevel * 10}%`"
-                      ></div>
-                    </div>
-                    <span class="text-warning font-bold">{{ staticPatientData.painLevel }}/10</span>
-                  </div>
-                </UCard>
-              </div>
-
-              <!-- Administrative Data -->
-              <h2 class="text-default mt-8 mb-3 text-lg font-bold">Données administratives</h2>
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-                <UCard>
-                  <h3 class="mb-2 text-base font-semibold">Adresse</h3>
-                  <p class="text-toned text-sm">
-                    {{ patient.address || '-' }}
-                    <br v-if="patient.address && patient.city" />
-                    {{ patient.city || '' }}{{ patient.postalCode ? ` ${patient.postalCode}` : ''
-                    }}{{ patient.country ? `, ${patient.country}` : '' }}
-                  </p>
-                </UCard>
-                <UCard>
-                  <h3 class="mb-2 text-base font-semibold">Assurance / Mutuelle</h3>
-                  <p class="text-toned text-sm">
-                    {{ patient.insuranceProvider || '-' }}
-                    <br v-if="patient.insuranceProvider" />
-                    N°: {{ patient.insuranceNumber || '-' }}
-                  </p>
-                </UCard>
-                <UCard>
-                  <h3 class="mb-2 text-base font-semibold">Médecin prescripteur</h3>
-                  <p class="text-toned text-sm">
-                    {{ patient.referralSource || '-' }}
-                    <br v-if="patient.referralSource && patient.referralDate" />
-                    Prescription du: {{ patient.referralDate ? formatDate(patient.referralDate) : '-' }}
-                  </p>
-                </UCard>
-                <UCard>
-                  <h3 class="mb-2 text-base font-semibold">Contact d'urgence</h3>
-                  <p class="text-toned text-sm">
-                    <template v-if="patient.emergencyContacts && patient.emergencyContacts.length > 0">
-                      {{ patient.emergencyContacts[0]?.name }}
-                      ({{ patient.emergencyContacts[0]?.relationship }})
-                      <br />
-                      Tél: {{ patient.emergencyContacts[0]?.phone }}
-                    </template>
-                    <template v-else>Aucun contact d'urgence enregistré</template>
-                  </p>
-                </UCard>
-              </div>
-
-              <!-- Medical Data -->
-              <h2 class="text-default mt-8 mb-3 text-lg font-bold">Données médicales</h2>
-              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div class="flex flex-col gap-6">
-                  <UCard class="border-l-warning border-l-4">
-                    <h3 class="text-warning mb-2 text-base font-semibold">Allergies & Contre-indications</h3>
-                    <p class="text-toned text-sm">
-                      <template v-if="patient.allergies && patient.allergies.length > 0">
-                        {{ patient.allergies.join(', ') }}
-                      </template>
-                      <template v-else>Aucune allergie connue</template>
-                    </p>
-                  </UCard>
-                  <UCard class="border-l-warning border-l-4">
-                    <h3 class="text-warning mb-2 text-base font-semibold">Chirurgies</h3>
-                    <p class="text-toned text-sm">
-                      <template v-if="patient.surgeries && patient.surgeries.length > 0">
-                        {{ patient.surgeries.join(', ') }}
-                      </template>
-                      <template v-else>Aucune allergie connue</template>
-                    </p>
-                  </UCard>
-
-                  <UCard>
-                    <h3 class="mb-2 text-base font-semibold">Antécédents médicaux</h3>
-                    <p class="text-toned text-sm">
-                      <template v-if="patient.medicalConditions && patient.medicalConditions.length > 0">
-                        {{ patient.medicalConditions.join(', ') }}
-                      </template>
-                      <template v-else>Aucun antécédent médical enregistré</template>
-                    </p>
-                  </UCard>
-                  <UCard>
-                    <h3 class="mb-2 text-base font-semibold">Médicaments actuels</h3>
-                    <p class="text-toned text-sm">
-                      <template v-if="patient.medications && patient.medications.length > 0">
-                        {{ patient.medications.join(', ') }}
-                      </template>
-                      <template v-else>Aucun médicament enregistré</template>
-                    </p>
-                  </UCard>
-                </div>
-                <!-- Notes -->
-                <UCard>
-                  <h2 class="text-default mb-3 text-lg font-bold">Notes du praticien</h2>
-                  <UCard variant="subtle">
-                    <textarea
-                      v-model="patient.notes"
-                      class="text-toned w-full resize-none border-0 bg-transparent p-0 text-sm focus:ring-0"
-                      rows="4"
-                      placeholder="Ajouter des notes sur le patient..."
-                    ></textarea>
-                  </UCard>
-                </UCard>
-              </div>
-            </div>
+            <PatientInformationTab v-if="patient" :patient="patient" />
           </template>
 
           <!-- Séances Tab -->
           <template #seances>
-            <div class="mt-6">
-              <UCard>
-                <h3 class="text-default mb-4 text-lg font-semibold">Historique des séances</h3>
-                <p class="text-muted">Cette section contiendra l'historique des séances du patient.</p>
-              </UCard>
-            </div>
+            <PatientSessionsTab />
           </template>
 
           <!-- Plan de traitement Tab -->
           <template #plan>
-            <div class="mt-6">
-              <UCard>
-                <h3 class="text-default mb-4 text-lg font-semibold">Plan de traitement</h3>
-                <p class="text-muted">Cette section contiendra le plan de traitement du patient.</p>
-              </UCard>
-            </div>
+            <PatientTreatmentPlanTab />
           </template>
 
           <!-- Documents Tab -->
           <template #documents>
-            <div class="mt-6">
-              <UCard>
-                <h3 class="text-default mb-4 text-lg font-semibold">Documents</h3>
-                <div v-if="documents && documents.length > 0" class="space-y-3">
-                  <UCard
-                    v-for="doc in documents"
-                    :key="doc.id"
-                    variant="subtle"
-                    class="flex items-center justify-between p-3"
-                  >
-                    <div class="flex items-center gap-3">
-                      <UIcon name="i-lucide-file-text" class="text-muted" />
-                      <div class="text-sm">
-                        <p class="text-default font-medium">{{ doc.fileName }}</p>
-                        <p class="text-muted text-xs">{{ formatDate(doc.uploadedAt) }}</p>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <UButton icon="i-lucide-eye" variant="ghost" size="xs" color="neutral" />
-                      <UButton icon="i-lucide-download" variant="ghost" size="xs" color="neutral" />
-                      <UButton icon="i-lucide-trash-2" variant="ghost" size="xs" color="error" />
-                    </div>
-                  </UCard>
-                </div>
-                <p v-else class="text-muted text-sm">Aucun document disponible.</p>
-              </UCard>
-            </div>
+            <PatientDocumentsTab />
           </template>
 
           <!-- Facturation Tab -->
           <template #facturation>
-            <div class="mt-6">
-              <UCard>
-                <h3 class="text-default mb-4 text-lg font-semibold">Facturation</h3>
-                <p class="text-muted">Cette section contiendra les informations de facturation du patient.</p>
-              </UCard>
-            </div>
+            <PatientBillingTab />
           </template>
         </UTabs>
       </div>
