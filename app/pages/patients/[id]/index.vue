@@ -21,9 +21,8 @@
 
   const tabs = [
     { label: "Vue d'Ensemble", slot: 'overview', value: 'overview' },
-    { label: 'Informations', slot: 'informations', value: 'informations' },
-    { label: 'Séances', slot: 'seances', value: 'seances' },
     { label: 'Plan de traitement', slot: 'plan', value: 'plan' },
+    { label: 'Séances', slot: 'seances', value: 'seances' },
     { label: 'Documents', slot: 'documents', value: 'documents' },
     { label: 'Facturation', slot: 'facturation', value: 'facturation' }
   ]
@@ -149,119 +148,118 @@
     </template>
 
     <template #body>
-      <div v-if="status === 'pending'" class="flex justify-center py-8">
-        <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
-      </div>
+      <UContainer>
+        <div v-if="status === 'pending'" class="flex justify-center py-8">
+          <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
+        </div>
 
-      <div v-else-if="patient" class="space-y-6">
-        <!-- Breadcrumb -->
-        <UBreadcrumb :items="breadcrumbItems" />
+        <div v-else-if="patient" class="space-y-6">
+          <!-- Breadcrumb -->
+          <UBreadcrumb :items="breadcrumbItems" />
 
-        <!-- Patient Header -->
-        <UCard variant="outline">
-          <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
-            <div class="mx-auto shrink-0 sm:mx-0">
-              <UAvatar :alt="formatFullName(patient)" size="3xl" class="h-24 w-24 text-4xl" />
+          <!-- Patient Header -->
+          <UCard variant="outline">
+            <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
+              <div class="mx-auto shrink-0 sm:mx-0">
+                <UAvatar :alt="formatFullName(patient)" size="3xl" class="h-24 w-24 text-4xl" />
+              </div>
+              <div class="flex flex-1 flex-col gap-3 text-center sm:text-left">
+                <div class="flex flex-col justify-center gap-2 sm:flex-row sm:items-center sm:justify-start">
+                  <h1 class="text-2xl leading-tight font-bold md:text-3xl">
+                    {{ formatFullName(patient) }}
+                  </h1>
+                  <UBadge :color="getStatusColor(patient.status)" variant="outline" class="self-center">
+                    {{ getStatusLabel(patient.status) }}
+                  </UBadge>
+                </div>
+                <div
+                  class="text-muted flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm sm:justify-start"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <UIcon name="i-lucide-cake" class="text-base" />
+                    <span v-if="patient.dateOfBirth">
+                      Né le {{ formatDate(patient.dateOfBirth) }} ({{ getAge(patient.dateOfBirth) }} ans)
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <UIcon name="i-lucide-phone" class="text-base" />
+                    <a class="hover:text-primary hover:underline" :href="`tel:${staticPatientData.phone}`">
+                      {{ staticPatientData.phone }}
+                    </a>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <UIcon name="i-lucide-mail" class="text-base" />
+                    <a class="hover:text-primary truncate hover:underline" :href="`mailto:${staticPatientData.email}`">
+                      {{ staticPatientData.email }}
+                    </a>
+                  </div>
+                </div>
+                <div
+                  class="text-primary flex items-center justify-center gap-1.5 text-sm font-semibold sm:justify-start"
+                >
+                  <UIcon name="i-lucide-calendar-check" class="text-base" />
+                  <span>Prochain RDV: {{ staticPatientData.nextAppointment }}</span>
+                </div>
+              </div>
             </div>
-            <div class="flex flex-1 flex-col gap-3 text-center sm:text-left">
-              <div class="flex flex-col justify-center gap-2 sm:flex-row sm:items-center sm:justify-start">
-                <h1 class="text-2xl leading-tight font-bold md:text-3xl">
-                  {{ formatFullName(patient) }}
-                </h1>
-                <UBadge :color="getStatusColor(patient.status)" variant="outline" class="self-center">
-                  {{ getStatusLabel(patient.status) }}
-                </UBadge>
-              </div>
-              <div
-                class="text-muted flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm sm:justify-start"
-              >
-                <div class="flex items-center gap-1.5">
-                  <UIcon name="i-lucide-cake" class="text-base" />
-                  <span v-if="patient.dateOfBirth">
-                    Né le {{ formatDate(patient.dateOfBirth) }} ({{ getAge(patient.dateOfBirth) }} ans)
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <UIcon name="i-lucide-phone" class="text-base" />
-                  <a class="hover:text-primary hover:underline" :href="`tel:${staticPatientData.phone}`">
-                    {{ staticPatientData.phone }}
-                  </a>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <UIcon name="i-lucide-mail" class="text-base" />
-                  <a class="hover:text-primary truncate hover:underline" :href="`mailto:${staticPatientData.email}`">
-                    {{ staticPatientData.email }}
-                  </a>
-                </div>
-              </div>
-              <div class="text-primary flex items-center justify-center gap-1.5 text-sm font-semibold sm:justify-start">
-                <UIcon name="i-lucide-calendar-check" class="text-base" />
-                <span>Prochain RDV: {{ staticPatientData.nextAppointment }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="border-default mt-4 flex flex-wrap justify-center gap-2 border-t pt-4 sm:justify-end">
-            <PatientEditModal v-if="patient" :patient="patient" @updated="() => refreshNuxtData()">
+            <div class="border-default mt-4 flex flex-wrap justify-center gap-2 border-t pt-4 sm:justify-end">
+              <PatientEditModal v-if="patient" :patient="patient" @updated="() => refreshNuxtData()">
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
+                >
+                  <UIcon name="i-lucide-edit" class="text-base" />
+                  <span class="truncate">Modifier patient</span>
+                </UButton>
+              </PatientEditModal>
               <UButton
-                color="neutral"
-                variant="outline"
+                color="primary"
+                variant="soft"
                 class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
               >
-                <UIcon name="i-lucide-edit" class="text-base" />
-                <span class="truncate">Modifier patient</span>
+                <UIcon name="i-lucide-plus" class="text-base" />
+                <span class="truncate">Ajouter une séance</span>
               </UButton>
-            </PatientEditModal>
-            <UButton
-              color="primary"
-              variant="soft"
-              class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-            >
-              <UIcon name="i-lucide-plus" class="text-base" />
-              <span class="truncate">Ajouter une séance</span>
-            </UButton>
-            <UButton
-              color="primary"
-              class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-            >
-              <UIcon name="i-lucide-file-text" class="text-base" />
-              <span class="truncate">Créer un document</span>
-            </UButton>
-          </div>
-        </UCard>
+              <UButton
+                color="primary"
+                class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
+              >
+                <UIcon name="i-lucide-file-text" class="text-base" />
+                <span class="truncate">Créer un document</span>
+              </UButton>
+            </div>
+          </UCard>
 
-        <!-- Tabs -->
-        <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="overview" class="w-full">
-          <!-- Vue d'Ensemble Tab -->
-          <template #overview>
-            <PatientOverviewTab v-if="patient" :patient="patient" />
-          </template>
+          <!-- Tabs -->
+          <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="overview" class="w-full">
+            <!-- Vue d'Ensemble Tab -->
+            <template #overview>
+              <PatientOverviewTab v-if="patient" :patient="patient" />
+            </template>
 
-          <!-- Informations Tab -->
-          <template #informations>
-            <PatientInformationTab v-if="patient" :patient="patient" />
-          </template>
+            <!-- Séances Tab -->
+            <template #seances>
+              <PatientSessionsTab />
+            </template>
 
-          <!-- Séances Tab -->
-          <template #seances>
-            <PatientSessionsTab />
-          </template>
+            <!-- Plan de traitement Tab -->
+            <template #plan>
+              <PatientTreatmentPlanTab />
+            </template>
 
-          <!-- Plan de traitement Tab -->
-          <template #plan>
-            <PatientTreatmentPlanTab />
-          </template>
+            <!-- Documents Tab -->
+            <template #documents>
+              <PatientDocumentsTab />
+            </template>
 
-          <!-- Documents Tab -->
-          <template #documents>
-            <PatientDocumentsTab />
-          </template>
-
-          <!-- Facturation Tab -->
-          <template #facturation>
-            <PatientBillingTab />
-          </template>
-        </UTabs>
-      </div>
+            <!-- Facturation Tab -->
+            <template #facturation>
+              <PatientBillingTab />
+            </template>
+          </UTabs>
+        </div>
+      </UContainer>
     </template>
   </UDashboardPanel>
 </template>

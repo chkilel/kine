@@ -40,7 +40,7 @@
       { date: '12', month: 'OCT', type: 'Mobilisation', time: '09:00 - 30 min', status: 'missed' }
     ],
     recentDocuments: [
-      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-radiology' },
+      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
       { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
     ],
     treatmentHistory: [
@@ -82,23 +82,15 @@
     <div class="flex flex-col gap-6 lg:col-span-1">
       <!-- Résumé rapide -->
       <UCard variant="outline">
-        <template #header>
-          <h2 class="text-lg font-bold">Résumé rapide</h2>
-        </template>
+        <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
         <div class="space-y-4 text-sm">
           <div>
             <h3 class="text-muted font-semibold">Pathologie principale</h3>
-            <p class="text-default">{{ overviewData.mainPathology }}</p>
+            <p>{{ overviewData.mainPathology }}</p>
           </div>
           <div>
             <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-            <p class="text-default">{{ overviewData.treatmentObjective }}</p>
-          </div>
-          <div>
-            <h3 class="text-muted font-semibold">Séances</h3>
-            <p class="text-default">
-              {{ overviewData.sessionsCompleted }} / {{ overviewData.sessionsTotal }} effectuées
-            </p>
+            <p>{{ overviewData.treatmentObjective }}</p>
           </div>
           <div>
             <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
@@ -110,7 +102,7 @@
                 size="md"
                 class="flex-1"
               />
-              <span class="text-default font-semibold">{{ overviewData.painLevel }}/10</span>
+              <span class="font-semibold">{{ overviewData.painLevel }}/10</span>
             </div>
           </div>
         </div>
@@ -118,9 +110,7 @@
 
       <!-- Données administratives -->
       <UCard variant="outline">
-        <template #header>
-          <h2 class="text-lg font-bold">Données administratives</h2>
-        </template>
+        <h2 class="mb-5 text-lg font-bold">Données administratives</h2>
         <div class="space-y-3 text-sm">
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-home" class="text-muted mt-0.5 shrink-0 text-base" />
@@ -157,9 +147,7 @@
 
       <!-- Données médicales -->
       <UCard variant="outline">
-        <template #header>
-          <h2 class="text-lg font-bold">Données médicales</h2>
-        </template>
+        <h2 class="mb-5 text-lg font-bold">Données médicales</h2>
         <div class="space-y-3 text-sm">
           <div>
             <h3 class="text-muted mb-2 font-semibold">Allergies / Contre-indications</h3>
@@ -168,8 +156,9 @@
                 v-for="allergy in overviewData.allergiesList"
                 :key="allergy"
                 color="error"
-                variant="outline"
-                size="xs"
+                variant="subtle"
+                size="md"
+                class="rounded-full"
               >
                 {{ allergy }}
               </UBadge>
@@ -182,8 +171,9 @@
                 v-for="condition in overviewData.medicalHistoryList"
                 :key="condition"
                 color="warning"
-                variant="outline"
-                size="xs"
+                variant="subtle"
+                size="md"
+                class="rounded-full text-red-700"
               >
                 {{ condition }}
               </UBadge>
@@ -196,8 +186,9 @@
                 v-for="medication in overviewData.currentTreatmentList"
                 :key="medication"
                 color="primary"
-                variant="outline"
-                size="xs"
+                variant="subtle"
+                size="md"
+                class="rounded-full"
               >
                 {{ medication }}
               </UBadge>
@@ -214,7 +205,7 @@
         <div class="space-y-4">
           <UTextarea placeholder="Ajouter une note rapide..." :rows="2" class="w-full" />
           <div v-for="note in overviewData.practitionerNotes" :key="note.date" class="text-sm">
-            <p class="text-default truncate">{{ note.text }}</p>
+            <p class="truncate">{{ note.text }}</p>
             <p class="text-muted text-xs">{{ note.author }} - {{ note.date }}</p>
           </div>
         </div>
@@ -230,7 +221,7 @@
             <h2 class="text-lg font-bold">Plan de traitement actif</h2>
             <p class="text-muted text-sm">{{ overviewData.treatmentPlan.name }}</p>
           </div>
-          <UBadge color="success" variant="outline" size="xs">
+          <UBadge color="success" variant="soft" size="lg" class="rounded-full">
             {{ overviewData.treatmentPlan.status }}
           </UBadge>
         </div>
@@ -251,20 +242,19 @@
             <span>Progression ({{ overviewData.sessionsCompleted }}/{{ overviewData.sessionsTotal }} séances)</span>
             <span>{{ overviewData.treatmentPlan.progress }}%</span>
           </div>
-          <UProgress :model-value="overviewData.treatmentPlan.progress" max="100" color="primary" size="md" />
+          <UProgress :model-value="overviewData.treatmentPlan.progress" :max="100" color="primary" size="lg" />
         </div>
-        <div class="mt-6 flex flex-wrap gap-2">
-          <UButton variant="outline" color="neutral" class="flex-1" icon="i-lucide-edit">Modifier</UButton>
-          <UButton variant="outline" color="neutral" class="flex-1" icon="i-lucide-archive">Clôturer</UButton>
-          <UButton color="primary" class="flex-1" icon="i-lucide-plus">Nouveau plan</UButton>
+        <div class="mt-6 flex flex-wrap justify-end gap-2">
+          <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
+          <UButton variant="soft" color="neutral" icon="i-lucide-edit">Modifier</UButton>
+          <UButton variant="soft" color="neutral" icon="i-lucide-archive">Clôturer</UButton>
+          <UButton color="primary" icon="i-lucide-plus">Nouveau plan</UButton>
         </div>
       </UCard>
 
       <!-- Aperçu des séances -->
       <UCard variant="outline">
-        <template #header>
-          <h2 class="text-lg font-bold">Aperçu des prochaines/dernières séances</h2>
-        </template>
+        <h2 class="mb-5 text-lg font-bold">Aperçu des prochaines/dernières séances</h2>
         <div class="flow-root">
           <ul class="divide-default -my-4 divide-y">
             <li
@@ -274,19 +264,19 @@
             >
               <div class="flex items-center gap-4">
                 <div class="w-12 text-center">
-                  <p class="text-default text-sm font-bold">{{ session.date }}</p>
+                  <p class="text-sm font-bold">{{ session.date }}</p>
                   <p class="text-muted text-xs">{{ session.month }}</p>
                 </div>
                 <div>
-                  <p class="text-default font-semibold">{{ session.type }}</p>
+                  <p class="font-semibold">{{ session.type }}</p>
                   <p class="text-muted text-sm">{{ session.time }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <UBadge :color="getSessionBadgeColor(session.status)" variant="outline" size="xs">
+                <UBadge :color="getSessionBadgeColor(session.status)" variant="soft" size="sm">
                   {{ getSessionBadgeLabel(session.status) }}
                 </UBadge>
-                <UButton variant="ghost" size="xs" icon="i-lucide-eye" square />
+                <UButton variant="ghost" size="sm" icon="i-lucide-eye" square />
               </div>
             </li>
           </ul>
@@ -297,20 +287,20 @@
       <UCard variant="outline">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-bold">Documents récents du plan</h2>
-          <NuxtLink to="#" class="text-primary text-sm font-semibold hover:underline">Voir tous les documents</NuxtLink>
+          <UButton variant="ghost" class="">Voir tous les documents</UButton>
         </div>
         <div class="space-y-3">
           <div v-for="doc in overviewData.recentDocuments" :key="doc.name" class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <UIcon :name="doc.icon" class="text-primary text-xl" />
               <div>
-                <p class="text-default text-sm font-semibold">{{ doc.name }}</p>
+                <p class="text-sm font-semibold">{{ doc.name }}</p>
                 <p class="text-muted text-xs">{{ doc.date }}</p>
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <UButton variant="ghost" size="xs" icon="i-lucide-eye" square />
-              <UButton variant="ghost" size="xs" icon="i-lucide-download" square />
+              <UButton variant="ghost" size="sm" icon="i-lucide-eye" square />
+              <UButton variant="ghost" size="sm" icon="i-lucide-download" square />
             </div>
           </div>
         </div>
@@ -320,7 +310,7 @@
       <UCard variant="outline">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-bold">Historique des plans</h2>
-          <NuxtLink to="#" class="text-primary text-sm font-semibold hover:underline">Voir tous les plans</NuxtLink>
+          <UButton variant="ghost" class="">Voir tous les plans</UButton>
         </div>
         <div class="space-y-3">
           <div
@@ -329,10 +319,10 @@
             class="flex items-center justify-between text-sm"
           >
             <div class="flex flex-col">
-              <p class="text-default font-semibold">{{ plan.name }}</p>
+              <p class="font-semibold">{{ plan.name }}</p>
               <p class="text-muted text-xs">{{ plan.period }}</p>
             </div>
-            <UBadge color="neutral" variant="outline" size="xs">Clôturé</UBadge>
+            <UBadge color="neutral" variant="soft" size="md">Clôturé</UBadge>
           </div>
         </div>
       </UCard>
