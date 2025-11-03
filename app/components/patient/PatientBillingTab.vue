@@ -67,7 +67,7 @@
       </UCard>
 
       <!-- Payments Received -->
-      <UCard>
+      <UCard variant="outline">
         <template #header>
           <h2 class="text-default text-lg font-bold">Paiements reçus</h2>
         </template>
@@ -115,7 +115,7 @@
 
     <!-- Sidebar -->
     <div class="flex flex-col gap-6 lg:col-span-1">
-      <UCard>
+      <UCard variant="outline">
         <template #header>
           <h2 class="text-default text-lg font-bold">À facturer / En attente</h2>
         </template>

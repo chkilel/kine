@@ -82,7 +82,7 @@
     <!-- Quick Summary -->
     <h2 class="mb-3 text-lg font-bold">Résumé rapide</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-1 flex items-center gap-2">
           <UIcon name="i-lucide-heart-pulse" class="text-primary text-lg" />
           <p class="text-muted text-sm font-medium">Pathologie principale</p>
@@ -91,7 +91,7 @@
           {{ staticPatientData.pathology }}
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-1 flex items-center gap-2">
           <UIcon name="i-lucide-target" class="text-primary text-lg" />
           <p class="text-muted text-sm font-medium">Objectif du traitement</p>
@@ -100,7 +100,7 @@
           {{ staticPatientData.treatmentGoal }}
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-1 flex items-center gap-2">
           <UIcon name="i-lucide-calendar-check" class="text-primary text-lg" />
           <p class="text-muted text-sm font-medium">Séances</p>
@@ -109,7 +109,7 @@
           {{ staticPatientData.sessionsCompleted }} / {{ staticPatientData.sessionsTotal }} effectuées
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-2 flex items-center gap-2">
           <UIcon name="i-lucide-thermometer" class="text-primary text-lg" />
           <p class="text-muted text-sm font-medium">Niveau de douleur actuel</p>
@@ -126,7 +126,7 @@
     <!-- Administrative Data -->
     <h2 class="mt-8 mb-3 text-lg font-bold">Données administratives</h2>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-2 flex items-center gap-2">
           <UIcon name="i-lucide-map-pin" class="text-primary text-lg" />
           <h3 class="font-semibold">Adresse</h3>
@@ -138,7 +138,7 @@
           }}{{ patient.country ? `, ${patient.country}` : '' }}
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-2 flex items-center gap-2">
           <UIcon name="i-lucide-shield-check" class="text-primary text-lg" />
           <h3 class="font-semibold">Assurance / Mutuelle</h3>
@@ -149,7 +149,7 @@
           N°: {{ patient.insuranceNumber || '-' }}
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-2 flex items-center gap-2">
           <UIcon name="i-lucide-user-check" class="text-primary text-lg" />
           <h3 class="font-semibold">Médecin prescripteur</h3>
@@ -160,7 +160,7 @@
           Prescription du: {{ patient.referralDate ? formatDate(patient.referralDate) : '-' }}
         </p>
       </UCard>
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-2 flex items-center gap-2">
           <UIcon name="i-lucide-phone-call" class="text-primary text-lg" />
           <h3 class="font-semibold">Contact d'urgence</h3>
@@ -188,7 +188,7 @@
           </div>
           <div v-if="patient.allergies && patient.allergies.length > 0" class="flex gap-1.5">
             <UBadge
-              variant="subtle"
+              variant="outline"
               color="warning"
               v-for="allergy in patient.allergies"
               :key="allergy"
@@ -245,7 +245,7 @@
 
           <div v-if="patient.medications && patient.medications.length > 0" class="flex gap-1.5">
             <UBadge
-              variant="subtle"
+              variant="outline"
               color="neutral"
               v-for="medication in patient.medications"
               :key="medication"
@@ -258,12 +258,12 @@
         </UCard>
       </div>
       <!-- Notes -->
-      <UCard>
+      <UCard variant="outline">
         <div class="mb-3 flex items-center gap-2">
           <UIcon name="i-lucide-file-text" class="text-primary text-lg" />
           <h2 class="text-lg font-bold">Notes du praticien</h2>
         </div>
-        <UCard variant="subtle">
+        <UCard variant="outline">
           <textarea
             v-model="patient.notes"
             class="text-toned w-full resize-none border-0 bg-transparent p-0 text-sm focus:ring-0"
