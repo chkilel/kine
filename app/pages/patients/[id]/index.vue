@@ -17,9 +17,10 @@
     })
   }
 
-  const activeTab = ref('informations')
+  const activeTab = ref('overview')
 
   const tabs = [
+    { label: "Vue d'Ensemble", slot: 'overview', value: 'overview' },
     { label: 'Informations', slot: 'informations', value: 'informations' },
     { label: 'Séances', slot: 'seances', value: 'seances' },
     { label: 'Plan de traitement', slot: 'plan', value: 'plan' },
@@ -157,7 +158,7 @@
         <UBreadcrumb :items="breadcrumbItems" />
 
         <!-- Patient Header -->
-        <header class="bg-default rounded-xl p-4 shadow-sm sm:p-6">
+        <UCard variant="outline">
           <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
             <div class="mx-auto shrink-0 sm:mx-0">
               <UAvatar :alt="formatFullName(patient)" size="3xl" class="h-24 w-24 text-4xl" />
@@ -167,7 +168,7 @@
                 <h1 class="text-2xl leading-tight font-bold md:text-3xl">
                   {{ formatFullName(patient) }}
                 </h1>
-                <UBadge :color="getStatusColor(patient.status)" variant="subtle" class="self-center">
+                <UBadge :color="getStatusColor(patient.status)" variant="outline" class="self-center">
                   {{ getStatusLabel(patient.status) }}
                 </UBadge>
               </div>
@@ -226,10 +227,15 @@
               <span class="truncate">Créer un document</span>
             </UButton>
           </div>
-        </header>
+        </UCard>
 
         <!-- Tabs -->
-        <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="informations" class="w-full">
+        <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="overview" class="w-full">
+          <!-- Vue d'Ensemble Tab -->
+          <template #overview>
+            <PatientOverviewTab v-if="patient" :patient="patient" />
+          </template>
+
           <!-- Informations Tab -->
           <template #informations>
             <PatientInformationTab v-if="patient" :patient="patient" />
