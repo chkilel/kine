@@ -7,178 +7,412 @@
     progress: number
     completedSessions: number
     totalSessions: number
-    upcomingSessions: number
-    hasPrescription: boolean
-    archived?: boolean
+    startDate: string
+    endDate: string
+    therapist: string
+    painLevel: number
+    frequency: string
+    prescribingDoctor: string
+    insurance: string
+    context: string
   }
 
-  const treatmentPlans: TreatmentPlan[] = [
+  interface Session {
+    id: string
+    date: string
+    time: string
+    type: string
+    duration: string
+    status: 'completed' | 'upcoming' | 'missed'
+  }
+
+  interface Document {
+    id: string
+    name: string
+    uploadDate: string
+    uploadedBy: string
+    type: 'radio' | 'report' | 'prescription'
+  }
+
+  interface Note {
+    id: string
+    session: string
+    content: string
+    author: string
+    date: string
+  }
+
+  const treatmentPlan: TreatmentPlan = {
+    id: '1',
+    title: 'Rééducation épaule droite',
+    objective: "Améliorer l'amplitude articulaire, réduire la douleur nocturne et renforcer la coiffe des rotateurs.",
+    status: 'active',
+    progress: 67,
+    completedSessions: 10,
+    totalSessions: 15,
+    startDate: '01/10/2024',
+    endDate: '30/11/2024',
+    therapist: 'Dr. Martin',
+    painLevel: 4,
+    frequency: '2x / semaine (15 séances)',
+    prescribingDoctor: 'Dr. Leblanc (15/09/2024)',
+    insurance: 'Mutuelle SantéPlus (Prise en charge OK)',
+    context: 'Suite à une chute, diagnostic de tendinopathie du supra-épineux avec calcification.'
+  }
+
+  const sessions: Session[] = [
     {
       id: '1',
-      title: 'Rééducation Lombalgie',
-      objective: 'Objectif: Réduction de la douleur, amélioration de la mobilité.',
-      status: 'active',
-      progress: 67,
-      completedSessions: 10,
-      totalSessions: 15,
-      upcomingSessions: 5,
-      hasPrescription: true
+      date: '15 Oct. 2024',
+      time: '10:00',
+      type: 'Bilan initial',
+      duration: '45 min',
+      status: 'completed'
     },
     {
       id: '2',
-      title: 'Protocole post-opératoire LCA',
-      objective: "Objectif: Récupération de l'amplitude, renforcement quadricipital.",
-      status: 'active',
-      progress: 27,
-      completedSessions: 8,
-      totalSessions: 30,
-      upcomingSessions: 22,
-      hasPrescription: true
+      date: '18 Oct. 2024',
+      time: '11:00',
+      type: 'Renforcement',
+      duration: '30 min',
+      status: 'upcoming'
     },
     {
       id: '3',
-      title: 'Tendinopathie de la coiffe',
-      objective: 'Objectif: Antalgie, renforcement des rotateurs externes.',
-      status: 'completed',
-      progress: 100,
-      completedSessions: 12,
-      totalSessions: 12,
-      upcomingSessions: 0,
-      hasPrescription: false,
-      archived: true
+      date: '22 Oct. 2024',
+      time: '10:00',
+      type: 'Thérapie manuelle',
+      duration: '30 min',
+      status: 'upcoming'
+    },
+    {
+      id: '4',
+      date: '12 Oct. 2024',
+      time: '09:00',
+      type: 'Mobilisation',
+      duration: '30 min',
+      status: 'missed'
     }
   ]
 
-  const activePlans = treatmentPlans.filter((plan) => !plan.archived)
-  const archivedPlans = treatmentPlans.filter((plan) => plan.archived)
+  const documents: Document[] = [
+    {
+      id: '1',
+      name: 'Radio_Epaule_Post-Chute.pdf',
+      uploadDate: '02/10/2024',
+      uploadedBy: 'Dr. Martin',
+      type: 'radio'
+    },
+    {
+      id: '2',
+      name: 'Rapport_Medecin_Traitant.docx',
+      uploadDate: '01/10/2024',
+      uploadedBy: 'Dr. Martin',
+      type: 'report'
+    },
+    {
+      id: '3',
+      name: 'Ordonnance_Antalgiques.png',
+      uploadDate: '01/10/2024',
+      uploadedBy: 'Dr. Martin',
+      type: 'prescription'
+    }
+  ]
+
+  const notes: Note[] = [
+    {
+      id: '1',
+      session: 'Séance 5',
+      content: 'Amélioration notable de la mobilité en abduction.',
+      author: 'Dr. Martin',
+      date: '15 Oct. 2024'
+    },
+    {
+      id: '2',
+      session: 'Séance 4',
+      content: 'Douleur résiduelle à la palpation du tendon.',
+      author: 'Dr. Martin',
+      date: '12 Oct. 2024'
+    }
+  ]
+
+  const newNote = ref('')
+
+  function getSessionStatusColor(status: string) {
+    switch (status) {
+      case 'completed':
+        return 'success'
+      case 'upcoming':
+        return 'warning'
+      case 'missed':
+        return 'error'
+      default:
+        return 'neutral'
+    }
+  }
+
+  function getSessionStatusLabel(status: string) {
+    switch (status) {
+      case 'completed':
+        return 'Terminée'
+      case 'upcoming':
+        return 'À venir'
+      case 'missed':
+        return 'Manquée'
+      default:
+        return status
+    }
+  }
+
+  function getDocumentIcon(type: string) {
+    switch (type) {
+      case 'radio':
+        return 'i-lucide-image'
+      case 'report':
+        return 'i-lucide-file-text'
+      case 'prescription':
+        return 'i-lucide-pill'
+      default:
+        return 'i-lucide-file-text'
+    }
+  }
+
+  function getDocumentColor(type: string) {
+    switch (type) {
+      case 'radio':
+        return 'primary'
+      case 'report':
+        return 'info'
+      case 'prescription':
+        return 'secondary'
+      default:
+        return 'neutral'
+    }
+  }
+
+  function addNote() {
+    if (newNote.value.trim()) {
+      // In a real app, this would save to the API
+      newNote.value = ''
+    }
+  }
 </script>
 
 <template>
-  <div class="mt-6">
-    <div class="mb-6 flex items-center justify-end">
-      <UButton color="primary" class="flex items-center gap-2">
-        <UIcon name="i-lucide-plus" />
-        <span>Nouveau Plan de Traitement</span>
-      </UButton>
-    </div>
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Left Column -->
+    <div class="flex flex-col gap-6 lg:col-span-1">
+      <!-- Treatment Plan Card -->
+      <UCard>
+        <div class="mb-4 flex items-start justify-between">
+          <h2 class="text-default text-lg font-bold">{{ treatmentPlan.title }}</h2>
+          <UBadge color="success" variant="soft" class="rounded-full">Actif</UBadge>
+        </div>
+        <div class="text-muted space-y-3 text-sm">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-calendar" class="text-toned text-base" />
+            <span>Début: {{ treatmentPlan.startDate }} - Fin: {{ treatmentPlan.endDate }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-user" class="text-toned text-base" />
+            <span>Thérapeute: {{ treatmentPlan.therapist }}</span>
+          </div>
+        </div>
+        <div class="mt-5">
+          <div class="text-toned mb-1 flex items-center justify-between text-sm">
+            <span>Progression ({{ treatmentPlan.completedSessions }}/{{ treatmentPlan.totalSessions }} séances)</span>
+            <span>{{ treatmentPlan.progress }}%</span>
+          </div>
+          <UProgress :model-value="treatmentPlan.progress" />
+        </div>
+        <div class="mt-6 flex flex-wrap gap-2">
+          <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
+          <UButton icon="i-lucide-archive" variant="outline" color="neutral" size="md" class="flex-1">Clôturer</UButton>
+          <UButton icon="i-lucide-plus" color="primary" size="md" class="flex-1">Nouveau</UButton>
+        </div>
+      </UCard>
 
-    <div class="flex flex-col gap-8">
-      <!-- Plans de Traitement Actifs -->
-      <div>
-        <h2 class="text-default mb-4 text-lg font-bold">Plans de Traitement Actifs</h2>
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <UCard v-for="plan in activePlans" :key="plan.id" :class="{ 'opacity-70': plan.archived }">
-            <div class="flex items-start justify-between">
+      <!-- Treatment Plan Details -->
+      <UCard
+        :ui="{
+          body: 'p-0 sm:p-0'
+        }"
+      >
+        <UCollapsible default-open>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="group p-4 sm:p-6"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+            trailing-icon="i-lucide-chevron-down"
+            block
+          >
+            <h3 class="text-default text-base font-bold">Détails du plan</h3>
+          </UButton>
+
+          <template #content>
+            <div class="border-default space-y-5 border-t p-4 sm:p-6">
               <div>
-                <h3 class="text-default text-base font-bold">{{ plan.title }}</h3>
-                <p class="text-muted text-sm">{{ plan.objective }}</p>
+                <h4 class="text-default mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
+                <p class="text-muted text-sm">{{ treatmentPlan.objective }}</p>
               </div>
-              <UBadge
-                :color="plan.status === 'active' ? 'success' : 'neutral'"
-                variant="subtle"
-                :size="plan.archived ? 'xs' : 'lg'"
-              >
-                {{ plan.status === 'active' ? 'Actif' : 'Terminé' }}
-              </UBadge>
-            </div>
-
-            <div>
-              <div class="text-muted mb-1 flex items-center justify-end text-sm">{{ plan.progress }}%</div>
-              <UProgress
-                :model-value="plan.progress"
-                :max="100"
-                :color="plan.status === 'completed' ? 'success' : undefined"
-              />
-              <div class="text-muted mt-1 flex items-center justify-between text-xs">
-                <span>{{ plan.completedSessions }}/{{ plan.totalSessions }} terminées</span>
-                <span>{{ plan.upcomingSessions }} à venir</span>
+              <div>
+                <h4 class="text-default mb-2 text-sm font-semibold">Contexte pathologique</h4>
+                <p class="text-muted text-sm">{{ treatmentPlan.context }}</p>
               </div>
-            </div>
-
-            <template v-if="!plan.archived" #footer>
-              <div class="flex items-center justify-between">
-                <UButton
-                  v-if="plan.hasPrescription"
-                  label="Voir la prescription"
-                  variant="ghost"
-                  color="primary"
-                  size="sm"
-                  icon="i-lucide-paperclip"
-                  class="flex items-center gap-2 self-start"
-                />
-                <div class="flex flex-wrap justify-end gap-2">
-                  <UButton variant="ghost" color="neutral" size="sm" class="flex items-center gap-1">
-                    <UIcon name="i-lucide-check-circle" />
-                    <span>Terminer séance</span>
-                  </UButton>
-                  <UButton variant="ghost" color="neutral" size="sm" class="flex items-center gap-1">
-                    <UIcon name="i-lucide-note-add" />
-                    <span>Note</span>
-                  </UButton>
-                  <UButton variant="ghost" color="neutral" size="sm" class="flex items-center gap-1">
-                    <UIcon name="i-lucide-refresh-cw" />
-                    <span>Renouveler</span>
-                  </UButton>
-                  <UDropdown :items="[]">
-                    <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-more-vertical" square />
-                  </UDropdown>
+              <div>
+                <h4 class="text-default mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
+                <div class="flex items-center gap-3">
+                  <USlider :model-value="treatmentPlan.painLevel" :max="10" :min="0" disabled />
+                  <span class="text-primary font-semibold">{{ treatmentPlan.painLevel }}/10</span>
                 </div>
               </div>
-            </template>
-
-            <template v-else #footer>
-              <div class="flex justify-end gap-2">
-                <UButton variant="ghost" color="primary" size="sm" class="flex items-center gap-1">
-                  <UIcon name="i-lucide-eye" />
-                  <span>Voir les détails</span>
-                </UButton>
-                <UButton variant="ghost" color="neutral" size="sm" class="flex items-center gap-1">
-                  <UIcon name="i-lucide-archive-restore" />
-                  <span>Désarchiver</span>
-                </UButton>
-              </div>
-            </template>
-          </UCard>
-        </div>
-      </div>
-
-      <!-- Plans de Traitement Archivés -->
-      <div v-if="archivedPlans.length > 0">
-        <h2 class="text-default mb-4 text-lg font-bold">Plans de Traitement Archivés</h2>
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <UCard v-for="plan in archivedPlans" :key="plan.id" class="opacity-70">
-            <div class="flex items-start justify-between">
-              <div>
-                <h3 class="text-default text-base font-bold">{{ plan.title }}</h3>
-                <p class="text-muted text-sm">{{ plan.objective }}</p>
-              </div>
-              <UBadge color="neutral" variant="subtle" size="xs">Terminé</UBadge>
-            </div>
-
-            <div>
-              <div class="text-muted mb-1 flex items-center justify-end text-sm">{{ plan.progress }}%</div>
-              <UProgress :model-value="plan.progress" :max="100" color="success" />
-              <div class="text-muted mt-1 flex items-center justify-between text-xs">
-                <span>{{ plan.completedSessions }}/{{ plan.totalSessions }} terminées</span>
-                <span>{{ plan.upcomingSessions }} à venir</span>
+              <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <h4 class="text-default font-semibold">Fréquence</h4>
+                  <p class="text-muted">{{ treatmentPlan.frequency }}</p>
+                </div>
+                <div>
+                  <h4 class="text-default font-semibold">Médecin prescripteur</h4>
+                  <p class="text-muted">{{ treatmentPlan.prescribingDoctor }}</p>
+                </div>
+                <div>
+                  <h4 class="text-default font-semibold">Assurance</h4>
+                  <p class="text-muted">{{ treatmentPlan.insurance }}</p>
+                </div>
               </div>
             </div>
+          </template>
+        </UCollapsible>
+      </UCard>
+    </div>
 
-            <template #footer>
-              <div class="flex justify-end gap-2">
-                <UButton variant="ghost" color="primary" size="sm" class="flex items-center gap-1">
-                  <UIcon name="i-lucide-eye" />
-                  <span>Voir les détails</span>
-                </UButton>
-                <UButton variant="ghost" color="neutral" size="sm" class="flex items-center gap-1">
-                  <UIcon name="i-lucide-archive-restore" />
-                  <span>Désarchiver</span>
-                </UButton>
+    <!-- Right Column -->
+    <div class="flex flex-col gap-6 lg:col-span-2">
+      <!-- Sessions Overview -->
+      <UCard>
+        <div class="mb-5 flex items-center justify-between">
+          <h3 class="text-default text-base font-bold">Aperçu des séances</h3>
+          <UButton icon="i-lucide-plus" color="primary" size="sm" square label="Séance" />
+        </div>
+        <div class="overflow-x-auto">
+          <UTable
+            :data="sessions"
+            :columns="[
+              { accessorKey: 'date', header: 'Date' },
+              { accessorKey: 'type', header: 'Type' },
+              { accessorKey: 'duration', header: 'Durée' },
+              { accessorKey: 'status', header: 'Statut' },
+              { id: 'actions', header: 'Actions' }
+            ]"
+            :ui="{
+              thead: 'bg-muted'
+            }"
+          >
+            <template #date-cell="{ row }">
+              <span class="text-default text-sm">{{ row.getValue('date') }}, {{ row.original.time }}</span>
+            </template>
+            <template #type-cell="{ row }">
+              <span class="text-toned text-sm">{{ row.getValue('type') }}</span>
+            </template>
+            <template #duration-cell="{ row }">
+              <span class="text-toned text-sm">
+                {{ row.getValue('duration') }}
+              </span>
+            </template>
+            <template #status-cell="{ row }">
+              <UBadge :color="getSessionStatusColor(row.getValue('status'))" variant="soft" size="md">
+                {{ getSessionStatusLabel(row.getValue('status')) }}
+              </UBadge>
+            </template>
+            <template #actions-cell="{ row }">
+              <div class="flex items-center justify-end gap-2">
+                <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
+                <UButton
+                  v-if="row.getValue('status') === 'upcoming'"
+                  icon="i-lucide-x"
+                  variant="ghost"
+                  color="error"
+                  size="sm"
+                  square
+                />
+                <UButton
+                  v-else-if="row.getValue('status') === 'completed'"
+                  icon="i-lucide-plus"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  square
+                />
               </div>
             </template>
-          </UCard>
+          </UTable>
         </div>
-      </div>
+      </UCard>
+
+      <!-- Notes & Follow-up -->
+      <UCard>
+        <h3 class="text-default mb-5! text-base font-bold">Notes &amp; Suivi</h3>
+        <div class="space-y-4">
+          <div>
+            <UTextarea
+              v-model="newNote"
+              autoresize
+              placeholder="Ajouter une note de suivi..."
+              :rows="3"
+              class="block"
+            />
+            <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
+          </div>
+          <div class="border-default space-y-3 border-t pt-4">
+            <div v-for="note in notes" :key="note.id" class="text-sm">
+              <p class="text-default">
+                <strong class="font-semibold">{{ note.session }}:</strong>
+                {{ note.content }}
+              </p>
+              <p class="text-toned text-xs">{{ note.author }} - {{ note.date }}</p>
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <!-- Documents -->
+      <UCard>
+        <div class="mb-5 flex items-center justify-between">
+          <h3 class="text-default text-base font-bold">Documents du plan de traitement</h3>
+          <UButton icon="i-lucide-plus" color="primary" size="sm">Ajouter un document</UButton>
+        </div>
+        <div class="space-y-4">
+          <UFileUpload
+            label="Glissez-déposez un fichier ou"
+            description="cliquez pour téléverser"
+            class="hover:bg-elevated min-h-24 w-full"
+          />
+
+          <div class="divide-default divide-y">
+            <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between py-3">
+              <div class="flex items-center gap-4">
+                <UBadge
+                  :icon="getDocumentIcon(doc.type)"
+                  :color="getDocumentColor(doc.type)"
+                  variant="soft"
+                  size="lg"
+                  square
+                />
+                <div>
+                  <p class="text-default font-semibold">{{ doc.name }}</p>
+                  <p class="text-toned text-xs">Téléversé le {{ doc.uploadDate }} par {{ doc.uploadedBy }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
+                <UButton icon="i-lucide-download" variant="ghost" color="neutral" size="sm" square />
+                <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square />
+              </div>
+            </div>
+          </div>
+        </div>
+      </UCard>
     </div>
   </div>
 </template>
