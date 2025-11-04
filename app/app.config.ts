@@ -3,6 +3,11 @@ export default defineAppConfig({
     colors: {
       primary: 'blue',
       neutral: 'zinc'
+    },
+    input: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
     }
   }
 })
