@@ -8,6 +8,21 @@ export default defineAppConfig({
       defaultVariants: {
         variant: 'subtle'
       }
+    },
+    select: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
+    },
+    selectmenu: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
+    },
+    textarea: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
     }
   }
 })
