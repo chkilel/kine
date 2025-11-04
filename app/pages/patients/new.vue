@@ -36,6 +36,8 @@
   const newSurgery = ref('')
   const newAllergy = ref('')
   const newMedication = ref('')
+  const newNote = ref('')
+  const patientNotes = ref<Array<{ content: string; date: string; author: string }>>([])
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
@@ -66,7 +68,14 @@
         allergies: event.data.allergies?.filter((allergy) => allergy.trim() !== '') || [],
         medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
         // Filter out empty emergency contacts numbers, name and relationship are optional
-        emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || []
+        emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
+        // Combine existing notes with new notes
+        notes: event.data.notes
+          ? `${event.data.notes}\n\n${patientNotes.value.map((note) => `${note.date} - ${note.author}: ${note.content}`).join('\n')}`.trim()
+          : patientNotes.value
+              .map((note) => `${note.date} - ${note.author}: ${note.content}`)
+              .join('\n')
+              .trim() || undefined
       }
 
       const response = await $fetch('/api/patients', {
@@ -161,6 +170,31 @@
   function addMedication() {
     addArrayItem('medications', newMedication.value)
     newMedication.value = ''
+  }
+
+  function addNote() {
+    if (newNote.value.trim()) {
+      const now = new Date()
+      const formattedDate = now.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+
+      patientNotes.value.push({
+        content: newNote.value.trim(),
+        date: formattedDate,
+        author: 'Dr. Martin' // This should come from current user context
+      })
+
+      newNote.value = ''
+    }
+  }
+
+  function removeNote(index: number) {
+    patientNotes.value.splice(index, 1)
   }
 
   // File upload handling
@@ -663,14 +697,62 @@
 
                   <template #content>
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <UFormField label="Notes générales" name="notes">
-                        <UTextarea
-                          v-model="state.notes"
-                          placeholder="Ajouter des notes pertinentes sur le patient..."
-                          :rows="4"
-                          class="w-full"
+                      <!-- Add new note -->
+                      <div>
+                        <UFormField label="Nouvelle note" name="newNote">
+                          <UTextarea
+                            v-model="newNote"
+                            placeholder="Ajouter une nouvelle note..."
+                            :rows="3"
+                            class="w-full"
+                            @keyup.enter.ctrl="addNote"
+                          />
+                        </UFormField>
+                        <div class="mt-3 flex justify-end gap-3">
+                          <UButton label="Annuler" color="neutral" variant="subtle" @click="newNote = ''" />
+                          <UButton label="Enregistrer" color="primary" @click="addNote" :disabled="!newNote.trim()" />
+                        </div>
+                      </div>
+
+                      <!-- Saved notes -->
+                      <div v-if="patientNotes.length > 0" class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <h4 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">Notes enregistrées</h4>
+                        <ul class="space-y-3">
+                          <li
+                            v-for="(note, index) in patientNotes"
+                            :key="index"
+                            class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50"
+                          >
+                            <div class="flex items-start justify-between">
+                              <div>
+                                <p class="text-sm text-gray-800 dark:text-gray-200">{{ note.content }}</p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  {{ note.date }} - {{ note.author }}
+                                </p>
+                              </div>
+                              <UButton
+                                icon="i-lucide-trash-2"
+                                size="xs"
+                                color="error"
+                                variant="ghost"
+                                @click="removeNote(index)"
+                                class="ml-2 flex-shrink-0"
+                              />
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <!-- Empty state -->
+                      <div v-else class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <UEmpty
+                          variant="naked"
+                          icon="i-lucide-file-text"
+                          title="Aucune note ajoutée"
+                          description="Ajoutez des notes pour suivre l'évolution du patient."
+                          class="p-0"
                         />
-                      </UFormField>
+                      </div>
                     </div>
                   </template>
                 </UCollapsible>
