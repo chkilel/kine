@@ -115,14 +115,18 @@ CREATE TABLE `consultations` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
 	`patientId` text NOT NULL,
+	`treatmentPlanId` text,
 	`dateOfBirth` integer NOT NULL,
-	`mainComplaint` text,
-	`diagnosis` text,
-	`treatment` text,
-	`notes` text,
+	`chiefComplaint` text,
+	`sessionNotes` text,
+	`treatmentPlanSummary` text,
+	`observations` text,
+	`nextSteps` text,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
-	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `idx_consultations_org_patient_date` ON `consultations` (`organizationId`,`patientId`,`dateOfBirth`);--> statement-breakpoint
@@ -130,13 +134,15 @@ CREATE INDEX `idx_consultations_org_date` ON `consultations` (`organizationId`,`
 CREATE INDEX `idx_consultations_org_created_at` ON `consultations` (`organizationId`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_patient_date` ON `consultations` (`patientId`,`dateOfBirth`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_date_patient` ON `consultations` (`organizationId`,`dateOfBirth`,`patientId`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_org_plan_date` ON `consultations` (`organizationId`,`treatmentPlanId`,`dateOfBirth`);--> statement-breakpoint
 CREATE TABLE `patient_documents` (
 	`id` text PRIMARY KEY NOT NULL,
 	`patientId` text NOT NULL,
 	`organizationId` text NOT NULL,
 	`uploadedById` text NOT NULL,
+	`treatmentPlanId` text,
 	`fileName` text NOT NULL,
-	`originalName` text NOT NULL,
+	`originalFileName` text NOT NULL,
 	`mimeType` text NOT NULL,
 	`fileSize` integer NOT NULL,
 	`storageKey` text NOT NULL,
@@ -147,7 +153,8 @@ CREATE TABLE `patient_documents` (
 	`deletedAt` integer,
 	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`uploadedById`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`uploadedById`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `patient_documents_storageKey_unique` ON `patient_documents` (`storageKey`);--> statement-breakpoint
@@ -166,7 +173,7 @@ CREATE TABLE `patients` (
 	`dateOfBirth` integer NOT NULL,
 	`gender` text,
 	`email` text,
-	`phone` text,
+	`phone` text NOT NULL,
 	`address` text,
 	`city` text,
 	`postalCode` text,
@@ -184,10 +191,10 @@ CREATE TABLE `patients` (
 	`notes` text,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
-	`deletedAt` integer
+	`deletedAt` integer,
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `patients_email_unique` ON `patients` (`email`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_first_name` ON `patients` (`organizationId`,`deletedAt`,`firstName`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_last_name` ON `patients` (`organizationId`,`deletedAt`,`lastName`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_email` ON `patients` (`organizationId`,`deletedAt`,`email`);--> statement-breakpoint
@@ -198,4 +205,27 @@ CREATE INDEX `idx_patients_org_active_insurance` ON `patients` (`organizationId`
 CREATE INDEX `idx_patients_org_active_name_search` ON `patients` (`organizationId`,`deletedAt`,`lastName`,`firstName`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_status_created` ON `patients` (`organizationId`,`deletedAt`,`status`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_insurance_status` ON `patients` (`organizationId`,`deletedAt`,`insuranceProvider`,`status`);--> statement-breakpoint
-CREATE INDEX `idx_patients_org_deleted_only` ON `patients` (`organizationId`,`deletedAt`);
+CREATE INDEX `idx_patients_org_deleted_only` ON `patients` (`organizationId`,`deletedAt`);--> statement-breakpoint
+CREATE TABLE `treatment_plans` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organizationId` text NOT NULL,
+	`patientId` text NOT NULL,
+	`title` text NOT NULL,
+	`diagnosis` text NOT NULL,
+	`objective` text,
+	`dateOfBirth` integer NOT NULL,
+	`referralDate` integer,
+	`numberOfSessions` integer,
+	`sessionFrequency` text,
+	`status` text DEFAULT 'planned' NOT NULL,
+	`notes` text,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	`deletedAt` integer,
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_treatment_plans_org_active_patient` ON `treatment_plans` (`organizationId`,`deletedAt`,`patientId`);--> statement-breakpoint
+CREATE INDEX `idx_treatment_plans_org_active_status` ON `treatment_plans` (`organizationId`,`deletedAt`,`status`);--> statement-breakpoint
+CREATE INDEX `idx_treatment_plans_org_active_created_at` ON `treatment_plans` (`organizationId`,`deletedAt`,`createdAt`);
