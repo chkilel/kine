@@ -7,21 +7,76 @@
 
   const props = defineProps<Props>()
 
-  // Hardcoded data for overview tab
-  const overviewData = {
+  // Computed properties for database fields
+  const fullAddress = computed(() => {
+    const parts = []
+    if (props.patient?.address) parts.push(props.patient.address)
+    if (props.patient?.city) parts.push(props.patient.city)
+    if (props.patient?.postalCode) parts.push(props.patient.postalCode)
+    if (props.patient?.country) parts.push(props.patient.country)
+    return parts.join(', ') || '-'
+  })
+
+  const insuranceDetails = computed(() => {
+    if (props.patient?.insuranceProvider) {
+      let details = props.patient.insuranceProvider
+      if (props.patient?.insuranceNumber) {
+        details += ` (${props.patient.insuranceNumber})`
+      }
+      return details
+    }
+    return '-'
+  })
+
+  const primaryEmergencyContact = computed(() => {
+    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
+      const contact = props.patient.emergencyContacts[0]
+      return contact.name || '-'
+    }
+    return '-'
+  })
+
+  const primaryEmergencyPhone = computed(() => {
+    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
+      return props.patient.emergencyContacts[0].phone || '-'
+    }
+    return '-'
+  })
+
+  const allergiesList = computed(() => {
+    if (props.patient?.allergies && props.patient.allergies.length > 0) {
+      return props.patient.allergies
+    }
+    return []
+  })
+
+  const medicalHistoryList = computed(() => {
+    if (props.patient?.medicalConditions && props.patient.medicalConditions.length > 0) {
+      return props.patient.medicalConditions
+    }
+    return []
+  })
+
+  const currentTreatmentList = computed(() => {
+    if (props.patient?.medications && props.patient.medications.length > 0) {
+      return props.patient.medications
+    }
+    return []
+  })
+
+  const referralSource = computed(() => {
+    return props.patient?.referralSource || '-'
+  })
+
+  // Static data for fields not in database
+  const staticData = {
     mainPathology: "Tendinopathie calcifiante de l'épaule",
     treatmentObjective: 'Récupération amplitude & force',
     sessionsCompleted: 10,
     sessionsTotal: 15,
     painLevel: 4,
-    fullAddress: '123 Rue de la République, 75001 Paris',
-    insuranceDetails: 'Mutuelle SantéPlus (Couverture 80%)',
-    prescribingDoctor: 'Dr. Leblanc',
-    emergencyContactName: 'Sophie Dupont',
-    emergencyContactPhone: '06 87 65 43 21',
-    allergiesList: ['Aspirine'],
-    medicalHistoryList: ['HTA', 'Diabète type 2'],
-    currentTreatmentList: ['Metformine'],
+    coverage: '80%',
+    doctor: 'Dr. Leblanc',
     practitionerNotes: [
       { text: 'Amélioration notable de la mobilité en abduction.', author: 'Dr. Martin', date: 'il y a 2 jours' },
       { text: 'Douleur résiduelle à la palpation du tendon.', author: 'Dr. Martin', date: 'il y a 5 jours' }
@@ -86,23 +141,17 @@
         <div class="space-y-4 text-sm">
           <div>
             <h3 class="text-muted font-semibold">Pathologie principale</h3>
-            <p>{{ overviewData.mainPathology }}</p>
+            <p>{{ staticData.mainPathology }}</p>
           </div>
           <div>
             <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-            <p>{{ overviewData.treatmentObjective }}</p>
+            <p>{{ staticData.treatmentObjective }}</p>
           </div>
           <div>
             <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
             <div class="flex items-center gap-3">
-              <UProgress
-                :model-value="overviewData.painLevel * 10"
-                :max="100"
-                color="primary"
-                size="md"
-                class="flex-1"
-              />
-              <span class="font-semibold">{{ overviewData.painLevel }}/10</span>
+              <UProgress :model-value="staticData.painLevel * 10" :max="100" color="primary" size="md" class="flex-1" />
+              <span class="font-semibold">{{ staticData.painLevel }}/10</span>
             </div>
           </div>
         </div>
@@ -116,30 +165,28 @@
             <UIcon name="i-lucide-home" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Adresse</h3>
-              <p class="text-default">{{ overviewData.fullAddress }}</p>
+              <p class="text-default">{{ fullAddress }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-heart" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Assurance/Mutuelle</h3>
-              <p class="text-default">{{ overviewData.insuranceDetails }}</p>
+              <p class="text-default">{{ insuranceDetails }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-stethoscope" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Médecin prescripteur</h3>
-              <p class="text-default">{{ overviewData.prescribingDoctor }}</p>
+              <p class="text-default">{{ referralSource }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Contact d'urgence</h3>
-              <p class="text-default">
-                {{ overviewData.emergencyContactName }} - {{ overviewData.emergencyContactPhone }}
-              </p>
+              <p class="text-default">{{ primaryEmergencyContact }} - {{ primaryEmergencyPhone }}</p>
             </div>
           </div>
         </div>
@@ -153,7 +200,7 @@
             <h3 class="text-muted mb-2 font-semibold">Allergies / Contre-indications</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="allergy in overviewData.allergiesList"
+                v-for="allergy in allergiesList"
                 :key="allergy"
                 color="error"
                 variant="subtle"
@@ -162,28 +209,30 @@
               >
                 {{ allergy }}
               </UBadge>
+              <span v-if="allergiesList.length === 0" class="text-muted">Aucune allergie connue</span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Antécédents médicaux</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="condition in overviewData.medicalHistoryList"
+                v-for="condition in medicalHistoryList"
                 :key="condition"
                 color="warning"
                 variant="subtle"
                 size="md"
-                class="rounded-full text-red-700"
+                class="text-error rounded-full"
               >
                 {{ condition }}
               </UBadge>
+              <span v-if="medicalHistoryList.length === 0" class="text-muted">Aucun antécédent médical connu</span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Traitement actuel</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="medication in overviewData.currentTreatmentList"
+                v-for="medication in currentTreatmentList"
                 :key="medication"
                 color="primary"
                 variant="subtle"
@@ -192,6 +241,7 @@
               >
                 {{ medication }}
               </UBadge>
+              <span v-if="currentTreatmentList.length === 0" class="text-muted">Aucun traitement en cours</span>
             </div>
           </div>
         </div>
@@ -204,7 +254,7 @@
         </template>
         <div class="space-y-4">
           <UTextarea placeholder="Ajouter une note rapide..." :rows="2" class="w-full" />
-          <div v-for="note in overviewData.practitionerNotes" :key="note.date" class="text-sm">
+          <div v-for="note in staticData.practitionerNotes" :key="note.date" class="text-sm">
             <p class="truncate">{{ note.text }}</p>
             <p class="text-muted text-xs">{{ note.author }} - {{ note.date }}</p>
           </div>
@@ -219,30 +269,28 @@
         <div class="mb-4 flex items-start justify-between">
           <div>
             <h2 class="text-lg font-bold">Plan de traitement actif</h2>
-            <p class="text-muted text-sm">{{ overviewData.treatmentPlan.name }}</p>
+            <p class="text-muted text-sm">{{ staticData.treatmentPlan.name }}</p>
           </div>
           <UBadge color="success" variant="soft" size="lg" class="rounded-full">
-            {{ overviewData.treatmentPlan.status }}
+            {{ staticData.treatmentPlan.status }}
           </UBadge>
         </div>
         <div class="text-muted mb-5 space-y-3 text-sm">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="shrink-0 text-base" />
-            <span>
-              Début: {{ overviewData.treatmentPlan.startDate }} - Fin: {{ overviewData.treatmentPlan.endDate }}
-            </span>
+            <span>Début: {{ staticData.treatmentPlan.startDate }} - Fin: {{ staticData.treatmentPlan.endDate }}</span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="shrink-0 text-base" />
-            <span>Thérapeute: {{ overviewData.treatmentPlan.therapist }}</span>
+            <span>Thérapeute: {{ staticData.treatmentPlan.therapist }}</span>
           </div>
         </div>
         <div>
           <div class="text-muted mb-1 flex items-center justify-between text-sm">
-            <span>Progression ({{ overviewData.sessionsCompleted }}/{{ overviewData.sessionsTotal }} séances)</span>
-            <span>{{ overviewData.treatmentPlan.progress }}%</span>
+            <span>Progression ({{ staticData.sessionsCompleted }}/{{ staticData.sessionsTotal }} séances)</span>
+            <span>{{ staticData.treatmentPlan.progress }}%</span>
           </div>
-          <UProgress :model-value="overviewData.treatmentPlan.progress" :max="100" color="primary" size="lg" />
+          <UProgress :model-value="staticData.treatmentPlan.progress" :max="100" color="primary" size="lg" />
         </div>
         <div class="mt-6 flex flex-wrap justify-end gap-2">
           <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
@@ -258,7 +306,7 @@
         <div class="flow-root">
           <ul class="divide-default -my-4 divide-y">
             <li
-              v-for="session in overviewData.upcomingSessions"
+              v-for="session in staticData.upcomingSessions"
               :key="session.date"
               class="flex items-center justify-between py-4"
             >
@@ -290,7 +338,7 @@
           <UButton variant="ghost" class="">Voir tous les documents</UButton>
         </div>
         <div class="space-y-3">
-          <div v-for="doc in overviewData.recentDocuments" :key="doc.name" class="flex items-center justify-between">
+          <div v-for="doc in staticData.recentDocuments" :key="doc.name" class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <UIcon :name="doc.icon" class="text-primary text-xl" />
               <div>
@@ -314,7 +362,7 @@
         </div>
         <div class="space-y-3">
           <div
-            v-for="plan in overviewData.treatmentHistory"
+            v-for="plan in staticData.treatmentHistory"
             :key="plan.name"
             class="flex items-center justify-between text-sm"
           >

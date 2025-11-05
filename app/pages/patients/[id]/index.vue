@@ -1,14 +1,12 @@
 <script setup lang="ts">
   import type { Patient } from '~~/shared/types/patient.types'
   import type { BreadcrumbItem } from '@nuxt/ui'
-  import { format, differenceInYears, parseISO } from 'date-fns'
+  import { format, differenceInYears, parseISO, isValid } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
   const route = useRoute()
-  const toast = useToast()
 
   const { data: patient, status, error } = await useFetch<Patient>(`/api/patients/${route.params.id}`)
-  const { data: documents, refresh: refreshDocuments } = await useFetch(`/api/patients/${route.params.id}/documents`)
 
   if (error.value) {
     throw createError({
@@ -29,10 +27,6 @@
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     {
-      label: 'Dashboard',
-      to: '/'
-    },
-    {
       label: 'Patients',
       to: '/patients'
     },
@@ -41,20 +35,16 @@
     }
   ])
 
-  function formatDate(date?: Date | string) {
+  function formatDate(date?: Date | string): string {
     if (!date) return '-'
+
+    const dateObj = typeof date === 'string' ? parseISO(date) : date
+
+    if (!isValid(dateObj)) return '-'
+
     try {
-      let dateObj: Date
-      if (date instanceof Date) {
-        dateObj = date
-      } else if (typeof date === 'string') {
-        dateObj = parseISO(date)
-      } else {
-        return '-'
-      }
       return format(dateObj, 'dd/MM/yyyy', { locale: fr })
-    } catch (error) {
-      console.error('Error formatting date:', error, date)
+    } catch {
       return '-'
     }
   }
@@ -108,27 +98,16 @@
     }
   }
 
-  // Static data for demo purposes when API data is not available
+  // Static data for fields not in database
   const staticPatientData = {
-    phone: '06 12 34 56 78',
-    email: 'jean.dupont@email.com',
-    address: '123 Rue de la Santé',
-    city: '75001 Paris, France',
-    insurance: 'Harmonie Mutuelle',
-    insuranceNumber: 'HM123456789',
     coverage: '100%',
     doctor: 'Dr. Leroy (Généraliste)',
-    prescriptionDate: '12/08/2024',
-    emergencyContact: 'Sophie Dupont (Épouse)',
-    emergencyPhone: '06 87 65 43 21',
     nextAppointment: '15 Oct. 2024 à 10:00',
     pathology: 'Lombalgie chronique',
     treatmentGoal: 'Réduction douleur & mobilité',
     sessionsCompleted: 8,
     sessionsTotal: 15,
     painLevel: 6,
-    allergies: 'Pénicilline, Pacemaker',
-    medicalHistory: 'Hernie discale L4-L5 en 2018. Arthrose légère du genou droit.',
     currentTreatment: 'Anti-inflammatoires non stéroïdiens (si besoin).',
     notes:
       "Patient motivé. Bonne progression sur les exercices de renforcement du tronc. Penser à intégrer des exercices d'étirement la prochaine séance."
@@ -181,16 +160,16 @@
                       Né le {{ formatDate(patient.dateOfBirth) }} ({{ getAge(patient.dateOfBirth) }} ans)
                     </span>
                   </div>
-                  <div class="flex items-center gap-1.5">
+                  <div v-if="patient.phone" class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-phone" class="text-base" />
-                    <a class="hover:text-primary hover:underline" :href="`tel:${staticPatientData.phone}`">
-                      {{ staticPatientData.phone }}
+                    <a class="hover:text-primary hover:underline" :href="`tel:${patient.phone}`">
+                      {{ patient.phone }}
                     </a>
                   </div>
-                  <div class="flex items-center gap-1.5">
+                  <div v-if="patient.email" class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-mail" class="text-base" />
-                    <a class="hover:text-primary truncate hover:underline" :href="`mailto:${staticPatientData.email}`">
-                      {{ staticPatientData.email }}
+                    <a class="hover:text-primary truncate hover:underline" :href="`mailto:${patient.email}`">
+                      {{ patient.email }}
                     </a>
                   </div>
                 </div>
