@@ -37,7 +37,7 @@
   const newAllergy = ref('')
   const newMedication = ref('')
   const newNote = ref('')
-  const patientNotes = ref<Array<{ content: string; date: string; author: string }>>([])
+  const patientNotes = ref<Array<{ content: string; date: Date; author: string }>>([])
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
@@ -69,13 +69,20 @@
         medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
         // Filter out empty emergency contacts numbers, name and relationship are optional
         emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
-        // Combine existing notes with new notes
-        notes: event.data.notes
-          ? `${event.data.notes}\n\n${patientNotes.value.map((note) => `${note.date} - ${note.author}: ${note.content}`).join('\n')}`.trim()
-          : patientNotes.value
-              .map((note) => `${note.date} - ${note.author}: ${note.content}`)
-              .join('\n')
-              .trim() || undefined
+        // Combine existing notes with new notes as array of objects
+        notes: (() => {
+          const notesArray: Array<{ content: string; date: Date; author: string }> = []
+
+          // Add existing notes if any
+          if (event.data.notes && Array.isArray(event.data.notes)) {
+            notesArray.push(...event.data.notes.filter((note) => note.content && note.content.trim() !== ''))
+          }
+
+          // Add patient notes
+          notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
+
+          return notesArray.length > 0 ? notesArray : undefined
+        })()
       }
 
       const response = await $fetch('/api/patients', {
@@ -99,30 +106,6 @@
       })
     }
   }
-
-  // Accordion items for collapsible sections
-  const accordionItems = [
-    {
-      label: 'Données médicales',
-      icon: 'i-lucide-history',
-      slot: 'medical-data'
-    },
-    {
-      label: 'Assurance & Facturation',
-      icon: 'i-lucide-file-text',
-      slot: 'insurance-billing'
-    },
-    {
-      label: 'Pièces jointes',
-      icon: 'i-lucide-paperclip',
-      slot: 'attachments'
-    },
-    {
-      label: 'Notes',
-      icon: 'i-lucide-clipboard-list',
-      slot: 'notes'
-    }
-  ]
 
   // Array management functions
   function addEmergencyContact() {
@@ -174,18 +157,9 @@
 
   function addNote() {
     if (newNote.value.trim()) {
-      const now = new Date()
-      const formattedDate = now.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-
       patientNotes.value.push({
         content: newNote.value.trim(),
-        date: formattedDate,
+        date: new Date(),
         author: 'Dr. Martin' // This should come from current user context
       })
 
@@ -195,26 +169,6 @@
 
   function removeNote(index: number) {
     patientNotes.value.splice(index, 1)
-  }
-
-  // File upload handling
-  const uploadedFiles = ref<File[]>([])
-
-  function handleFileUpload(event: Event) {
-    const target = event.target as HTMLInputElement
-    if (target.files) {
-      uploadedFiles.value = Array.from(target.files)
-    }
-  }
-
-  function removeFile(index: number) {
-    uploadedFiles.value.splice(index, 1)
-  }
-
-  function updateArrayItem(arrayField: keyof PatientCreate, index: number, value: string) {
-    const currentArray = (state[arrayField] as string[]) || []
-    currentArray[index] = value
-    ;(state as any)[arrayField] = currentArray
   }
 
   function submitButton() {
@@ -714,38 +668,33 @@
                         </div>
                       </div>
 
-                      <!-- Saved notes -->
-                      <div v-if="patientNotes.length > 0" class="border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <h4 class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-200">Notes enregistrées</h4>
-                        <ul class="space-y-3">
-                          <li
-                            v-for="(note, index) in patientNotes"
-                            :key="index"
-                            class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50"
-                          >
-                            <div class="flex items-start justify-between">
-                              <div>
-                                <p class="text-sm text-gray-800 dark:text-gray-200">{{ note.content }}</p>
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                  {{ note.date }} - {{ note.author }}
-                                </p>
+                      <div class="border-default border-t">
+                        <!-- Saved notes -->
+                        <template v-if="patientNotes.length > 0">
+                          <h4 class="text-foreground mb-2 text-sm font-semibold">Notes enregistrées</h4>
+                          <ul class="space-y-3">
+                            <li v-for="(note, index) in patientNotes" :key="index" class="bg-muted rounded-lg p-2">
+                              <div class="flex items-start justify-between">
+                                <div>
+                                  <p class="text-foreground text-sm">{{ note.content }}</p>
+                                  <p class="text-muted-foreground mt-1 text-xs">{{ note.date }} - {{ note.author }}</p>
+                                </div>
+                                <UButton
+                                  icon="i-lucide-trash-2"
+                                  size="xs"
+                                  color="error"
+                                  variant="ghost"
+                                  @click="removeNote(index)"
+                                  class="ml-2 shrink-0"
+                                />
                               </div>
-                              <UButton
-                                icon="i-lucide-trash-2"
-                                size="xs"
-                                color="error"
-                                variant="ghost"
-                                @click="removeNote(index)"
-                                class="ml-2 flex-shrink-0"
-                              />
-                            </div>
-                          </li>
-                        </ul>
-                      </div>
+                            </li>
+                          </ul>
+                        </template>
 
-                      <!-- Empty state -->
-                      <div v-else class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <!-- Empty state -->
                         <UEmpty
+                          v-else
                           variant="naked"
                           icon="i-lucide-file-text"
                           title="Aucune note ajoutée"

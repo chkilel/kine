@@ -5,14 +5,26 @@ z.config(fr())
 
 // Base schemas
 export const genderSchema = z.enum(['male', 'female'])
-export const patientStatusSchema = z.enum(['active', 'inactive', 'discharged'])
-export const documentCategorySchema = z.enum(['referral', 'imaging', 'lab_results', 'treatment_notes', 'other'])
+export const patientStatusSchema = z.enum(['active', 'inactive', 'discharged', 'archived'])
+export const documentCategorySchema = z.enum([
+  'referral',
+  'imaging',
+  'lab_results',
+  'treatment_notes',
+  'prescriptions',
+  'other'
+])
+export const noteSchema = z.object({
+  date: z.date(),
+  author: z.string(),
+  content: z.string().min(1)
+})
 
 // Emergency contact schema
 export const emergencyContactSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   phone: z.string(),
-  relationship: z.string()
+  relationship: z.string().optional()
 })
 
 // Patient schemas
@@ -20,9 +32,9 @@ export const patientCreateSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   dateOfBirth: z.date(),
-  gender: genderSchema.optional(),
+  gender: genderSchema,
   email: z.email().optional(),
-  phone: z.string().min(1),
+  phone: z.string().min(10),
   address: z.string().optional(),
   city: z.string().optional(),
   postalCode: z.string().optional(),
@@ -37,7 +49,7 @@ export const patientCreateSchema = z.object({
   referralSource: z.string().optional(),
   referralDate: z.date().optional(),
   status: patientStatusSchema.default('active'),
-  notes: z.string().optional()
+  notes: z.array(noteSchema).optional()
 })
 
 export const patientUpdateSchema = patientCreateSchema.partial()
@@ -65,6 +77,42 @@ export const patientSchema = z.object({
   referralSource: z.string().nullable(),
   referralDate: z.date().nullable(),
   status: patientStatusSchema,
+  notes: z.array(z.string()).nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  deletedAt: z.date().nullable()
+})
+
+// Treatment Plan schemas
+export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'cancelled'])
+
+export const treatmentPlanCreateSchema = z.object({
+  patientId: z.string(),
+  title: z.string().min(1),
+  diagnosis: z.string().min(1),
+  objective: z.string().optional(),
+  startDate: z.date(),
+  endDate: z.date().optional(),
+  numberOfSessions: z.number().optional(),
+  sessionFrequency: z.string().optional(),
+  status: treatmentPlanStatusSchema.default('planned'),
+  notes: z.string().optional()
+})
+
+export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
+
+export const treatmentPlanSchema = z.object({
+  id: z.string(),
+  organizationId: z.string(),
+  patientId: z.string(),
+  title: z.string(),
+  diagnosis: z.string(),
+  objective: z.string().nullable(),
+  startDate: z.date(),
+  endDate: z.date().nullable(),
+  numberOfSessions: z.number().nullable(),
+  sessionFrequency: z.string().nullable(),
+  status: treatmentPlanStatusSchema,
   notes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -74,11 +122,13 @@ export const patientSchema = z.object({
 // Consultation schemas
 export const consultationCreateSchema = z.object({
   patientId: z.string(),
+  treatmentPlanId: z.string().optional(),
   date: z.date(),
-  mainComplaint: z.string().optional(),
-  diagnosis: z.string().optional(),
-  treatment: z.string().optional(),
-  notes: z.string().optional()
+  chiefComplaint: z.string().optional(),
+  sessionNotes: z.string().optional(),
+  treatmentPlanSummary: z.string().optional(),
+  observations: z.string().optional(),
+  nextSteps: z.string().optional()
 })
 
 export const consultationUpdateSchema = consultationCreateSchema.partial()
@@ -87,11 +137,13 @@ export const consultationSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   patientId: z.string(),
+  treatmentPlanId: z.string().nullable(),
   date: z.date(),
-  mainComplaint: z.string().nullable(),
-  diagnosis: z.string().nullable(),
-  treatment: z.string().nullable(),
-  notes: z.string().nullable(),
+  chiefComplaint: z.string().nullable(),
+  sessionNotes: z.string().nullable(),
+  treatmentPlanSummary: z.string().nullable(),
+  observations: z.string().nullable(),
+  nextSteps: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date()
 })
@@ -99,8 +151,9 @@ export const consultationSchema = z.object({
 // Patient Document schemas
 export const patientDocumentCreateSchema = z.object({
   patientId: z.string(),
+  treatmentPlanId: z.string().optional(),
   fileName: z.string().min(1),
-  originalName: z.string().min(1),
+  originalFileName: z.string().min(1),
   mimeType: z.string().min(1),
   fileSize: z.number().min(0),
   storageKey: z.string().min(1),
@@ -111,7 +164,7 @@ export const patientDocumentCreateSchema = z.object({
 export const patientDocumentUpdateSchema = patientDocumentCreateSchema.partial().omit({
   patientId: true,
   fileName: true,
-  originalName: true,
+  originalFileName: true,
   mimeType: true,
   fileSize: true,
   storageKey: true
@@ -122,8 +175,9 @@ export const patientDocumentSchema = z.object({
   patientId: z.string(),
   organizationId: z.string(),
   uploadedById: z.string(),
+  treatmentPlanId: z.string().nullable(),
   fileName: z.string(),
-  originalName: z.string(),
+  originalFileName: z.string(),
   mimeType: z.string(),
   fileSize: z.number(),
   storageKey: z.string(),
@@ -144,10 +198,18 @@ export const patientQuerySchema = z.object({
   insuranceProvider: z.string().optional()
 })
 
+export const treatmentPlanQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  patientId: z.string().optional(),
+  status: treatmentPlanStatusSchema.optional()
+})
+
 export const consultationQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   patientId: z.string().optional(),
+  treatmentPlanId: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional()
 })
@@ -166,6 +228,12 @@ export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
 
+export type TreatmentPlan = z.infer<typeof treatmentPlanSchema>
+export type TreatmentPlanCreate = z.infer<typeof treatmentPlanCreateSchema>
+export type TreatmentPlanUpdate = z.infer<typeof treatmentPlanUpdateSchema>
+export type TreatmentPlanQuery = z.infer<typeof treatmentPlanQuerySchema>
+export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
+
 export type Consultation = z.infer<typeof consultationSchema>
 export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
 export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>
@@ -180,3 +248,4 @@ export type Gender = z.infer<typeof genderSchema>
 export type PatientStatus = z.infer<typeof patientStatusSchema>
 export type DocumentCategory = z.infer<typeof documentCategorySchema>
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>
+export type Note = z.infer<typeof noteSchema>
