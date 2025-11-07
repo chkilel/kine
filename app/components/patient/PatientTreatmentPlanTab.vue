@@ -274,9 +274,7 @@
     }
   }
 
-  const props = defineProps<{
-    patient?: Patient
-  }>()
+  const props = defineProps<{ patient?: Patient }>()
 
   const createSlideoverOpen = ref(false)
 
@@ -533,12 +531,7 @@
   <!-- Create Treatment Plan Slideover -->
   <CreateTreatmentPlanSlideover
     v-if="props.patient"
-    :patient="{
-      id: props.patient.id,
-      firstName: props.patient.firstName,
-      lastName: props.patient.lastName,
-      birthDate: props.patient.dateOfBirth
-    }"
+    :patient="props.patient"
     :open="createSlideoverOpen"
     @update:open="createSlideoverOpen = $event"
     @created="handleTreatmentPlanCreated"

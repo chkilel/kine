@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     const [patient] = await db
       .select()
       .from(patients)
-      .where(and(eq(patients.id, id), eq(patients.organizationId, activeOrganizationId), isNull(patients.deletedAt)))
+      .where(and(eq(patients.organizationId, activeOrganizationId), eq(patients.id, id), isNull(patients.deletedAt)))
       .limit(1)
 
     if (!patient) {
@@ -52,10 +52,11 @@ export default defineEventHandler(async (event) => {
 
     return patient
   } catch (error: any) {
+    console.error('Error fetching patient:', error)
+
     if (error.statusCode) {
       throw error
     }
-    console.error('Error fetching patient:', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to fetch patient'

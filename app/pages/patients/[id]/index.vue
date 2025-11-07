@@ -1,12 +1,22 @@
 <script setup lang="ts">
   import type { Patient } from '~~/shared/types/patient.types'
   import type { BreadcrumbItem } from '@nuxt/ui'
-  import { format, differenceInYears, parseISO, isValid } from 'date-fns'
-  import { fr } from 'date-fns/locale'
 
   const route = useRoute()
 
-  const { data: patient, status, error } = await useFetch<Patient>(`/api/patients/${route.params.id}`)
+  const {
+    data: patient,
+    status,
+    error
+  } = await useFetch(`/api/patients/${route.params.id}`, {
+    transform: (data) => ({
+      ...data,
+      dateOfBirth: toDate(data.dateOfBirth),
+      createdAt: toDate(data.createdAt),
+      updatedAt: toDate(data.updatedAt),
+      deletedAt: toDate(data.deletedAt)
+    })
+  })
 
   if (error.value) {
     throw createError({
@@ -16,6 +26,7 @@
   }
 
   const activeTab = ref('overview')
+  const isEditModalOpen = ref(false)
 
   const tabs = [
     { label: "Vue d'Ensemble", slot: 'overview', value: 'overview' },
@@ -26,50 +37,12 @@
   ]
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    {
-      label: 'Patients',
-      to: '/patients'
-    },
-    {
-      label: patient.value ? formatFullName(patient.value) : 'Patient'
-    }
+    { label: 'Patients', to: '/patients' },
+    { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  function formatDate(date?: Date | string): string {
-    if (!date) return '-'
-
-    const dateObj = typeof date === 'string' ? parseISO(date) : date
-
-    if (!isValid(dateObj)) return '-'
-
-    try {
-      return format(dateObj, 'dd/MM/yyyy', { locale: fr })
-    } catch {
-      return '-'
-    }
-  }
-
-  function formatFullName(patient: Patient) {
+  function formatFullName(patient: Pick<Patient, 'firstName' | 'lastName'>) {
     return `${patient.firstName} ${patient.lastName}`
-  }
-
-  function getAge(dateOfBirth?: Date | string) {
-    if (!dateOfBirth) return ''
-    try {
-      let birth: Date
-      if (dateOfBirth instanceof Date) {
-        birth = dateOfBirth
-      } else if (typeof dateOfBirth === 'string') {
-        birth = parseISO(dateOfBirth)
-      } else {
-        return ''
-      }
-      const age = differenceInYears(new Date(), birth)
-      return age.toString()
-    } catch (error) {
-      console.error('Error calculating age:', error, dateOfBirth)
-      return ''
-    }
   }
 
   function getStatusColor(status: string) {
@@ -182,16 +155,15 @@
               </div>
             </div>
             <div class="border-default mt-4 flex flex-wrap justify-center gap-2 border-t pt-4 sm:justify-end">
-              <PatientEditModal v-if="patient" :patient="patient" @updated="() => refreshNuxtData()">
-                <UButton
-                  color="neutral"
-                  variant="outline"
-                  class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-                >
-                  <UIcon name="i-lucide-edit" class="text-base" />
-                  <span class="truncate">Modifier patient</span>
-                </UButton>
-              </PatientEditModal>
+              <UButton
+                color="neutral"
+                variant="outline"
+                class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
+                @click="isEditModalOpen = true"
+              >
+                <UIcon name="i-lucide-edit" class="text-base" />
+                <span class="truncate">Modifier patient</span>
+              </UButton>
               <UButton
                 color="primary"
                 variant="soft"
@@ -241,4 +213,13 @@
       </UContainer>
     </template>
   </UDashboardPanel>
+
+  <!-- Edit Modal -->
+  <PatientEditSlideover
+    v-if="patient"
+    :patient="patient"
+    :open="isEditModalOpen"
+    @update:open="isEditModalOpen = $event"
+    @updated="() => refreshNuxtData()"
+  />
 </template>

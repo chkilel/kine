@@ -2,11 +2,9 @@
   import { differenceInDays } from 'date-fns'
   import type { Patient } from '~~/shared/types/patient.types'
 
-  interface Props {
+  const props = defineProps<{
     patient: Patient
-  }
-
-  const props = defineProps<Props>()
+  }>()
 
   // Computed properties for database fields
   const fullAddress = computed(() => {
@@ -32,14 +30,14 @@
   const primaryEmergencyContact = computed(() => {
     if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
       const contact = props.patient.emergencyContacts[0]
-      return contact.name || '-'
+      return contact?.name || 'Sans nom'
     }
     return '-'
   })
 
   const primaryEmergencyPhone = computed(() => {
     if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
-      return props.patient.emergencyContacts[0].phone || '-'
+      return props.patient.emergencyContacts[0]?.phone || '-'
     }
     return '-'
   })

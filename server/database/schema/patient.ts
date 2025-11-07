@@ -43,7 +43,6 @@ export const patients = sqliteTable(
     insuranceProvider: text(), // Optional insurance company name — e.g., "AXA Assurance"
     insuranceNumber: text(), // Optional insurance number — e.g., "INS-123456789"
     referralSource: text(), // Who referred the patient — e.g., "Dr. Smith" or "Online Ad"
-    // referralDate: dateSchema, // Timestamp (ms) — e.g., 1730246400000 for "2024-10-30" NOT RELEVENT
 
     // ---- Record management ----
     status: text({ enum: ['active', 'inactive', 'discharged', 'archived'] })

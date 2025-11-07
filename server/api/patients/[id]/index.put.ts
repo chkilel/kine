@@ -39,8 +39,18 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
   try {
+    // Convert date strings to Date objects
+    const processedBody = {
+      ...body,
+      dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined,
+      notes: body.notes?.map((note: any) => ({
+        ...note,
+        date: new Date(note.date)
+      }))
+    }
+
     // Validate input
-    const validatedData = patientUpdateSchema.parse(body)
+    const validatedData = patientUpdateSchema.parse(processedBody)
 
     // Update patient
     const [updatedPatient] = await db

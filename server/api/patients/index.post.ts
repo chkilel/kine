@@ -35,7 +35,6 @@ export default defineEventHandler(async (event) => {
     const processedBody = {
       ...rawBody,
       dateOfBirth: rawBody.dateOfBirth ? new Date(rawBody.dateOfBirth) : undefined,
-      referralDate: rawBody.referralDate ? new Date(rawBody.referralDate) : undefined,
       notes: rawBody.notes?.map((note: any) => ({
         ...note,
         date: note.date ? new Date(note.date) : undefined

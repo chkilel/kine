@@ -24,7 +24,6 @@
     insuranceProvider: undefined,
     insuranceNumber: undefined,
     referralSource: undefined,
-    referralDate: undefined,
     status: 'active',
     notes: undefined
   })
@@ -52,9 +51,6 @@
 
   watch(dobModel, (val) => {
     state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
-  })
-  watch(referralModel, (val) => {
-    state.referralDate = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
   async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
@@ -432,25 +428,6 @@
                     <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
                       <UFormField label="Médecin/Praticien" name="referralSource">
                         <UInput v-model="state.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
-                      </UFormField>
-                      <UFormField label="Date de référence" name="referralDate">
-                        <UPopover>
-                          <UButton
-                            color="neutral"
-                            variant="subtle"
-                            icon="i-lucide-calendar"
-                            class="w-full justify-start"
-                          >
-                            {{
-                              referralModel
-                                ? df.format(referralModel.toDate(getLocalTimeZone()))
-                                : 'Sélectionner une date'
-                            }}
-                          </UButton>
-                          <template #content>
-                            <UCalendar v-model="referralModel" class="p-2" />
-                          </template>
-                        </UPopover>
                       </UFormField>
                     </div>
                   </template>

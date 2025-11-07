@@ -50,7 +50,6 @@ export const patientCreateSchema = z.object({
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
   referralSource: z.string().optional(),
-  referralDate: z.date().optional(),
   status: patientStatusSchema.default('active'),
   notes: z.array(noteSchema).optional()
 })
@@ -62,7 +61,7 @@ export const patientSchema = z.object({
   organizationId: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  dateOfBirth: z.date(),
+  dateOfBirth: z.date().nullable(),
   gender: genderSchema.nullable(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
@@ -78,11 +77,10 @@ export const patientSchema = z.object({
   insuranceProvider: z.string().nullable(),
   insuranceNumber: z.string().nullable(),
   referralSource: z.string().nullable(),
-  referralDate: z.date().nullable(),
   status: patientStatusSchema,
   notes: z.array(noteSchema).nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.date().nullable(),
+  updatedAt: z.date().nullable,
   deletedAt: z.date().nullable()
 })
 
