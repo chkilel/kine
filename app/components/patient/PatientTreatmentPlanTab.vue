@@ -1,127 +1,202 @@
 <script setup lang="ts">
   import CreateTreatmentPlanSlideover from './CreateTreatmentPlanSlideover.vue'
 
-  interface TreatmentPlan {
-    id: string
-    title: string
-    objective: string
-    status: 'active' | 'completed'
-    progress: number
-    completedSessions: number
-    totalSessions: number
-    startDate: string
-    endDate: string
-    therapist: string
-    painLevel: number
-    frequency: string
-    prescribingDoctor: string
-    insurance: string
-    context: string
-  }
-
-  interface Session {
-    id: string
-    date: string
-    time: string
-    type: string
-    duration: string
-    status: 'completed' | 'upcoming' | 'missed'
-  }
-
-  interface Document {
-    id: string
-    name: string
-    uploadDate: string
-    uploadedBy: string
-    type: 'radio' | 'report' | 'prescription'
-  }
-
-  interface Note {
-    id: string
-    session: string
-    content: string
-    author: string
-    date: string
-  }
-
   const treatmentPlan: TreatmentPlan = {
     id: '1',
+    organizationId: 'org_1',
+    patientId: 'pat_1',
+    therapistId: 'therapist_1',
     title: 'Rééducation épaule droite',
+    diagnosis: 'Tendinopathie du supra-épineux avec calcification',
     objective: "Améliorer l'amplitude articulaire, réduire la douleur nocturne et renforcer la coiffe des rotateurs.",
-    status: 'active',
-    progress: 67,
-    completedSessions: 10,
-    totalSessions: 15,
-    startDate: '01/10/2024',
-    endDate: '30/11/2024',
-    therapist: 'Dr. Martin',
+    startDate: new Date('2024-10-01'),
+    endDate: new Date('2024-11-30'),
+    numberOfSessions: 15,
+    sessionFrequency: 2,
+    status: 'ongoing',
+    prescribingDoctor: 'Dr. Leblanc',
+    prescriptionDate: new Date('2024-09-15'),
     painLevel: 4,
-    frequency: '2x / semaine (15 séances)',
-    prescribingDoctor: 'Dr. Leblanc (15/09/2024)',
-    insurance: 'Mutuelle SantéPlus (Prise en charge OK)',
-    context: 'Suite à une chute, diagnostic de tendinopathie du supra-épineux avec calcification.'
+    coverageStatus: 'covered',
+    insuranceInfo: 'Mutuelle SantéPlus (Prise en charge OK)',
+    notes: [
+      {
+        date: new Date(),
+        author: 'Dr. Martin',
+        content: 'Suite à une chute, diagnostic de tendinopathie du supra-épineux avec calcification.'
+      }
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null
   }
 
-  const sessions: Session[] = [
+  const sessions: Consultation[] = [
     {
       id: '1',
-      date: '15 Oct. 2024',
-      time: '10:00',
-      type: 'Bilan initial',
-      duration: '45 min',
-      status: 'completed'
+      organizationId: 'org_1',
+      patientId: 'pat_1',
+      treatmentPlanId: '1',
+      date: new Date('2024-10-15'),
+      startTime: '10:00',
+      endTime: '10:45',
+      duration: 45,
+      sessionType: 'initial',
+      chiefComplaint: 'Douleur épaule droite',
+      sessionNotes: 'Bilan initial effectué',
+      treatmentPlanSummary: 'Évaluation et plan de traitement',
+      observations: 'Limitation de la mobilité',
+      nextSteps: 'Renforcement et mobilisation',
+      painLevelBefore: 6,
+      painLevelAfter: 4,
+      progressNotes: 'Amélioration notable de la mobilité en abduction.',
+      therapistId: 'therapist_1',
+      therapistNotes: 'Patient motivé',
+      status: 'completed',
+      billed: false,
+      insuranceClaimed: false,
+      sessionCost: 5000,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: '2',
-      date: '18 Oct. 2024',
-      time: '11:00',
-      type: 'Renforcement',
-      duration: '30 min',
-      status: 'upcoming'
+      organizationId: 'org_1',
+      patientId: 'pat_1',
+      treatmentPlanId: '1',
+      date: new Date('2024-10-18'),
+      startTime: '11:00',
+      endTime: '11:30',
+      duration: 30,
+      sessionType: 'follow_up',
+      chiefComplaint: 'Suivi rééducation',
+      sessionNotes: 'Renforcement',
+      treatmentPlanSummary: 'Exercices de renforcement',
+      observations: 'Bonne progression',
+      nextSteps: 'Continuer le programme',
+      painLevelBefore: 4,
+      painLevelAfter: 3,
+      progressNotes: null,
+      therapistId: 'therapist_1',
+      therapistNotes: null,
+      status: 'scheduled',
+      billed: false,
+      insuranceClaimed: false,
+      sessionCost: 4000,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: '3',
-      date: '22 Oct. 2024',
-      time: '10:00',
-      type: 'Thérapie manuelle',
-      duration: '30 min',
-      status: 'upcoming'
+      organizationId: 'org_1',
+      patientId: 'pat_1',
+      treatmentPlanId: '1',
+      date: new Date('2024-10-22'),
+      startTime: '10:00',
+      endTime: '10:30',
+      duration: 30,
+      sessionType: 'follow_up',
+      chiefComplaint: 'Suivi rééducation',
+      sessionNotes: 'Thérapie manuelle',
+      treatmentPlanSummary: 'Mobilisation et thérapie manuelle',
+      observations: 'Douleur résiduelle à la palpation',
+      nextSteps: 'Continuer la thérapie manuelle',
+      painLevelBefore: 3,
+      painLevelAfter: 2,
+      progressNotes: null,
+      therapistId: 'therapist_1',
+      therapistNotes: null,
+      status: 'scheduled',
+      billed: false,
+      insuranceClaimed: false,
+      sessionCost: 4000,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
       id: '4',
-      date: '12 Oct. 2024',
-      time: '09:00',
-      type: 'Mobilisation',
-      duration: '30 min',
-      status: 'missed'
+      organizationId: 'org_1',
+      patientId: 'pat_1',
+      treatmentPlanId: '1',
+      date: new Date('2024-10-12'),
+      startTime: '09:00',
+      endTime: '09:30',
+      duration: 30,
+      sessionType: 'follow_up',
+      chiefComplaint: 'Suivi rééducation',
+      sessionNotes: 'Mobilisation',
+      treatmentPlanSummary: 'Exercices de mobilisation',
+      observations: null,
+      nextSteps: null,
+      painLevelBefore: 5,
+      painLevelAfter: null,
+      progressNotes: null,
+      therapistId: 'therapist_1',
+      therapistNotes: null,
+      status: 'no_show',
+      billed: false,
+      insuranceClaimed: false,
+      sessionCost: 4000,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ]
 
-  const documents: Document[] = [
+  const documents: PatientDocument[] = [
     {
       id: '1',
-      name: 'Radio_Epaule_Post-Chute.pdf',
-      uploadDate: '02/10/2024',
-      uploadedBy: 'Dr. Martin',
-      type: 'radio'
+      patientId: 'pat_1',
+      organizationId: 'org_1',
+      uploadedById: 'therapist_1',
+      treatmentPlanId: '1',
+      fileName: 'Radio_Epaule_Post-Chute.pdf',
+      originalFileName: 'Radio_Epaule_Post-Chute.pdf',
+      mimeType: 'application/pdf',
+      fileSize: 2048576,
+      storageKey: 'orgs/org_1/patients/pat_1/doc_1.pdf',
+      category: 'imaging',
+      description: 'Radio post-chute épaule droite',
+      createdAt: new Date('2024-10-02'),
+      updatedAt: new Date('2024-10-02'),
+      deletedAt: null
     },
     {
       id: '2',
-      name: 'Rapport_Medecin_Traitant.docx',
-      uploadDate: '01/10/2024',
-      uploadedBy: 'Dr. Martin',
-      type: 'report'
+      patientId: 'pat_1',
+      organizationId: 'org_1',
+      uploadedById: 'therapist_1',
+      treatmentPlanId: '1',
+      fileName: 'Rapport_Medecin_Traitant.docx',
+      originalFileName: 'Rapport_Medecin_Traitant.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      fileSize: 1024000,
+      storageKey: 'orgs/org_1/patients/pat_1/doc_2.docx',
+      category: 'treatment_notes',
+      description: 'Rapport du médecin traitant',
+      createdAt: new Date('2024-10-01'),
+      updatedAt: new Date('2024-10-01'),
+      deletedAt: null
     },
     {
       id: '3',
-      name: 'Ordonnance_Antalgiques.png',
-      uploadDate: '01/10/2024',
-      uploadedBy: 'Dr. Martin',
-      type: 'prescription'
+      patientId: 'pat_1',
+      organizationId: 'org_1',
+      uploadedById: 'therapist_1',
+      treatmentPlanId: '1',
+      fileName: 'Ordonnance_Antalgiques.png',
+      originalFileName: 'Ordonnance_Antalgiques.png',
+      mimeType: 'image/png',
+      fileSize: 512000,
+      storageKey: 'orgs/org_1/patients/pat_1/doc_3.png',
+      category: 'prescriptions',
+      description: 'Ordonnance antalgiques',
+      createdAt: new Date('2024-10-01'),
+      updatedAt: new Date('2024-10-01'),
+      deletedAt: null
     }
   ]
 
-  const notes: Note[] = [
+  const notes = [
     {
       id: '1',
       session: 'Séance 5',
@@ -144,9 +219,9 @@
     switch (status) {
       case 'completed':
         return 'success'
-      case 'upcoming':
+      case 'scheduled':
         return 'warning'
-      case 'missed':
+      case 'no_show':
         return 'error'
       default:
         return 'neutral'
@@ -157,35 +232,35 @@
     switch (status) {
       case 'completed':
         return 'Terminée'
-      case 'upcoming':
+      case 'scheduled':
         return 'À venir'
-      case 'missed':
+      case 'no_show':
         return 'Manquée'
       default:
         return status
     }
   }
 
-  function getDocumentIcon(type: string) {
-    switch (type) {
-      case 'radio':
+  function getDocumentIcon(category: string) {
+    switch (category) {
+      case 'imaging':
         return 'i-lucide-image'
-      case 'report':
+      case 'treatment_notes':
         return 'i-lucide-file-text'
-      case 'prescription':
+      case 'prescriptions':
         return 'i-lucide-pill'
       default:
         return 'i-lucide-file-text'
     }
   }
 
-  function getDocumentColor(type: string) {
-    switch (type) {
-      case 'radio':
+  function getDocumentColor(category: string) {
+    switch (category) {
+      case 'imaging':
         return 'primary'
-      case 'report':
+      case 'treatment_notes':
         return 'info'
-      case 'prescription':
+      case 'prescriptions':
         return 'secondary'
       default:
         return 'neutral'
@@ -199,17 +274,16 @@
     }
   }
 
+  const props = defineProps<{
+    patient?: Patient
+  }>()
+
   const createSlideoverOpen = ref(false)
 
-  const patient = {
-    id: '1',
-    name: 'Jean Dupont',
-    birthDate: '01/01/1980'
-  }
-
-  function handleCreatePlan(plan: any) {
-    console.log('Creating treatment plan:', plan)
-    // In a real app, this would save to the API
+  function handleTreatmentPlanCreated(plan: any) {
+    console.log('Treatment plan created:', plan)
+    // Refresh data or update UI
+    createSlideoverOpen.value = false
   }
 </script>
 
@@ -226,19 +300,40 @@
         <div class="text-muted space-y-3 text-sm">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="text-toned" />
-            <span>Début: {{ treatmentPlan.startDate }} - Fin: {{ treatmentPlan.endDate }}</span>
+            <span>
+              Début: {{ treatmentPlan.startDate.toLocaleDateString('fr-FR') }} - Fin:
+              {{ treatmentPlan.endDate?.toLocaleDateString('fr-FR') }}
+            </span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="text-toned" />
-            <span>Thérapeute: {{ treatmentPlan.therapist }}</span>
+            <span>Thérapeute: {{ treatmentPlan.therapistId }}</span>
           </div>
         </div>
         <div class="mt-5">
           <div class="text-muted mb-1 flex items-center justify-between text-sm">
-            <span>Progression ({{ treatmentPlan.completedSessions }}/{{ treatmentPlan.totalSessions }} séances)</span>
-            <span>{{ treatmentPlan.progress }}%</span>
+            <span>
+              Progression ({{ sessions.filter((s) => s.status === 'completed').length }}/{{
+                treatmentPlan.numberOfSessions
+              }}
+              séances)
+            </span>
+            <span>
+              {{
+                Math.round(
+                  (sessions.filter((s) => s.status === 'completed').length / (treatmentPlan.numberOfSessions || 1)) *
+                    100
+                )
+              }}%
+            </span>
           </div>
-          <UProgress :model-value="treatmentPlan.progress" />
+          <UProgress
+            :model-value="
+              Math.round(
+                (sessions.filter((s) => s.status === 'completed').length / (treatmentPlan.numberOfSessions || 1)) * 100
+              )
+            "
+          />
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
@@ -274,10 +369,10 @@
                 <p class="text-muted text-sm">{{ treatmentPlan.objective }}</p>
               </div>
               <div>
-                <h4 class="mb-2 text-sm font-semibold">Contexte pathologique</h4>
-                <p class="text-muted text-sm">{{ treatmentPlan.context }}</p>
+                <h4 class="mb-2 text-sm font-semibold">Diagnostic</h4>
+                <p class="text-muted text-sm">{{ treatmentPlan.diagnosis }}</p>
               </div>
-              <div>
+              <div v-if="treatmentPlan.painLevel">
                 <h4 class="mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
                 <div class="flex items-center gap-3">
                   <USlider :model-value="treatmentPlan.painLevel" :max="10" :min="0" disabled />
@@ -287,7 +382,7 @@
               <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <h4 class="font-semibold">Fréquence</h4>
-                  <p class="text-muted">{{ treatmentPlan.frequency }}</p>
+                  <p class="text-muted">{{ treatmentPlan.sessionFrequency }}x / semaine</p>
                 </div>
                 <div>
                   <h4 class="font-semibold">Médecin prescripteur</h4>
@@ -295,7 +390,7 @@
                 </div>
                 <div>
                   <h4 class="font-semibold">Assurance</h4>
-                  <p class="text-muted">{{ treatmentPlan.insurance }}</p>
+                  <p class="text-muted">{{ treatmentPlan.insuranceInfo }}</p>
                 </div>
               </div>
             </div>
@@ -327,15 +422,15 @@
             }"
           >
             <template #date-cell="{ row }">
-              <span class="text-sm">{{ row.getValue('date') }}, {{ row.original.time }}</span>
+              <span class="text-sm">
+                {{ row.original.date.toLocaleDateString('fr-FR') }}, {{ row.original.startTime }}
+              </span>
             </template>
             <template #type-cell="{ row }">
-              <span class="text-muted text-sm">{{ row.getValue('type') }}</span>
+              <span class="text-muted text-sm">{{ row.original.sessionType }}</span>
             </template>
             <template #duration-cell="{ row }">
-              <span class="text-muted text-sm">
-                {{ row.getValue('duration') }}
-              </span>
+              <span class="text-muted text-sm">{{ row.original.duration }} min</span>
             </template>
             <template #status-cell="{ row }">
               <UBadge :color="getSessionStatusColor(row.getValue('status'))" variant="soft" size="md">
@@ -346,7 +441,7 @@
               <div class="flex items-center justify-end gap-2">
                 <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
                 <UButton
-                  v-if="row.getValue('status') === 'upcoming'"
+                  v-if="row.original.status === 'scheduled'"
                   icon="i-lucide-x"
                   variant="ghost"
                   color="error"
@@ -354,7 +449,7 @@
                   square
                 />
                 <UButton
-                  v-else-if="row.getValue('status') === 'completed'"
+                  v-else-if="row.original.status === 'completed'"
                   icon="i-lucide-plus"
                   variant="ghost"
                   color="neutral"
@@ -410,15 +505,17 @@
             <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between py-3">
               <div class="flex items-center gap-4">
                 <UBadge
-                  :icon="getDocumentIcon(doc.type)"
-                  :color="getDocumentColor(doc.type)"
+                  :icon="getDocumentIcon(doc.category)"
+                  :color="getDocumentColor(doc.category)"
                   variant="soft"
                   size="lg"
                   square
                 />
                 <div>
-                  <p class="font-semibold">{{ doc.name }}</p>
-                  <p class="text-muted text-xs">Téléversé le {{ doc.uploadDate }} par {{ doc.uploadedBy }}</p>
+                  <p class="font-semibold">{{ doc.originalFileName }}</p>
+                  <p class="text-muted text-xs">
+                    Téléversé le {{ doc.createdAt.toLocaleDateString('fr-FR') }} par {{ doc.uploadedById }}
+                  </p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -435,9 +532,15 @@
 
   <!-- Create Treatment Plan Slideover -->
   <CreateTreatmentPlanSlideover
-    :patient="patient"
+    v-if="props.patient"
+    :patient="{
+      id: props.patient.id,
+      firstName: props.patient.firstName,
+      lastName: props.patient.lastName,
+      birthDate: props.patient.dateOfBirth
+    }"
     :open="createSlideoverOpen"
     @update:open="createSlideoverOpen = $event"
-    @create="handleCreatePlan"
+    @created="handleTreatmentPlanCreated"
   />
 </template>

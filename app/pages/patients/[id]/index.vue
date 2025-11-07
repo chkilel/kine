@@ -224,7 +224,7 @@
 
             <!-- Plan de traitement Tab -->
             <template #plan>
-              <PatientTreatmentPlanTab />
+              <PatientTreatmentPlanTab v-if="patient" :patient="patient" />
             </template>
 
             <!-- Documents Tab -->
