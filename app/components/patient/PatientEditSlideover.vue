@@ -259,56 +259,38 @@
           <h3 class="text-highlighted mb-4 text-base font-bold">Contact d'urgence</h3>
           <div class="space-y-4">
             <div class="text-sm">Contacts existants: {{ state.emergencyContacts?.length || 0 }}</div>
-            <div v-if="state.emergencyContacts?.length" class="space-y-4">
+            <div v-if="state.emergencyContacts?.length" class="divide-default divide-y">
               <div
                 v-for="(contact, index) in state.emergencyContacts"
                 :key="`contact-${index}`"
-                class="group bg-muted p-2"
+                class="flex items-center justify-between py-3"
               >
-                <div class="flex items-start gap-4">
-                  <div class="bg-elevated flex size-13 shrink-0 items-center justify-center rounded-xl">
-                    <UIcon name="i-lucide-user" class="text-primary text-xl" />
+                <div class="flex items-center gap-4">
+                  <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
+                  <div>
+                    <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
+                    <p class="text-muted flex gap-4 text-xs">
+                      <span class="flex items-center gap-1">
+                        <UIcon name="i-lucide-phone" class="h-3 w-3" />
+                        {{ contact.phone }}
+                      </span>
+                      <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
+                        <UIcon name="i-lucide-users" class="h-3 w-3" />
+                        {{ contact.relationship }}
+                      </span>
+                    </p>
                   </div>
-
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-start justify-between gap-4">
-                      <div class="min-w-0 flex-1 space-y-3">
-                        <div class="space-y-2">
-                          <h4 class="truncate text-base font-semibold tracking-tight">
-                            {{ contact.name || 'Contact sans nom' }}
-                          </h4>
-                          <div class="flex items-center gap-4 text-sm">
-                            <div class="flex items-center gap-2">
-                              <UIcon name="i-lucide-phone" class="h-4 w-4" />
-                              <span>{{ contact.phone }}</span>
-                            </div>
-                            <div v-if="contact.relationship" class="flex items-center gap-2">
-                              <UIcon name="i-lucide-users" class="h-4 w-4" />
-                              <span>{{ contact.relationship }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="flex items-center gap-2">
-                        <UButton
-                          icon="i-lucide-edit-2"
-                          size="xs"
-                          color="primary"
-                          variant="ghost"
-                          class="opacity-0 transition-all duration-200 group-hover:opacity-100"
-                        />
-                        <UButton
-                          icon="i-lucide-trash-2"
-                          size="xs"
-                          color="error"
-                          variant="ghost"
-                          class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-red-50"
-                          @click="state.emergencyContacts?.splice(index, 1)"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UButton icon="i-lucide-edit-2" variant="ghost" color="neutral" size="sm" square />
+                  <UButton
+                    icon="i-lucide-trash-2"
+                    variant="ghost"
+                    color="error"
+                    size="sm"
+                    square
+                    @click="state.emergencyContacts?.splice(index, 1)"
+                  />
                 </div>
               </div>
             </div>
