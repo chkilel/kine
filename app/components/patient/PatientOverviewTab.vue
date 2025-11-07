@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import { differenceInDays } from 'date-fns'
   import type { Patient } from '~~/shared/types/patient.types'
 
   interface Props {
@@ -68,6 +69,30 @@
     return props.patient?.referralSource || '-'
   })
 
+  const practitionerNotes = computed(() => {
+    if (props.patient?.notes && props.patient.notes.length > 0) {
+      return props.patient.notes.map((note) => ({
+        text: note.content,
+        author: note.author,
+        date: formatDate(note.date)
+      }))
+    }
+    return []
+  })
+
+  function formatDate(date: Date | string) {
+    const noteDate = typeof date === 'string' ? new Date(date) : date
+    const now = new Date()
+    const diffInDays = differenceInDays(now, noteDate)
+
+    if (diffInDays === 0) return "Aujourd'hui"
+    if (diffInDays === 1) return 'Hier'
+    if (diffInDays <= 7) return `il y a ${diffInDays} jours`
+    if (diffInDays <= 30) return `il y a ${Math.floor(diffInDays / 7)} semaines`
+    if (diffInDays <= 365) return `il y a ${Math.floor(diffInDays / 30)} mois`
+    return `il y a ${Math.floor(diffInDays / 365)} ans`
+  }
+
   // Static data for fields not in database
   const staticData = {
     mainPathology: "Tendinopathie calcifiante de l'épaule",
@@ -77,10 +102,7 @@
     painLevel: 4,
     coverage: '80%',
     doctor: 'Dr. Leblanc',
-    practitionerNotes: [
-      { text: 'Amélioration notable de la mobilité en abduction.', author: 'Dr. Martin', date: 'il y a 2 jours' },
-      { text: 'Douleur résiduelle à la palpation du tendon.', author: 'Dr. Martin', date: 'il y a 5 jours' }
-    ],
+
     treatmentPlan: {
       name: 'Rééducation épaule droite',
       status: 'Actif',
@@ -141,11 +163,11 @@
         <div class="space-y-4 text-sm">
           <div>
             <h3 class="text-muted font-semibold">Pathologie principale</h3>
-            <p>{{ staticData.mainPathology }}</p>
+            <p class="font-medium">{{ staticData.mainPathology }}</p>
           </div>
           <div>
             <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-            <p>{{ staticData.treatmentObjective }}</p>
+            <p class="font-medium">{{ staticData.treatmentObjective }}</p>
           </div>
           <div>
             <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
@@ -165,28 +187,28 @@
             <UIcon name="i-lucide-home" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Adresse</h3>
-              <p class="text-default">{{ fullAddress }}</p>
+              <p class="font-medium">{{ fullAddress }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-heart" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Assurance/Mutuelle</h3>
-              <p class="text-default">{{ insuranceDetails }}</p>
+              <p class="font-medium">{{ insuranceDetails }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-stethoscope" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Médecin prescripteur</h3>
-              <p class="text-default">{{ referralSource }}</p>
+              <p class="font-medium">{{ referralSource }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Contact d'urgence</h3>
-              <p class="text-default">{{ primaryEmergencyContact }} - {{ primaryEmergencyPhone }}</p>
+              <p class="font-medium">{{ primaryEmergencyContact }} - {{ primaryEmergencyPhone }}</p>
             </div>
           </div>
         </div>
@@ -254,10 +276,11 @@
         </template>
         <div class="space-y-4">
           <UTextarea placeholder="Ajouter une note rapide..." :rows="2" class="w-full" />
-          <div v-for="note in staticData.practitionerNotes" :key="note.date" class="text-sm">
+          <div v-for="note in practitionerNotes" :key="note.date" class="text-sm">
             <p class="truncate">{{ note.text }}</p>
             <p class="text-muted text-xs">{{ note.author }} - {{ note.date }}</p>
           </div>
+          <div v-if="practitionerNotes.length === 0" class="text-muted text-sm">Aucune note enregistrée</div>
         </div>
       </UCard>
     </div>
