@@ -1,261 +1,104 @@
-# Project Specification: Kine
+# Project Context
 
-## Project Overview
+## Purpose
 
-**Kine** is a multi-tenant physiotherapy practice management application designed to centralize clinic operations including patient management, appointment scheduling, clinical documentation, billing, and reporting. The application targets reducing administrative time by and missed appointments by through automation and streamlined workflows.
+Kine is a comprehensive physical therapy clinic management web application designed to streamline patient care, treatment planning, and clinic operations. The system serves multi-tenant physical therapy clinics with features for patient management, treatment tracking, document handling, billing, and analytics.
 
-## Domain Context
+## Tech Stack
 
-### Core Entities
-
-- **Organizations**: Multi-tenant clinics with isolated data and settings
-- **Users**: Clinic staff with role-based access control (admin, physiotherapist, receptionist)
-- **Patients**: Comprehensive medical records with demographics, history, and documents
-- **Appointments**: Calendar-based scheduling with status tracking and reminders
-- **Treatment Plans**: Structured therapy plans linked to prescriptions with session tracking
-- **Clinical Assessments**: Intake forms for patient history, pain assessment, and goals
-- **Invoices**: Multi-session billing with payment tracking and balance management
-
-### Key Workflows
-
-- **Patient Onboarding**: Registration, assessment, treatment plan creation
-- **Appointment Management**: Scheduling, reminders, status updates
-- **Clinical Documentation**: Assessment forms, progress notes, treatment tracking
-- **Billing & Payments**: Invoice generation, payment processing, financial reporting
-- **Multi-language Support**: French UI with Arabic patient-facing content (RTL support)
-
-### User Roles
-
-- **Administrator**: Full system access, organization settings, user management
-- **Physiotherapist**: Patient care, clinical documentation, treatment planning
-- **Receptionist**: Appointment scheduling, patient registration, billing support
-
-### Primary Goals
-
-- Centralize all physiotherapy practice operations in one secure, efficient platform
-- Replace fragmented tools (paper, spreadsheets, calendars, billing software)
-- Enable multi-tenant support for multiple clinics
-- Offer a French UI with planned Arabic support for patient-facing content
-- Ensure all active patients have complete Treatment Plans and Clinical Assessments
-- Reduce administrative workload and streamline billing to minimize payment delays
-- Improve care plan tracking, treatment monitoring, and appointment adherence through automation
-- Deliver affordable, simple, and secure practice management software
-
-## Technology Stack
-
-### Frontend
-
-- **Framework**: Nuxt 4
-- **UI Library**: Vue 3
-- **Language**: TypeScript
-- **Component Library**: Nuxt UI
-- **Internationalization**: Vue I18n
-- **Styling**: Tailwind CSS (via Nuxt UI)
-- **Icons**: Iconify (Lucide, Simple Icons)
-- **Charts**: Unovis for data visualization
-- **Date Handling**: date-fns
-- **State Management**: Pinia (when needed for complex state)
-
-### Backend
-
-- **API**: Nuxt Server Routes
-- **Authentication**: Better Auth with Organization and Admin plugins
-- **Database**: Drizzle ORM with SQLite (Cloudflare D1)
-- **Validation**: Zod v4 for runtime type validation
-- **File Storage**: Cloudflare R2
-- **Caching**: Cloudflare KV
-- **Email**: Transactional email provider for reminders
-
-### Infrastructure & Deployment
-
-- **Platform**: Cloudflare Workers
-- **Database**: Cloudflare D1
-- **File Storage**: Cloudflare R2
-- **Caching**: Cloudflare KV
+- **Frontend**: Nuxt 4, Vue 3, TypeScript, Tailwind CSS via Nuxt UI
+- **Backend**: Nitro (Nuxt's server engine) on Cloudflare Workers
+- **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
+- **Authentication**: Better Auth with organization support
+- **File Storage**: Cloudflare R2 (S3-compatible)
 - **Package Manager**: pnpm
-- **Deployment**: Cloudflare Workers with D1 database
+- **Deployment**: Cloudflare Workers with Wrangler
 
-## Project Structure
-
-```
-kine-web/
-├── app/                          # Frontend application
-│   ├── components/               # Vue components
-│   │   ├── customers/           # Customer management components
-│   │   ├── home/               # Dashboard components
-│   │   ├── inbox/              # Email/messaging components
-│   │   ├── organizations/      # Organization management
-│   │   └── settings/           # Settings components
-│   ├── composables/            # Vue composables
-│   ├── layouts/               # Nuxt layouts
-│   ├── middleware/            # Nuxt middleware
-│   ├── pages/                 # Nuxt pages
-│   ├── types/                 # TypeScript type definitions
-│   └── utils/                 # Utility functions
-├── server/                     # Backend application
-│   ├── api/                   # API routes
-│   │   ├── auth/              # Authentication endpoints
-│   │   ├── r2/                # File storage endpoints
-│   │   └── [various].ts       # Other API endpoints
-│   ├── database/              # Database configuration
-│   │   ├── migrations/        # Database migrations
-│   │   └── schema/            # Database schema definitions
-│   └── utils/                 # Server utilities
-├── shared/                     # Shared code between client/server
-│   ├── types/                 # Shared TypeScript types
-│   └── utils/                 # Shared utilities
-└── openspec/                  # Project specifications
-```
-
-## Key Features & Modules
-
-### Authentication & Authorization
-
-- Multi-tenant authentication using Better Auth
-- Organization-based access control
-- User roles and permissions
-- Session management with Cloudflare KV
-
-### Organization Management
-
-- Multi-clinic support
-- Organization creation and management
-- Member invitations and role assignments
-- Organization switching
-
-### Customer Management
-
-- Patient records and profiles
-- Treatment plans and clinical assessments
-- Appointment scheduling
-- Billing and invoicing
-
-### Dashboard & Analytics
-
-- Sales and revenue tracking
-- Patient statistics
-- Appointment metrics
-- Data visualization with Unovis charts
-
-### Communication
-
-- Internal messaging system
-- Email notifications and reminders
-- Multi-language support (French primary, Arabic planned)
-
-## Development Conventions
+## Project Conventions
 
 ### Code Style
 
-- TypeScript for type safety
-- Vue 3 Composition API
-- Nuxt 4 conventions and best practices
-- Tailwind CSS for styling
-- Zod for runtime validation
+- **Formatting**: Prettier with 2-space tabs, single quotes, 120 character width
+- **TypeScript**: Strict mode enabled
+- **Vue**: Composition API with `<script setup lang='ts'>` syntax
+- **CSS**: Nuxt UI base classes first especially for colors and then Tailwind CSS utility classes
+- **Naming**: PascalCase for components, camelCase for functions/variables
+- **File Organization**: Feature-based structure with clear separation of concerns
 
-### Database
+### Architecture Patterns
 
-- Drizzle ORM for database operations
-- Cloudflare D1 for production and development
-- Migration-based schema changes
-- Type-safe database operations
+- **Multi-tenant SaaS**: Organization-based data isolation
+- **Soft-delete**: Data retention patterns with deleted_at timestamps
+- **Type-safe APIs**: Zod validation for request/response schemas
+- **Component-based**: Modular Vue components with clear props/events
+- **Database Indexing**: Comprehensive indexing strategy for performance
+- **File Upload**: Direct R2 uploads with signed URLs
 
-### API Design
+### Testing Strategy
 
-- RESTful API design
-- Nuxt server routes
-- Consistent error handling
-- Input validation with Zod
+- No explicit testing framework currently configured
+- Manual testing through development workflow
+- Type safety provides compile-time error checking
 
-### State Management
+### Git Workflow
 
-- Local component state where possible
-- Pinia for complex shared state
-- Server state via API calls
-- Caching strategies with Cloudflare KV
+- **Semantic Commits**: Conventional commit format
+- **Commit Types**: feat, fix, docs, style, refactor, test, chore
+- **Branching**: Feature branches from main
+- **Code Review**: Pull requests for significant changes
 
-## Configuration Files
+## Domain Context
 
-### Key Configuration
+### Physical Therapy Clinic Operations
 
-- `nuxt.config.ts` - Nuxt configuration
-- `drizzle.config.ts` - Database configuration
-- `wrangler.jsonc` - Cloudflare Workers configuration
-- `package.json` - Dependencies and scripts
+- **Patient Management**: Comprehensive medical records, treatment history, consultations
+- **Treatment Planning**: Custom treatment plans with progress tracking
+- **Document Management**: Categorized medical documents (referrals, imaging, lab results, treatment notes, prescriptions)
+- **Billing & Insurance**: Insurance tracking and billing workflows
+- **Analytics**: Dashboard with charts and performance metrics
 
-### Environment Variables
+### Regional Considerations
 
-- Better Auth secret and configuration
-- Cloudflare R2 credentials
-- Database connection settings
-- Email service configuration
+- **Locale**: French-speaking regions (evident from French locale in Zod schemas)
+- **Medical Standards**: Compliance with physical therapy practice standards
+- **Data Privacy**: Patient confidentiality and medical data protection
 
-## Development Workflow
+### User Roles
 
-### Local Development
+- **Clinic Administrators**: Organization management, member access
+- **Therapists**: Patient care, treatment planning, documentation
+- **Staff**: Billing, scheduling, administrative tasks
 
-```bash
-pnpm install          # Install dependencies
-pnpm dev              # Start development server
-pnpm db:gen           # Generate database migrations
-pnpm db:mig           # Apply local migrations
-```
+## Important Constraints
 
-### Database Management
+- **Multi-tenancy**: Strict data isolation between organizations
+- **Medical Data**: HIPAA-like compliance for patient information
+- **Performance**: Optimized for Cloudflare Workers edge deployment
+- **Scalability**: Designed to handle multiple clinics and high patient volumes
+- **Data Retention**: Soft-delete patterns for audit trails
 
-```bash
-pnpm db:gen           # Generate migrations
-pnpm db:mig           # Apply local migrations
-pnpm db:mig-remote    # Apply production migrations
-```
+## External Dependencies
 
-### Deployment
+- **Cloudflare Workers**: Serverless compute platform
+- **Cloudflare D1**: SQLite-compatible serverless database
+- **Cloudflare R2**: S3-compatible object storage
+- **Better Auth**: Authentication and authorization service
+- **Nuxt UI**: Component library for consistent UI
+- **Drizzle ORM**: Type-safe database operations
 
-```bash
-pnpm build            # Build for production
-pnpm deploy           # Deploy to Cloudflare Workers
-```
+## Database Schema Highlights
 
-## Current Implementation Status
+- **Organizations**: Multi-tenant container with billing and settings
+- **Users**: Authentication and role-based access control
+- **Patients**: Comprehensive patient records with medical history
+- **Treatment Plans**: Structured treatment programs with goals and progress
+- **Documents**: File storage with categorization and metadata
+- **Sessions**: Consultation tracking with notes and outcomes
 
-### Completed
+## API Patterns
 
-- Basic Nuxt 4 setup with TypeScript
-- Authentication system with Better Auth
-- Organization management
-- Basic dashboard components
-- Database schema with Drizzle
-- Cloudflare Workers deployment setup
-
-### In Progress
-
-- Patients management (placeholder pages exist - customers)
-- Advanced dashboard features
-- Email integration
-- PDF generation for invoices
-
-### Planned
-
-- Arabic language support
-- Advanced appointment scheduling
-- Billing and payment processing
-- Mobile-responsive design improvements
-- Advanced reporting features
-
-## Security Considerations
-
-- Multi-tenant data isolation
-- Secure authentication flows
-- Input validation and sanitization
-- Environment variable management
-- Cloudflare Workers security features
-- Rate limiting and abuse prevention
-
-## Performance Optimizations
-
-- Cloudflare Edge Network
-- Database query optimization
-- Caching strategies with KV
-- Image optimization via R2
-- Bundle size optimization
-- Lazy loading components
+- **RESTful Design**: Standard HTTP methods and status codes
+- **Validation**: Zod schemas for request/response validation
+- **Error Handling**: Consistent error responses with proper HTTP status codes
+- **Authentication**: JWT-based with organization context
+- **File Operations**: Signed URLs for secure uploads/downloads
