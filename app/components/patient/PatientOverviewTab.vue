@@ -6,6 +6,27 @@
     patient: Patient
   }>()
 
+  // Use treatment plans composable
+  const {
+    getActiveTreatmentPlan,
+    getTreatmentPlanHistory,
+    formatTreatmentPlanStatus,
+    formatDateRange,
+    getTherapistName,
+    loading: treatmentPlansLoading,
+    error: treatmentPlansError
+  } = usePatientTreatmentPlans(props.patient?.id)
+
+  // Watch for patient changes
+  watch(
+    () => props.patient?.id,
+    (newId) => {
+      if (newId) {
+        fetchTreatmentPlans(newId)
+      }
+    }
+  )
+
   // Computed properties for database fields
   const fullAddress = computed(() => {
     const parts = []
@@ -91,24 +112,8 @@
     return `il y a ${Math.floor(diffInDays / 365)} ans`
   }
 
-  // Static data for fields not in database
+  // Static data for fields not yet connected to database
   const staticData = {
-    mainPathology: "Tendinopathie calcifiante de l'épaule",
-    treatmentObjective: 'Récupération amplitude & force',
-    sessionsCompleted: 10,
-    sessionsTotal: 15,
-    painLevel: 4,
-    coverage: '80%',
-    doctor: 'Dr. Leblanc',
-
-    treatmentPlan: {
-      name: 'Rééducation épaule droite',
-      status: 'Actif',
-      startDate: '01/10/2024',
-      endDate: '30/11/2024',
-      therapist: 'Dr. Martin',
-      progress: 67
-    },
     upcomingSessions: [
       { date: '18', month: 'OCT', type: 'Renforcement', time: '11:00 - 30 min', status: 'upcoming' },
       { date: '15', month: 'OCT', type: 'Bilan initial', time: '10:00 - 45 min', status: 'completed' },
@@ -117,10 +122,6 @@
     recentDocuments: [
       { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
       { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
-    ],
-    treatmentHistory: [
-      { name: 'Lombalgie aiguë', period: 'Juin 2023 - Juil. 2023', status: 'closed' },
-      { name: 'Entorse cheville', period: 'Janv. 2022 - Fév. 2022', status: 'closed' }
     ]
   }
 
@@ -157,24 +158,62 @@
     <div class="flex flex-col gap-6 lg:col-span-1">
       <!-- Résumé rapide -->
       <UCard variant="outline">
-        <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
-        <div class="space-y-4 text-sm">
-          <div>
-            <h3 class="text-muted font-semibold">Pathologie principale</h3>
-            <p class="font-medium">{{ staticData.mainPathology }}</p>
+        <template v-if="treatmentPlansLoading">
+          <div class="flex items-center justify-center py-8">
+            <UIcon name="i-lucide-loader-2" class="animate-spin text-2xl" />
           </div>
-          <div>
-            <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-            <p class="font-medium">{{ staticData.treatmentObjective }}</p>
+        </template>
+        <template v-else-if="treatmentPlansError">
+          <div class="py-8 text-center">
+            <p class="text-muted">Erreur lors du chargement des données</p>
           </div>
-          <div>
-            <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
-            <div class="flex items-center gap-3">
-              <UProgress :model-value="staticData.painLevel * 10" :max="100" color="primary" size="md" class="flex-1" />
-              <span class="font-semibold">{{ staticData.painLevel }}/10</span>
+        </template>
+        <template v-else-if="getActiveTreatmentPlan">
+          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
+          <div class="space-y-4 text-sm">
+            <div>
+              <h3 class="text-muted font-semibold">Pathologie principale</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.diagnosis }}</p>
+            </div>
+            <div>
+              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
+            </div>
+            <div>
+              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
+              <div class="flex items-center gap-3">
+                <UProgress
+                  :model-value="(getActiveTreatmentPlan.painLevel || 0) * 10"
+                  :max="100"
+                  color="primary"
+                  size="md"
+                  class="flex-1"
+                />
+                <span class="font-semibold">{{ getActiveTreatmentPlan.painLevel || 0 }}/10</span>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
+        <template v-else>
+          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
+          <div class="space-y-4 text-sm">
+            <div>
+              <h3 class="text-muted font-semibold">Pathologie principale</h3>
+              <p class="text-muted font-medium">Aucun plan de traitement actif</p>
+            </div>
+            <div>
+              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
+              <p class="text-muted font-medium">Non spécifié</p>
+            </div>
+            <div>
+              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
+              <div class="flex items-center gap-3">
+                <UProgress :model-value="0" :max="100" color="primary" size="md" class="flex-1" />
+                <span class="font-semibold">0/10</span>
+              </div>
+            </div>
+          </div>
+        </template>
       </UCard>
 
       <!-- Données administratives -->
@@ -287,38 +326,69 @@
     <div class="flex flex-col gap-6 lg:col-span-2">
       <!-- Plan de traitement actif -->
       <UCard variant="outline">
-        <div class="mb-4 flex items-start justify-between">
+        <template v-if="treatmentPlansLoading">
+          <div class="flex items-center justify-center py-8">
+            <UIcon name="i-lucide-loader-2" class="animate-spin text-2xl" />
+          </div>
+        </template>
+        <template v-else-if="treatmentPlansError">
+          <div class="py-8 text-center">
+            <p class="text-muted">Erreur lors du chargement des plans de traitement</p>
+            <UButton variant="ghost" size="sm" @click="fetchTreatmentPlans(props.patient.id)">Réessayer</UButton>
+          </div>
+        </template>
+        <template v-else-if="getActiveTreatmentPlan">
+          <div class="mb-4 flex items-start justify-between">
+            <div>
+              <h2 class="text-lg font-bold">Plan de traitement actif</h2>
+              <p class="text-muted text-sm">{{ getActiveTreatmentPlan.title }}</p>
+            </div>
+            <UBadge
+              :color="formatTreatmentPlanStatus(getActiveTreatmentPlan.status).color"
+              variant="soft"
+              size="lg"
+              class="rounded-full"
+            >
+              {{ formatTreatmentPlanStatus(getActiveTreatmentPlan.status).label }}
+            </UBadge>
+          </div>
+          <div class="text-muted mb-5 space-y-3 text-sm">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-calendar" class="shrink-0 text-base" />
+              <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-user" class="shrink-0 text-base" />
+              <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
+            </div>
+          </div>
           <div>
-            <h2 class="text-lg font-bold">Plan de traitement actif</h2>
-            <p class="text-muted text-sm">{{ staticData.treatmentPlan.name }}</p>
+            <div class="text-muted mb-1 flex items-center justify-between text-sm">
+              <span>
+                Progression ({{ getActiveTreatmentPlan.completedConsultations }}/{{
+                  getActiveTreatmentPlan.numberOfSessions || 0
+                }}
+                séances)
+              </span>
+              <span>{{ getActiveTreatmentPlan.progress }}%</span>
+            </div>
+            <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="lg" />
           </div>
-          <UBadge color="success" variant="soft" size="lg" class="rounded-full">
-            {{ staticData.treatmentPlan.status }}
-          </UBadge>
-        </div>
-        <div class="text-muted mb-5 space-y-3 text-sm">
-          <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-calendar" class="shrink-0 text-base" />
-            <span>Début: {{ staticData.treatmentPlan.startDate }} - Fin: {{ staticData.treatmentPlan.endDate }}</span>
+          <div class="mt-6 flex flex-wrap justify-end gap-2">
+            <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
+            <UButton variant="soft" color="neutral" icon="i-lucide-edit">Modifier</UButton>
+            <UButton variant="soft" color="neutral" icon="i-lucide-archive">Clôturer</UButton>
+            <UButton color="primary" icon="i-lucide-plus">Nouveau plan</UButton>
           </div>
-          <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-user" class="shrink-0 text-base" />
-            <span>Thérapeute: {{ staticData.treatmentPlan.therapist }}</span>
+        </template>
+        <template v-else>
+          <div class="py-8 text-center">
+            <UIcon name="i-lucide-clipboard-list" class="text-muted mx-auto mb-4 text-4xl" />
+            <h3 class="mb-2 text-lg font-semibold">Aucun plan de traitement actif</h3>
+            <p class="text-muted mb-4">Commencez par créer un plan de traitement pour ce patient</p>
+            <UButton color="primary" icon="i-lucide-plus">Créer un plan</UButton>
           </div>
-        </div>
-        <div>
-          <div class="text-muted mb-1 flex items-center justify-between text-sm">
-            <span>Progression ({{ staticData.sessionsCompleted }}/{{ staticData.sessionsTotal }} séances)</span>
-            <span>{{ staticData.treatmentPlan.progress }}%</span>
-          </div>
-          <UProgress :model-value="staticData.treatmentPlan.progress" :max="100" color="primary" size="lg" />
-        </div>
-        <div class="mt-6 flex flex-wrap justify-end gap-2">
-          <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
-          <UButton variant="soft" color="neutral" icon="i-lucide-edit">Modifier</UButton>
-          <UButton variant="soft" color="neutral" icon="i-lucide-archive">Clôturer</UButton>
-          <UButton color="primary" icon="i-lucide-plus">Nouveau plan</UButton>
-        </div>
+        </template>
       </UCard>
 
       <!-- Aperçu des séances -->
@@ -381,19 +451,31 @@
           <h2 class="text-lg font-bold">Historique des plans</h2>
           <UButton variant="ghost" class="">Voir tous les plans</UButton>
         </div>
-        <div class="space-y-3">
-          <div
-            v-for="plan in staticData.treatmentHistory"
-            :key="plan.name"
-            class="flex items-center justify-between text-sm"
-          >
-            <div class="flex flex-col">
-              <p class="font-semibold">{{ plan.name }}</p>
-              <p class="text-muted text-xs">{{ plan.period }}</p>
-            </div>
-            <UBadge color="neutral" variant="soft" size="md">Clôturé</UBadge>
+        <template v-if="treatmentPlansLoading">
+          <div class="flex items-center justify-center py-4">
+            <UIcon name="i-lucide-loader-2" class="animate-spin text-xl" />
           </div>
-        </div>
+        </template>
+        <template v-else-if="getTreatmentPlanHistory.length > 0">
+          <div class="space-y-3">
+            <div
+              v-for="plan in getTreatmentPlanHistory"
+              :key="plan.id"
+              class="flex items-center justify-between text-sm"
+            >
+              <div class="flex flex-col">
+                <p class="font-semibold">{{ plan.title }}</p>
+                <p class="text-muted text-xs">{{ formatDateRange(plan.startDate, plan.endDate) }}</p>
+              </div>
+              <UBadge :color="formatTreatmentPlanStatus(plan.status).color" variant="soft" size="md">
+                {{ formatTreatmentPlanStatus(plan.status).label }}
+              </UBadge>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <UEmpty icon="i-lucide-history" description="Aucun historique de plans de traitement" class="py-4" />
+        </template>
       </UCard>
     </div>
   </div>
