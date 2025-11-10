@@ -15,7 +15,7 @@ export const documentCategorySchema = z.enum([
   'other'
 ])
 export const noteSchema = z.object({
-  date: z.date(),
+  date: z.coerce.date(),
   author: z.string(),
   content: z.string().min(1)
 })
@@ -27,14 +27,11 @@ export const emergencyContactSchema = z.object({
   relationship: z.string().optional()
 })
 
-// Treatment Plan schemas
-export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'cancelled'])
-
 // Patient schemas
 export const patientCreateSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  dateOfBirth: z.date(),
+  dateOfBirth: z.coerce.date(),
   gender: genderSchema,
   email: z.email().optional(),
   phone: z.string().min(10),
@@ -59,30 +56,30 @@ export const patientUpdateSchema = patientCreateSchema.partial()
 export const patientSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  dateOfBirth: z.date().nullable(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  dateOfBirth: z.coerce.date().optional(),
   gender: genderSchema.nullable(),
-  email: z.string().nullable(),
-  phone: z.string().nullable(),
-  address: z.string().nullable(),
-  city: z.string().nullable(),
-  postalCode: z.string().nullable(),
-  country: z.string().nullable(),
-  emergencyContacts: z.array(emergencyContactSchema).nullable(),
-  medicalConditions: z.array(z.string()).nullable(),
-  surgeries: z.array(z.string()).nullable(),
-  allergies: z.array(z.string()).nullable(),
-  medications: z.array(z.string()).nullable(),
-  insuranceProvider: z.string().nullable(),
-  insuranceNumber: z.string().nullable(),
-  referralSource: z.string().nullable(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).optional(),
+  medicalConditions: z.array(z.string()).optional(),
+  surgeries: z.array(z.string()).optional(),
+  allergies: z.array(z.string()).optional(),
+  medications: z.array(z.string()).optional(),
+  insuranceProvider: z.string().optional(),
+  insuranceNumber: z.string().optional(),
+  referralSource: z.string().optional(),
   status: patientStatusSchema,
-  notes: z.array(noteSchema).nullable(),
-  createdAt: z.date().nullable(),
-  updatedAt: z.date().nullable,
-  deletedAt: z.date().nullable()
+  notes: z.array(noteSchema).optional()
 })
+
+// Treatment Plan schemas
+export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'cancelled'])
 
 export const treatmentPlanCreateSchema = z.object({
   patientId: z.string(),
@@ -90,13 +87,13 @@ export const treatmentPlanCreateSchema = z.object({
   title: z.string().min(1),
   diagnosis: z.string().min(1),
   objective: z.string().optional(),
-  startDate: z.date(),
-  endDate: z.date().optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().nullable().optional(),
   numberOfSessions: z.number().min(1).optional(),
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
   prescribingDoctor: z.string().optional(),
-  prescriptionDate: z.date().optional(),
+  prescriptionDate: z.coerce.date().optional(),
   painLevel: z.number().min(0).max(10).optional(),
   coverageStatus: z
     .enum([
@@ -125,13 +122,13 @@ export const treatmentPlanSchema = z.object({
   title: z.string(),
   diagnosis: z.string(),
   objective: z.string().nullable(),
-  startDate: z.date(),
-  endDate: z.date().nullable(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().nullable(),
   numberOfSessions: z.number().nullable(),
   sessionFrequency: z.number().nullable(),
   status: treatmentPlanStatusSchema,
   prescribingDoctor: z.string().nullable(),
-  prescriptionDate: z.date().nullable(),
+  prescriptionDate: z.coerce.date().nullable(),
   painLevel: z.number().nullable(),
   coverageStatus: z
     .enum([
@@ -148,9 +145,9 @@ export const treatmentPlanSchema = z.object({
     .nullable(),
   insuranceInfo: z.string().nullable(),
   notes: z.array(noteSchema).nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  deletedAt: z.date().nullable()
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  deletedAt: z.coerce.date().nullable()
 })
 
 // Consultation schemas
@@ -160,7 +157,7 @@ export const consultationStatusSchema = z.enum(['scheduled', 'in_progress', 'com
 export const consultationCreateSchema = z.object({
   patientId: z.string(),
   treatmentPlanId: z.string().optional(),
-  date: z.date(),
+  date: z.coerce.date(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   duration: z.number().min(1).optional(),
@@ -188,7 +185,7 @@ export const consultationSchema = z.object({
   organizationId: z.string(),
   patientId: z.string(),
   treatmentPlanId: z.string().nullable(),
-  date: z.date(),
+  date: z.coerce.date(),
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
   duration: z.number().nullable(),
@@ -207,8 +204,8 @@ export const consultationSchema = z.object({
   billed: z.boolean(),
   insuranceClaimed: z.boolean(),
   sessionCost: z.number().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date()
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
 })
 
 // Patient Document schemas
@@ -248,9 +245,9 @@ export const patientDocumentSchema = z.object({
   storageKey: z.string(),
   category: documentCategorySchema,
   description: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  deletedAt: z.date().nullable()
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  deletedAt: z.coerce.date().nullable()
 })
 
 // Query schemas
@@ -275,8 +272,8 @@ export const consultationQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
-  dateFrom: z.date().optional(),
-  dateTo: z.date().optional()
+  dateFrom: z.coerce.date().optional(),
+  dateTo: z.coerce.date().optional()
 })
 
 export const patientDocumentQuerySchema = z.object({

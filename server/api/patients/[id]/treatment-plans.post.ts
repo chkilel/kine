@@ -54,47 +54,13 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Read raw body first to preprocess dates
-    const rawBody = await readBody(event)
-
-    // Convert date strings to Date objects before validation
-    const processedBody = {
-      patientId,
-      title: rawBody.title,
-      diagnosis: rawBody.diagnosis,
-      objective: rawBody.objective || undefined,
-      startDate: rawBody.startDate ? new Date(rawBody.startDate) : new Date(),
-      endDate: rawBody.endDate ? new Date(rawBody.endDate) : undefined,
-      numberOfSessions: rawBody.numberOfSessions || undefined,
-      sessionFrequency: rawBody.sessionFrequency || undefined,
-      status: rawBody.status || 'planned',
-      prescribingDoctor: rawBody.prescribingDoctor || undefined,
-      therapist: rawBody.therapist || undefined,
-      prescriptionDate: rawBody.prescriptionDate ? new Date(rawBody.prescriptionDate) : undefined,
-      painLevel: rawBody.painLevel || undefined,
-      coverageStatus: rawBody.coverageStatus || undefined,
-      insuranceInfo: rawBody.insuranceInfo || undefined,
-      notes: rawBody.notes || undefined
-    }
-
     // Validate input
-    const body = treatmentPlanCreateSchema.parse(processedBody)
+    const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
-    // Convert undefined to null for database insertion
+    // Add org ID
     const validatedData = {
       ...body,
-      organizationId: activeOrganizationId,
-      objective: body.objective || null,
-      endDate: body.endDate || null,
-      numberOfSessions: body.numberOfSessions || null,
-      sessionFrequency: body.sessionFrequency || null,
-      prescribingDoctor: body.prescribingDoctor || null,
-      therapist: body.therapistId || null,
-      prescriptionDate: body.prescriptionDate || null,
-      painLevel: body.painLevel || null,
-      coverageStatus: body.coverageStatus || null,
-      insuranceInfo: body.insuranceInfo || null,
-      notes: body.notes || null
+      organizationId: activeOrganizationId
     }
 
     // Create treatment plan
