@@ -4,6 +4,11 @@
   "autoupdate": true,
   "theme": "opencode",
   "mcp": {
+    "nuxt": {
+      "type": "remote",
+      "url": "https://mcp.nuxt.com/sse",
+      "enabled": true
+    },
     "nuxt-ui": {
       "type": "remote",
       "url": "https://ui.nuxt.com/mcp",
@@ -11,7 +16,13 @@
     },
     "context7": {
       "type": "local",
-      "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", "ctx7sk-50eb2428-6c15-4203-9ed0-a59eddd6c0c1"],
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-50eb2428-6c15-4203-9ed0-a59eddd6c0c1"
+      ],
       "enabled": true
     }
   }

@@ -24,6 +24,7 @@ Kine is a comprehensive physical therapy clinic management web application desig
 - **CSS**: Nuxt UI base classes first especially for colors and then Tailwind CSS utility classes
 - **Naming**: PascalCase for components, camelCase for functions/variables
 - **File Organization**: Feature-based structure with clear separation of concerns
+- **API calls**: UseFetch and useAsyncData whenever is possible
 
 ### Architecture Patterns
 
