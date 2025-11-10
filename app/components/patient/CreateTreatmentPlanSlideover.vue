@@ -53,8 +53,6 @@
   const currentUser = computed(() => session.data.value?.user)
   const therapists = computed(() => [session.data.value?.user!])
 
-  console.log('🚀 >>> ', 'session', ': ', therapists.value)
-
   const toast = useToast()
   const loading = ref(false)
 
@@ -120,8 +118,6 @@
     form.endDate = val ? val.toDate(getLocalTimeZone()) : null
   })
 
-  console.log('🚀 >>> ', 'form', ': ', form)
-
   const uploadedFiles = ref<UploadedFile[]>([])
   const fileInputRef = ref<HTMLInputElement>()
 
@@ -135,10 +131,10 @@
         title: event.data.title,
         diagnosis: event.data.diagnosis,
         objective: event.data.objective,
-        startDate: event.data.startDate ? event.data.startDate : new Date(),
-        endDate: event.data.endDate ? event.data.endDate : null,
+        startDate: event.data.startDate || new Date(),
+        endDate: event.data.endDate || null,
         numberOfSessions: event.data.numberOfSessions,
-        sessionFrequency: 2,
+        sessionFrequency: event.data.sessionFrequency,
         status: event.data.status,
         prescribingDoctor: event.data.prescribingDoctor,
         therapistId: event.data.therapistId,
@@ -146,10 +142,8 @@
         painLevel: event.data.painLevel,
         coverageStatus: event.data.coverageStatus,
         insuranceInfo: event.data.insuranceInfo,
-        notes: `Médecin prescripteur: ${event.data.prescribingDoctor}\nKinésithérapeute: ${event.data.therapistId}\nNiveau de douleur: ${event.data.painLevel}/10\nAssurance: ${event.data.insuranceInfo}\nStatut couverture: ${event.data.coverageStatus}`
+        notes: '' // FIXME
       }
-
-      console.log('🚀 >>> ', 'planData', ': ', planData)
 
       const treatmentPlan = await $fetch<TreatmentPlan>(`/api/patients/${props.patient.id}/treatment-plans`, {
         method: 'POST',

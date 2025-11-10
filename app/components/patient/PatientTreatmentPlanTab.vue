@@ -1,220 +1,75 @@
 <script setup lang="ts">
   import CreateTreatmentPlanSlideover from './CreateTreatmentPlanSlideover.vue'
 
-  const treatmentPlan: TreatmentPlan = {
-    id: '1',
-    organizationId: 'org_1',
-    patientId: 'pat_1',
-    therapistId: 'therapist_1',
-    title: 'Rééducation épaule droite',
-    diagnosis: 'Tendinopathie du supra-épineux avec calcification',
-    objective: "Améliorer l'amplitude articulaire, réduire la douleur nocturne et renforcer la coiffe des rotateurs.",
-    startDate: new Date('2024-10-01'),
-    endDate: new Date('2024-11-30'),
-    numberOfSessions: 15,
-    sessionFrequency: 2,
-    status: 'ongoing',
-    prescribingDoctor: 'Dr. Leblanc',
-    prescriptionDate: new Date('2024-09-15'),
-    painLevel: 4,
-    coverageStatus: 'covered',
-    insuranceInfo: 'Mutuelle SantéPlus (Prise en charge OK)',
-    notes: [
-      {
-        date: new Date(),
-        author: 'Dr. Martin',
-        content: 'Suite à une chute, diagnostic de tendinopathie du supra-épineux avec calcification.'
-      }
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null
+  const props = defineProps<{ patient?: Patient }>()
+  const createSlideoverOpen = ref(false)
+
+  // Use Nuxt UI's useToast for notifications
+  const toast = useToast()
+
+  // Use Nuxt's useFetch composable for reactive data fetching
+  const {
+    data: treatmentPlans,
+    pending: loading,
+    error,
+    refresh: refreshTreatmentPlans
+  } = await useFetch(`/api/patients/${props.patient?.id}/treatment-plans`, {
+    key: `treatment-plans-${props.patient?.id}`,
+    server: false, // Fetch on client-side to ensure we have patient context
+    default: () => [],
+    transform: (data: any) => data || []
+  })
+
+  // Get the active treatment plan (first one, or most recent)
+  const activeTreatmentPlan = computed(() => {
+    if (!treatmentPlans.value?.length) return null
+    return treatmentPlans.value[0] // API returns ordered by newest first
+  })
+
+  // Handle treatment plan creation
+  function handleTreatmentPlanCreated(plan: any) {
+    console.log('Treatment plan created:', plan)
+    // Show success notification
+    toast.add({
+      title: 'Plan de traitement créé',
+      description: `Le plan "${plan.title}" a été créé avec succès.`,
+      color: 'success'
+    })
+    // Refresh data after creating a new plan
+    refreshTreatmentPlans()
+    createSlideoverOpen.value = false
   }
 
-  const sessions: Consultation[] = [
-    {
-      id: '1',
-      organizationId: 'org_1',
-      patientId: 'pat_1',
-      treatmentPlanId: '1',
-      date: new Date('2024-10-15'),
-      startTime: '10:00',
-      endTime: '10:45',
-      duration: 45,
-      sessionType: 'initial',
-      chiefComplaint: 'Douleur épaule droite',
-      sessionNotes: 'Bilan initial effectué',
-      treatmentPlanSummary: 'Évaluation et plan de traitement',
-      observations: 'Limitation de la mobilité',
-      nextSteps: 'Renforcement et mobilisation',
-      painLevelBefore: 6,
-      painLevelAfter: 4,
-      progressNotes: 'Amélioration notable de la mobilité en abduction.',
-      therapistId: 'therapist_1',
-      therapistNotes: 'Patient motivé',
-      status: 'completed',
-      billed: false,
-      insuranceClaimed: false,
-      sessionCost: 5000,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '2',
-      organizationId: 'org_1',
-      patientId: 'pat_1',
-      treatmentPlanId: '1',
-      date: new Date('2024-10-18'),
-      startTime: '11:00',
-      endTime: '11:30',
-      duration: 30,
-      sessionType: 'follow_up',
-      chiefComplaint: 'Suivi rééducation',
-      sessionNotes: 'Renforcement',
-      treatmentPlanSummary: 'Exercices de renforcement',
-      observations: 'Bonne progression',
-      nextSteps: 'Continuer le programme',
-      painLevelBefore: 4,
-      painLevelAfter: 3,
-      progressNotes: null,
-      therapistId: 'therapist_1',
-      therapistNotes: null,
-      status: 'scheduled',
-      billed: false,
-      insuranceClaimed: false,
-      sessionCost: 4000,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      organizationId: 'org_1',
-      patientId: 'pat_1',
-      treatmentPlanId: '1',
-      date: new Date('2024-10-22'),
-      startTime: '10:00',
-      endTime: '10:30',
-      duration: 30,
-      sessionType: 'follow_up',
-      chiefComplaint: 'Suivi rééducation',
-      sessionNotes: 'Thérapie manuelle',
-      treatmentPlanSummary: 'Mobilisation et thérapie manuelle',
-      observations: 'Douleur résiduelle à la palpation',
-      nextSteps: 'Continuer la thérapie manuelle',
-      painLevelBefore: 3,
-      painLevelAfter: 2,
-      progressNotes: null,
-      therapistId: 'therapist_1',
-      therapistNotes: null,
-      status: 'scheduled',
-      billed: false,
-      insuranceClaimed: false,
-      sessionCost: 4000,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '4',
-      organizationId: 'org_1',
-      patientId: 'pat_1',
-      treatmentPlanId: '1',
-      date: new Date('2024-10-12'),
-      startTime: '09:00',
-      endTime: '09:30',
-      duration: 30,
-      sessionType: 'follow_up',
-      chiefComplaint: 'Suivi rééducation',
-      sessionNotes: 'Mobilisation',
-      treatmentPlanSummary: 'Exercices de mobilisation',
-      observations: null,
-      nextSteps: null,
-      painLevelBefore: 5,
-      painLevelAfter: null,
-      progressNotes: null,
-      therapistId: 'therapist_1',
-      therapistNotes: null,
-      status: 'no_show',
-      billed: false,
-      insuranceClaimed: false,
-      sessionCost: 4000,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  // Retry fetch with user feedback
+  async function retryFetch() {
+    try {
+      await refreshTreatmentPlans()
+      toast.add({
+        title: 'Données actualisées',
+        description: 'Les plans de traitement ont été rechargés avec succès.',
+        color: 'success'
+      })
+    } catch (err: any) {
+      toast.add({
+        title: 'Erreur de chargement',
+        description: 'Impossible de recharger les données. Veuillez réessayer plus tard.',
+        color: 'error'
+      })
     }
-  ]
+  }
 
-  const documents: PatientDocument[] = [
-    {
-      id: '1',
-      patientId: 'pat_1',
-      organizationId: 'org_1',
-      uploadedById: 'therapist_1',
-      treatmentPlanId: '1',
-      fileName: 'Radio_Epaule_Post-Chute.pdf',
-      originalFileName: 'Radio_Epaule_Post-Chute.pdf',
-      mimeType: 'application/pdf',
-      fileSize: 2048576,
-      storageKey: 'orgs/org_1/patients/pat_1/doc_1.pdf',
-      category: 'imaging',
-      description: 'Radio post-chute épaule droite',
-      createdAt: new Date('2024-10-02'),
-      updatedAt: new Date('2024-10-02'),
-      deletedAt: null
-    },
-    {
-      id: '2',
-      patientId: 'pat_1',
-      organizationId: 'org_1',
-      uploadedById: 'therapist_1',
-      treatmentPlanId: '1',
-      fileName: 'Rapport_Medecin_Traitant.docx',
-      originalFileName: 'Rapport_Medecin_Traitant.docx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      fileSize: 1024000,
-      storageKey: 'orgs/org_1/patients/pat_1/doc_2.docx',
-      category: 'treatment_notes',
-      description: 'Rapport du médecin traitant',
-      createdAt: new Date('2024-10-01'),
-      updatedAt: new Date('2024-10-01'),
-      deletedAt: null
-    },
-    {
-      id: '3',
-      patientId: 'pat_1',
-      organizationId: 'org_1',
-      uploadedById: 'therapist_1',
-      treatmentPlanId: '1',
-      fileName: 'Ordonnance_Antalgiques.png',
-      originalFileName: 'Ordonnance_Antalgiques.png',
-      mimeType: 'image/png',
-      fileSize: 512000,
-      storageKey: 'orgs/org_1/patients/pat_1/doc_3.png',
-      category: 'prescriptions',
-      description: 'Ordonnance antalgiques',
-      createdAt: new Date('2024-10-01'),
-      updatedAt: new Date('2024-10-01'),
-      deletedAt: null
-    }
-  ]
+  // Open create slideover with user feedback
+  function openCreateSlideover() {
+    createSlideoverOpen.value = true
+    toast.add({
+      title: 'Création de plan',
+      description: 'Ouvrez le formulaire pour créer un nouveau plan de traitement.',
+      duration: 2000,
+      color: 'info'
+    })
+  }
 
-  const notes = [
-    {
-      id: '1',
-      session: 'Séance 5',
-      content: 'Amélioration notable de la mobilité en abduction.',
-      author: 'Dr. Martin',
-      date: '15 Oct. 2024'
-    },
-    {
-      id: '2',
-      session: 'Séance 4',
-      content: 'Douleur résiduelle à la palpation du tendon.',
-      author: 'Dr. Martin',
-      date: '12 Oct. 2024'
-    }
-  ]
-
-  const newNote = ref('')
-
+  // Helper functions
   function getSessionStatusColor(status: string) {
     switch (status) {
       case 'completed':
@@ -267,71 +122,111 @@
     }
   }
 
-  function addNote() {
-    if (newNote.value.trim()) {
-      // In a real app, this would save to the API
-      newNote.value = ''
+  // Get therapist display name
+  function getTherapistName(therapist: any) {
+    if (!therapist) return 'Non assigné'
+    return `${therapist.firstName || ''} ${therapist.lastName || ''}`.trim() || therapist.email || 'Non assigné'
+  }
+
+  // Get status badge color and label
+  function getStatusInfo(status: string) {
+    switch (status) {
+      case 'ongoing':
+        return { color: 'success' as const, label: 'Actif' }
+      case 'completed':
+        return { color: 'neutral' as const, label: 'Terminé' }
+      case 'paused':
+        return { color: 'warning' as const, label: 'En pause' }
+      case 'cancelled':
+        return { color: 'error' as const, label: 'Annulé' }
+      default:
+        return { color: 'neutral' as const, label: status }
     }
   }
 
-  const props = defineProps<{ patient?: Patient }>()
+  // Notes and documents state
+  const newNote = ref('')
+  const documents = ref<any[]>([])
 
-  const createSlideoverOpen = ref(false)
-
-  function handleTreatmentPlanCreated(plan: any) {
-    console.log('Treatment plan created:', plan)
-    // Refresh data or update UI
-    createSlideoverOpen.value = false
+  function addNote() {
+    if (newNote.value.trim()) {
+      // In a real app, this would save to the API
+      console.log('Adding note:', newNote.value)
+      newNote.value = ''
+    }
   }
 </script>
 
 <template>
-  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <!-- Loading State -->
+  <div v-if="loading" class="mt-6 flex items-center justify-center py-12">
+    <div class="flex items-center gap-3">
+      <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+      <span class="text-muted">Chargement des plans de traitement...</span>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div v-else-if="error" class="mt-6">
+    <UAlert color="error" icon="i-lucide-alert-circle" title="Erreur de chargement">
+      <template #description>
+        {{ error.data?.message || error.message || 'Failed to fetch treatment plans' }}
+        <UButton @click="retryFetch()" variant="link" color="error" size="sm" class="ml-2">Réessayer</UButton>
+      </template>
+    </UAlert>
+  </div>
+
+  <!-- Empty State -->
+  <div v-else-if="!activeTreatmentPlan" class="mt-6">
+    <UEmpty
+      icon="i-lucide-clipboard-plus"
+      title="Aucun plan de traitement"
+      description="Ce patient n'a pas encore de plan de traitement. Créez-en un pour commencer le suivi."
+      :actions="[{ label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary' }]"
+      @action="openCreateSlideover"
+    />
+  </div>
+
+  <!-- Treatment Plan Content -->
+  <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="flex flex-col gap-6 lg:col-span-1">
       <!-- Treatment Plan Card -->
       <UCard>
         <div class="mb-4 flex items-start justify-between">
-          <h2 class="text-lg font-bold">{{ treatmentPlan.title }}</h2>
-          <UBadge color="success" variant="soft" class="rounded-full">Actif</UBadge>
+          <h2 class="text-lg font-bold">{{ activeTreatmentPlan.title }}</h2>
+          <UBadge :color="getStatusInfo(activeTreatmentPlan.status).color" variant="soft" class="rounded-full">
+            {{ getStatusInfo(activeTreatmentPlan.status).label }}
+          </UBadge>
         </div>
         <div class="text-muted space-y-3 text-sm">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="text-toned" />
             <span>
-              Début: {{ treatmentPlan.startDate.toLocaleDateString('fr-FR') }} - Fin:
-              {{ treatmentPlan.endDate?.toLocaleDateString('fr-FR') }}
+              Début: {{ new Date(activeTreatmentPlan.startDate).toLocaleDateString('fr-FR') }} - Fin:
+              {{
+                activeTreatmentPlan.endDate
+                  ? new Date(activeTreatmentPlan.endDate).toLocaleDateString('fr-FR')
+                  : 'Non définie'
+              }}
             </span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="text-toned" />
-            <span>Thérapeute: {{ treatmentPlan.therapistId }}</span>
+            <span>Thérapeute: {{ getTherapistName(activeTreatmentPlan.therapist) }}</span>
           </div>
         </div>
         <div class="mt-5">
           <div class="text-muted mb-1 flex items-center justify-between text-sm">
             <span>
-              Progression ({{ sessions.filter((s) => s.status === 'completed').length }}/{{
-                treatmentPlan.numberOfSessions
+              Progression ({{ activeTreatmentPlan.completedConsultations || 0 }}/{{
+                activeTreatmentPlan.numberOfSessions || 0
               }}
               séances)
             </span>
-            <span>
-              {{
-                Math.round(
-                  (sessions.filter((s) => s.status === 'completed').length / (treatmentPlan.numberOfSessions || 1)) *
-                    100
-                )
-              }}%
-            </span>
+            <span>{{ activeTreatmentPlan.progress || 0 }}%</span>
           </div>
-          <UProgress
-            :model-value="
-              Math.round(
-                (sessions.filter((s) => s.status === 'completed').length / (treatmentPlan.numberOfSessions || 1)) * 100
-              )
-            "
-          />
+          <UProgress :model-value="activeTreatmentPlan.progress || 0" />
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
@@ -364,31 +259,31 @@
             <div class="border-default space-y-5 border-t p-4 sm:p-6">
               <div>
                 <h4 class="mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
-                <p class="text-muted text-sm">{{ treatmentPlan.objective }}</p>
+                <p class="text-muted text-sm">{{ activeTreatmentPlan.objective || 'Non spécifié' }}</p>
               </div>
               <div>
                 <h4 class="mb-2 text-sm font-semibold">Diagnostic</h4>
-                <p class="text-muted text-sm">{{ treatmentPlan.diagnosis }}</p>
+                <p class="text-muted text-sm">{{ activeTreatmentPlan.diagnosis || 'Non spécifié' }}</p>
               </div>
-              <div v-if="treatmentPlan.painLevel">
+              <div v-if="activeTreatmentPlan.painLevel">
                 <h4 class="mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
                 <div class="flex items-center gap-3">
-                  <USlider :model-value="treatmentPlan.painLevel" :max="10" :min="0" disabled />
-                  <span class="font-semibold">{{ treatmentPlan.painLevel }}/10</span>
+                  <USlider :model-value="activeTreatmentPlan.painLevel" :max="10" :min="0" disabled />
+                  <span class="font-semibold">{{ activeTreatmentPlan.painLevel }}/10</span>
                 </div>
               </div>
               <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <h4 class="font-semibold">Fréquence</h4>
-                  <p class="text-muted">{{ treatmentPlan.sessionFrequency }}x / semaine</p>
+                  <p class="text-muted">{{ activeTreatmentPlan.sessionFrequency || 0 }}x / semaine</p>
                 </div>
                 <div>
                   <h4 class="font-semibold">Médecin prescripteur</h4>
-                  <p class="text-muted">{{ treatmentPlan.prescribingDoctor }}</p>
+                  <p class="text-muted">{{ activeTreatmentPlan.prescribingDoctor || 'Non spécifié' }}</p>
                 </div>
                 <div>
                   <h4 class="font-semibold">Assurance</h4>
-                  <p class="text-muted">{{ treatmentPlan.insuranceInfo }}</p>
+                  <p class="text-muted">{{ activeTreatmentPlan.insuranceInfo || 'Non spécifié' }}</p>
                 </div>
               </div>
             </div>
@@ -407,7 +302,7 @@
         </div>
         <div class="overflow-x-auto">
           <UTable
-            :data="sessions"
+            :data="[]"
             :columns="[
               { accessorKey: 'date', header: 'Date' },
               { accessorKey: 'type', header: 'Type' },
@@ -419,41 +314,11 @@
               thead: 'bg-muted'
             }"
           >
-            <template #date-cell="{ row }">
-              <span class="text-sm">
-                {{ row.original.date.toLocaleDateString('fr-FR') }}, {{ row.original.startTime }}
-              </span>
-            </template>
-            <template #type-cell="{ row }">
-              <span class="text-muted text-sm">{{ row.original.sessionType }}</span>
-            </template>
-            <template #duration-cell="{ row }">
-              <span class="text-muted text-sm">{{ row.original.duration }} min</span>
-            </template>
-            <template #status-cell="{ row }">
-              <UBadge :color="getSessionStatusColor(row.getValue('status'))" variant="soft" size="md">
-                {{ getSessionStatusLabel(row.getValue('status')) }}
-              </UBadge>
-            </template>
-            <template #actions-cell="{ row }">
-              <div class="flex items-center justify-end gap-2">
-                <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
-                <UButton
-                  v-if="row.original.status === 'scheduled'"
-                  icon="i-lucide-x"
-                  variant="ghost"
-                  color="error"
-                  size="sm"
-                  square
-                />
-                <UButton
-                  v-else-if="row.original.status === 'completed'"
-                  icon="i-lucide-plus"
-                  variant="ghost"
-                  color="neutral"
-                  size="sm"
-                  square
-                />
+            <template #empty>
+              <div class="flex flex-col items-center justify-center py-8 text-center">
+                <UIcon name="i-lucide-calendar" class="text-muted mb-2 size-8" />
+                <p class="text-muted text-sm">Aucune séance enregistrée pour ce plan de traitement</p>
+                <UButton icon="i-lucide-plus" color="primary" size="sm" class="mt-3">Ajouter une séance</UButton>
               </div>
             </template>
           </UTable>
@@ -475,12 +340,17 @@
             <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
           </div>
           <div class="border-default space-y-3 border-t pt-4">
-            <div v-for="note in notes" :key="note.id" class="text-sm">
+            <div v-if="!activeTreatmentPlan.notes?.length" class="py-4 text-center">
+              <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
+            </div>
+            <div v-else v-for="note in activeTreatmentPlan.notes" :key="note.id" class="text-sm">
               <p>
-                <strong class="font-semibold">{{ note.session }}:</strong>
+                <strong class="font-semibold">
+                  {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
+                </strong>
                 {{ note.content }}
               </p>
-              <p class="text-muted text-xs">{{ note.author }} - {{ note.date }}</p>
+              <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
             </div>
           </div>
         </div>
@@ -500,7 +370,10 @@
           />
 
           <div class="divide-default divide-y">
-            <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between py-3">
+            <div v-if="!documents?.length" class="py-4 text-center">
+              <p class="text-muted text-sm">Aucun document pour ce plan de traitement</p>
+            </div>
+            <div v-else v-for="doc in documents" :key="doc.id" class="flex items-center justify-between py-3">
               <div class="flex items-center gap-4">
                 <UBadge
                   :icon="getDocumentIcon(doc.category)"
@@ -512,7 +385,7 @@
                 <div>
                   <p class="font-semibold">{{ doc.originalFileName }}</p>
                   <p class="text-muted text-xs">
-                    Téléversé le {{ doc.createdAt.toLocaleDateString('fr-FR') }} par {{ doc.uploadedById }}
+                    Téléversé le {{ new Date(doc.createdAt).toLocaleDateString('fr-FR') }} par {{ doc.uploadedById }}
                   </p>
                 </div>
               </div>
