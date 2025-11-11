@@ -226,12 +226,18 @@
             </span>
             <span>{{ activeTreatmentPlan.progress || 0 }}%</span>
           </div>
-          <UProgress :model-value="activeTreatmentPlan.progress || 0" />
+          <UProgress :model-value="activeTreatmentPlan.progress || 0" size="lg" />
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
           <UButton icon="i-lucide-archive" variant="outline" color="neutral" size="md" class="flex-1">Clôturer</UButton>
-          <UButton icon="i-lucide-plus" color="primary" size="md" class="flex-1" @click="createSlideoverOpen = true">
+          <UButton
+            icon="i-lucide-plus"
+            color="primary"
+            size="md"
+            class="flex-1 justify-center sm:justify-start"
+            @click="createSlideoverOpen = true"
+          >
             Nouveau
           </UButton>
         </div>
@@ -315,10 +321,22 @@
             }"
           >
             <template #empty>
-              <div class="flex flex-col items-center justify-center py-8 text-center">
-                <UIcon name="i-lucide-calendar" class="text-muted mb-2 size-8" />
-                <p class="text-muted text-sm">Aucune séance enregistrée pour ce plan de traitement</p>
-                <UButton icon="i-lucide-plus" color="primary" size="sm" class="mt-3">Ajouter une séance</UButton>
+              <div class="px-4 py-8 text-center">
+                <div class="bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
+                  <UIcon name="i-lucide-calendar-x" class="text-primary text-3xl" />
+                </div>
+                <h3 class="text-default mt-4 text-lg font-semibold">
+                  Aucune séance planifiée pour ce plan de traitement.
+                </h3>
+                <p class="text-muted mt-2 text-sm">
+                  Commencez à planifier les séances pour ce patient afin de débuter le suivi.
+                </p>
+                <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                  <UButton icon="i-lucide-plus-circle" color="primary" size="md">Planifier les séances du plan</UButton>
+                  <UButton icon="i-lucide-plus" variant="outline" color="neutral" size="md">
+                    Créer une consultation indépendante
+                  </UButton>
+                </div>
               </div>
             </template>
           </UTable>
