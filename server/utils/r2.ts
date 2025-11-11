@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3'
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import type { H3Event } from 'h3'
 
 export function getR2Client(event: H3Event) {
@@ -31,4 +31,21 @@ export function getR2BucketName(event: H3Event) {
     throw new Error('R2 bucket name is not configured. Please set R2_BUCKET_NAME in .env')
   }
   return bucket
+}
+
+export async function deleteR2File(event: H3Event, storageKey: string) {
+  const client = getR2Client(event)
+  const bucket = getR2BucketName(event)
+
+  const command = new DeleteObjectCommand({
+    Bucket: bucket,
+    Key: storageKey
+  })
+
+  try {
+    await client.send(command)
+  } catch (error) {
+    console.error('Error deleting R2 file:', error)
+    throw error
+  }
 }

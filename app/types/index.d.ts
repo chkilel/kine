@@ -1,16 +1,19 @@
 import type { AvatarProps } from '@nuxt/ui'
+import type { Patient } from '~~/shared/types/patient.types'
 
-export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
+export type PatientStatus = 'active' | 'inactive' | 'discharged'
 export type SaleStatus = 'paid' | 'failed' | 'refunded'
 
+// Keep User type for authentication purposes
 export interface User {
-  id: number
+  id: string
   name: string
   email: string
   avatar?: AvatarProps
-  status: UserStatus
-  location: string
 }
+
+// Patient type for clinical management
+export { Patient }
 
 export interface Mail {
   id: number

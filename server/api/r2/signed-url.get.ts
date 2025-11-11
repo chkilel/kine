@@ -5,7 +5,7 @@ import z from 'zod'
 import { getR2Client, getR2BucketName } from '~~/server/utils/r2'
 
 const schema = z.object({
-  keys: z.array(z.string()).min(1),
+  keys: z.union([z.array(z.string()).min(1), z.string()]).transform((val) => (Array.isArray(val) ? val : [val])),
   expiresIn: z.coerce.number().int().positive().max(3600).default(300)
 })
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
       errors: Object.keys(errors).length ? errors : undefined
     }
   } catch (err: any) {
-    console.log('Failed to generate signed URLs in GET /api/r2/blobs', err)
+    console.log('Failed to generate signed URLs in GET /api/r2/signed-url', err)
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to generate signed URLs',

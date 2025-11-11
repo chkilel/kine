@@ -18,6 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.917.0",
     "@aws-sdk/s3-request-presigner": "^3.917.0",
+    "@internationalized/date": "^3.10.0",
     "@paralleldrive/cuid2": "^2.3.1",
     "@unovis/ts": "^1.6.1",
     "@unovis/vue": "^1.6.1",
@@ -35,6 +36,7 @@
     "@iconify-json/lucide": "^1.2.71",
     "@iconify-json/simple-icons": "^1.2.55",
     "@nuxt/ui": "^4.1.0",
+    "@types/node": "^24.9.1",
     "drizzle-kit": "^0.31.5",
     "nitro-cloudflare-dev": "^0.2.2",
     "nitropack": "^2.12.8",

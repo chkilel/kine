@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     const signedUrl = await getSignedUrl(client, command, { expiresIn })
     return { url: signedUrl }
   } catch (err: any) {
-    console.log('Failed to generate signed URL in POST /api/r2/blob', err)
+    console.log('Failed to generate signed URL in POST /api/r2/upload', err)
     throw createError({
       statusCode: 500,
       message: 'Failed to generate signed URL',

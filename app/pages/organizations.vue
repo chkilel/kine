@@ -3,7 +3,7 @@
   import { upperFirst } from 'scule'
   import { getPaginationRowModel } from '@tanstack/table-core'
   import type { Row } from '@tanstack/table-core'
-  import { LazyOrganizationsCreateModal } from '#components'
+  import { LazyOrganizationCreateModal } from '#components'
 
   const UButton = resolveComponent('UButton')
   const UBadge = resolveComponent('UBadge')
@@ -29,7 +29,7 @@
   const organizations = computed(() => Array.from(orgList.value?.data ?? []))
 
   // Create modal instance
-  const createOrganizationModal = overlay.create(LazyOrganizationsCreateModal)
+  const createOrganizationModal = overlay.create(LazyOrganizationCreateModal)
 
   // Function to open the create organization modal
   async function openCreateOrganizationModal() {
@@ -45,11 +45,11 @@
       if (!newKeys.length) return
 
       try {
-        const response = await $fetch('/api/r2/blobs', { params: { keys: newKeys } })
+        const response = await $fetch('/api/r2/signed-url', { params: { keys: newKeys } })
 
         if (response?.urls) {
           for (const [k, u] of Object.entries(response.urls)) {
-            if (u) logoUrlMap.value[k] = u
+            if (typeof u === 'string') logoUrlMap.value[k] = u
           }
         }
       } catch {
@@ -185,7 +185,7 @@
           h(UAvatar, {
             src: logoUrl,
             alt: `logo de ${org.name}`,
-            text: org.name.charAt(0).toUpperCase(),
+            text: upperFirst(org.name).charAt(0),
             size: 'lg',
             ui: {
               fallback: 'text-primary'
