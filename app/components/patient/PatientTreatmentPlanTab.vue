@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import CreateTreatmentPlanSlideover from './CreateTreatmentPlanSlideover.vue'
+  import { LazyPatientCreateTreatmentPlanSlideover, LazyPatientSessionPlanningSlideover } from '#components'
 
   const props = defineProps<{ patient?: Patient }>()
   const createSlideoverOpen = ref(false)
@@ -25,6 +25,56 @@
     if (!treatmentPlans.value?.length) return null
     return treatmentPlans.value[0] // API returns ordered by newest first
   })
+
+  // Use useOverlay for session planning slideover
+  const overlay = useOverlay()
+  const sessionPlanningOverlay = overlay.create(LazyPatientSessionPlanningSlideover)
+
+  // Function to open session planning with event handlers
+  function openSessionPlanning() {
+    const instance = sessionPlanningOverlay.open({
+      patient: props.patient as any,
+      treatmentPlan: activeTreatmentPlan.value
+        ? {
+            id: activeTreatmentPlan.value.id,
+            title: activeTreatmentPlan.value.title,
+            totalSessions: activeTreatmentPlan.value.numberOfSessions || 20,
+            completedSessions: activeTreatmentPlan.value.completedConsultations || 0,
+            remainingSessions:
+              (activeTreatmentPlan.value.numberOfSessions || 20) -
+              (activeTreatmentPlan.value.completedConsultations || 0),
+            treatmentType: activeTreatmentPlan.value.diagnosis || 'Rééducation',
+            progress: activeTreatmentPlan.value.progress || 0
+          }
+        : undefined
+    })
+
+    // Handle the close event with data
+    instance.then((result: any) => {
+      if (result) {
+        // Handle different types of results based on the action
+        if (result.type === 'session-created') {
+          toast.add({
+            title: 'Séance créée',
+            description: 'La séance a été ajoutée au plan de traitement.',
+            color: 'success'
+          })
+        } else if (result.type === 'sessions-updated') {
+          toast.add({
+            title: 'Séances mises à jour',
+            description: 'Les séances ont été mises à jour avec succès.',
+            color: 'success'
+          })
+        } else if (result.type === 'sessions-generated') {
+          toast.add({
+            title: 'Séances générées',
+            description: `${result.data?.length || 0} séances ont été générées avec succès.`,
+            color: 'success'
+          })
+        }
+      }
+    })
+  }
 
   // Handle treatment plan creation
   function handleTreatmentPlanCreated(plan: any) {
@@ -304,7 +354,9 @@
       <UCard>
         <div class="mb-5 flex items-center justify-between">
           <h3 class="text-base font-bold">Aperçu des séances</h3>
-          <UButton icon="i-lucide-plus" color="primary" size="sm" square label="Séance" />
+          <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openSessionPlanning()">
+            Planifier les séances
+          </UButton>
         </div>
         <div class="overflow-x-auto">
           <UTable
@@ -332,7 +384,9 @@
                   Commencez à planifier les séances pour ce patient afin de débuter le suivi.
                 </p>
                 <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                  <UButton icon="i-lucide-plus-circle" color="primary" size="md">Planifier les séances du plan</UButton>
+                  <UButton icon="i-lucide-plus-circle" color="primary" size="md" @click="openSessionPlanning()">
+                    Planifier les séances du plan
+                  </UButton>
                   <UButton icon="i-lucide-plus" variant="outline" color="neutral" size="md">
                     Créer une consultation indépendante
                   </UButton>
@@ -420,7 +474,7 @@
   </div>
 
   <!-- Create Treatment Plan Slideover -->
-  <CreateTreatmentPlanSlideover
+  <LazyPatientCreateTreatmentPlanSlideover
     v-if="props.patient"
     :patient="props.patient"
     :open="createSlideoverOpen"

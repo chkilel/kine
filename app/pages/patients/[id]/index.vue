@@ -41,10 +41,6 @@
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  function formatFullName(patient: Pick<Patient, 'firstName' | 'lastName'>) {
-    return `${patient.firstName} ${patient.lastName}`
-  }
-
   function getStatusColor(status: string) {
     switch (status) {
       case 'active':
