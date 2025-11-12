@@ -23,6 +23,11 @@ export default defineAppConfig({
       defaultVariants: {
         variant: 'subtle'
       }
+    },
+    inputNumber: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
     }
   }
 })

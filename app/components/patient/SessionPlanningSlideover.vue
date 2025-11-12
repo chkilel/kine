@@ -49,10 +49,11 @@
   const planningSettings = ref({
     autoGeneration: true,
     sessionsToPlan: 8,
-    frequency: 7,
+    frequency: 2,
     duration: 45,
     startDate: new Date().toISOString().split('T')[0],
-    preferredDays: [] as string[]
+    preferredDays: ['Lundi', 'Mercredi', 'Vendredi'] as string[],
+    location: 'cabinet' as 'cabinet' | 'domicile' | 'visio'
   })
 
   const sessionDetails = ref({
@@ -283,213 +284,334 @@
     const dateObj = date instanceof Date ? date : new Date(date.toString())
     return selectedDate.value ? dateObj.toDateString() === selectedDate.value.toDateString() : false
   }
+
+  const togglePreferredDay = (day: string) => {
+    const index = planningSettings.value.preferredDays.indexOf(day)
+    if (index > -1) {
+      planningSettings.value.preferredDays.splice(index, 1)
+    } else {
+      planningSettings.value.preferredDays.push(day)
+    }
+  }
 </script>
 
 <template>
   <USlideover
     v-model:open="props.open"
     title="Planification des séances"
+    :description="`Patient: ${formatFullName(props.patient!)}`"
     :ui="{
       content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl',
-      body: 'bg-elevated',
-      header: 'bg-accented'
+      body: 'bg-elevated'
     }"
     @close="emit('close', $event)"
   >
-    <template #description>
-      <h2 class="text-lg">{{ `Plan de traitement pour ${formatFullName(props.patient!)}` }}</h2>
-    </template>
     <template #body>
       <!-- Main Content -->
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col">
         <!-- Treatment Plan Overview -->
         <UCard>
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
-            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4 sm:col-span-2">
-              <p class="text-muted-foreground text-sm font-medium">Titre</p>
-              <p class="text-foreground text-lg font-semibold">
-                {{ props.treatmentPlan?.title }}
-              </p>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
+              <p class="text-sm font-medium">Total de séances</p>
+              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.totalSessions }}</p>
+            </div>
+            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
+              <p class="text-sm font-medium">Séances restantes</p>
+              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.remainingSessions }}</p>
+            </div>
+            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
+              <p class="text-sm font-medium">Plan de traitement</p>
+              <p class="font-title text-lg font-bold">{{ props.treatmentPlan?.title }}</p>
             </div>
 
-            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4 text-center">
-              <p class="text-muted-foreground text-sm font-medium">Total de séances</p>
-              <p class="text-foreground text-xl font-bold">{{ props.treatmentPlan?.totalSessions }}</p>
-            </div>
-            <div class="bg-muted flex flex-col gap-1 rounded-lg p-4 text-center">
-              <p class="text-muted-foreground text-sm font-medium">Séances restantes</p>
-              <p class="text-foreground text-xl font-bold">{{ props.treatmentPlan?.remainingSessions }}</p>
-            </div>
-          </div>
-          <USeparator class="mt-6">
-            <h3 class="text-lg font-bold">Paramètres de Planification</h3>
-          </USeparator>
-          <div class="flex flex-wrap items-center justify-end gap-4">
-            <div class="flex items-center gap-3">
-              <span class="text-muted-foreground text-sm font-medium">Activer la génération automatique</span>
-              <USwitch v-model="planningSettings.autoGeneration" />
-            </div>
-          </div>
-
-          <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <UFormField label="Séances à planifier">
-              <UInputNumber v-model="planningSettings.sessionsToPlan" :min="1" :max="20" class="w-full" />
-            </UFormField>
-
-            <UFormField label="Fréquence / semaine">
-              <USelect
-                v-model="planningSettings.preferredDays"
-                :options="[
-                  { value: 'morning', label: 'Matin (8h-12h)' },
-                  { value: 'afternoon', label: 'Après-midi (14h-18h)' },
-                  { value: 'evening', label: 'Soir (18h-20h)' }
-                ]"
-                multiple
-                class="w-full"
+            <div class="col-span-full space-y-2">
+              <div class="flex justify-between text-sm font-medium">
+                <span>Progression du plan</span>
+                <span>
+                  {{ props.treatmentPlan?.completedSessions || 0 }} /
+                  {{ props.treatmentPlan?.totalSessions || 1 }} séances
+                </span>
+              </div>
+              <UProgress
+                :model-value="props.treatmentPlan?.completedSessions || 0"
+                :max="props.treatmentPlan?.totalSessions || 1"
               />
-            </UFormField>
-
-            <UFormField label="Durée (min)">
-              <USelect
-                v-model="planningSettings.duration"
-                :options="[
-                  { label: '30', value: 30 },
-                  { label: '45', value: 45 },
-                  { label: '60', value: 60 }
-                ]"
-              />
-            </UFormField>
-
-            <UFormField label="Date de début">
-              <UInput v-model="planningSettings.startDate" type="date" class="w-full" />
-            </UFormField>
-          </div>
-
-          <UAlert
-            color="warning"
-            icon="i-lucide-alert-triangle"
-            class="mt-4"
-            v-if="
-              props.treatmentPlan?.remainingSessions &&
-              props.treatmentPlan.remainingSessions < planningSettings.sessionsToPlan
-            "
-          >
-            <template #title>Attention</template>
-            <template #description>
-              Il ne reste que {{ props.treatmentPlan.remainingSessions }} séances disponibles dans le plan de traitement
-              actuel.
-            </template>
-          </UAlert>
-        </UCard>
-
-        <!-- Session Details -->
-        <UCard>
-          <h3 class="mb-6 text-lg font-bold">Détails du rendez-vous</h3>
-
-          <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <UFormField label="Praticien">
-              <UInput v-model="sessionDetails.practitioner" readonly class="w-full" />
-            </UFormField>
-
-            <UFormField label="Lieu">
-              <UFieldGroup class="flex">
-                <UButton
-                  v-for="loc in [
-                    { value: 'cabinet', label: 'Cabinet', icon: 'i-lucide-building' },
-                    { value: 'domicile', label: 'Domicile', icon: 'i-lucide-home' }
-                  ]"
-                  :key="loc.value"
-                  :variant="sessionDetails.location === loc.value ? 'solid' : 'subtle'"
-                  :color="sessionDetails.location === loc.value ? 'primary' : 'neutral'"
-                  :icon="loc.icon"
-                  class="flex-1 justify-center"
-                  @click="sessionDetails.location = loc.value as any"
-                >
-                  {{ loc.label }}
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
-
-            <UFormField label="Durée">
-              <UFieldGroup class="w-full">
-                <UButton
-                  v-for="duration in [30, 45, 60]"
-                  :key="duration"
-                  :variant="sessionDetails.duration === duration ? 'solid' : 'subtle'"
-                  :color="sessionDetails.duration === duration ? 'primary' : 'neutral'"
-                  class="flex-1 justify-center"
-                  @click="sessionDetails.duration = duration"
-                >
-                  {{ duration }} min
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
-
-            <div class="md:col-span-2 lg:col-span-3">
-              <UFormField label="Type de séance">
-                <USelect
-                  v-model="sessionDetails.type"
-                  :options="['Rééducation lombaire', 'Mobilisation', 'Évaluation initiale']"
-                  class="w-full"
-                />
-              </UFormField>
             </div>
-          </div>
-          <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <!-- Calendar -->
-            <UCard variant="subtle">
-              <UCalendar
-                :year-controls="false"
-                :model-value="selectedDate"
-                @update:model-value="selectedDate = $event"
-                :is-date-unavailable="isDateUnavailable"
-              />
-            </UCard>
-
-            <!-- Time Selection -->
-            <UCard
+            <UAlert
               variant="subtle"
-              :ui="{
-                body: 'h-full flex flex-col justify-between'
-              }"
+              orientation="horizontal"
+              :icon="planningSettings.autoGeneration ? 'i-lucide-zap' : 'i-lucide-zap-off'"
+              class="col-span-full"
+              :ui="{ icon: 'size-5' }"
             >
-              <UFormField label="Heure de la séance">
-                <!-- Quick Time Slots -->
-                <div class="grid grid-cols-3 gap-2 pb-6 sm:grid-cols-4">
-                  <UButton
-                    v-for="time in timeSlots"
-                    :key="time"
-                    :variant="isTimeUnavailable(time) ? 'soft' : isTimeSelected(time) ? 'solid' : 'subtle'"
-                    :color="isTimeUnavailable(time) ? 'neutral' : 'primary'"
-                    :disabled="isTimeUnavailable(time)"
-                    size="md"
-                    class="justify-center"
-                    @click="!isTimeUnavailable(time) && selectTime(time)"
-                  >
-                    {{ time }}
-                  </UButton>
-                </div>
-              </UFormField>
+              <template #title>
+                <h4 class="font-title text-base font-semibold">
+                  {{ planningSettings.autoGeneration ? 'Planification automatique' : 'Planification manuelle' }}
+                </h4>
+              </template>
 
-              <UButton icon="i-lucide-plus" color="primary" size="lg" block class="mt-auto" @click="addSession">
-                Ajouter cette séance au plan
-              </UButton>
-            </UCard>
+              <template #description>
+                <span v-if="planningSettings.autoGeneration">
+                  Ajustez les paramètres de planification, puis lancez la génération des séances.
+                </span>
+                <span v-else>
+                  Utilisez le calendrier ci-dessous pour définir manuellement les dates et heures de chaque séance.
+                </span>
+              </template>
+
+              <template #actions>
+                <USwitch v-model="planningSettings.autoGeneration" />
+              </template>
+            </UAlert>
           </div>
         </UCard>
+
+        <!-- Planning Toggle Section -->
+        <UCollapsible
+          :default-open="planningSettings.autoGeneration"
+          :open="planningSettings.autoGeneration"
+          :unmount-on-hide="false"
+          class="mt-6"
+        >
+          <template #content>
+            <UCard>
+              <h3 class="text-lg font-bold">Paramètres de planification</h3>
+
+              <!-- Auto Planning Section -->
+              <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <UFormField label="Praticien">
+                  <UInput v-model="sessionDetails.practitioner" readonly class="w-full" />
+                </UFormField>
+                <UFormField label="Séances à planifier">
+                  <UInputNumber
+                    v-model="planningSettings.sessionsToPlan"
+                    :min="1"
+                    :max="treatmentPlan?.totalSessions || 20"
+                    class="w-full"
+                  />
+                </UFormField>
+
+                <UFormField label="Fréquence par semaine">
+                  <USelect
+                    v-model="planningSettings.frequency"
+                    :options="[
+                      { label: '1 fois', value: 1 },
+                      { label: '2 fois', value: 2 },
+                      { label: '3 fois', value: 3 }
+                    ]"
+                    class="w-full"
+                  />
+                </UFormField>
+
+                <UFormField label="Date de début">
+                  <UPopover>
+                    <UButton color="neutral" variant="subtle" class="w-full justify-start">
+                      {{
+                        planningSettings.startDate
+                          ? new Date(planningSettings.startDate).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })
+                          : 'Sélectionner une date'
+                      }}
+                    </UButton>
+                    <template #content>
+                      <UCalendar v-model="planningSettings.startDate" class="p-2" :year-controls="false" />
+                    </template>
+                  </UPopover>
+                </UFormField>
+
+                <UFormField label="Durée (minutes)">
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-xs">
+                      <span>15</span>
+                      <span>30</span>
+                      <span>45</span>
+                      <span>60</span>
+                      <span>75</span>
+                      <span>90</span>
+                    </div>
+                    <USlider size="lg" v-model="planningSettings.duration" :min="15" :max="90" :step="15" />
+                  </div>
+                </UFormField>
+                <UFormField label="Lieu" class="">
+                  <UFieldGroup class="flex">
+                    <UButton
+                      v-for="loc in [
+                        { value: 'cabinet', label: 'Cabinet', icon: 'i-lucide-building' },
+                        { value: 'domicile', label: 'Domicile', icon: 'i-lucide-home' }
+                      ]"
+                      :key="loc.value"
+                      :variant="planningSettings.location === loc.value ? 'solid' : 'subtle'"
+                      :color="planningSettings.location === loc.value ? 'primary' : 'neutral'"
+                      :icon="loc.icon"
+                      class="flex-1 justify-center"
+                      @click="planningSettings.location = loc.value as any"
+                    >
+                      {{ loc.label }}
+                    </UButton>
+                  </UFieldGroup>
+                </UFormField>
+
+                <UFormField label="Jours préférés" class="col-span-full">
+                  <UCheckboxGroup
+                    :items="['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']"
+                    v-model="planningSettings.preferredDays"
+                    orientation="horizontal"
+                    variant="card"
+                    :ui="{ item: 'flex-1 p-2 justify-center' }"
+                  />
+                </UFormField>
+              </div>
+
+              <UAlert
+                color="warning"
+                icon="i-lucide-alert-triangle"
+                class="mt-4"
+                v-if="
+                  props.treatmentPlan?.remainingSessions &&
+                  props.treatmentPlan.remainingSessions < planningSettings.sessionsToPlan
+                "
+              >
+                <template #title>Limite du plan de traitement</template>
+                <template #description>
+                  Vous prévoyez {{ planningSettings.sessionsToPlan }} séances, mais il n'en reste que
+                  {{ props.treatmentPlan.remainingSessions }} sur les {{ props.treatmentPlan?.totalSessions }} du plan.
+                  Assurez-vous que cela correspond aux besoins du patient.
+                </template>
+              </UAlert>
+            </UCard>
+          </template>
+        </UCollapsible>
+
+        <!-- Session Details - Only show in manual mode -->
+
+        <UCollapsible :open="!planningSettings.autoGeneration" :unmount-on-hide="false">
+          <template #content>
+            <UCard>
+              <h3 class="text-lg font-bold">Détails du rendez-vous</h3>
+
+              <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <UFormField label="Praticien">
+                  <UInput v-model="sessionDetails.practitioner" readonly class="w-full" />
+                </UFormField>
+
+                <div class="">
+                  <UFormField label="Type de séance">
+                    <USelect
+                      v-model="sessionDetails.type"
+                      :options="['Rééducation lombaire', 'Mobilisation', 'Évaluation initiale']"
+                      class="w-full"
+                    />
+                  </UFormField>
+                </div>
+                <UFormField label="Durée (minutes)">
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-xs">
+                      <span>15</span>
+                      <span>30</span>
+                      <span>45</span>
+                      <span>60</span>
+                      <span>75</span>
+                      <span>90</span>
+                    </div>
+                    <USlider size="lg" v-model="sessionDetails.duration" :min="15" :max="90" :step="15" />
+                  </div>
+                </UFormField>
+                <UFormField label="Lieu">
+                  <UFieldGroup class="flex">
+                    <UButton
+                      v-for="loc in [
+                        { value: 'cabinet', label: 'Cabinet', icon: 'i-lucide-building' },
+                        { value: 'domicile', label: 'Domicile', icon: 'i-lucide-car-front' }
+                      ]"
+                      :key="loc.value"
+                      :variant="sessionDetails.location === loc.value ? 'solid' : 'subtle'"
+                      :color="sessionDetails.location === loc.value ? 'primary' : 'neutral'"
+                      :icon="loc.icon"
+                      block
+                      @click="sessionDetails.location = loc.value as any"
+                    >
+                      {{ loc.label }}
+                    </UButton>
+                  </UFieldGroup>
+                </UFormField>
+              </div>
+              <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Calendar -->
+                <UCard variant="subtle">
+                  <UCalendar
+                    :year-controls="false"
+                    :model-value="selectedDate"
+                    @update:model-value="selectedDate = $event"
+                    :is-date-unavailable="isDateUnavailable"
+                  />
+                </UCard>
+
+                <!-- Time Selection -->
+                <UCard
+                  variant="subtle"
+                  :ui="{
+                    body: 'h-full flex flex-col justify-between'
+                  }"
+                >
+                  <UFormField label="Heure de la séance">
+                    <!-- Quick Time Slots -->
+                    <div class="grid grid-cols-3 gap-2 pb-6 sm:grid-cols-4">
+                      <UButton
+                        v-for="time in timeSlots"
+                        block
+                        :key="time"
+                        :variant="isTimeUnavailable(time) ? 'soft' : isTimeSelected(time) ? 'solid' : 'subtle'"
+                        :color="isTimeUnavailable(time) ? 'neutral' : 'primary'"
+                        :disabled="isTimeUnavailable(time)"
+                        size="md"
+                        @click="!isTimeUnavailable(time) && selectTime(time)"
+                      >
+                        {{ time }}
+                      </UButton>
+                    </div>
+                  </UFormField>
+
+                  <UButton icon="i-lucide-plus" color="primary" size="lg" block @click="addSession">
+                    Ajouter cette séance au plan
+                  </UButton>
+                </UCard>
+              </div>
+            </UCard>
+          </template>
+        </UCollapsible>
 
         <!-- Session Management -->
-        <UCard>
+        <UCard class="mt-6">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h3 class="text-foreground text-lg font-bold">Gestion des Séances</h3>
               <p class="text-muted-foreground text-base">Prévisualisez, générez et ajustez les séances ci-dessous.</p>
             </div>
             <div class="flex items-center gap-3">
-              <UButton icon="i-lucide-refresh-cw" variant="outline" color="primary" @click="generateSessions">
+              <UButton
+                v-if="planningSettings.autoGeneration"
+                icon="i-lucide-refresh-cw"
+                variant="outline"
+                color="primary"
+                @click="generateSessions"
+              >
                 Regénérer
               </UButton>
-              <UButton icon="i-lucide-sparkles" color="primary" @click="generateSessions">Générer les séances</UButton>
+              <UButton
+                v-if="planningSettings.autoGeneration"
+                icon="i-lucide-sparkles"
+                color="primary"
+                @click="generateSessions"
+              >
+                Générer les séances
+              </UButton>
+              <UButton v-else icon="i-lucide-plus" variant="outline" color="primary" @click="addSession">
+                Ajouter une séance manuellement
+              </UButton>
             </div>
           </div>
 
@@ -595,7 +717,7 @@
         </UCard>
 
         <!-- Communication Settings -->
-        <UCard>
+        <UCard class="mt-6">
           <h3 class="text-foreground mb-4 text-lg font-bold">Communication Patient</h3>
           <div class="space-y-4">
             <div class="flex items-center justify-between">
