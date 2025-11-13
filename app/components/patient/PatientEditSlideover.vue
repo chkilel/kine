@@ -1,18 +1,17 @@
 <script setup lang="ts">
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
-  import { patientUpdateSchema } from '~~/shared/types/patient.types'
-  import type { Patient, PatientUpdate } from '~~/shared/types/patient.types'
+  import { parseISO } from 'date-fns'
 
   const props = defineProps<{
     patient: Patient
-    open: boolean
   }>()
 
   const emit = defineEmits<{
-    'update:open': [value: boolean]
-    updated: [patient: Patient]
+    close: [patient?: Partial<Patient>]
   }>()
-  const schema = patientUpdateSchema
+
+  const toast = useToast()
+  const formRef = ref()
 
   // Emergency contact state
   const emergencyContactName = ref('')
@@ -48,9 +47,6 @@
     state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
-  const toast = useToast()
-  const formRef = ref()
-
   async function onSubmit() {
     if (!formRef.value) return
 
@@ -58,10 +54,10 @@
       const validationResult = await formRef.value.validate()
       if (!validationResult) return
 
-      const response = (await $fetch(`/api/patients/${props.patient.id}`, {
+      const response = await $fetch(`/api/patients/${props.patient.id}`, {
         method: 'PUT',
         body: state
-      })) as Patient
+      })
 
       toast.add({
         title: 'Succès',
@@ -69,11 +65,13 @@
         color: 'success'
       })
 
-      emit('updated', response)
-      emit('update:open', false)
-
       // Refresh the patient data
-      await refreshNuxtData()
+      await refreshNuxtData(`user-${response.id}`)
+
+      emit('close', {
+        ...response,
+        dateOfBirth: parseISO(response.dateOfBirth)
+      })
     } catch (error: any) {
       toast.add({
         title: 'Erreur',
@@ -126,56 +124,51 @@
   }
 
   function handleCancel() {
-    emit('update:open', false)
+    emit('close')
   }
 
-  // Watch for open prop changes to reset form
-  watch(
-    () => props.open,
-    (isOpen) => {
-      if (isOpen) {
-        // Reset state with current patient data
-        Object.assign(state, {
-          firstName: props.patient.firstName,
-          lastName: props.patient.lastName,
-          email: props.patient.email || undefined,
-          phone: props.patient.phone || undefined,
-          dateOfBirth: props.patient.dateOfBirth,
-          gender: props.patient.gender || undefined,
-          address: props.patient.address || undefined,
-          city: props.patient.city || undefined,
-          postalCode: props.patient.postalCode || undefined,
-          country: props.patient.country || undefined,
-          emergencyContacts: props.patient.emergencyContacts || [],
-          insuranceProvider: props.patient.insuranceProvider || undefined,
-          insuranceNumber: props.patient.insuranceNumber || undefined,
-          referralSource: props.patient.referralSource || undefined,
-          status: props.patient.status
-        })
+  // Initialize form with patient data
+  onMounted(() => {
+    // Reset state with current patient data
+    Object.assign(state, {
+      firstName: props.patient.firstName,
+      lastName: props.patient.lastName,
+      email: props.patient.email || undefined,
+      phone: props.patient.phone || undefined,
+      dateOfBirth: props.patient.dateOfBirth,
+      gender: props.patient.gender || undefined,
+      address: props.patient.address || undefined,
+      city: props.patient.city || undefined,
+      postalCode: props.patient.postalCode || undefined,
+      country: props.patient.country || undefined,
+      emergencyContacts: props.patient.emergencyContacts || [],
+      insuranceProvider: props.patient.insuranceProvider || undefined,
+      insuranceNumber: props.patient.insuranceNumber || undefined,
+      referralSource: props.patient.referralSource || undefined,
+      status: props.patient.status
+    })
 
-        // Reset emergency contact form
-        emergencyContactName.value = ''
-        emergencyContactPhone.value = ''
-        emergencyContactRelationship.value = ''
+    // Reset emergency contact form
+    emergencyContactName.value = ''
+    emergencyContactPhone.value = ''
+    emergencyContactRelationship.value = ''
 
-        // Reset notes form
-        newNoteContent.value = ''
+    // Reset notes form
+    newNoteContent.value = ''
 
-        // Initialize calendar models with patient data
-        if (props.patient.dateOfBirth) {
-          const date = new Date(props.patient.dateOfBirth)
-          dobModel.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-        }
-      }
+    // Initialize calendar models with patient data
+    if (props.patient.dateOfBirth) {
+      const date = new Date(props.patient.dateOfBirth)
+      dobModel.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
     }
-  )
+  })
 </script>
 
 <template>
   <USlideover
-    :open="open"
+    :open="true"
     :dismissible="false"
-    @update:open="emit('update:open', $event)"
+    @close="emit('close')"
     title="Modifier le patient"
     :description="`Modifier les informations de ${patient.firstName} ${patient.lastName}`"
     :ui="{
@@ -183,7 +176,7 @@
     }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="schema" :state="state" class="space-y-6">
+      <UForm ref="formRef" :schema="patientUpdateSchema" :state="state" class="space-y-6">
         <!-- Basic Information -->
         <UCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Informations de base</h3>

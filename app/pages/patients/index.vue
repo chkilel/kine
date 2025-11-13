@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import type { TableColumn } from '@nuxt/ui'
   import { upperFirst } from 'scule'
   import { getPaginationRowModel } from '@tanstack/table-core'
+  import type { TableColumn } from '@nuxt/ui'
   import type { Row } from '@tanstack/table-core'
   import type { Patient } from '~~/shared/types/patient.types'
 
@@ -14,18 +14,11 @@
   const toast = useToast()
   const table = useTemplateRef('table')
 
-  const columnFilters = ref([
-    {
-      id: 'email',
-      value: ''
-    }
-  ])
+  const columnFilters = ref([{ id: 'email', value: '' }])
   const columnVisibility = ref()
   const rowSelection = ref({ 1: true })
 
-  const { data, status } = await useFetch<Patient[]>('/api/patients', {
-    lazy: true
-  })
+  const { data, status } = await useFetch<Patient[]>('/api/patients', { lazy: true })
 
   function getRowItems(row: Row<Patient>) {
     return [
@@ -133,7 +126,7 @@
           }),
           h('div', undefined, [
             h('p', { class: 'font-medium text-highlighted' }, fullName),
-            h('p', { class: '' }, `@${row.original.firstName.toLowerCase()}${row.original.lastName.toLowerCase()}`)
+            h('p', { class: '' }, `@${row.original.firstName?.toLowerCase()}${row.original.lastName?.toLowerCase()}`)
           ])
         ])
       }
@@ -242,122 +235,129 @@
 </script>
 
 <template>
-  <UDashboardPanel id="patients">
+  <UDashboardPanel id="patients" class="bg-elevated">
     <template #header>
       <UDashboardNavbar title="Patients">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
-        <template #right>
-          <UButton label="Nouveau patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
-        </template>
+        <template #right>Notif</template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <div class="flex flex-wrap items-center justify-between gap-1.5">
-        <UInput
-          :model-value="table?.tableApi?.getColumn('email')?.getFilterValue() as string"
-          class="max-w-sm"
-          icon="i-lucide-search"
-          placeholder="Filtrer les patients..."
-          @update:model-value="table?.tableApi?.getColumn('email')?.setFilterValue($event)"
-        />
+      <UContainer>
+        <UCard>
+          <template #header>
+            <div class="flex justify-end">
+              <UButton label="Nouveau patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
+            </div>
+          </template>
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <UInput
+              :model-value="table?.tableApi?.getColumn('email')?.getFilterValue() as string"
+              class="max-w-sm"
+              icon="i-lucide-search"
+              placeholder="Filtrer les patients..."
+              @update:model-value="table?.tableApi?.getColumn('email')?.setFilterValue($event)"
+            />
 
-        <div class="flex flex-wrap items-center gap-1.5">
-          <PatientDeleteModal
-            :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-            :selected-ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map((row) => row.original.id) || []"
-          >
-            <UButton
-              v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-              label="Supprimer"
-              color="error"
-              variant="subtle"
-              icon="i-lucide-trash"
-            >
-              <template #trailing>
-                <UKbd>
-                  {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
-                </UKbd>
-              </template>
-            </UButton>
-          </PatientDeleteModal>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <PatientDeleteModal
+                :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+                :selected-ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map((row) => row.original.id) || []"
+              >
+                <UButton
+                  v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+                  label="Supprimer"
+                  color="error"
+                  variant="subtle"
+                  icon="i-lucide-trash"
+                >
+                  <template #trailing>
+                    <UKbd>
+                      {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
+                    </UKbd>
+                  </template>
+                </UButton>
+              </PatientDeleteModal>
 
-          <USelect
-            v-model="statusFilter"
-            :items="[
-              { label: 'Tous', value: 'all' },
-              { label: 'Actif', value: 'active' },
-              { label: 'Inactif', value: 'inactive' },
-              { label: 'Sorti', value: 'discharged' }
-            ]"
-            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-            placeholder="Filtrer par statut"
-            class="min-w-28"
+              <USelect
+                v-model="statusFilter"
+                :items="[
+                  { label: 'Tous', value: 'all' },
+                  { label: 'Actif', value: 'active' },
+                  { label: 'Inactif', value: 'inactive' },
+                  { label: 'Sorti', value: 'discharged' }
+                ]"
+                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+                placeholder="Filtrer par statut"
+                class="min-w-28"
+              />
+              <UDropdownMenu
+                :items="
+                  table?.tableApi
+                    ?.getAllColumns()
+                    .filter((column: any) => column.getCanHide())
+                    .map((column: any) => ({
+                      label: upperFirst(column.id),
+                      type: 'checkbox' as const,
+                      checked: column.getIsVisible(),
+                      onUpdateChecked(checked: boolean) {
+                        table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+                      },
+                      onSelect(e?: Event) {
+                        e?.preventDefault()
+                      }
+                    }))
+                "
+                :content="{ align: 'end' }"
+              >
+                <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
+              </UDropdownMenu>
+            </div>
+          </div>
+
+          <UTable
+            ref="table"
+            v-model:column-filters="columnFilters"
+            v-model:column-visibility="columnVisibility"
+            v-model:row-selection="rowSelection"
+            v-model:pagination="pagination"
+            :pagination-options="{
+              getPaginationRowModel: getPaginationRowModel()
+            }"
+            class="mt-6 shrink-0"
+            :data="data"
+            :columns="columns"
+            :loading="status === 'pending'"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody: '[&>tr]:last:[&>td]:border-b-0',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default'
+            }"
           />
-          <UDropdownMenu
-            :items="
-              table?.tableApi
-                ?.getAllColumns()
-                .filter((column: any) => column.getCanHide())
-                .map((column: any) => ({
-                  label: upperFirst(column.id),
-                  type: 'checkbox' as const,
-                  checked: column.getIsVisible(),
-                  onUpdateChecked(checked: boolean) {
-                    table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
-                  },
-                  onSelect(e?: Event) {
-                    e?.preventDefault()
-                  }
-                }))
-            "
-            :content="{ align: 'end' }"
-          >
-            <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
-          </UDropdownMenu>
-        </div>
-      </div>
 
-      <UTable
-        ref="table"
-        v-model:column-filters="columnFilters"
-        v-model:column-visibility="columnVisibility"
-        v-model:row-selection="rowSelection"
-        v-model:pagination="pagination"
-        :pagination-options="{
-          getPaginationRowModel: getPaginationRowModel()
-        }"
-        class="shrink-0"
-        :data="data"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
-          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody: '[&>tr]:last:[&>td]:border-b-0',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default'
-        }"
-      />
+          <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
+            <div class="text-muted text-sm">
+              {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
+              {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+            </div>
 
-      <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
-        <div class="text-muted text-sm">
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
-        </div>
-
-        <div class="flex items-center gap-1.5">
-          <UPagination
-            :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-            :total="table?.tableApi?.getFilteredRowModel().rows.length"
-            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-          />
-        </div>
-      </div>
+            <div class="flex items-center gap-1.5">
+              <UPagination
+                :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+                :total="table?.tableApi?.getFilteredRowModel().rows.length"
+                @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+              />
+            </div>
+          </div>
+        </UCard>
+      </UContainer>
     </template>
   </UDashboardPanel>
 </template>

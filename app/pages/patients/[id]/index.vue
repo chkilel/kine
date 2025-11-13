@@ -1,33 +1,9 @@
 <script setup lang="ts">
-  import type { Patient } from '~~/shared/types/patient.types'
   import type { BreadcrumbItem } from '@nuxt/ui'
+  import { parseISO } from 'date-fns'
+  import { LazyPatientEditSlideover } from '#components'
 
-  const route = useRoute()
-
-  const {
-    data: patient,
-    status,
-    error
-  } = await useFetch(`/api/patients/${route.params.id}`, {
-    transform: (data) => ({
-      ...data,
-      dateOfBirth: toDate(data.dateOfBirth),
-      createdAt: toDate(data.createdAt),
-      updatedAt: toDate(data.updatedAt),
-      deletedAt: toDate(data.deletedAt)
-    })
-  })
-
-  if (error.value) {
-    throw createError({
-      statusCode: error.value?.statusCode || 404,
-      statusMessage: error.value?.statusMessage || 'Patient introuvable'
-    })
-  }
-
-  const activeTab = ref('overview')
-  const isEditModalOpen = ref(false)
-
+  // Const
   const tabs = [
     { label: "Vue d'Ensemble", slot: 'overview', value: 'overview' },
     { label: 'Plan de traitement', slot: 'plan', value: 'plan' },
@@ -40,6 +16,42 @@
     { label: 'Patients', to: '/patients' },
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
+
+  // -------------------------
+  const route = useRoute()
+  const overlay = useOverlay()
+  const editSlideover = overlay.create(LazyPatientEditSlideover)
+  const activeTab = ref('overview')
+
+  const {
+    data: patient,
+    status,
+    error
+  } = await useFetch(`/api/patients/${route.params.id}`, {
+    key: () => `user-${route.params.id}`,
+    transform: (data) => {
+      return {
+        ...data,
+        dateOfBirth: parseISO(data.dateOfBirth),
+        createdAt: parseISO(data.createdAt),
+        updatedAt: parseISO(data.updatedAt),
+        deletedAt: data.deletedAt ? parseISO(data.deletedAt) : null
+      }
+    }
+  })
+
+  if (error.value) {
+    throw createError({
+      statusCode: error.value?.statusCode || 404,
+      statusMessage: error.value?.statusMessage || 'Patient introuvable'
+    })
+  }
+
+  function openEditSlideover() {
+    if (!patient.value) return
+
+    editSlideover.open({ patient: patient.value })
+  }
 
   function getStatusColor(status: string) {
     switch (status) {
@@ -66,25 +78,10 @@
         return status
     }
   }
-
-  // Static data for fields not in database
-  const staticPatientData = {
-    coverage: '100%',
-    doctor: 'Dr. Leroy (Généraliste)',
-    nextAppointment: '15 Oct. 2024 à 10:00',
-    pathology: 'Lombalgie chronique',
-    treatmentGoal: 'Réduction douleur & mobilité',
-    sessionsCompleted: 8,
-    sessionsTotal: 15,
-    painLevel: 6,
-    currentTreatment: 'Anti-inflammatoires non stéroïdiens (si besoin).',
-    notes:
-      "Patient motivé. Bonne progression sur les exercices de renforcement du tronc. Penser à intégrer des exercices d'étirement la prochaine séance."
-  }
 </script>
 
 <template>
-  <UDashboardPanel class="bg-elevated">
+  <UDashboardPanel id="patient-profil" class="bg-elevated">
     <template #header>
       <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Profil du patient'">
         <template #leading>
@@ -109,7 +106,7 @@
           <UCard variant="outline">
             <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
               <div class="mx-auto shrink-0 sm:mx-0">
-                <UAvatar :alt="formatFullName(patient)" size="3xl" class="h-24 w-24 text-4xl" />
+                <UAvatar :alt="formatFullName(patient)" class="size-24 rounded-xl text-4xl" />
               </div>
               <div class="flex flex-1 flex-col gap-3 text-center sm:text-left">
                 <div class="flex flex-col justify-center gap-2 sm:flex-row sm:items-center sm:justify-start">
@@ -146,7 +143,7 @@
                   class="text-primary flex items-center justify-center gap-1.5 text-sm font-semibold sm:justify-start"
                 >
                   <UIcon name="i-lucide-calendar-check" class="text-base" />
-                  <span>Prochain RDV: {{ staticPatientData.nextAppointment }}</span>
+                  <span>Prochain RDV: 15 Oct. 2024 à 10:00 (Static)</span>
                 </div>
               </div>
             </div>
@@ -154,27 +151,12 @@
               <UButton
                 color="neutral"
                 variant="outline"
-                class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-                @click="isEditModalOpen = true"
-              >
-                <UIcon name="i-lucide-edit" class="text-base" />
-                <span class="truncate">Modifier patient</span>
-              </UButton>
-              <UButton
-                color="primary"
-                variant="soft"
-                class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-              >
-                <UIcon name="i-lucide-plus" class="text-base" />
-                <span class="truncate">Ajouter une séance</span>
-              </UButton>
-              <UButton
-                color="primary"
-                class="flex h-9 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg px-3"
-              >
-                <UIcon name="i-lucide-file-text" class="text-base" />
-                <span class="truncate">Créer un document</span>
-              </UButton>
+                icon="i-lucide-edit"
+                label="Modifier patient"
+                @click="openEditSlideover"
+              />
+              <UButton color="primary" variant="soft" icon="i-lucide-plus" label="Ajouter une séance" />
+              <UButton color="primary" icon="i-lucide-file-text" label="Créer un document" />
             </div>
           </UCard>
 
@@ -209,13 +191,4 @@
       </UContainer>
     </template>
   </UDashboardPanel>
-
-  <!-- Edit Modal -->
-  <PatientEditSlideover
-    v-if="patient"
-    :patient="patient"
-    :open="isEditModalOpen"
-    @update:open="isEditModalOpen = $event"
-    @updated="() => refreshNuxtData()"
-  />
 </template>
