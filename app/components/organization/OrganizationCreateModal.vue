@@ -71,7 +71,7 @@
   )
 
   // ✅ Create organization via UForm submit
-  async function onSubmit(event: FormSubmitEvent<OrganizationInsertSchema>) {
+  async function onSubmit(_event: FormSubmitEvent<OrganizationInsertSchema>) {
     isCreating.value = true
 
     try {
@@ -181,7 +181,7 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-end w-full gap-2 ">
+      <div class="flex w-full justify-end gap-2">
         <UButton label="Annuler" color="neutral" variant="outline" :disabled="isCreating" @click="handleCancel" />
         <UButton
           label="Créer une organisation"
