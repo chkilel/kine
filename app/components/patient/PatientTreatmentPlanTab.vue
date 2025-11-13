@@ -1,23 +1,21 @@
 <script setup lang="ts">
-  import { LazyPatientCreateTreatmentPlanSlideover, LazyPatientSessionPlanningSlideover } from '#components'
+  import { LazyTreatmentPlanCreateSideover, LazyConsultaionPlanningSlideover } from '#components'
 
   const props = defineProps<{ patient?: Patient }>()
+
+  const toast = useToast()
+  const overlay = useOverlay()
+  const sessionPlanningOverlay = overlay.create(LazyConsultaionPlanningSlideover)
+
   const createSlideoverOpen = ref(false)
 
-  // Use Nuxt UI's useToast for notifications
-  const toast = useToast()
-
-  // Use Nuxt's useFetch composable for reactive data fetching
   const {
     data: treatmentPlans,
     pending: loading,
     error,
     refresh: refreshTreatmentPlans
-  } = await useFetch(`/api/patients/${props.patient?.id}/treatment-plans`, {
-    key: `treatment-plans-${props.patient?.id}`,
-    server: false, // Fetch on client-side to ensure we have patient context
-    default: () => [],
-    transform: (data: any) => data || []
+  } = await useFetch(() => `/api/patients/${props.patient?.id}/treatment-plans`, {
+    key: () => `treatment-plans-${props.patient?.id}`
   })
 
   // Get the active treatment plan (first one, or most recent)
@@ -25,10 +23,6 @@
     if (!treatmentPlans.value?.length) return null
     return treatmentPlans.value[0] // API returns ordered by newest first
   })
-
-  // Use useOverlay for session planning slideover
-  const overlay = useOverlay()
-  const sessionPlanningOverlay = overlay.create(LazyPatientSessionPlanningSlideover)
 
   // Function to open session planning with event handlers
   function openSessionPlanning() {
@@ -117,33 +111,6 @@
       duration: 2000,
       color: 'info'
     })
-  }
-
-  // Helper functions
-  function getSessionStatusColor(status: string) {
-    switch (status) {
-      case 'completed':
-        return 'success'
-      case 'scheduled':
-        return 'warning'
-      case 'no_show':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
-
-  function getSessionStatusLabel(status: string) {
-    switch (status) {
-      case 'completed':
-        return 'Terminée'
-      case 'scheduled':
-        return 'À venir'
-      case 'no_show':
-        return 'Manquée'
-      default:
-        return status
-    }
   }
 
   function getDocumentIcon(category: string) {
@@ -474,7 +441,7 @@
   </div>
 
   <!-- Create Treatment Plan Slideover -->
-  <LazyPatientCreateTreatmentPlanSlideover
+  <LazyTreatmentPlanCreateSideover
     v-if="props.patient"
     :patient="props.patient"
     :open="createSlideoverOpen"

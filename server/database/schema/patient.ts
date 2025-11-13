@@ -24,7 +24,7 @@ export const patients = sqliteTable(
     firstName: text().notNull(), // Patient's first name — e.g., "John"
     lastName: text().notNull(), // Patient's last name — e.g., "Doe"
     dateOfBirth: requiredDateSchema, // Timestamp (ms) — e.g., 631152000000 for "1990-01-01"
-    gender: text({ enum: ['male', 'female'] }), // Gender — either "male" or "female"
+    gender: text({ enum: ['male', 'female'] }).notNull(), // Gender — either "male" or "female"
     email: text(), // Optional — e.g., "john.doe@example.com"
     phone: text().notNull(), // Patient’s phone number — e.g., "+212612345678"
     address: text(), // Street address — e.g., "123 Main Street"

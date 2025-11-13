@@ -72,7 +72,7 @@
     painLevel: 10,
     coverageStatus: 'not_required',
     insuranceInfo: '',
-    notes: undefined
+    notes: null
   })
 
   // Calendar models for date components

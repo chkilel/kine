@@ -1,34 +1,6 @@
 <script setup lang="ts">
   import { UCard } from '#components'
 
-  interface Patient {
-    id: string
-    firstName: string
-    lastName: string
-  }
-
-  interface TreatmentPlan {
-    id: string
-    title: string
-    totalSessions: number
-    completedSessions: number
-    remainingSessions: number
-    treatmentType: string
-    progress: number
-  }
-
-  interface Session {
-    id: string
-    date: string
-    time: string
-    type: string
-    details: string
-    status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
-    duration: number
-    location: 'cabinet' | 'domicile' | 'visio'
-    practitioner: string
-  }
-
   const props = defineProps<{
     patient?: Patient
     treatmentPlan?: TreatmentPlan
@@ -314,11 +286,11 @@
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Total de séances</p>
-              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.totalSessions }}</p>
+              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.numberOfSessions }}</p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Séances restantes</p>
-              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.remainingSessions }}</p>
+              <p class="font-title text-xl font-bold">555</p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Plan de traitement</p>
@@ -328,10 +300,7 @@
             <div class="col-span-full space-y-2">
               <div class="flex justify-between text-sm font-medium">
                 <span>Progression du plan</span>
-                <span>
-                  {{ props.treatmentPlan?.completedSessions || 0 }} /
-                  {{ props.treatmentPlan?.totalSessions || 1 }} séances
-                </span>
+                <span>{{ 666 }} / {{ 444 }} séances</span>
               </div>
               <UProgress
                 :model-value="props.treatmentPlan?.completedSessions || 0"

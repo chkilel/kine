@@ -84,8 +84,8 @@ export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'complete
 export const treatmentPlanCreateSchema = z.object({
   patientId: z.string(),
   therapistId: z.string(),
-  title: z.string().min(1),
-  diagnosis: z.string().min(1),
+  title: z.string().min(3),
+  diagnosis: z.string().min(3),
   objective: z.string().optional(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date().nullable().optional(),
@@ -109,7 +109,7 @@ export const treatmentPlanCreateSchema = z.object({
     ])
     .optional(),
   insuranceInfo: z.string().optional(),
-  notes: z.string().optional()
+  notes: z.array(noteSchema).nullable()
 })
 
 export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
