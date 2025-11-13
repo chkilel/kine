@@ -12,3 +12,29 @@ export function slugify(name: string) {
 export function formatFullName(patient: Pick<Patient, 'firstName' | 'lastName'>) {
   return `${patient.firstName} ${patient.lastName}`
 }
+
+export function getSessionBadgeColor(status: string) {
+  switch (status) {
+    case 'upcoming':
+      return 'warning'
+    case 'completed':
+      return 'success'
+    case 'missed':
+      return 'error'
+    default:
+      return 'neutral'
+  }
+}
+
+export function getSessionBadgeLabel(status: string) {
+  switch (status) {
+    case 'upcoming':
+      return 'À venir'
+    case 'completed':
+      return 'Terminée'
+    case 'missed':
+      return 'Manquée'
+    default:
+      return status
+  }
+}

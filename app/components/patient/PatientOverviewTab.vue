@@ -1,13 +1,14 @@
 <script setup lang="ts">
-  import { differenceInDays } from 'date-fns'
-  import type { Patient } from '~~/shared/types/patient.types'
+  import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
+  import { fr } from 'date-fns/locale'
 
-  const props = defineProps<{
+  const { patient } = defineProps<{
     patient: Patient
   }>()
 
   // Use treatment plans composable
   const {
+    fetchTreatmentPlans,
     getActiveTreatmentPlan,
     getTreatmentPlanHistory,
     formatTreatmentPlanStatus,
@@ -15,11 +16,11 @@
     getTherapistName,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
-  } = usePatientTreatmentPlans(props.patient?.id)
+  } = usePatientTreatmentPlans(patient?.id)
 
   // Watch for patient changes
   watch(
-    () => props.patient?.id,
+    () => patient?.id,
     (newId) => {
       if (newId) {
         fetchTreatmentPlans(newId)
@@ -30,18 +31,18 @@
   // Computed properties for database fields
   const fullAddress = computed(() => {
     const parts = []
-    if (props.patient?.address) parts.push(props.patient.address)
-    if (props.patient?.city) parts.push(props.patient.city)
-    if (props.patient?.postalCode) parts.push(props.patient.postalCode)
-    if (props.patient?.country) parts.push(props.patient.country)
+    if (patient?.address) parts.push(patient.address)
+    if (patient?.city) parts.push(patient.city)
+    if (patient?.postalCode) parts.push(patient.postalCode)
+    if (patient?.country) parts.push(patient.country)
     return parts.join(', ') || '-'
   })
 
   const insuranceDetails = computed(() => {
-    if (props.patient?.insuranceProvider) {
-      let details = props.patient.insuranceProvider
-      if (props.patient?.insuranceNumber) {
-        details += ` (${props.patient.insuranceNumber})`
+    if (patient?.insuranceProvider) {
+      let details = patient.insuranceProvider
+      if (patient?.insuranceNumber) {
+        details += ` (${patient.insuranceNumber})`
       }
       return details
     }
@@ -49,48 +50,16 @@
   })
 
   const primaryEmergencyContact = computed(() => {
-    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
-      const contact = props.patient.emergencyContacts[0]
-      return contact?.name || 'Sans nom'
-    }
-    return '-'
-  })
-
-  const primaryEmergencyPhone = computed(() => {
-    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
-      return props.patient.emergencyContacts[0]?.phone || '-'
-    }
-    return '-'
-  })
-
-  const allergiesList = computed(() => {
-    if (props.patient?.allergies && props.patient.allergies.length > 0) {
-      return props.patient.allergies
-    }
-    return []
-  })
-
-  const medicalHistoryList = computed(() => {
-    if (props.patient?.medicalConditions && props.patient.medicalConditions.length > 0) {
-      return props.patient.medicalConditions
-    }
-    return []
-  })
-
-  const currentTreatmentList = computed(() => {
-    if (props.patient?.medications && props.patient.medications.length > 0) {
-      return props.patient.medications
-    }
-    return []
-  })
-
-  const referralSource = computed(() => {
-    return props.patient?.referralSource || '-'
+    const contact = patient?.emergencyContacts?.[0]
+    if (!contact) return '-'
+    const name = contact.name || 'Sans nom'
+    const phone = contact.phone || '-'
+    return `${name} - ${phone}`
   })
 
   const practitionerNotes = computed(() => {
-    if (props.patient?.notes && props.patient.notes.length > 0) {
-      return props.patient.notes.map((note) => ({
+    if (patient?.notes && patient.notes.length > 0) {
+      return patient.notes.map((note) => ({
         text: note.content,
         author: note.author,
         date: formatDate(note.date)
@@ -100,16 +69,14 @@
   })
 
   function formatDate(date: Date | string) {
-    const noteDate = typeof date === 'string' ? new Date(date) : date
+    const noteDate = typeof date === 'string' ? parseISO(date) : date
     const now = new Date()
     const diffInDays = differenceInDays(now, noteDate)
 
     if (diffInDays === 0) return "Aujourd'hui"
     if (diffInDays === 1) return 'Hier'
-    if (diffInDays <= 7) return `il y a ${diffInDays} jours`
-    if (diffInDays <= 30) return `il y a ${Math.floor(diffInDays / 7)} semaines`
-    if (diffInDays <= 365) return `il y a ${Math.floor(diffInDays / 30)} mois`
-    return `il y a ${Math.floor(diffInDays / 365)} ans`
+
+    return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
   }
 
   // Static data for fields not yet connected to database
@@ -123,32 +90,6 @@
       { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
       { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
     ]
-  }
-
-  function getSessionBadgeColor(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'warning'
-      case 'completed':
-        return 'success'
-      case 'missed':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
-
-  function getSessionBadgeLabel(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'À venir'
-      case 'completed':
-        return 'Terminée'
-      case 'missed':
-        return 'Manquée'
-      default:
-        return status
-    }
   }
 </script>
 
@@ -238,14 +179,14 @@
             <UIcon name="i-lucide-stethoscope" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Médecin prescripteur</h3>
-              <p class="font-medium">{{ referralSource }}</p>
+              <p class="font-medium">{{ patient.referralSource || '-' }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Contact d'urgence</h3>
-              <p class="font-medium">{{ primaryEmergencyContact }} - {{ primaryEmergencyPhone }}</p>
+              <p class="font-medium">{{ primaryEmergencyContact }}</p>
             </div>
           </div>
         </div>
@@ -259,7 +200,7 @@
             <h3 class="text-muted mb-2 font-semibold">Allergies / Contre-indications</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="allergy in allergiesList"
+                v-for="allergy in patient.allergies"
                 :key="allergy"
                 color="error"
                 variant="subtle"
@@ -268,14 +209,14 @@
               >
                 {{ allergy }}
               </UBadge>
-              <span v-if="allergiesList.length === 0" class="text-muted">Aucune allergie connue</span>
+              <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Antécédents médicaux</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="condition in medicalHistoryList"
+                v-for="condition in patient.medicalConditions"
                 :key="condition"
                 color="warning"
                 variant="subtle"
@@ -284,14 +225,16 @@
               >
                 {{ condition }}
               </UBadge>
-              <span v-if="medicalHistoryList.length === 0" class="text-muted">Aucun antécédent médical connu</span>
+              <span v-if="patient.medicalConditions?.length === 0" class="text-muted">
+                Aucun antécédent médical connu
+              </span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Traitement actuel</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="medication in currentTreatmentList"
+                v-for="medication in patient.medications"
                 :key="medication"
                 color="primary"
                 variant="subtle"
@@ -300,7 +243,7 @@
               >
                 {{ medication }}
               </UBadge>
-              <span v-if="currentTreatmentList.length === 0" class="text-muted">Aucun traitement en cours</span>
+              <span v-if="patient.medications?.length === 0" class="text-muted">Aucun traitement en cours</span>
             </div>
           </div>
         </div>
@@ -334,7 +277,7 @@
         <template v-else-if="treatmentPlansError">
           <div class="py-8 text-center">
             <p class="text-muted">Erreur lors du chargement des plans de traitement</p>
-            <UButton variant="ghost" size="sm" @click="fetchTreatmentPlans(props.patient.id)">Réessayer</UButton>
+            <UButton variant="ghost" size="sm" @click="fetchTreatmentPlans(patient.id)">Réessayer</UButton>
           </div>
         </template>
         <template v-else-if="getActiveTreatmentPlan">
