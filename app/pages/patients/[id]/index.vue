@@ -164,7 +164,7 @@
           <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="overview" class="w-full">
             <!-- Vue d'Ensemble Tab -->
             <template #overview>
-              <PatientOverviewTab v-if="patient" :patient="patient" />
+              <LazyPatientOverviewTab v-if="patient" :patient="patient" />
             </template>
 
             <!-- Séances Tab -->
@@ -174,7 +174,7 @@
 
             <!-- Plan de traitement Tab -->
             <template #plan>
-              <PatientTreatmentPlanTab v-if="patient" :patient="patient" />
+              <LazyPatientTreatmentPlanTab v-if="patient" :patient="patient" />
             </template>
 
             <!-- Documents Tab -->
