@@ -4,8 +4,17 @@
 
   const toast = useToast()
   const router = useRouter()
+  const { data: sessionData } = await authClient.useSession(useFetch)
 
-  const state = reactive<Partial<PatientCreate>>({
+  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Patients', to: '/patients' },
+    { label: 'Nouvelle fiche patient' }
+  ])
+
+  const form = useTemplateRef<HTMLFormElement>('createPatientForm')
+  const formState = reactive<Partial<PatientCreate>>({
+    organizationId: sessionData.value?.session.activeOrganizationId!,
     firstName: '',
     lastName: '',
     email: undefined,
@@ -28,34 +37,24 @@
     notes: undefined
   })
 
-  const form = useTemplateRef<HTMLFormElement>('createPatientForm')
-
   // Array input fields
   const newMedicalCondition = ref('')
   const newSurgery = ref('')
   const newAllergy = ref('')
   const newMedication = ref('')
   const newNote = ref('')
-  const patientNotes = ref<Array<{ content: string; date: Date; author: string }>>([])
-
-  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { label: 'Dashboard', to: '/' },
-    { label: 'Patients', to: '/patients' },
-    { label: 'Nouvelle fiche patient' }
-  ])
+  const patientNotes = ref<Array<Note>>([])
 
   // Date formatter and calendar models
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
   const dobModel = shallowRef<CalendarDate | null>(null)
-  const referralModel = shallowRef<CalendarDate | null>(null)
 
   watch(dobModel, (val) => {
-    state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
+    formState.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
   async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
     try {
-      // Prepare the data to match the database schema
       const submitData = {
         ...event.data,
         // Filter out empty values from arrays
@@ -67,7 +66,7 @@
         emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
         // Combine existing notes with new notes as array of objects
         notes: (() => {
-          const notesArray: Array<{ content: string; date: Date; author: string }> = []
+          const notesArray: Array<Note> = []
 
           // Add existing notes if any
           if (event.data.notes && Array.isArray(event.data.notes)) {
@@ -81,7 +80,7 @@
         })()
       }
 
-      const response = await $fetch('/api/patients', {
+      await $fetch('/api/patients', {
         method: 'POST',
         body: submitData
       })
@@ -105,29 +104,29 @@
 
   // Array management functions
   function addEmergencyContact() {
-    if (!state.emergencyContacts) {
-      state.emergencyContacts = []
+    if (!formState.emergencyContacts) {
+      formState.emergencyContacts = []
     }
-    state.emergencyContacts.push({ name: '', phone: '', relationship: '' })
+    formState.emergencyContacts.push({ name: '', phone: '', relationship: '' })
   }
 
   function removeEmergencyContact(index: number) {
-    state.emergencyContacts?.splice(index, 1)
+    formState.emergencyContacts?.splice(index, 1)
   }
 
   function addArrayItem(arrayField: keyof PatientCreate, value: string) {
-    const currentArray = (state[arrayField] as string[]) || []
+    const currentArray = (formState[arrayField] as string[]) || []
     if (value.trim()) {
       currentArray.push(value.trim())
-      const updatedState = state as any
+      const updatedState = formState as any
       updatedState[arrayField] = currentArray
     }
   }
 
   function removeArrayItem(arrayField: keyof PatientCreate, index: number) {
-    const currentArray = (state[arrayField] as string[]) || []
+    const currentArray = (formState[arrayField] as string[]) || []
     currentArray.splice(index, 1)
-    const updatedState = state as any
+    const updatedState = formState as any
     updatedState[arrayField] = currentArray
   }
 
@@ -156,7 +155,7 @@
       patientNotes.value.push({
         content: newNote.value.trim(),
         date: new Date(),
-        author: 'Dr. Martin' // This should come from current user context
+        author: 'Dr. Martin' // FIXME This should come from organization therapist/users
       })
 
       newNote.value = ''
@@ -192,7 +191,7 @@
         <UForm
           ref="createPatientForm"
           :schema="patientCreateSchema"
-          :state="state"
+          :state="formState"
           class="space-y-6"
           @submit="onSubmit"
         >
@@ -201,10 +200,10 @@
             <h2 class="text-highlighted mb-4 text-lg font-bold">Informations Essentielles</h2>
             <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
               <UFormField label="Prénom" name="firstName" required>
-                <UInput v-model="state.firstName" placeholder="ex: Jean" class="w-full" />
+                <UInput v-model="formState.firstName" placeholder="ex: Jean" class="w-full" />
               </UFormField>
               <UFormField label="Nom" name="lastName" required>
-                <UInput v-model="state.lastName" placeholder="ex: Dupont" class="w-full" />
+                <UInput v-model="formState.lastName" placeholder="ex: Dupont" class="w-full" />
               </UFormField>
               <UFormField label="Date de naissance" name="dateOfBirth" required>
                 <UPopover>
@@ -218,7 +217,7 @@
               </UFormField>
               <UFormField label="Sexe" name="gender" required>
                 <USelect
-                  v-model="state.gender"
+                  v-model="formState.gender"
                   placeholder="Sélectionner..."
                   class="w-full"
                   :items="[
@@ -229,7 +228,7 @@
               </UFormField>
               <div class="md:col-span-2">
                 <UFormField label="Téléphone" name="phone" required>
-                  <UInput v-model="state.phone" placeholder="ex: 06 12 34 56 78" type="tel" class="w-full" />
+                  <UInput v-model="formState.phone" placeholder="ex: 06 12 34 56 78" type="tel" class="w-full" />
                 </UFormField>
               </div>
             </div>
@@ -261,7 +260,7 @@
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
                       <UFormField label="Email" name="email">
                         <UInput
-                          v-model="state.email"
+                          v-model="formState.email"
                           placeholder="ex: jean.dupont@email.com"
                           type="email"
                           class="w-full"
@@ -269,7 +268,7 @@
                       </UFormField>
                       <UFormField label="Adresse" name="address">
                         <UTextarea
-                          v-model="state.address"
+                          v-model="formState.address"
                           placeholder="123 Rue de la République, 75001 Paris, France"
                           :rows="3"
                           class="w-full"
@@ -277,14 +276,14 @@
                       </UFormField>
                       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <UFormField label="Ville" name="city">
-                          <UInput v-model="state.city" placeholder="Paris" class="w-full" />
+                          <UInput v-model="formState.city" placeholder="Paris" class="w-full" />
                         </UFormField>
                         <UFormField label="Code Postal" name="postalCode">
-                          <UInput v-model="state.postalCode" placeholder="75001" class="w-full" />
+                          <UInput v-model="formState.postalCode" placeholder="75001" class="w-full" />
                         </UFormField>
                       </div>
                       <UFormField label="Pays" name="country">
-                        <UInput v-model="state.country" placeholder="France" class="w-full" />
+                        <UInput v-model="formState.country" placeholder="France" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -312,9 +311,12 @@
 
                   <template #content>
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <div v-if="state.emergencyContacts && state.emergencyContacts.length > 0" class="space-y-4">
+                      <div
+                        v-if="formState.emergencyContacts && formState.emergencyContacts.length > 0"
+                        class="space-y-4"
+                      >
                         <div
-                          v-for="(contact, index) in state.emergencyContacts"
+                          v-for="(contact, index) in formState.emergencyContacts"
                           :key="index"
                           class="border-default rounded-lg border p-3"
                         >
@@ -396,10 +398,14 @@
                   <template #content>
                     <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
                       <UFormField label="Nom de l'assurance/mutuelle" name="insuranceProvider">
-                        <UInput v-model="state.insuranceProvider" placeholder="ex: Mutuelle SantéPlus" class="w-full" />
+                        <UInput
+                          v-model="formState.insuranceProvider"
+                          placeholder="ex: Mutuelle SantéPlus"
+                          class="w-full"
+                        />
                       </UFormField>
                       <UFormField label="Numéro de police" name="insuranceNumber">
-                        <UInput v-model="state.insuranceNumber" placeholder="ex: 987654321" class="w-full" />
+                        <UInput v-model="formState.insuranceNumber" placeholder="ex: 987654321" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -427,7 +433,7 @@
                   <template #content>
                     <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
                       <UFormField label="Médecin/Praticien" name="referralSource">
-                        <UInput v-model="state.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
+                        <UInput v-model="formState.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -461,11 +467,11 @@
                       <UFormField label="Antécédents médicaux" name="medicalConditions">
                         <div class="space-y-2">
                           <div
-                            v-if="state.medicalConditions && state.medicalConditions.length > 0"
+                            v-if="formState.medicalConditions && formState.medicalConditions.length > 0"
                             class="flex flex-wrap gap-2"
                           >
                             <UBadge
-                              v-for="(condition, index) in state.medicalConditions"
+                              v-for="(condition, index) in formState.medicalConditions"
                               :key="index"
                               color="neutral"
                               variant="subtle"
@@ -499,9 +505,12 @@
                       <!-- Chirurgies / Interventions -->
                       <UFormField label="Chirurgies / Interventions" name="surgeries">
                         <div class="space-y-2">
-                          <div v-if="state.surgeries && state.surgeries.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.surgeries && formState.surgeries.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(surgery, index) in state.surgeries"
+                              v-for="(surgery, index) in formState.surgeries"
                               :key="index"
                               color="primary"
                               variant="subtle"
@@ -535,9 +544,12 @@
                       <!-- Allergies -->
                       <UFormField label="Allergies" name="allergies">
                         <div class="space-y-2">
-                          <div v-if="state.allergies && state.allergies.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.allergies && formState.allergies.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(allergy, index) in state.allergies"
+                              v-for="(allergy, index) in formState.allergies"
                               :key="index"
                               color="error"
                               variant="subtle"
@@ -571,9 +583,12 @@
                       <!-- Médicaments actuels -->
                       <UFormField label="Médicaments actuels" name="medications">
                         <div class="space-y-2">
-                          <div v-if="state.medications && state.medications.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.medications && formState.medications.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(medication, index) in state.medications"
+                              v-for="(medication, index) in formState.medications"
                               :key="index"
                               color="info"
                               variant="subtle"
