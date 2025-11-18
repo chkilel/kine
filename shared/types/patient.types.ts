@@ -29,6 +29,7 @@ export const emergencyContactSchema = z.object({
 
 // Patient schemas
 export const patientCreateSchema = z.object({
+  organizationId: z.string().min(1),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   dateOfBirth: z.coerce.date(),
@@ -60,7 +61,7 @@ export const patientSchema = z.object({
   lastName: z.string(),
   dateOfBirth: z.coerce.date(),
   gender: genderSchema,
-  phone: z.string().nullable(),
+  phone: z.string(),
   email: z.string().nullable(),
   address: z.string().nullable(),
   city: z.string().nullable(),
@@ -82,8 +83,9 @@ export const patientSchema = z.object({
 export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'cancelled'])
 
 export const treatmentPlanCreateSchema = z.object({
-  patientId: z.string(),
-  therapistId: z.string(),
+  patientId: z.string().min(1),
+  organizationId: z.string().min(1),
+  therapistId: z.string().min(1),
   title: z.string().min(3),
   diagnosis: z.string().min(3),
   objective: z.string().optional(),
@@ -151,31 +153,41 @@ export const treatmentPlanSchema = z.object({
 })
 
 // Consultation schemas
-export const consultationSessionTypeSchema = z.enum(['initial', 'follow_up', 'evaluation', 'discharge'])
+export const consultationLocationSchema = z.enum(['clinic', 'home', 'telehealth'])
+export const consultationSessionTypeSchema = z.enum([
+  'initial',
+  'follow_up',
+  'evaluation',
+  'discharge',
+  'mobilization',
+  'reinforcement',
+  'reeducation'
+])
 export const consultationStatusSchema = z.enum(['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'])
 
 export const consultationCreateSchema = z.object({
   patientId: z.string(),
+  organizationId: z.string().min(1),
   treatmentPlanId: z.string().optional(),
+  therapistId: z.string().optional(),
   date: z.coerce.date(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   duration: z.number().min(1).optional(),
-  sessionType: consultationSessionTypeSchema.optional(),
+  type: consultationSessionTypeSchema.optional(),
+  location: consultationLocationSchema.default('clinic'),
   chiefComplaint: z.string().optional(),
-  sessionNotes: z.string().optional(),
-  treatmentPlanSummary: z.string().optional(),
+  notes: z.string().optional(),
+  treatmentSummary: z.string().optional(),
   observations: z.string().optional(),
   nextSteps: z.string().optional(),
   painLevelBefore: z.number().min(0).max(10).optional(),
   painLevelAfter: z.number().min(0).max(10).optional(),
   progressNotes: z.string().optional(),
-  therapistId: z.string().optional(),
-  therapistNotes: z.string().optional(),
   status: consultationStatusSchema.default('scheduled'),
   billed: z.boolean().default(false),
   insuranceClaimed: z.boolean().default(false),
-  sessionCost: z.number().min(0).optional()
+  cost: z.number().min(0).optional()
 })
 
 export const consultationUpdateSchema = consultationCreateSchema.partial()
@@ -189,21 +201,21 @@ export const consultationSchema = z.object({
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
   duration: z.number().nullable(),
-  sessionType: consultationSessionTypeSchema.nullable(),
+  type: consultationSessionTypeSchema.nullable(),
+  location: consultationLocationSchema.nullable(),
   chiefComplaint: z.string().nullable(),
-  sessionNotes: z.string().nullable(),
-  treatmentPlanSummary: z.string().nullable(),
+  notes: z.string().nullable(),
+  treatmentSummary: z.string().nullable(),
   observations: z.string().nullable(),
   nextSteps: z.string().nullable(),
   painLevelBefore: z.number().nullable(),
   painLevelAfter: z.number().nullable(),
   progressNotes: z.string().nullable(),
   therapistId: z.string().nullable(),
-  therapistNotes: z.string().nullable(),
   status: consultationStatusSchema,
   billed: z.boolean(),
   insuranceClaimed: z.boolean(),
-  sessionCost: z.number().nullable(),
+  cost: z.number().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 })
@@ -211,6 +223,7 @@ export const consultationSchema = z.object({
 // Patient Document schemas
 export const patientDocumentCreateSchema = z.object({
   patientId: z.string(),
+  organizationId: z.string().min(1),
   uploadedById: z.string(),
   treatmentPlanId: z.string().optional(),
   fileName: z.string().min(1),
@@ -272,6 +285,8 @@ export const consultationQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
+  status: consultationStatusSchema.optional(),
+  type: consultationSessionTypeSchema.optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional()
 })
@@ -300,6 +315,7 @@ export type Consultation = z.infer<typeof consultationSchema>
 export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
 export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>
 export type ConsultationSessionType = z.infer<typeof consultationSessionTypeSchema>
+export type ConsultationLocation = z.infer<typeof consultationLocationSchema>
 export type ConsultationStatus = z.infer<typeof consultationStatusSchema>
 export type ConsultationQuery = z.infer<typeof consultationQuerySchema>
 
