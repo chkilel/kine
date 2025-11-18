@@ -120,21 +120,21 @@ CREATE TABLE `consultations` (
 	`startTime` text,
 	`endTime` text,
 	`duration` integer,
-	`sessionType` text,
+	`type` text,
 	`chiefComplaint` text,
-	`sessionNotes` text,
-	`treatmentPlanSummary` text,
+	`notes` text,
+	`treatmentSummary` text,
 	`observations` text,
 	`nextSteps` text,
 	`painLevelBefore` integer,
 	`painLevelAfter` integer,
 	`progressNotes` text,
 	`therapistId` text,
-	`therapistNotes` text,
 	`status` text DEFAULT 'scheduled' NOT NULL,
+	`location` text DEFAULT 'clinic',
 	`billed` integer DEFAULT false,
 	`insuranceClaimed` integer DEFAULT false,
-	`sessionCost` integer,
+	`cost` integer,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -148,7 +148,8 @@ CREATE INDEX `idx_consultations_org_date` ON `consultations` (`organizationId`,`
 CREATE INDEX `idx_consultations_org_created_at` ON `consultations` (`organizationId`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_status_date` ON `consultations` (`organizationId`,`status`,`dateOfBirth`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_therapist_date` ON `consultations` (`organizationId`,`therapistId`,`dateOfBirth`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_session_type_date` ON `consultations` (`organizationId`,`sessionType`,`dateOfBirth`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_org_session_type_date` ON `consultations` (`organizationId`,`type`,`dateOfBirth`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_org_location_date` ON `consultations` (`organizationId`,`location`,`dateOfBirth`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_billed_date` ON `consultations` (`organizationId`,`billed`,`dateOfBirth`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_insurance_date` ON `consultations` (`organizationId`,`insuranceClaimed`,`dateOfBirth`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_patient_date` ON `consultations` (`patientId`,`dateOfBirth`);--> statement-breakpoint
@@ -192,7 +193,7 @@ CREATE TABLE `patients` (
 	`firstName` text NOT NULL,
 	`lastName` text NOT NULL,
 	`dateOfBirth` integer NOT NULL,
-	`gender` text,
+	`gender` text NOT NULL,
 	`email` text,
 	`phone` text NOT NULL,
 	`address` text,

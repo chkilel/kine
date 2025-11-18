@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "2b8ce5af-2826-4aa4-9978-ab5943e7cfbb",
+  "id": "559584e1-2532-47f4-a645-a0de56a9200c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -833,8 +833,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sessionType": {
-          "name": "sessionType",
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -847,15 +847,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "sessionNotes": {
-          "name": "sessionNotes",
+        "notes": {
+          "name": "notes",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "treatmentPlanSummary": {
-          "name": "treatmentPlanSummary",
+        "treatmentSummary": {
+          "name": "treatmentSummary",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -903,13 +903,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "therapistNotes": {
-          "name": "therapistNotes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "status": {
           "name": "status",
           "type": "text",
@@ -917,6 +910,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'scheduled'"
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'clinic'"
         },
         "billed": {
           "name": "billed",
@@ -934,8 +935,8 @@
           "autoincrement": false,
           "default": false
         },
-        "sessionCost": {
-          "name": "sessionCost",
+        "cost": {
+          "name": "cost",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -1004,7 +1005,16 @@
           "name": "idx_consultations_org_session_type_date",
           "columns": [
             "organizationId",
-            "sessionType",
+            "type",
+            "dateOfBirth"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_location_date": {
+          "name": "idx_consultations_org_location_date",
+          "columns": [
+            "organizationId",
+            "location",
             "dateOfBirth"
           ],
           "isUnique": false
@@ -1414,7 +1424,7 @@
           "name": "gender",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "email": {
