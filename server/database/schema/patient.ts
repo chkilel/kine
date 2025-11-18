@@ -23,7 +23,7 @@ export const patients = sqliteTable(
     // Personal information
     firstName: text().notNull(), // Patient's first name — e.g., "John"
     lastName: text().notNull(), // Patient's last name — e.g., "Doe"
-    dateOfBirth: requiredDateSchema, // Timestamp (ms) — e.g., 631152000000 for "1990-01-01"
+    dateOfBirth: requiredDateSchema(), // Timestamp (ms) — e.g., 631152000000 for "1990-01-01"
     gender: text({ enum: ['male', 'female'] }).notNull(), // Gender — either "male" or "female"
     email: text(), // Optional — e.g., "john.doe@example.com"
     phone: text().notNull(), // Patient’s phone number — e.g., "+212612345678"
@@ -112,8 +112,8 @@ export const treatmentPlans = sqliteTable(
     diagnosis: text().notNull(), // Main medical diagnosis — e.g., "Post-operative knee rehabilitation"
     objective: text(), // Goal or objective of treatment — e.g., "Restore full range of motion"
 
-    startDate: requiredDateSchema, // Start date (timestamp ms)
-    endDate: dateSchema, // End date (timestamp ms)
+    startDate: requiredDateSchema(), // Start date (timestamp ms)
+    endDate: dateSchema(), // End date (timestamp ms)
     numberOfSessions: integer(), // Total number of sessions prescribed — e.g., 12
     sessionFrequency: integer(), // Session frequency — e.g., 1,...,7
 
@@ -123,7 +123,7 @@ export const treatmentPlans = sqliteTable(
 
     // Medical staff and prescription info
     prescribingDoctor: text(), // Doctor who prescribed the treatment — e.g., "Dr. Martin"
-    prescriptionDate: dateSchema, // Date when prescription was issued — e.g., 1730246400000 for "2024-10-30"
+    prescriptionDate: dateSchema(), // Date when prescription was issued — e.g., 1730246400000 for "2024-10-30"
 
     // Clinical assessment
     painLevel: integer(), // Initial pain level (0-10 scale) — e.g., 6 for moderate pain
@@ -213,7 +213,7 @@ export const consultations = sqliteTable(
     treatmentPlanId: text().references(() => treatmentPlans.id, { onDelete: 'set null' }), // Optional link to a treatment plan — e.g., for progress tracking
 
     // ---- Scheduling ----
-    date: requiredDateSchema, // Consultation date (timestamp ms) — e.g., 1730332800000 for "2025-10-30"
+    date: requiredDateSchema(), // Consultation date (timestamp ms) — e.g., 1730332800000 for "2025-10-30"
     startTime: text(), // Start time of session — e.g., "10:00"
     endTime: text(), // End time of session — e.g., "11:00"
     duration: integer(), // Session duration in minutes — e.g., 60
