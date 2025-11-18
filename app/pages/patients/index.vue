@@ -3,7 +3,6 @@
   import { getPaginationRowModel } from '@tanstack/table-core'
   import type { TableColumn } from '@nuxt/ui'
   import type { Row } from '@tanstack/table-core'
-  import type { Patient } from '~~/shared/types/patient.types'
 
   const UAvatar = resolveComponent('UAvatar')
   const UButton = resolveComponent('UButton')
@@ -213,17 +212,16 @@
   const statusFilter = ref('all')
 
   watch(
-    () => statusFilter.value,
-    (newVal) => {
-      if (!table?.value?.tableApi) return
+    [() => statusFilter.value, () => status.value, () => table?.value?.tableApi],
+    ([newFilter, dataStatus, tableApi]) => {
+      if (!tableApi || dataStatus !== 'success') return
 
-      const statusColumn = table.value.tableApi.getColumn('status')
+      const statusColumn = tableApi.getColumn('status')
       if (!statusColumn) return
-
-      if (newVal === 'all') {
+      if (newFilter === 'all') {
         statusColumn.setFilterValue(undefined)
       } else {
-        statusColumn.setFilterValue(newVal)
+        statusColumn.setFilterValue(newFilter)
       }
     }
   )
