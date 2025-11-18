@@ -14,7 +14,7 @@
 
   const form = useTemplateRef<HTMLFormElement>('createPatientForm')
   const formState = reactive<Partial<PatientCreate>>({
-    organizationId: sessionData.value?.session.activeOrganizationId!,
+    organizationId: undefined,
     firstName: '',
     lastName: '',
     email: undefined,
@@ -35,6 +35,12 @@
     referralSource: undefined,
     status: 'active',
     notes: undefined
+  })
+
+  watchEffect(() => {
+    if (sessionData.value?.session?.activeOrganizationId) {
+      formState.organizationId = sessionData.value.session.activeOrganizationId
+    }
   })
 
   // Array input fields
