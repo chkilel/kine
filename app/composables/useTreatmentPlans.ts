@@ -19,7 +19,7 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     error,
     refresh
   } = useFetch<TreatmentPlanWithProgress[]>(() => (patientId ? `/api/patients/${patientId}/treatment-plans` : ''), {
-    key: `treatment-plans-${patientId}`,
+    key: () => `treatment-plans-${patientId}`,
     server: true,
     default: () => [],
     transform: (data: TreatmentPlanWithProgress[]) => data || [],

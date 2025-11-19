@@ -1,10 +1,14 @@
 <script setup lang="ts">
+  import { LazyTreatmentPlanCreateSideover } from '#components'
   import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
   const { patient } = defineProps<{
     patient: Patient
   }>()
+
+  const overlay = useOverlay()
+  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
 
   // Use treatment plans composable
   const {
@@ -79,6 +83,36 @@
     return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
   }
 
+  function getSessionBadgeColor(status: string) {
+    switch (status) {
+      case 'upcoming':
+        return 'primary'
+      case 'completed':
+        return 'success'
+      case 'missed':
+        return 'error'
+      default:
+        return 'neutral'
+    }
+  }
+
+  function getSessionBadgeLabel(status: string) {
+    switch (status) {
+      case 'upcoming':
+        return 'À venir'
+      case 'completed':
+        return 'Terminé'
+      case 'missed':
+        return 'Manqué'
+      default:
+        return status
+    }
+  }
+
+  function openCreateTreatmentPlan() {
+    treatmentPlanCreateOverlay.open({ patient })
+  }
+
   // Static data for fields not yet connected to database
   const staticData = {
     upcomingSessions: [
@@ -97,66 +131,6 @@
   <div class="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="flex flex-col gap-6 lg:col-span-1">
-      <!-- Résumé rapide -->
-      <UCard variant="outline">
-        <template v-if="treatmentPlansLoading">
-          <div class="flex items-center justify-center py-8">
-            <UIcon name="i-lucide-loader-2" class="animate-spin text-2xl" />
-          </div>
-        </template>
-        <template v-else-if="treatmentPlansError">
-          <div class="py-8 text-center">
-            <p class="text-muted">Erreur lors du chargement des données</p>
-          </div>
-        </template>
-        <template v-else-if="getActiveTreatmentPlan">
-          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
-          <div class="space-y-4 text-sm">
-            <div>
-              <h3 class="text-muted font-semibold">Pathologie principale</h3>
-              <p class="font-medium">{{ getActiveTreatmentPlan.diagnosis }}</p>
-            </div>
-            <div>
-              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-              <p class="font-medium">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
-            </div>
-            <div>
-              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
-              <div class="flex items-center gap-3">
-                <UProgress
-                  :model-value="(getActiveTreatmentPlan.painLevel || 0) * 10"
-                  :max="100"
-                  color="primary"
-                  size="md"
-                  class="flex-1"
-                />
-                <span class="font-semibold">{{ getActiveTreatmentPlan.painLevel || 0 }}/10</span>
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
-          <div class="space-y-4 text-sm">
-            <div>
-              <h3 class="text-muted font-semibold">Pathologie principale</h3>
-              <p class="text-muted font-medium">Aucun plan de traitement actif</p>
-            </div>
-            <div>
-              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-              <p class="text-muted font-medium">Non spécifié</p>
-            </div>
-            <div>
-              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
-              <div class="flex items-center gap-3">
-                <UProgress :model-value="0" :max="100" color="primary" size="md" class="flex-1" />
-                <span class="font-semibold">0/10</span>
-              </div>
-            </div>
-          </div>
-        </template>
-      </UCard>
-
       <!-- Données administratives -->
       <UCard variant="outline">
         <h2 class="mb-5 text-lg font-bold">Données administratives</h2>
@@ -221,7 +195,7 @@
                 color="warning"
                 variant="subtle"
                 size="md"
-                class="text-error rounded-full"
+                class="rounded-full"
               >
                 {{ condition }}
               </UBadge>
@@ -286,23 +260,26 @@
               <h2 class="text-lg font-bold">Plan de traitement actif</h2>
               <p class="text-muted text-sm">{{ getActiveTreatmentPlan.title }}</p>
             </div>
-            <UBadge
-              :color="formatTreatmentPlanStatus(getActiveTreatmentPlan.status).color"
-              variant="soft"
-              size="lg"
-              class="rounded-full"
-            >
-              {{ formatTreatmentPlanStatus(getActiveTreatmentPlan.status).label }}
-            </UBadge>
+            <UBadge color="success" variant="soft" size="sm">Actif</UBadge>
           </div>
-          <div class="text-muted mb-5 space-y-3 text-sm">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-calendar" class="shrink-0 text-base" />
-              <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+          <div class="mb-5 space-y-4 text-sm">
+            <div>
+              <h3 class="text-dimmed font-semibold">Pathologie principale</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.diagnosis }}</p>
             </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-user" class="shrink-0 text-base" />
-              <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
+            <div>
+              <h3 class="text-dimmed font-semibold">Objectif du traitement</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
+            </div>
+            <div class="text-toned flex items-center gap-20">
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-calendar" class="text-muted text-base" />
+                <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-user" class="text-muted text-base" />
+                <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
+              </div>
             </div>
           </div>
           <div>
@@ -315,22 +292,25 @@
               </span>
               <span>{{ getActiveTreatmentPlan.progress }}%</span>
             </div>
-            <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="lg" />
+            <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="md" />
           </div>
-          <div class="mt-6 flex flex-wrap justify-end gap-2">
-            <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
-            <UButton variant="soft" color="neutral" icon="i-lucide-edit">Modifier</UButton>
-            <UButton variant="soft" color="neutral" icon="i-lucide-archive">Clôturer</UButton>
-            <UButton color="primary" icon="i-lucide-plus">Nouveau plan</UButton>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <UButton variant="soft" color="neutral" icon="i-lucide-edit" block class="flex-1">Modifier plan</UButton>
+            <UButton variant="soft" color="neutral" icon="i-lucide-archive" block class="flex-1">Clôturer plan</UButton>
+            <UButton color="primary" icon="i-lucide-plus" block class="flex-1" @click="openCreateTreatmentPlan">
+              Nouveau plan
+            </UButton>
           </div>
         </template>
         <template v-else>
-          <div class="py-8 text-center">
-            <UIcon name="i-lucide-clipboard-list" class="text-muted mx-auto mb-4 text-4xl" />
-            <h3 class="mb-2 text-lg font-semibold">Aucun plan de traitement actif</h3>
-            <p class="text-muted mb-4">Commencez par créer un plan de traitement pour ce patient</p>
-            <UButton color="primary" icon="i-lucide-plus">Créer un plan</UButton>
-          </div>
+          <UEmpty
+            icon="i-lucide-clipboard-plus"
+            title="Aucun plan de traitement"
+            description="Ce patient n'a pas encore de plan de traitement. Créez-en un pour commencer le suivi."
+            :actions="[
+              { label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary', onClick: openCreateTreatmentPlan }
+            ]"
+          />
         </template>
       </UCard>
 

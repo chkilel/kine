@@ -34,24 +34,26 @@
 
   const props = defineProps<{
     patient: Patient
-    open: boolean
   }>()
 
   const emit = defineEmits<{
-    'update:open': [value: boolean]
-    created: [plan: TreatmentPlan]
+    close: [data?: any]
   }>()
 
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
+  // Session
+  const activeOrganization = authClient.useActiveOrganization()
   const session = await authClient.useSession(useFetch)
-  if (!session.data.value?.user) {
+  if (!session.data.value?.user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }
 
   const currentUser = computed(() => session.data.value?.user)
   const therapists = computed(() => [session.data.value?.user!])
+
+  // Get active organization
 
   const toast = useToast()
   const loading = ref(false)
@@ -59,6 +61,7 @@
   const form = reactive<TreatmentPlanCreate>({
     patientId: props.patient.id!,
     therapistId: currentUser.value!.id,
+    organizationId: activeOrganization.value.data!.id,
     prescribingDoctor: '',
     prescriptionDate: new Date(),
     title: '',
@@ -125,29 +128,9 @@
     loading.value = true
 
     try {
-      // Create treatment plan data matching the API schema
-      const planData = {
-        patientId: props.patient.id,
-        title: event.data.title,
-        diagnosis: event.data.diagnosis,
-        objective: event.data.objective,
-        startDate: event.data.startDate || new Date(),
-        endDate: event.data.endDate || null,
-        numberOfSessions: event.data.numberOfSessions,
-        sessionFrequency: event.data.sessionFrequency,
-        status: event.data.status,
-        prescribingDoctor: event.data.prescribingDoctor,
-        therapistId: event.data.therapistId,
-        prescriptionDate: event.data.prescriptionDate || null,
-        painLevel: event.data.painLevel,
-        coverageStatus: event.data.coverageStatus,
-        insuranceInfo: event.data.insuranceInfo,
-        notes: '' // FIXME
-      }
-
       const treatmentPlan = await $fetch<TreatmentPlan>(`/api/patients/${props.patient.id}/treatment-plans`, {
         method: 'POST',
-        body: planData
+        body: form
       })
 
       if (!treatmentPlan) {
@@ -196,8 +179,7 @@
         color: 'success'
       })
 
-      emit('created', treatmentPlan)
-      emit('update:open', false)
+      emit('close', treatmentPlan)
       resetForm()
     } catch (error: any) {
       console.error('Error creating treatment plan:', error)
@@ -322,7 +304,7 @@
   }
 
   function handleCancel() {
-    emit('update:open', false)
+    emit('close', false)
   }
 
   const formRef = useTemplateRef<HTMLFormElement>('newPlanRef')
@@ -333,9 +315,7 @@
 
 <template>
   <USlideover
-    :open="open"
     :dismissible="false"
-    @update:open="emit('update:open', $event)"
     title="Créer un plan de traitement"
     description="Ajoutez les informations de base du plan de traitement."
     :ui="{

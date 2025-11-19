@@ -6,40 +6,29 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultaionPlanningSlideover)
-
-  const createSlideoverOpen = ref(false)
+  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
 
   const {
-    data: treatmentPlans,
-    pending: loading,
+    treatmentPlans,
+    loading,
     error,
-    refresh: refreshTreatmentPlans
-  } = await useFetch(() => `/api/patients/${props.patient?.id}/treatment-plans`, {
-    key: () => `treatment-plans-${props.patient?.id}`
-  })
+    refresh: refreshTreatmentPlans,
+    getActiveTreatmentPlan,
+    formatTreatmentPlanStatus,
+    formatDate,
+    formatDateRange,
+    getTherapistName
+  } = usePatientTreatmentPlans(props.patient?.id)
 
-  // Get the active treatment plan (first one, or most recent)
-  const activeTreatmentPlan = computed(() => {
-    if (!treatmentPlans.value?.length) return null
-    return treatmentPlans.value[0] // API returns ordered by newest first
-  })
-
+  async function sessionPlanning() {
+    sessionPlanningOverlay.open()
+  }
   // Function to open session planning with event handlers
   function openSessionPlanning() {
     const instance = sessionPlanningOverlay.open({
       patient: props.patient as any,
-      treatmentPlan: activeTreatmentPlan.value
-        ? {
-            id: activeTreatmentPlan.value.id,
-            title: activeTreatmentPlan.value.title,
-            totalSessions: activeTreatmentPlan.value.numberOfSessions || 20,
-            completedSessions: activeTreatmentPlan.value.completedConsultations || 0,
-            remainingSessions:
-              (activeTreatmentPlan.value.numberOfSessions || 20) -
-              (activeTreatmentPlan.value.completedConsultations || 0),
-            treatmentType: activeTreatmentPlan.value.diagnosis || 'Rééducation',
-            progress: activeTreatmentPlan.value.progress || 0
-          }
+      treatmentPlan: getActiveTreatmentPlan.value
+        ? (getActiveTreatmentPlan.value as unknown as TreatmentPlan)
         : undefined
     })
 
@@ -81,7 +70,6 @@
     })
     // Refresh data after creating a new plan
     refreshTreatmentPlans()
-    createSlideoverOpen.value = false
   }
 
   // Retry fetch with user feedback
@@ -103,13 +91,16 @@
   }
 
   // Open create slideover with user feedback
-  function openCreateSlideover() {
-    createSlideoverOpen.value = true
-    toast.add({
-      title: 'Création de plan',
-      description: 'Ouvrez le formulaire pour créer un nouveau plan de traitement.',
-      duration: 2000,
-      color: 'info'
+  async function openCreateSlideover() {
+    const instance = treatmentPlanCreateOverlay.open({
+      patient: props.patient as any
+    })
+
+    // Handle the close event with data
+    instance.then((result: any) => {
+      if (result) {
+        handleTreatmentPlanCreated(result)
+      }
     })
   }
 
@@ -136,28 +127,6 @@
         return 'secondary'
       default:
         return 'neutral'
-    }
-  }
-
-  // Get therapist display name
-  function getTherapistName(therapist: any) {
-    if (!therapist) return 'Non assigné'
-    return `${therapist.firstName || ''} ${therapist.lastName || ''}`.trim() || therapist.email || 'Non assigné'
-  }
-
-  // Get status badge color and label
-  function getStatusInfo(status: string) {
-    switch (status) {
-      case 'ongoing':
-        return { color: 'success' as const, label: 'Actif' }
-      case 'completed':
-        return { color: 'neutral' as const, label: 'Terminé' }
-      case 'paused':
-        return { color: 'warning' as const, label: 'En pause' }
-      case 'cancelled':
-        return { color: 'error' as const, label: 'Annulé' }
-      default:
-        return { color: 'neutral' as const, label: status }
     }
   }
 
@@ -194,13 +163,12 @@
   </div>
 
   <!-- Empty State -->
-  <div v-else-if="!activeTreatmentPlan" class="mt-6">
+  <div v-else-if="!getActiveTreatmentPlan" class="mt-6">
     <UEmpty
       icon="i-lucide-clipboard-plus"
       title="Aucun plan de traitement"
       description="Ce patient n'a pas encore de plan de traitement. Créez-en un pour commencer le suivi."
-      :actions="[{ label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary' }]"
-      @action="openCreateSlideover"
+      :actions="[{ label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary', onClick: openCreateSlideover }]"
     />
   </div>
 
@@ -211,39 +179,39 @@
       <!-- Treatment Plan Card -->
       <UCard>
         <div class="mb-4 flex items-start justify-between">
-          <h2 class="text-lg font-bold">{{ activeTreatmentPlan.title }}</h2>
-          <UBadge :color="getStatusInfo(activeTreatmentPlan.status).color" variant="soft" class="rounded-full">
-            {{ getStatusInfo(activeTreatmentPlan.status).label }}
+          <h2 class="text-lg font-bold">{{ getActiveTreatmentPlan.title }}</h2>
+          <UBadge
+            :color="formatTreatmentPlanStatus(getActiveTreatmentPlan.status).color"
+            variant="soft"
+            class="rounded-full"
+          >
+            {{ formatTreatmentPlanStatus(getActiveTreatmentPlan.status).label }}
           </UBadge>
         </div>
         <div class="text-muted space-y-3 text-sm">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="text-toned" />
             <span>
-              Début: {{ new Date(activeTreatmentPlan.startDate).toLocaleDateString('fr-FR') }} - Fin:
-              {{
-                activeTreatmentPlan.endDate
-                  ? new Date(activeTreatmentPlan.endDate).toLocaleDateString('fr-FR')
-                  : 'Non définie'
-              }}
+              Début: {{ formatDate(getActiveTreatmentPlan.startDate) }} - Fin:
+              {{ getActiveTreatmentPlan.endDate ? formatDate(getActiveTreatmentPlan.endDate) : 'Non définie' }}
             </span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="text-toned" />
-            <span>Thérapeute: {{ getTherapistName(activeTreatmentPlan.therapist) }}</span>
+            <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
           </div>
         </div>
         <div class="mt-5">
           <div class="text-muted mb-1 flex items-center justify-between text-sm">
             <span>
-              Progression ({{ activeTreatmentPlan.completedConsultations || 0 }}/{{
-                activeTreatmentPlan.numberOfSessions || 0
+              Progression ({{ getActiveTreatmentPlan.completedConsultations || 0 }}/{{
+                getActiveTreatmentPlan.numberOfSessions || 0
               }}
               séances)
             </span>
-            <span>{{ activeTreatmentPlan.progress || 0 }}%</span>
+            <span>{{ getActiveTreatmentPlan.progress || 0 }}%</span>
           </div>
-          <UProgress :model-value="activeTreatmentPlan.progress || 0" size="lg" />
+          <UProgress :model-value="getActiveTreatmentPlan.progress || 0" size="lg" />
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
           <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
@@ -253,7 +221,7 @@
             color="primary"
             size="md"
             class="flex-1 justify-center sm:justify-start"
-            @click="createSlideoverOpen = true"
+            @click="sessionPlanning"
           >
             Nouveau
           </UButton>
@@ -282,31 +250,31 @@
             <div class="border-default space-y-5 border-t p-4 sm:p-6">
               <div>
                 <h4 class="mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
-                <p class="text-muted text-sm">{{ activeTreatmentPlan.objective || 'Non spécifié' }}</p>
+                <p class="text-muted text-sm">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
               </div>
               <div>
                 <h4 class="mb-2 text-sm font-semibold">Diagnostic</h4>
-                <p class="text-muted text-sm">{{ activeTreatmentPlan.diagnosis || 'Non spécifié' }}</p>
+                <p class="text-muted text-sm">{{ getActiveTreatmentPlan.diagnosis || 'Non spécifié' }}</p>
               </div>
-              <div v-if="activeTreatmentPlan.painLevel">
+              <div v-if="getActiveTreatmentPlan.painLevel">
                 <h4 class="mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
                 <div class="flex items-center gap-3">
-                  <USlider :model-value="activeTreatmentPlan.painLevel" :max="10" :min="0" disabled />
-                  <span class="font-semibold">{{ activeTreatmentPlan.painLevel }}/10</span>
+                  <USlider :model-value="getActiveTreatmentPlan.painLevel" :max="10" :min="0" disabled />
+                  <span class="font-semibold">{{ getActiveTreatmentPlan.painLevel }}/10</span>
                 </div>
               </div>
               <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <h4 class="font-semibold">Fréquence</h4>
-                  <p class="text-muted">{{ activeTreatmentPlan.sessionFrequency || 0 }}x / semaine</p>
+                  <p class="text-muted">{{ getActiveTreatmentPlan.sessionFrequency || 0 }}x / semaine</p>
                 </div>
                 <div>
                   <h4 class="font-semibold">Médecin prescripteur</h4>
-                  <p class="text-muted">{{ activeTreatmentPlan.prescribingDoctor || 'Non spécifié' }}</p>
+                  <p class="text-muted">{{ getActiveTreatmentPlan.prescribingDoctor || 'Non spécifié' }}</p>
                 </div>
                 <div>
                   <h4 class="font-semibold">Assurance</h4>
-                  <p class="text-muted">{{ activeTreatmentPlan.insuranceInfo || 'Non spécifié' }}</p>
+                  <p class="text-muted">{{ getActiveTreatmentPlan.insuranceInfo || 'Non spécifié' }}</p>
                 </div>
               </div>
             </div>
@@ -379,15 +347,20 @@
             <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
           </div>
           <div class="border-default space-y-3 border-t pt-4">
-            <div v-if="!activeTreatmentPlan.notes?.length" class="py-4 text-center">
+            <div v-if="!(getActiveTreatmentPlan.notes as any[])?.length" class="py-4 text-center">
               <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
             </div>
-            <div v-else v-for="note in activeTreatmentPlan.notes" :key="note.id" class="text-sm">
+            <div
+              v-else
+              v-for="(note, index) in (getActiveTreatmentPlan.notes as any[]) || []"
+              :key="index"
+              class="text-sm"
+            >
               <p>
                 <strong class="font-semibold">
                   {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
                 </strong>
-                {{ note.content }}
+                {{ note.content || '' }}
               </p>
               <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
             </div>
@@ -439,13 +412,4 @@
       </UCard>
     </div>
   </div>
-
-  <!-- Create Treatment Plan Slideover -->
-  <LazyTreatmentPlanCreateSideover
-    v-if="props.patient"
-    :patient="props.patient"
-    :open="createSlideoverOpen"
-    @update:open="createSlideoverOpen = $event"
-    @created="handleTreatmentPlanCreated"
-  />
 </template>
