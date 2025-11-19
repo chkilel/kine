@@ -1,5 +1,16 @@
 # Treatment Plan Consultations Planning
 
+## Why
+
+The current `ConsultaionPlanningSlideover.vue` component uses hardcoded mock data and local state management, making it impossible to persist consultation schedules. Therapists need a robust system to plan and track consultations within treatment plans, with proper database persistence and type safety.
+
+## What Changes
+
+- Enhance existing consultation schemas to support planning features
+- Create API endpoints for consultation CRUD operations
+- Update the planning component to use real data
+- Add consultation management features (create, update, delete, status changes)
+
 ## Summary
 
 Implement treatment plan consultations planning functionality starting with manual planning mode. This feature will replace the mock data in `ConsultaionPlanningSlideover.vue` with real database integration, enabling therapists to schedule and manage patient consultations as part of treatment plans.
