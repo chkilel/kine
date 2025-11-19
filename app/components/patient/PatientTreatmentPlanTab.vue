@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { LazyTreatmentPlanCreateSideover, LazyConsultaionPlanningSlideover } from '#components'
+  import { useConsultations } from '~/composables/useConsultations'
 
   const props = defineProps<{ patient: Patient }>()
 
@@ -8,15 +9,143 @@
   const sessionPlanningOverlay = overlay.create(LazyConsultaionPlanningSlideover)
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
 
+  const { fetchTreatmentPlanConsultations, deleteConsultation: deleteConsultationFromComposable } = useConsultations()
+
+  // Treatment plans API call
   const {
-    loading,
+    data: treatmentPlans,
+    pending: loading,
     error,
-    refresh: refreshTreatmentPlans,
+    refresh: refreshTreatmentPlans
+  } = useFetch(`/api/patients/${props.patient?.id}/treatment-plans`)
+
+  // Computed properties for treatment plan data
+  const getActiveTreatmentPlan = computed(() => {
+    const plans = treatmentPlans.value || []
+    return plans.find((plan: any) => plan.status === 'active') || plans[0]
+  })
+
+  const formatTreatmentPlanStatus = (status: string) => {
+    switch (status) {
+      case 'active':
+        return { color: 'success', label: 'Actif' }
+      case 'completed':
+        return { color: 'info', label: 'Terminé' }
+      case 'paused':
+        return { color: 'warning', label: 'En pause' }
+      case 'cancelled':
+        return { color: 'error', label: 'Annulé' }
+      default:
+        return { color: 'neutral', label: status }
+    }
+  }
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    })
+  }
+
+  const getTherapistName = (therapist: any) => {
+    if (!therapist) return 'Non assigné'
+    return `${therapist.firstName} ${therapist.lastName}`.trim() || 'Thérapeute'
+  }
+
+  // Consultations data
+  const consultations = ref<any[]>([])
+  const consultationsLoading = ref(false)
+  const consultationsError = ref<any>(null)
+
+  // Fetch consultations for active treatment plan
+  const fetchConsultations = async () => {
+    const planId = getActiveTreatmentPlan.value?.id
+    if (!planId) return
+
+    consultationsLoading.value = true
+    consultationsError.value = null
+
+    try {
+      const result = await fetchTreatmentPlanConsultations(planId)
+      consultations.value = result.consultations
+    } catch (error) {
+      consultationsError.value = error
+    } finally {
+      consultationsLoading.value = false
+    }
+  }
+
+  // Watch for active treatment plan changes and fetch consultations
+  watch(
     getActiveTreatmentPlan,
-    formatTreatmentPlanStatus,
-    formatDate,
-    getTherapistName
-  } = usePatientTreatmentPlans(props.patient?.id)
+    () => {
+      fetchConsultations()
+    },
+    { immediate: true }
+  )
+
+  // Refresh consultations data
+  const refreshConsultations = async () => {
+    await fetchConsultations()
+    toast.add({
+      title: 'Consultations actualisées',
+      description: 'Les consultations ont été rechargées avec succès.',
+      color: 'success'
+    })
+  }
+
+  // Helper functions for consultation display (consistent with consultation planning)
+  const getSessionStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'success'
+      case 'scheduled':
+        return 'info'
+      case 'completed':
+        return 'success'
+      case 'cancelled':
+        return 'error'
+      case 'in_progress':
+        return 'warning'
+      case 'no_show':
+        return 'error'
+      default:
+        return 'neutral'
+    }
+  }
+
+  const getSessionStatusLabel = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmée'
+      case 'scheduled':
+        return 'À venir'
+      case 'completed':
+        return 'Terminée'
+      case 'cancelled':
+        return 'Annulée'
+      case 'in_progress':
+        return 'En cours'
+      case 'no_show':
+        return 'Absence'
+      default:
+        return status
+    }
+  }
+
+  // Delete consultation function
+  const deleteConsultation = async (consultationId: string) => {
+    if (!props.patient) return
+
+    const success = await deleteConsultationFromComposable(props.patient.id, consultationId)
+
+    if (success) {
+      await fetchConsultations()
+    }
+  }
+
+  // Edit consultation function - opens planning slideover with consultation data
 
   // Function to open session planning with event handlers
   function openSessionPlanning() {
@@ -238,17 +367,31 @@
       <UCard>
         <div class="mb-5 flex items-center justify-between">
           <h3 class="text-base font-bold">Aperçu des séances</h3>
-          <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openSessionPlanning()">
-            Planifier les séances
-          </UButton>
+          <div class="flex items-center gap-2">
+            <UButton
+              icon="i-lucide-refresh-cw"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :loading="consultationsLoading"
+              @click="refreshConsultations()"
+            >
+              Actualiser
+            </UButton>
+            <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openSessionPlanning()">
+              Planifier les séances
+            </UButton>
+          </div>
         </div>
         <div class="overflow-x-auto">
           <UTable
-            :data="[]"
+            :data="consultations"
+            :loading="consultationsLoading"
             :columns="[
-              { accessorKey: 'date', header: 'Date' },
+              { accessorKey: 'date', header: 'Date & Heure' },
               { accessorKey: 'type', header: 'Type' },
               { accessorKey: 'duration', header: 'Durée' },
+              { accessorKey: 'location', header: 'Lieu' },
               { accessorKey: 'status', header: 'Statut' },
               { id: 'actions', header: 'Actions' }
             ]"
@@ -256,6 +399,86 @@
               thead: 'bg-muted'
             }"
           >
+            <template #date-cell="{ row }">
+              <div>
+                <div class="font-medium">
+                  {{
+                    new Date(row.original.date).toLocaleDateString('fr-FR', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short'
+                    })
+                  }}
+                </div>
+                <div class="text-muted-foreground text-sm">{{ row.original.startTime || '' }}</div>
+              </div>
+            </template>
+
+            <template #type-cell="{ row }">
+              <div>
+                <div class="font-medium">
+                  {{
+                    row.original.type === 'initial'
+                      ? 'Évaluation initiale'
+                      : row.original.type === 'follow_up'
+                        ? 'Suivi'
+                        : row.original.type === 'evaluation'
+                          ? 'Évaluation'
+                          : row.original.type === 'discharge'
+                            ? 'Sortie'
+                            : row.original.type === 'mobilization'
+                              ? 'Mobilisation'
+                              : row.original.type === 'reinforcement'
+                                ? 'Renforcement'
+                                : row.original.type === 'reeducation'
+                                  ? 'Rééducation'
+                                  : row.original.type || ''
+                  }}
+                </div>
+                <div class="text-muted-foreground text-sm">{{ row.original.chiefComplaint || '' }}</div>
+              </div>
+            </template>
+
+            <template #duration-cell="{ row }">
+              <div class="text-sm">
+                {{ row.original.duration ? `${row.original.duration} min` : '-' }}
+              </div>
+            </template>
+
+            <template #location-cell="{ row }">
+              <div class="text-sm">
+                {{
+                  row.original.location === 'clinic'
+                    ? 'Cabinet'
+                    : row.original.location === 'home'
+                      ? 'Domicile'
+                      : row.original.location === 'telehealth'
+                        ? 'Téléconsultation'
+                        : row.original.location || '-'
+                }}
+              </div>
+            </template>
+
+            <template #status-cell="{ row }">
+              <UBadge :color="getSessionStatusColor(row.original.status)" variant="soft" size="xs">
+                {{ getSessionStatusLabel(row.original.status) }}
+              </UBadge>
+            </template>
+
+            <template #actions-cell="{ row }">
+              <div class="flex items-center justify-end gap-2">
+                <UButton icon="i-lucide-edit" variant="ghost" color="neutral" size="sm" square />
+                <UButton
+                  icon="i-lucide-trash"
+                  variant="ghost"
+                  color="error"
+                  size="sm"
+                  square
+                  @click="deleteConsultation(row.original.id)"
+                />
+              </div>
+            </template>
+
             <template #empty>
               <div class="px-4 py-8 text-center">
                 <div class="bg-primary/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full">

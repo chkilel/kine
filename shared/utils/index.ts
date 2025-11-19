@@ -38,3 +38,18 @@ export function getSessionBadgeLabel(status: string) {
       return status
   }
 }
+
+export const formatTreatmentPlanStatus = (status: string) => {
+  switch (status) {
+    case 'active':
+      return { color: 'success', label: 'Actif' }
+    case 'completed':
+      return { color: 'info', label: 'Terminé' }
+    case 'paused':
+      return { color: 'warning', label: 'En pause' }
+    case 'cancelled':
+      return { color: 'error', label: 'Annulé' }
+    default:
+      return { color: 'neutral', label: status }
+  }
+}
