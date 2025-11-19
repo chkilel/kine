@@ -20,37 +20,11 @@
 
   // Function to open session planning with event handlers
   function openSessionPlanning() {
-    const instance = sessionPlanningOverlay.open({
+    sessionPlanningOverlay.open({
       patient: props.patient as any,
       treatmentPlan: getActiveTreatmentPlan.value
         ? (getActiveTreatmentPlan.value as unknown as TreatmentPlan)
         : undefined
-    })
-
-    // Handle the close event with data
-    instance.then((result: any) => {
-      if (result) {
-        // Handle different types of results based on the action
-        if (result.type === 'session-created') {
-          toast.add({
-            title: 'Séance créée',
-            description: 'La séance a été ajoutée au plan de traitement.',
-            color: 'success'
-          })
-        } else if (result.type === 'sessions-updated') {
-          toast.add({
-            title: 'Séances mises à jour',
-            description: 'Les séances ont été mises à jour avec succès.',
-            color: 'success'
-          })
-        } else if (result.type === 'sessions-generated') {
-          toast.add({
-            title: 'Séances générées',
-            description: `${result.data?.length || 0} séances ont été générées avec succès.`,
-            color: 'success'
-          })
-        }
-      }
     })
   }
 

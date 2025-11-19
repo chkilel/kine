@@ -1,21 +1,34 @@
 <script setup lang="ts">
-  import { UCard } from '#components'
+  import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+  import { authClient } from '~/utils/auth-client'
 
   const props = defineProps<{
-    patient?: Patient
+    patient: Patient
     treatmentPlan?: TreatmentPlan
-    open?: boolean
   }>()
 
   const emit = defineEmits<{
-    'update:open': [value: boolean]
     close: [data?: any]
-    'session-created': [session: Session]
-    'sessions-updated': [sessions: Session[]]
-    'sessions-generated': [sessions: Session[]]
   }>()
 
   const toast = useToast()
+
+  // Use consultations composable
+  const { fetchConsultations, createConsultation, deleteConsultation, fetchTreatmentPlanConsultations } =
+    useConsultations()
+
+  // Get active organization and session
+  const activeOrganization = authClient.useActiveOrganization()
+  const session = await authClient.useSession(useFetch)
+  if (!session.data.value?.user || !activeOrganization.value.data) {
+    await navigateTo('/login')
+  }
+
+  const currentUser = computed(() => session.data.value?.user)
+  const therapists = computed(() => [session.data.value?.user!])
+
+  // Date formatter
+  const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
   // Form state
   const planningSettings = ref({
@@ -25,7 +38,7 @@
     duration: 45,
     startDate: new Date().toISOString().split('T')[0],
     preferredDays: ['Lundi', 'Mercredi', 'Vendredi'] as string[],
-    location: 'cabinet' as 'cabinet' | 'domicile' | 'visio'
+    location: 'clinic' as 'clinic' | 'home' | 'telehealth'
   })
 
   const sessionDetails = ref({
@@ -33,8 +46,8 @@
     time: '',
     duration: 45,
     type: '',
-    practitioner: 'Dr. Martin',
-    location: 'cabinet',
+    therapistId: currentUser.value?.id || '',
+    location: 'clinic',
     notes: ''
   })
 
@@ -43,48 +56,49 @@
     enableReminders: true
   })
 
+  // Calendar models for date components
+  const planningStartDateModel = shallowRef<CalendarDate | null>(null)
+  const selectedDateModel = shallowRef<CalendarDate | null>(null)
+
+  // Initialize calendar models from form dates
+  onMounted(() => {
+    if (planningSettings.value.startDate) {
+      planningStartDateModel.value = new CalendarDate(
+        new Date(planningSettings.value.startDate).getFullYear(),
+        new Date(planningSettings.value.startDate).getMonth() + 1,
+        new Date(planningSettings.value.startDate).getDate()
+      )
+    }
+  })
+
+  // Watch calendar models and update form state
+  watch(planningStartDateModel, (val) => {
+    if (val) {
+      planningSettings.value.startDate = val.toDate(getLocalTimeZone()).toISOString().split('T')[0]
+    }
+  })
+
+  watch(selectedDateModel, (val) => {
+    if (val) {
+      selectedDate.value = val.toDate(getLocalTimeZone()).toISOString().split('T')[0] || null
+    }
+  })
+
   // Calendar state
-  const selectedDate = ref<Date | null>(null)
+  const selectedDate = ref<string | null>(null)
   const selectedTime = ref<string | null>(null)
 
-  // Sessions data
-  const sessions = ref<Session[]>([
-    {
-      id: '1',
-      date: '2024-08-05',
-      time: '10:00',
-      type: 'Mobilisation',
-      details: 'Objectif: Amplitude articulaire',
-      status: 'scheduled',
-      duration: 45,
-      location: 'cabinet',
-      practitioner: 'Dr. Jean Lefevre'
-    },
-    {
-      id: '2',
-      date: '2024-08-07',
-      time: '14:30',
-      type: 'Renforcement',
-      details: 'Équipement: Élastiques, poids légers',
-      status: 'scheduled',
-      duration: 45,
-      location: 'cabinet',
-      practitioner: 'Dr. Jean Lefevre'
-    },
-    {
-      id: '3',
-      date: '2024-08-09',
-      time: '09:00',
-      type: 'Mobilisation',
-      details: 'Note: Focus sur rotation externe',
-      status: 'confirmed',
-      duration: 45,
-      location: 'cabinet',
-      practitioner: 'Dr. Jean Lefevre'
-    }
-  ])
-
+  const sessions = ref<Consultation[]>([])
   const selectedSessions = ref<string[]>([])
+  const treatmentPlanStats = ref<{
+    total: number
+    completed: number
+    scheduled: number
+    cancelled: number
+    progressPercentage: number
+  } | null>(null)
+  const isLoading = ref(false)
+  const isCreating = ref(false)
 
   // Time slots
   const timeSlots = [
@@ -104,11 +118,6 @@
 
   const unavailableSlots = ['10:30', '11:30', '16:30']
 
-  const selectDate = (date: Date) => {
-    selectedDate.value = date
-    sessionDetails.value.date = date
-  }
-
   const selectTime = (time: string) => {
     selectedTime.value = time
     sessionDetails.value.time = time
@@ -123,32 +132,92 @@
   }
 
   // Session management
-  const addSession = () => {
-    const newSession: Session = {
-      id: Date.now().toString(),
-      date: selectedDate.value?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-      time: selectedTime.value || '',
-      type: sessionDetails.value.type || 'Rééducation',
-      details: `Objectif: ${sessionDetails.value.type?.toLowerCase() || 'rééducation'}`,
-      status: 'scheduled',
-      duration: sessionDetails.value.duration,
-      location: sessionDetails.value.location as 'cabinet' | 'domicile' | 'visio',
-      practitioner: sessionDetails.value.practitioner
+  const addSession = async () => {
+    if (!selectedDate.value || !selectedTime.value) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner une date, une heure et un type de consultation',
+        color: 'error'
+      })
+      return
     }
 
-    sessions.value.push(newSession)
-    emit('session-created', newSession)
-    emit('close', { type: 'session-created', data: newSession })
+    if (!sessionDetails.value.type) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un type de séance',
+        color: 'error'
+      })
+      return
+    }
 
-    toast.add({
-      title: 'Séance ajoutée',
-      description: `La séance du ${selectedDate.value?.toLocaleDateString('fr-FR')} à ${newSession.time} a été ajoutée.`,
-      color: 'success'
-    })
+    isCreating.value = true
+    try {
+      const consultationData = {
+        patientId: props.patient.id,
+        organizationId: activeOrganization.value?.data?.id || '',
+        treatmentPlanId: props.treatmentPlan?.id,
+        date: selectedDate.value ? new Date(selectedDate.value) : new Date(),
+        startTime: selectedTime.value,
+        duration: sessionDetails.value.duration,
+        type: (sessionDetails.value.type || 'follow_up') as ConsultationSessionType,
+        location: sessionDetails.value.location as ConsultationLocation,
+        chiefComplaint: sessionDetails.value.notes || '',
+        notes: sessionDetails.value.notes || '',
+        therapistId: sessionDetails.value.therapistId || undefined,
+        status: 'scheduled' as const,
+        billed: false,
+        insuranceClaimed: false
+      }
+
+      const result = await createConsultation(props.patient.id, consultationData)
+
+      if (result.consultation) {
+        // Refresh consultations list
+        await refreshConsultations()
+
+        emit('close', { type: 'consultation-created', data: result.consultation })
+
+        // Reset form
+        selectedDate.value = null
+        selectedDateModel.value = null
+        selectedTime.value = null
+        sessionDetails.value.type = ''
+        sessionDetails.value.notes = ''
+      }
+    } finally {
+      isCreating.value = false
+    }
   }
 
-  const generateSessions = () => {
-    const startDate = planningSettings.value.startDate ? new Date(planningSettings.value.startDate) : new Date()
+  const refreshConsultations = async () => {
+    isLoading.value = true
+    try {
+      if (props.patient) {
+        const result = await fetchConsultations(props.patient.id)
+        if (result.consultations) {
+          sessions.value = result.consultations as Consultation[]
+        }
+      }
+
+      // Also fetch treatment plan statistics if a treatment plan is provided
+      if (props.treatmentPlan) {
+        const statsResult = await fetchTreatmentPlanConsultations(props.treatmentPlan.id)
+        if (statsResult.statistics) {
+          treatmentPlanStats.value = statsResult.statistics
+        }
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const generateSessions = async () => {
+    if (!props.patient) return
+
+    const startDate = planningSettings.value.startDate
+      ? new Date(planningSettings.value.startDate as string)
+      : new Date()
     const sessionDates: Date[] = []
 
     for (let i = 0; i < planningSettings.value.sessionsToPlan; i++) {
@@ -157,33 +226,55 @@
       sessionDates.push(sessionDate)
     }
 
-    const newSessions = sessionDates.map((date, index) => ({
-      id: Date.now().toString() + index,
-      date: date.toISOString().split('T')[0] || '',
-      time: '09:00',
-      type: 'Rééducation lombaire',
-      details: `Séance ${index + 1}/${planningSettings.value.sessionsToPlan}`,
-      status: 'scheduled' as const,
+    const newSessions = sessionDates.map((date, _index) => ({
+      patientId: props.patient?.id || '',
+      organizationId: activeOrganization.value?.data?.id || '',
+      treatmentPlanId: props.treatmentPlan?.id,
+      date: date,
+      startTime: '09:00',
       duration: planningSettings.value.duration,
-      location: 'cabinet' as const,
-      practitioner: 'Dr. Jean Lefevre'
+      type: 'follow_up' as
+        | 'initial'
+        | 'follow_up'
+        | 'evaluation'
+        | 'discharge'
+        | 'mobilization'
+        | 'reinforcement'
+        | 'reeducation',
+      location: planningSettings.value.location as 'clinic' | 'home' | 'telehealth',
+      therapistId: sessionDetails.value.therapistId || undefined,
+      status: 'scheduled' as const,
+      billed: false,
+      insuranceClaimed: false
     }))
 
-    sessions.value.push(...newSessions)
-    emit('sessions-generated', newSessions)
-    emit('close', { type: 'sessions-generated', data: newSessions })
+    // Create each consultation
+    if (props.patient) {
+      for (const sessionData of newSessions) {
+        await createConsultation(props.patient.id, sessionData)
+      }
+    }
+
+    // Refresh consultations list
+    await refreshConsultations()
+
+    emit('close', { type: 'sessions-generated' })
   }
 
-  const deleteSession = (sessionId: string) => {
-    const index = sessions.value.findIndex((s) => s.id === sessionId)
-    if (index > -1) {
-      sessions.value.splice(index, 1)
-      emit('sessions-updated', sessions.value)
-      emit('close', { type: 'sessions-updated', data: sessions.value })
+  const deleteSession = async (sessionId: string) => {
+    if (!props.patient) return
+
+    const result = await deleteConsultation(props.patient.id, sessionId)
+
+    if (result) {
+      // Refresh consultations list
+      await refreshConsultations()
+
+      emit('close', { type: 'consultation-deleted' })
 
       toast.add({
-        title: 'Séance supprimée',
-        description: 'La séance a été supprimée avec succès.',
+        title: 'Succès',
+        description: 'La consultation a été supprimée avec succès.',
         color: 'success'
       })
     }
@@ -230,11 +321,11 @@
 
   const updateSession = () => {
     toast.add({
-      title: 'Séance mise à jour',
+      title: 'Succès',
       description: 'Les modifications ont été enregistrées avec succès.',
       color: 'success'
     })
-    emit('close', { type: 'sessions-updated', data: sessions.value })
+    emit('close', { type: 'sessions-updated' })
   }
 
   // Helper functions
@@ -246,32 +337,16 @@
     return day === 0 || day === 6 // Sunday (0) or Saturday (6)
   }
 
-  const isToday = (date: any) => {
-    const dateObj = date instanceof Date ? date : new Date(date.toString())
-    const today = new Date()
-    return dateObj.toDateString() === today.toDateString()
-  }
-
-  const isSelected = (date: any) => {
-    const dateObj = date instanceof Date ? date : new Date(date.toString())
-    return selectedDate.value ? dateObj.toDateString() === selectedDate.value.toDateString() : false
-  }
-
-  const togglePreferredDay = (day: string) => {
-    const index = planningSettings.value.preferredDays.indexOf(day)
-    if (index > -1) {
-      planningSettings.value.preferredDays.splice(index, 1)
-    } else {
-      planningSettings.value.preferredDays.push(day)
-    }
-  }
+  // Load data on component mount
+  onMounted(async () => {
+    await refreshConsultations()
+  })
 </script>
 
 <template>
   <USlideover
-    v-model:open="props.open"
     title="Planification des séances"
-    :description="`Patient: ${formatFullName(props.patient!)}`"
+    :description="`Patient: ${formatFullName(props.patient)}`"
     :ui="{
       content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl',
       body: 'bg-elevated'
@@ -286,11 +361,13 @@
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Total de séances</p>
-              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.numberOfSessions }}</p>
+              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.numberOfSessions || 0 }}</p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Séances restantes</p>
-              <p class="font-title text-xl font-bold">555</p>
+              <p class="font-title text-xl font-bold">
+                {{ Math.max(0, (props.treatmentPlan?.numberOfSessions || 0) - (treatmentPlanStats?.completed || 0)) }}
+              </p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Plan de traitement</p>
@@ -300,12 +377,11 @@
             <div class="col-span-full space-y-2">
               <div class="flex justify-between text-sm font-medium">
                 <span>Progression du plan</span>
-                <span>{{ 666 }} / {{ 444 }} séances</span>
+                <span>
+                  {{ treatmentPlanStats?.completed || 0 }} / {{ props.treatmentPlan?.numberOfSessions || 0 }} séances
+                </span>
               </div>
-              <UProgress
-                :model-value="props.treatmentPlan?.completedSessions || 0"
-                :max="props.treatmentPlan?.totalSessions || 1"
-              />
+              <UProgress :model-value="treatmentPlanStats?.progressPercentage || 0" :max="100" />
             </div>
             <UAlert
               variant="subtle"
@@ -349,14 +425,20 @@
 
               <!-- Auto Planning Section -->
               <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <UFormField label="Praticien">
-                  <UInput v-model="sessionDetails.practitioner" readonly class="w-full" />
+                <UFormField label="Kinésithérapeute responsable" name="therapistId">
+                  <USelectMenu
+                    v-model="sessionDetails.therapistId"
+                    value-key="id"
+                    label-key="name"
+                    :items="therapists"
+                    class="w-full"
+                  />
                 </UFormField>
                 <UFormField label="Séances à planifier">
                   <UInputNumber
                     v-model="planningSettings.sessionsToPlan"
                     :min="1"
-                    :max="treatmentPlan?.totalSessions || 20"
+                    :max="treatmentPlan?.numberOfSessions || 20"
                     class="w-full"
                   />
                 </UFormField>
@@ -377,17 +459,13 @@
                   <UPopover>
                     <UButton color="neutral" variant="subtle" class="w-full justify-start">
                       {{
-                        planningSettings.startDate
-                          ? new Date(planningSettings.startDate).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })
+                        planningStartDateModel
+                          ? df.format(planningStartDateModel.toDate(getLocalTimeZone()))
                           : 'Sélectionner une date'
                       }}
                     </UButton>
                     <template #content>
-                      <UCalendar v-model="planningSettings.startDate" class="p-2" :year-controls="false" />
+                      <UCalendar v-model="planningStartDateModel" class="p-2" :year-controls="false" />
                     </template>
                   </UPopover>
                 </UFormField>
@@ -409,8 +487,9 @@
                   <UFieldGroup class="flex">
                     <UButton
                       v-for="loc in [
-                        { value: 'cabinet', label: 'Cabinet', icon: 'i-lucide-building' },
-                        { value: 'domicile', label: 'Domicile', icon: 'i-lucide-home' }
+                        { value: 'clinic', label: 'Cabinet', icon: 'i-lucide-building' },
+                        { value: 'home', label: 'Domicile', icon: 'i-lucide-home' },
+                        { value: 'telehealth', label: 'Téléconsultation', icon: 'i-lucide-video' }
                       ]"
                       :key="loc.value"
                       :variant="planningSettings.location === loc.value ? 'solid' : 'subtle'"
@@ -440,15 +519,15 @@
                 icon="i-lucide-alert-triangle"
                 class="mt-4"
                 v-if="
-                  props.treatmentPlan?.remainingSessions &&
-                  props.treatmentPlan.remainingSessions < planningSettings.sessionsToPlan
+                  props.treatmentPlan?.numberOfSessions &&
+                  props.treatmentPlan.numberOfSessions < planningSettings.sessionsToPlan
                 "
               >
                 <template #title>Limite du plan de traitement</template>
                 <template #description>
-                  Vous prévoyez {{ planningSettings.sessionsToPlan }} séances, mais il n'en reste que
-                  {{ props.treatmentPlan.remainingSessions }} sur les {{ props.treatmentPlan?.totalSessions }} du plan.
-                  Assurez-vous que cela correspond aux besoins du patient.
+                  Vous prévoyez {{ planningSettings.sessionsToPlan }} séances, mais le plan prévoit
+                  {{ props.treatmentPlan.numberOfSessions }} séances au total. Assurez-vous que cela correspond aux
+                  besoins du patient.
                 </template>
               </UAlert>
             </UCard>
@@ -463,15 +542,31 @@
               <h3 class="text-lg font-bold">Détails du rendez-vous</h3>
 
               <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <UFormField label="Praticien">
-                  <UInput v-model="sessionDetails.practitioner" readonly class="w-full" />
+                <UFormField label="Kinésithérapeute responsable" name="therapistId">
+                  <USelectMenu
+                    v-model="sessionDetails.therapistId"
+                    value-key="id"
+                    label-key="name"
+                    :items="therapists"
+                    class="w-full"
+                  />
                 </UFormField>
 
                 <div class="">
                   <UFormField label="Type de séance">
                     <USelect
                       v-model="sessionDetails.type"
-                      :options="['Rééducation lombaire', 'Mobilisation', 'Évaluation initiale']"
+                      :items="[
+                        { value: 'initial', label: 'Évaluation initiale' },
+                        { value: 'follow_up', label: 'Suivi' },
+                        { value: 'evaluation', label: 'Évaluation' },
+                        { value: 'discharge', label: 'Sortie' },
+                        { value: 'mobilization', label: 'Mobilisation' },
+                        { value: 'reinforcement', label: 'Renforcement' },
+                        { value: 'reeducation', label: 'Rééducation' }
+                      ]"
+                      option-attribute="label"
+                      value-attribute="value"
                       class="w-full"
                     />
                   </UFormField>
@@ -493,8 +588,9 @@
                   <UFieldGroup class="flex">
                     <UButton
                       v-for="loc in [
-                        { value: 'cabinet', label: 'Cabinet', icon: 'i-lucide-building' },
-                        { value: 'domicile', label: 'Domicile', icon: 'i-lucide-car-front' }
+                        { value: 'clinic', label: 'Cabinet', icon: 'i-lucide-building' },
+                        { value: 'home', label: 'Domicile', icon: 'i-lucide-home' },
+                        { value: 'telehealth', label: 'Téléconsultation', icon: 'i-lucide-video' }
                       ]"
                       :key="loc.value"
                       :variant="sessionDetails.location === loc.value ? 'solid' : 'subtle'"
@@ -512,9 +608,8 @@
                 <!-- Calendar -->
                 <UCard variant="subtle">
                   <UCalendar
+                    v-model="selectedDateModel"
                     :year-controls="false"
-                    :model-value="selectedDate"
-                    @update:model-value="selectedDate = $event"
                     :is-date-unavailable="isDateUnavailable"
                   />
                 </UCard>
@@ -544,7 +639,15 @@
                     </div>
                   </UFormField>
 
-                  <UButton icon="i-lucide-plus" color="primary" size="lg" block @click="addSession">
+                  <UButton
+                    icon="i-lucide-plus"
+                    color="primary"
+                    size="lg"
+                    block
+                    :loading="isCreating"
+                    :disabled="isCreating"
+                    @click="addSession"
+                  >
                     Ajouter cette séance au plan
                   </UButton>
                 </UCard>
@@ -574,6 +677,8 @@
                 v-if="planningSettings.autoGeneration"
                 icon="i-lucide-sparkles"
                 color="primary"
+                :loading="isCreating"
+                :disabled="isCreating"
                 @click="generateSessions"
               >
                 Générer les séances
@@ -587,6 +692,7 @@
           <div class="mt-4 overflow-x-auto">
             <UTable
               :data="sessions"
+              :loading="isLoading"
               :columns="[
                 { accessorKey: 'selected', header: '' },
                 { accessorKey: 'date', header: 'Date & Heure' },
@@ -606,21 +712,39 @@
                 <div>
                   <div class="font-medium">
                     {{
-                      new Date(row.original.date || '').toLocaleDateString('fr-FR', {
+                      new Date(row.original.date).toLocaleDateString('fr-FR', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long'
                       })
                     }}
                   </div>
-                  <div class="text-muted-foreground">{{ row.original.time || '' }}</div>
+                  <div class="text-muted-foreground">{{ row.original.startTime || '' }}</div>
                 </div>
               </template>
 
               <template #details-cell="{ row }">
                 <div>
-                  <div class="font-medium">{{ row.original.type || '' }}</div>
-                  <div class="text-muted-foreground">{{ row.original.details || '' }}</div>
+                  <div class="font-medium">
+                    {{
+                      row.original.type === 'initial'
+                        ? 'Évaluation initiale'
+                        : row.original.type === 'follow_up'
+                          ? 'Suivi'
+                          : row.original.type === 'evaluation'
+                            ? 'Évaluation'
+                            : row.original.type === 'discharge'
+                              ? 'Sortie'
+                              : row.original.type === 'mobilization'
+                                ? 'Mobilisation'
+                                : row.original.type === 'reinforcement'
+                                  ? 'Renforcement'
+                                  : row.original.type === 'reeducation'
+                                    ? 'Rééducation'
+                                    : row.original.type || ''
+                    }}
+                  </div>
+                  <div class="text-muted-foreground">{{ row.original.chiefComplaint || '' }}</div>
                 </div>
               </template>
 
