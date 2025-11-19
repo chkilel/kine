@@ -130,7 +130,7 @@
     try {
       const treatmentPlan = await $fetch<TreatmentPlan>(`/api/patients/${props.patient.id}/treatment-plans`, {
         method: 'POST',
-        body: form
+        body: event.data
       })
 
       if (!treatmentPlan) {
@@ -179,6 +179,7 @@
         color: 'success'
       })
 
+      await refreshNuxtData(`treatment-plans-${props.patient.id}`)
       emit('close', treatmentPlan)
       resetForm()
     } catch (error: any) {

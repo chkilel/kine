@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { LazyTreatmentPlanCreateSideover, LazyConsultaionPlanningSlideover } from '#components'
 
-  const props = defineProps<{ patient?: Patient }>()
+  const props = defineProps<{ patient: Patient }>()
 
   const toast = useToast()
   const overlay = useOverlay()
@@ -9,20 +9,15 @@
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
 
   const {
-    treatmentPlans,
     loading,
     error,
     refresh: refreshTreatmentPlans,
     getActiveTreatmentPlan,
     formatTreatmentPlanStatus,
     formatDate,
-    formatDateRange,
     getTherapistName
   } = usePatientTreatmentPlans(props.patient?.id)
 
-  async function sessionPlanning() {
-    sessionPlanningOverlay.open()
-  }
   // Function to open session planning with event handlers
   function openSessionPlanning() {
     const instance = sessionPlanningOverlay.open({
@@ -59,19 +54,6 @@
     })
   }
 
-  // Handle treatment plan creation
-  function handleTreatmentPlanCreated(plan: any) {
-    console.log('Treatment plan created:', plan)
-    // Show success notification
-    toast.add({
-      title: 'Plan de traitement créé',
-      description: `Le plan "${plan.title}" a été créé avec succès.`,
-      color: 'success'
-    })
-    // Refresh data after creating a new plan
-    refreshTreatmentPlans()
-  }
-
   // Retry fetch with user feedback
   async function retryFetch() {
     try {
@@ -92,15 +74,8 @@
 
   // Open create slideover with user feedback
   async function openCreateSlideover() {
-    const instance = treatmentPlanCreateOverlay.open({
-      patient: props.patient as any
-    })
-
-    // Handle the close event with data
-    instance.then((result: any) => {
-      if (result) {
-        handleTreatmentPlanCreated(result)
-      }
+    treatmentPlanCreateOverlay.open({
+      patient: props.patient
     })
   }
 
@@ -221,7 +196,7 @@
             color="primary"
             size="md"
             class="flex-1 justify-center sm:justify-start"
-            @click="sessionPlanning"
+            @click="openCreateSlideover"
           >
             Nouveau
           </UButton>
