@@ -4,7 +4,7 @@
 
   const toast = useToast()
   const router = useRouter()
-  const { session } = await useAuth()
+  const { activeOrganization } = await useAuth()
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
@@ -38,8 +38,8 @@
   })
 
   watchEffect(() => {
-    if (session.value?.activeOrganizationId) {
-      formState.organizationId = session.value.activeOrganizationId
+    if (activeOrganization.value.data?.id) {
+      formState.organizationId = activeOrganization.value.data?.id
     }
   })
 
@@ -110,9 +110,8 @@
 
   // Array management functions
   function addEmergencyContact() {
-    if (!formState.emergencyContacts) {
-      formState.emergencyContacts = []
-    }
+    if (!formState.emergencyContacts) formState.emergencyContacts = []
+
     formState.emergencyContacts.push({ name: '', phone: '', relationship: '' })
   }
 
