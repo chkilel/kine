@@ -7,6 +7,7 @@
 
   const toast = useToast()
   const { uploadFile } = useUploads()
+  const { createOrganization, checkSlug } = await useAuth()
 
   // ✅ Unified reactive form state
   const form = reactive({
@@ -71,26 +72,27 @@
   )
 
   // ✅ Create organization via UForm submit
-  async function onSubmit(_event: FormSubmitEvent<OrganizationInsertSchema>) {
+  async function onSubmit(event: FormSubmitEvent<OrganizationInsertSchema>) {
     isCreating.value = true
 
     try {
       // Upload logo if provided
-      if (form.logoFile) {
+      if (event.data.logoFile) {
         const result = await uploadFile({
-          file: form.logoFile,
+          file: event.data.logoFile,
           folder: 'org-logos',
-          name: `${form.slug}-logo`
+          name: `${event.data.slug}-logo`
         })
-        form.logo = result.key
+        event.data.logo = result.key
       }
 
-      const metadataObj = form.metadataText && form.metadataText.trim() ? JSON.parse(form.metadataText) : undefined
+      const metadataObj =
+        event.data.metadataText && event.data.metadataText.trim() ? JSON.parse(event.data.metadataText) : undefined
 
-      const { error } = await authClient.organization.create({
-        name: form.name,
-        slug: form.slug,
-        logo: form.logo || undefined,
+      const { error } = await createOrganization({
+        name: event.data.name,
+        slug: event.data.slug,
+        logo: event.data.logo || undefined,
         metadata: metadataObj || undefined,
         keepCurrentActiveOrganization: false
       })
@@ -124,7 +126,7 @@
   async function checkSlugAvailability(slug: string): Promise<boolean | null> {
     if (!slug) return null
     try {
-      const { data, error } = await authClient.organization.checkSlug({ slug })
+      const { data, error } = await checkSlug({ slug })
       if (error) {
         return null
       }

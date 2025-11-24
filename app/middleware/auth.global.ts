@@ -1,14 +1,12 @@
-import { authClient } from '~/utils/auth-client'
-
 export default defineNuxtRouteMiddleware(async (to) => {
   // ✅ `auth: true` means this route is for guests (login/register)
   const isGuestRoute = to.meta.auth === true
   const headers = import.meta.server ? useRequestHeaders() : undefined
 
   // Get current session
-  const { data: session } = await authClient.useSession(useFetch)
+  const { isAuthenticated } = await useAuth()
 
-  const isLoggedIn = !!session.value
+  const isLoggedIn = isAuthenticated.value
 
   // 🧭 If user is logged in and tries to access a guest page → redirect home
   if (isLoggedIn && isGuestRoute) {

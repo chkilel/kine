@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
-  import { authClient } from '~/utils/auth-client'
+  import { format } from 'date-fns'
 
   const props = defineProps<{
     patient: Patient
@@ -18,14 +18,13 @@
     useConsultations()
 
   // Get active organization and session
-  const activeOrganization = authClient.useActiveOrganization()
-  const session = await authClient.useSession(useFetch)
-  if (!session.data.value?.user || !activeOrganization.value.data) {
+  const { user, activeOrganization } = await useAuth()
+  if (!user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }
 
-  const currentUser = computed(() => session.data.value?.user)
-  const therapists = computed(() => [session.data.value?.user!])
+  // FIXME grab therapist from org
+  const therapists = [user.value!]
 
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
@@ -36,9 +35,9 @@
     sessionsToPlan: 8,
     frequency: 2,
     duration: 45,
-    startDate: new Date().toISOString().split('T')[0],
-    preferredDays: ['Lundi', 'Mercredi', 'Vendredi'] as string[],
-    location: 'clinic' as 'clinic' | 'home' | 'telehealth'
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    preferredDays: [] as string[],
+    location: 'clinic' as ConsultationLocation
   })
 
   const sessionDetails = ref({
@@ -46,7 +45,7 @@
     time: '',
     duration: 45,
     type: '',
-    therapistId: currentUser.value?.id || '',
+    therapistId: user.value?.id || '',
     location: 'clinic',
     notes: ''
   })
@@ -74,13 +73,13 @@
   // Watch calendar models and update form state
   watch(planningStartDateModel, (val) => {
     if (val) {
-      planningSettings.value.startDate = val.toDate(getLocalTimeZone()).toISOString().split('T')[0]
+      planningSettings.value.startDate = format(val.toDate(getLocalTimeZone()), 'yyyy-MM-dd')
     }
   })
 
   watch(selectedDateModel, (val) => {
     if (val) {
-      selectedDate.value = val.toDate(getLocalTimeZone()).toISOString().split('T')[0] || null
+      selectedDate.value = format(val.toDate(getLocalTimeZone()), 'yyyy-MM-dd') || null
     }
   })
 
@@ -505,7 +504,14 @@
 
                 <UFormField label="Jours préférés" class="col-span-full">
                   <UCheckboxGroup
-                    :items="['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']"
+                    :items="[
+                      { value: 'Mon', label: 'Lundi' },
+                      { value: 'Tue', label: 'Mardi' },
+                      { value: 'Wed', label: 'Mercredi' },
+                      { value: 'Thu', label: 'Jeudi' },
+                      { value: 'Fri', label: 'Vendredi' },
+                      { value: 'Sat', label: 'Samedi' }
+                    ]"
                     v-model="planningSettings.preferredDays"
                     orientation="horizontal"
                     variant="card"

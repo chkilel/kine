@@ -2,26 +2,6 @@
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
-  // Constants
-  const statusOptions = [
-    { value: 'planned', label: 'Planifié' },
-    { value: 'ongoing', label: 'En cours' },
-    { value: 'completed', label: 'Terminé' },
-    { value: 'cancelled', label: 'Annulé' }
-  ]
-
-  const coverageOptions = [
-    { value: 'not_required', label: 'Non nécessaire' }, // Patient sans mutuelle ou paie directement
-    { value: 'not_provided', label: 'Informations manquantes' }, // Attente des infos de mutuelle / Sécurité Sociale
-    { value: 'to_verify', label: 'À vérifier' }, // Infos reçues mais pas encore validées
-    { value: 'awaiting_agreement', label: "En attente d'accord" }, // Attente d'accord préalable de l'organisme
-    { value: 'covered', label: 'Prise en charge acceptée' }, // Accord total obtenu
-    { value: 'partially_covered', label: 'Prise en charge partielle' }, // Une partie reste à la charge du patient
-    { value: 'refused', label: 'Prise en charge refusée' }, // Accord refusé par l'organisme
-    { value: 'expired', label: 'Prise en charge expirée' }, // Accord dépassé ou non renouvelé
-    { value: 'cancelled', label: 'Prise en charge annulée' } // Annulée à la demande du patient ou de l'assureur
-  ]
-
   // Types
   interface UploadedFile {
     file: File
@@ -44,14 +24,13 @@
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
   // Session
-  const activeOrganization = authClient.useActiveOrganization()
-  const session = await authClient.useSession(useFetch)
-  if (!session.data.value?.user || !activeOrganization.value.data) {
+  const { user, session, activeOrganization, isAuthenticated } = await useAuth()
+  if (!user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }
 
-  const currentUser = computed(() => session.data.value?.user)
-  const therapists = computed(() => [session.data.value?.user!])
+  const currentUser = user
+  const therapists = [user.value!]
 
   // Get active organization
 
@@ -397,7 +376,7 @@
               <UFormField label="Statut" name="status">
                 <URadioGroup
                   v-model="form.status"
-                  :items="statusOptions"
+                  :items="PLAN_STATUS_OPTIONS"
                   value-key="value"
                   label-key="label"
                   orientation="horizontal"
@@ -441,7 +420,7 @@
               <UFormField label="Statut de couverture">
                 <USelectMenu
                   v-model="form.coverageStatus"
-                  :items="coverageOptions"
+                  :items="INSURANCE_COVERAGE_PTIONS"
                   value-key="value"
                   label-key="label"
                   placeholder="Selectionner ..."

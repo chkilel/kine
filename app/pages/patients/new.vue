@@ -4,7 +4,7 @@
 
   const toast = useToast()
   const router = useRouter()
-  const { data: sessionData } = await authClient.useSession(useFetch)
+  const { session } = await useAuth()
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
@@ -38,8 +38,8 @@
   })
 
   watchEffect(() => {
-    if (sessionData.value?.session?.activeOrganizationId) {
-      formState.organizationId = sessionData.value.session.activeOrganizationId
+    if (session.value?.activeOrganizationId) {
+      formState.organizationId = session.value.activeOrganizationId
     }
   })
 

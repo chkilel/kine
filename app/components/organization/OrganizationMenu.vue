@@ -1,12 +1,10 @@
 <script setup lang="ts">
   import type { DropdownMenuItem } from '@nuxt/ui'
-  import type { OrganizationSchema } from '~~/shared/types/org.types'
 
   defineProps<{ collapsed?: boolean }>()
 
   // Better Auth organization hooks
-  const organizations = authClient.useListOrganizations()
-  const activeOrganization = authClient.useActiveOrganization()
+  const { organizations, activeOrganization, setActiveOrganization } = await useAuth()
 
   const toast = useToast()
 
@@ -81,7 +79,7 @@
   // Switch organization using Better Auth
   async function switchOrganization(organizationId: string) {
     try {
-      const { data, error } = await authClient.organization.setActive({ organizationId })
+      const { error } = await setActiveOrganization({ organizationId })
       if (error) {
         console.error('Failed to switch organization:', error)
         toast.add({

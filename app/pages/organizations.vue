@@ -25,7 +25,7 @@
   const rowSelection = ref({})
 
   // Table data
-  const orgList = authClient.useListOrganizations()
+  const { organizations: orgList, setActiveOrganization } = await useAuth()
   const organizations = computed(() => Array.from(orgList.value?.data ?? []))
 
   // Pagination
@@ -94,7 +94,7 @@
         icon: 'i-lucide-check',
         onSelect: async () => {
           try {
-            const { error } = await authClient.organization.setActive({
+            const { error } = await setActiveOrganization({
               organizationId: org.id,
               organizationSlug: org.slug
             })
