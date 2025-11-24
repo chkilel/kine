@@ -13,6 +13,7 @@
   ]
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { label: 'Accueil', icon: 'i-lucide-home', to: '/' },
     { label: 'Patients', to: '/patients' },
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
@@ -52,32 +53,6 @@
 
     editSlideover.open({ patient: patient.value })
   }
-
-  function getStatusColor(status: string) {
-    switch (status) {
-      case 'active':
-        return 'success'
-      case 'inactive':
-        return 'warning'
-      case 'discharged':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
-
-  function getStatusLabel(status: string) {
-    switch (status) {
-      case 'active':
-        return 'Actif'
-      case 'inactive':
-        return 'Inactif'
-      case 'discharged':
-        return 'Sorti'
-      default:
-        return status
-    }
-  }
 </script>
 
 <template>
@@ -113,8 +88,13 @@
                   <h1 class="text-2xl leading-tight font-bold md:text-3xl">
                     {{ formatFullName(patient) }}
                   </h1>
-                  <UBadge :color="getStatusColor(patient.status)" variant="outline" class="self-center">
-                    {{ getStatusLabel(patient.status) }}
+                  <UBadge
+                    :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
+                    size="xl"
+                    variant="subtle"
+                    class="self-center"
+                  >
+                    {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
                   </UBadge>
                 </div>
                 <div
