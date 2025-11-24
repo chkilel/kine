@@ -30,3 +30,19 @@ export const INSURANCE_COVERAGE_PTIONS = [
   { value: 'expired', label: 'Prise en charge expirée' }, // Accord dépassé ou non renouvelé
   { value: 'cancelled', label: 'Prise en charge annulée' } // Annulée à la demande du patient ou de l'assureur
 ]
+
+export const RELATIONSHIPS = [
+  { label: 'Époux/Épouse', value: 'spouse' },
+  { label: 'Mère/Père', value: 'parent' },
+  { label: 'Fille/Fils', value: 'child' },
+  { label: 'Sœur/Frère', value: 'sibling' },
+  { label: 'Grand-mère/Grand-père', value: 'grandparent' },
+  { label: 'Petite-fille/Petit-fils', value: 'grandchild' },
+  { label: 'Tante/Oncle', value: 'aunt_uncle' },
+  { label: 'Cousine/Cousin', value: 'cousin' },
+  { label: 'Ami/Amie', value: 'friend' },
+  { label: 'Voisin/Voisine', value: 'neighbor' },
+  { label: 'Collègue', value: 'colleague' },
+  { label: 'Connaissance', value: 'acquaintance' },
+  { label: 'Autre', value: 'other' }
+]

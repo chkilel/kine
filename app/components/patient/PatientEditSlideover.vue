@@ -18,6 +18,12 @@
   const emergencyContactPhone = ref('')
   const emergencyContactRelationship = ref('')
 
+  // Edit state for emergency contacts
+  const editingContactIndex = ref<number | null>(null)
+  const editContactName = ref('')
+  const editContactPhone = ref('')
+  const editContactRelationship = ref('')
+
   // Notes state
   const newNoteContent = ref('')
 
@@ -123,6 +129,35 @@
     emergencyContactRelationship.value = ''
   }
 
+  function startEditContact(index: number) {
+    const contact = state.emergencyContacts?.[index]
+    if (!contact) return
+
+    editingContactIndex.value = index
+    editContactName.value = contact.name || ''
+    editContactPhone.value = contact.phone
+    editContactRelationship.value = contact.relationship || ''
+  }
+
+  function saveEditContact() {
+    if (editingContactIndex.value === null || !state.emergencyContacts) return
+
+    state.emergencyContacts[editingContactIndex.value] = {
+      name: editContactName.value || undefined,
+      phone: editContactPhone.value,
+      relationship: editContactRelationship.value || undefined
+    }
+
+    cancelEditContact()
+  }
+
+  function cancelEditContact() {
+    editingContactIndex.value = null
+    editContactName.value = ''
+    editContactPhone.value = ''
+    editContactRelationship.value = ''
+  }
+
   function handleCancel() {
     emit('close')
   }
@@ -152,6 +187,12 @@
     emergencyContactName.value = ''
     emergencyContactPhone.value = ''
     emergencyContactRelationship.value = ''
+
+    // Reset edit state
+    editingContactIndex.value = null
+    editContactName.value = ''
+    editContactPhone.value = ''
+    editContactRelationship.value = ''
 
     // Reset notes form
     newNoteContent.value = ''
@@ -253,59 +294,107 @@
           <div class="space-y-4">
             <div class="text-sm">Contacts existants: {{ state.emergencyContacts?.length || 0 }}</div>
             <div v-if="state.emergencyContacts?.length" class="divide-default divide-y">
-              <div
-                v-for="(contact, index) in state.emergencyContacts"
-                :key="`contact-${index}`"
-                class="flex items-center justify-between py-3"
-              >
-                <div class="flex items-center gap-4">
-                  <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
-                  <div>
-                    <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
-                    <p class="text-muted flex gap-4 text-xs">
-                      <span class="flex items-center gap-1">
-                        <UIcon name="i-lucide-phone" class="h-3 w-3" />
-                        {{ contact.phone }}
-                      </span>
-                      <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
-                        <UIcon name="i-lucide-users" class="h-3 w-3" />
-                        {{ contact.relationship }}
-                      </span>
-                    </p>
+              <div v-for="(contact, index) in state.emergencyContacts" :key="`contact-${index}`" class="py-3">
+                <!-- Edit Form -->
+                <div v-if="editingContactIndex === index" class="space-y-3">
+                  <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <UFormField label="Nom du contact">
+                      <UInput v-model="editContactName" placeholder="Jeanne Dupont" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Téléphone du contact">
+                      <UInput v-model="editContactPhone" placeholder="+1 (555) 987-6543" class="w-full" type="tel" />
+                    </UFormField>
+                    <UFormField label="Relation" class="md:col-span-2">
+                      <USelectMenu
+                        v-model="editContactRelationship"
+                        :items="RELATIONSHIPS"
+                        value-key="value"
+                        placeholder="Sélectionner une relation..."
+                        class="w-full"
+                      />
+                    </UFormField>
+                  </div>
+                  <div class="flex gap-2">
+                    <UButton
+                      label="Enregistrer"
+                      color="primary"
+                      variant="subtle"
+                      size="sm"
+                      @click="saveEditContact"
+                      :disabled="!editContactPhone"
+                    />
+                    <UButton label="Annuler" color="neutral" variant="ghost" size="sm" @click="cancelEditContact" />
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <UButton icon="i-lucide-edit-2" variant="ghost" color="neutral" size="sm" square />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    variant="ghost"
-                    color="error"
-                    size="sm"
-                    square
-                    @click="state.emergencyContacts?.splice(index, 1)"
-                  />
+
+                <!-- Display View -->
+                <div v-else class="flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
+                    <div>
+                      <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
+                      <p class="text-muted flex gap-4 text-xs">
+                        <span class="flex items-center gap-1">
+                          <UIcon name="i-lucide-phone" class="h-3 w-3" />
+                          {{ contact.phone }}
+                        </span>
+                        <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
+                          <UIcon name="i-lucide-users" class="h-3 w-3" />
+                          {{ RELATIONSHIPS.find((r) => r.value === contact.relationship)?.label || '' }}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <UButton
+                      icon="i-lucide-edit-2"
+                      variant="ghost"
+                      color="neutral"
+                      size="sm"
+                      square
+                      @click="startEditContact(index)"
+                    />
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      variant="ghost"
+                      color="error"
+                      size="sm"
+                      square
+                      @click="state.emergencyContacts?.splice(index, 1)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <UFormField label="Nom du contact" placeholder="Jeanne Dupont">
-                <UInput v-model="emergencyContactName" class="w-full" />
-              </UFormField>
-              <UFormField label="Téléphone du contact" placeholder="+1 (555) 987-6543">
-                <UInput v-model="emergencyContactPhone" class="w-full" type="tel" />
-              </UFormField>
-              <UFormField label="Relation" placeholder="Conjoint" class="md:col-span-2">
-                <UInput v-model="emergencyContactRelationship" class="w-full" />
-              </UFormField>
+
+            <!-- Add New Contact Form (hidden when editing) -->
+            <div v-if="editingContactIndex === null" class="space-y-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <UFormField label="Nom du contact">
+                  <UInput v-model="emergencyContactName" placeholder="Jeanne Dupont" class="w-full" />
+                </UFormField>
+                <UFormField label="Téléphone du contact">
+                  <UInput v-model="emergencyContactPhone" placeholder="+1 (555) 987-6543" class="w-full" type="tel" />
+                </UFormField>
+                <UFormField label="Relation" class="md:col-span-2">
+                  <USelectMenu
+                    v-model="emergencyContactRelationship"
+                    :items="RELATIONSHIPS"
+                    value-key="value"
+                    placeholder="Sélectionner une relation..."
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
+              <UButton
+                label="Ajouter le contact"
+                color="primary"
+                variant="subtle"
+                size="sm"
+                @click="addEmergencyContact"
+                :disabled="!emergencyContactPhone"
+              />
             </div>
-            <UButton
-              label="Ajouter le contact"
-              color="primary"
-              variant="subtle"
-              size="sm"
-              @click="addEmergencyContact"
-              :disabled="!emergencyContactPhone"
-            />
           </div>
         </UCard>
 

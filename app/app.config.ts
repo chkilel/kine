@@ -14,7 +14,7 @@ export default defineAppConfig({
         variant: 'subtle'
       }
     },
-    selectmenu: {
+    selectMenu: {
       defaultVariants: {
         variant: 'subtle'
       }
