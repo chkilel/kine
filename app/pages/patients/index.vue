@@ -22,7 +22,7 @@
 
   const table = useTemplateRef('table')
   const columnFilters = ref([{ id: 'search', value: '' }])
-  const columnVisibility = ref()
+  const columnVisibility = ref({ search: false })
   const pagination = ref({
     pageIndex: 0,
     pageSize: 10
@@ -31,6 +31,12 @@
   const { data, status } = await useFetch<Patient[]>('/api/patients', { lazy: true })
 
   const columns: TableColumn<Patient>[] = [
+    {
+      id: 'search',
+      accessorFn: (row) => `${row.firstName} ${row.lastName} ${row.email} ${row.phone}`,
+      enableColumnFilter: false,
+      enableHiding: false
+    },
     {
       accessorKey: 'name',
       header: 'Nom',
