@@ -135,9 +135,7 @@
           <UDashboardSidebarCollapse />
         </template>
 
-        <template #right>
-          <UButton icon="i-lucide-plus" label="Ajouter un patient" @click="navigateTo('/patients/new')" />
-        </template>
+        <template #right>notif</template>
       </UDashboardNavbar>
     </template>
 
@@ -145,7 +143,17 @@
       <UContainer>
         <!-- Breadcrumbs -->
         <div class="space-y-6">
-          <UBreadcrumb :items="BREADCRUMBS" />
+          <div class="flex items-center justify-between">
+            <UBreadcrumb :items="BREADCRUMBS" />
+
+            <UButton
+              icon="i-lucide-plus"
+              label="Ajouter un patient"
+              @click="navigateTo('/patients/new')"
+              class="hidden sm:flex"
+            />
+            <UButton icon="i-lucide-plus" label="Patient" @click="navigateTo('/patients/new')" class="sm:hidden" />
+          </div>
 
           <!-- Page Header -->
 
