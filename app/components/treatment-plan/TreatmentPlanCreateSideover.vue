@@ -376,7 +376,7 @@
               <UFormField label="Statut" name="status">
                 <URadioGroup
                   v-model="form.status"
-                  :items="PLAN_STATUS_OPTIONS"
+                  :items="[...PLAN_STATUS_OPTIONS]"
                   value-key="value"
                   label-key="label"
                   orientation="horizontal"

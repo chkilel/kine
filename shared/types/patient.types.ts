@@ -329,3 +329,15 @@ export type PatientStatus = z.infer<typeof patientStatusSchema>
 export type DocumentCategory = z.infer<typeof documentCategorySchema>
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>
 export type Note = z.infer<typeof noteSchema>
+
+// Extended types/interfaces
+export interface TreatmentPlanWithProgress extends TreatmentPlan {
+  therapist?: {
+    id: string
+    firstName?: string
+    lastName?: string
+    email?: string
+  }
+  progress: number
+  completedConsultations: number
+}

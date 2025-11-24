@@ -15,7 +15,6 @@
     fetchTreatmentPlans,
     getActiveTreatmentPlan,
     getTreatmentPlanHistory,
-    formatTreatmentPlanStatus,
     formatDateRange,
     getTherapistName,
     loading: treatmentPlansLoading,
@@ -53,12 +52,17 @@
     return '-'
   })
 
-  const primaryEmergencyContact = computed(() => {
-    const contact = patient?.emergencyContacts?.[0]
-    if (!contact) return '-'
-    const name = contact.name || 'Sans nom'
-    const phone = contact.phone || '-'
-    return `${name} - ${phone}`
+  const allEmergencyContacts = computed(() => {
+    if (!patient?.emergencyContacts || patient.emergencyContacts.length === 0) {
+      return ['-']
+    }
+
+    return patient.emergencyContacts.map((contact) => {
+      const name = contact.name || 'Sans nom'
+      const relationship = contact.relationship ? `(${getRelationshipLabel(contact.relationship)})` : ''
+      const phone = contact.phone || '-'
+      return `${name} ${relationship} - ${phone}`
+    })
   })
 
   const practitionerNotes = computed(() => {
@@ -158,9 +162,29 @@
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
-            <div>
-              <h3 class="text-muted font-semibold">Contact d'urgence</h3>
-              <p class="font-medium">{{ primaryEmergencyContact }}</p>
+            <div class="w-full">
+              <h3 class="text-muted font-semibold">Contacts d'urgence</h3>
+              <div class="space-y-2">
+                <div
+                  v-for="(contact, index) in patient?.emergencyContacts"
+                  :key="index"
+                  class="flex w-full items-center justify-between"
+                >
+                  <div class="text-gray-800 dark:text-gray-200">
+                    <p class="font-semibold">
+                      {{ contact.name || 'Sans nom' }}
+
+                      <span v-if="contact.relationship" class="font-normal">
+                        ({{ getRelationshipLabel(contact.relationship) }})
+                      </span>
+                    </p>
+                    <p class="font-title">{{ contact.phone || '-' }}</p>
+                  </div>
+                </div>
+                <div v-if="allEmergencyContacts.length === 0" class="text-muted text-sm">
+                  Aucun contact d'urgence enregistré
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -178,10 +202,24 @@
                 :key="allergy"
                 color="error"
                 variant="subtle"
-                size="md"
                 class="rounded-full"
               >
                 {{ allergy }}
+              </UBadge>
+              <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-muted mb-2 font-semibold">Chirurgies</h3>
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                v-for="surgery in patient.surgeries"
+                :key="surgery"
+                color="error"
+                variant="subtle"
+                class="rounded-full"
+              >
+                {{ surgery }}
               </UBadge>
               <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
             </div>
@@ -194,7 +232,6 @@
                 :key="condition"
                 color="warning"
                 variant="subtle"
-                size="md"
                 class="rounded-full"
               >
                 {{ condition }}
@@ -212,7 +249,6 @@
                 :key="medication"
                 color="primary"
                 variant="subtle"
-                size="md"
                 class="rounded-full"
               >
                 {{ medication }}

@@ -25,21 +25,6 @@
     return plans.find((plan: any) => plan.status === 'active') || plans[0]
   })
 
-  const formatTreatmentPlanStatus = (status: string) => {
-    switch (status) {
-      case 'active':
-        return { color: 'success', label: 'Actif' }
-      case 'completed':
-        return { color: 'info', label: 'Terminé' }
-      case 'paused':
-        return { color: 'warning', label: 'En pause' }
-      case 'cancelled':
-        return { color: 'error', label: 'Annulé' }
-      default:
-        return { color: 'neutral', label: status }
-    }
-  }
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: 'numeric',

@@ -4,19 +4,12 @@ export const STATUS_CONFIG = {
   inactive: { color: 'warning' as const, label: 'Inactif' },
   discharged: { color: 'error' as const, label: 'Sorti' },
   archived: { color: 'neutral' as const, label: 'Archivé' }
-}
+} as const
 
 // Derived filter options from STATUS_CONFIG
 export const STATUS_FILTER_OPTIONS = [
   { label: 'Statut: Tous', value: 'all' },
   ...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))
-]
-
-export const PLAN_STATUS_OPTIONS = [
-  { value: 'planned', label: 'Planifié' },
-  { value: 'ongoing', label: 'En cours' },
-  { value: 'completed', label: 'Terminé' },
-  { value: 'cancelled', label: 'Annulé' }
 ]
 
 export const INSURANCE_COVERAGE_PTIONS = [
@@ -31,18 +24,67 @@ export const INSURANCE_COVERAGE_PTIONS = [
   { value: 'cancelled', label: 'Prise en charge annulée' } // Annulée à la demande du patient ou de l'assureur
 ]
 
+// Relationships
 export const RELATIONSHIPS = [
-  { label: 'Époux/Épouse', value: 'spouse' },
-  { label: 'Mère/Père', value: 'parent' },
-  { label: 'Fille/Fils', value: 'child' },
-  { label: 'Sœur/Frère', value: 'sibling' },
-  { label: 'Grand-mère/Grand-père', value: 'grandparent' },
-  { label: 'Petite-fille/Petit-fils', value: 'grandchild' },
-  { label: 'Tante/Oncle', value: 'aunt_uncle' },
-  { label: 'Cousine/Cousin', value: 'cousin' },
-  { label: 'Ami/Amie', value: 'friend' },
-  { label: 'Voisin/Voisine', value: 'neighbor' },
+  { label: 'Époux', value: 'husband' },
+  { label: 'Épouse', value: 'wife' },
+
+  { label: 'Mère', value: 'mother' },
+  { label: 'Père', value: 'father' },
+
+  { label: 'Fille', value: 'daughter' },
+  { label: 'Fils', value: 'son' },
+
+  { label: 'Sœur', value: 'sister' },
+  { label: 'Frère', value: 'brother' },
+
+  { label: 'Grand-mère', value: 'grandmother' },
+  { label: 'Grand-père', value: 'grandfather' },
+
+  { label: 'Petite-fille', value: 'granddaughter' },
+  { label: 'Petit-fils', value: 'grandson' },
+
+  { label: 'Tante', value: 'aunt' },
+  { label: 'Oncle', value: 'uncle' },
+
+  { label: 'Cousine', value: 'female_cousin' },
+  { label: 'Cousin', value: 'male_cousin' },
+
+  { label: 'Amie', value: 'female_friend' },
+  { label: 'Ami', value: 'male_friend' },
+
+  { label: 'Voisine', value: 'female_neighbor' },
+  { label: 'Voisin', value: 'male_neighbor' },
+
   { label: 'Collègue', value: 'colleague' },
   { label: 'Connaissance', value: 'acquaintance' },
   { label: 'Autre', value: 'other' }
 ]
+
+export const getRelationshipLabel = (value: string): string => {
+  const relationship = RELATIONSHIPS.find((r) => r.value === value)
+  return relationship?.label || value
+}
+
+// Treatment plan status configuration
+export const TREATMENT_PLAN_STATUS_CONFIG = {
+  planned: { label: 'Planifié', color: 'warning' as const },
+  ongoing: { label: 'Actif', color: 'success' as const },
+  completed: { label: 'Terminé', color: 'neutral' as const },
+  paused: { label: 'En pause', color: 'warning' as const },
+  cancelled: { label: 'Annulé', color: 'error' as const }
+} as const
+
+export const PLAN_STATUS_OPTIONS = [
+  ...Object.entries(TREATMENT_PLAN_STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))
+] as const
+
+// Helper function to format treatment plan status
+export const formatTreatmentPlanStatus = (status: keyof typeof TREATMENT_PLAN_STATUS_CONFIG) => {
+  return (
+    TREATMENT_PLAN_STATUS_CONFIG[status] || {
+      label: status,
+      color: 'neutral' as const
+    }
+  )
+}

@@ -1,16 +1,3 @@
-import type { TreatmentPlan } from '~~/shared/types/patient.types'
-
-export interface TreatmentPlanWithProgress extends TreatmentPlan {
-  therapist?: {
-    id: string
-    firstName?: string
-    lastName?: string
-    email?: string
-  }
-  progress: number
-  completedConsultations: number
-}
-
 export const usePatientTreatmentPlans = (patientId?: string) => {
   // Only fetch if we have a patientId
   const {
@@ -18,11 +5,8 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     pending: loading,
     error,
     refresh
-  } = useFetch<TreatmentPlanWithProgress[]>(() => (patientId ? `/api/patients/${patientId}/treatment-plans` : ''), {
+  } = useFetch<TreatmentPlanWithProgress[]>(() => `/api/patients/${patientId}/treatment-plans`, {
     key: () => `treatment-plans-${patientId}`,
-    server: true,
-    default: () => [],
-    transform: (data: TreatmentPlanWithProgress[]) => data || [],
     immediate: !!patientId
   })
 
@@ -59,21 +43,6 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   })
 
-  const formatTreatmentPlanStatus = (status: string) => {
-    switch (status) {
-      case 'planned':
-        return { label: 'Planifié', color: 'warning' as const }
-      case 'ongoing':
-        return { label: 'Actif', color: 'success' as const }
-      case 'completed':
-        return { label: 'Terminé', color: 'neutral' as const }
-      case 'cancelled':
-        return { label: 'Annulé', color: 'error' as const }
-      default:
-        return { label: status, color: 'neutral' as const }
-    }
-  }
-
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return '-'
     const dateObj = typeof date === 'string' ? new Date(date) : date
@@ -105,7 +74,6 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     getCompletedTreatmentPlans,
     getCancelledTreatmentPlans,
     getTreatmentPlanHistory,
-    formatTreatmentPlanStatus,
     formatDate,
     formatDateRange,
     getTherapistName

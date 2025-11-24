@@ -403,7 +403,7 @@
                                   </span>
                                   <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
                                     <UIcon name="i-lucide-users" class="size-3" />
-                                    {{ RELATIONSHIPS.find((r) => r.value === contact.relationship)?.label || '' }}
+                                    {{ getRelationshipLabel(contact.relationship) }}
                                   </span>
                                 </p>
                               </div>
