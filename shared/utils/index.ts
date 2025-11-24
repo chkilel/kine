@@ -1,3 +1,4 @@
+import { differenceInYears, isBefore } from 'date-fns'
 import type { Patient } from '../types/patient.types'
 
 // Slugify a string
@@ -52,4 +53,15 @@ export const formatTreatmentPlanStatus = (status: string) => {
     default:
       return { color: 'neutral', label: status }
   }
+}
+
+// Calculate age from date of birth
+
+export function calculateAge(dob: string | Date): number {
+  const date = new Date(dob)
+  const now = new Date()
+
+  const years = differenceInYears(now, date)
+
+  return isBefore(now, new Date(now.getFullYear(), date.getMonth(), date.getDate())) ? years - 1 : years
 }

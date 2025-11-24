@@ -1,117 +1,36 @@
 <script setup lang="ts">
-  import { upperFirst } from 'scule'
   import { getPaginationRowModel } from '@tanstack/table-core'
   import type { TableColumn } from '@nuxt/ui'
-  import type { Row } from '@tanstack/table-core'
 
   const UAvatar = resolveComponent('UAvatar')
   const UButton = resolveComponent('UButton')
   const UBadge = resolveComponent('UBadge')
   const UDropdownMenu = resolveComponent('UDropdownMenu')
-  const UCheckbox = resolveComponent('UCheckbox')
+  const UBreadcrumb = resolveComponent('UBreadcrumb')
+  const UIcon = resolveComponent('UIcon')
 
-  const toast = useToast()
+  // Constants
+  const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
+
+  const STATUS_FILTER_OPTIONS = [
+    { label: 'Tous', value: 'all' },
+    { label: 'Actif', value: 'active' },
+    { label: 'Inactif', value: 'inactive' },
+    { label: 'Sorti', value: 'discharged' },
+    { label: 'Archivé', value: 'archived' }
+  ]
+
   const table = useTemplateRef('table')
-
-  const columnFilters = ref([{ id: 'email', value: '' }])
+  const columnFilters = ref([{ id: 'search', value: '' }])
   const columnVisibility = ref()
-  const rowSelection = ref({ 1: true })
+  const pagination = ref({
+    pageIndex: 0,
+    pageSize: 10
+  })
 
   const { data, status } = await useFetch<Patient[]>('/api/patients', { lazy: true })
 
-  function getRowItems(row: Row<Patient>) {
-    return [
-      {
-        type: 'label',
-        label: 'Actions'
-      },
-      {
-        label: 'Copy patient ID',
-        icon: 'i-lucide-copy',
-        onSelect() {
-          navigator.clipboard.writeText(row.original.id)
-          toast.add({
-            title: 'Copied to clipboard',
-            description: 'Patient ID copied to clipboard'
-          })
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'View patient details',
-        icon: 'i-lucide-list',
-        onSelect() {
-          navigateTo(`/patients/${row.original.id}`)
-        }
-      },
-      {
-        label: 'Voir les documents du patient',
-        icon: 'i-lucide-file-text',
-        onSelect() {
-          navigateTo(`/patients/${row.original.id}/documents`)
-        }
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Supprimer le patient',
-        icon: 'i-lucide-trash',
-        color: 'error',
-        onSelect: async () => {
-          if (
-            confirm(
-              `Êtes‑vous sûr de vouloir supprimer ${row.original.firstName} ${row.original.lastName} ? Cette action est irréversible.`
-            )
-          ) {
-            try {
-              await $fetch(`/api/patients/${row.original.id}`, {
-                method: 'DELETE'
-              })
-
-              toast.add({
-                title: 'Patient supprimé',
-                description: 'Le patient a été supprimé.',
-                color: 'success'
-              })
-
-              // Refresh the patient list
-              await refreshNuxtData()
-            } catch (error: any) {
-              toast.add({
-                title: 'Erreur',
-                description: error.data?.statusMessage || 'Échec de la suppression du patient',
-                color: 'error'
-              })
-            }
-          }
-        }
-      }
-    ]
-  }
-
   const columns: TableColumn<Patient>[] = [
-    {
-      id: 'select',
-      header: ({ table }) =>
-        h(UCheckbox, {
-          modelValue: table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
-          ariaLabel: 'Tout sélectionner'
-        }),
-      cell: ({ row }) =>
-        h(UCheckbox, {
-          modelValue: row.getIsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-          ariaLabel: 'Sélectionner la ligne'
-        })
-    },
-    {
-      accessorKey: 'id',
-      header: 'ID'
-    },
     {
       accessorKey: 'name',
       header: 'Nom',
@@ -120,116 +39,92 @@
         return h('div', { class: 'flex items-center gap-3' }, [
           h(UAvatar, {
             size: 'lg',
-            // Generate avatar from initials if no image
             src: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
           }),
-          h('div', undefined, [
-            h('p', { class: 'font-medium text-highlighted' }, fullName),
-            h('p', { class: '' }, `@${row.original.firstName?.toLowerCase()}${row.original.lastName?.toLowerCase()}`)
+          h('div', { class: 'group' }, [
+            h(
+              'p',
+              { class: 'font-semibold text-foreground group-hover:text-primary transition-colors' },
+              formatFullName(row.original)
+            ),
+            row.original.email ? h('div', { class: 'text-xs text-muted' }, row.original.email) : null
           ])
         ])
       }
     },
     {
-      accessorKey: 'email',
-      header: ({ column }) => {
-        const isSorted = column.getIsSorted()
-
-        return h(UButton, {
-          color: 'neutral',
-          variant: 'ghost',
-          label: 'Email',
-          icon: isSorted
-            ? isSorted === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down',
-          class: '-mx-2.5',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-        })
+      accessorKey: 'contact',
+      header: 'Contact',
+      cell: ({ row }) => {
+        return h(
+          'div',
+          row.original.phone
+            ? h('div', { class: 'text-sm' }, row.original.phone)
+            : h('span', { class: 'text-muted' }, '-')
+        )
       }
     },
     {
-      accessorKey: 'phone',
-      header: 'Téléphone',
-      cell: ({ row }) => row.original.phone || '-'
+      accessorKey: 'dateOfBirth',
+      header: 'Date de Naissance',
+      cell: ({ row }) => {
+        const age = calculateAge(row.original.dateOfBirth)
+        const formattedDate = formatDate(row.original.dateOfBirth)
+        return h('div', [
+          h('p', { class: 'font-semibold' }, formattedDate),
+          h('div', { class: 'text-xs text-muted' }, `(${age} ans)`)
+        ])
+      }
     },
     {
       accessorKey: 'status',
       header: 'Statut',
       filterFn: 'equals',
       cell: ({ row }) => {
-        const statusColors: Record<string, 'success' | 'warning' | 'error'> = {
-          active: 'success',
-          inactive: 'warning',
-          discharged: 'error'
-        }
+        const config = STATUS_CONFIG[row.original.status] || { color: 'neutral' as const, label: row.original.status }
 
-        const statusLabels: Record<string, string> = {
-          active: 'Actif',
-          inactive: 'Inactif',
-          discharged: 'Sorti'
-        }
-
-        const color = statusColors[row.original.status] || 'neutral'
-        const label = statusLabels[row.original.status] || row.original.status
-
-        return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () => label)
+        return h(
+          UBadge,
+          {
+            variant: 'subtle',
+            color: config.color,
+            class: 'capitalize'
+          },
+          () => config.label
+        )
       }
     },
     {
       accessorKey: 'insuranceProvider',
-      header: 'Assurance',
-      cell: ({ row }) => row.original.insuranceProvider || '-'
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        return h(
-          'div',
-          { class: 'text-right' },
-          h(
-            UDropdownMenu,
-            {
-              content: {
-                align: 'end'
-              },
-              items: getRowItems(row)
-            },
-            () =>
-              h(UButton, {
-                icon: 'i-lucide-ellipsis-vertical',
-                color: 'neutral',
-                variant: 'ghost',
-                class: 'ml-auto'
-              })
-          )
-        )
-      }
+      header: 'Assurance'
     }
   ]
 
   const statusFilter = ref('all')
+  const searchFilter = ref('')
 
   watch(
-    [() => statusFilter.value, () => status.value, () => table?.value?.tableApi],
-    ([newFilter, dataStatus, tableApi]) => {
+    [() => statusFilter.value, () => searchFilter.value, () => status.value, () => table?.value?.tableApi],
+    ([newStatusFilter, newSearchFilter, dataStatus, tableApi]) => {
       if (!tableApi || dataStatus !== 'success') return
 
+      // Apply status filter
       const statusColumn = tableApi.getColumn('status')
-      if (!statusColumn) return
-      if (newFilter === 'all') {
-        statusColumn.setFilterValue(undefined)
-      } else {
-        statusColumn.setFilterValue(newFilter)
+      if (statusColumn) {
+        if (newStatusFilter === 'all') {
+          statusColumn.setFilterValue(undefined)
+        } else {
+          statusColumn.setFilterValue(newStatusFilter)
+        }
+      }
+
+      // Apply search filter
+      const searchColumn = tableApi.getColumn('search')
+      if (searchColumn) {
+        searchColumn.setFilterValue(newSearchFilter)
       }
     }
   )
-
-  const pagination = ref({
-    pageIndex: 0,
-    pageSize: 10
-  })
 </script>
 
 <template>
@@ -240,121 +135,120 @@
           <UDashboardSidebarCollapse />
         </template>
 
-        <template #right>Notif</template>
+        <template #right>
+          <UButton icon="i-lucide-plus" label="Ajouter un patient" @click="navigateTo('/patients/new')" />
+        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <UContainer>
-        <UCard>
-          <template #header>
-            <div class="flex justify-end">
-              <UButton label="Nouveau patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
+        <!-- Breadcrumbs -->
+        <div class="space-y-6">
+          <UBreadcrumb :items="BREADCRUMBS" />
+
+          <!-- Page Header -->
+
+          <!-- Filters Card -->
+          <UCard class="mb-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <!-- Search Input -->
+              <div class="lg:col-span-1">
+                <UInput
+                  v-model="searchFilter"
+                  icon="i-lucide-search"
+                  placeholder="Rechercher par nom, téléphone, email..."
+                  size="lg"
+                />
+              </div>
+
+              <!-- Filters -->
+              <div class="flex items-center justify-start gap-3 overflow-x-auto md:justify-end lg:col-span-2">
+                <USelect
+                  v-model="statusFilter"
+                  :items="STATUS_FILTER_OPTIONS"
+                  placeholder="Filtrer par statut"
+                  class="min-w-40"
+                />
+
+                <UDropdownMenu
+                  :items="
+                    table?.tableApi
+                      ?.getAllColumns()
+                      .filter((column: any) => column.getCanHide())
+                      .map((column: any) => ({
+                        label: column.columnDef.header,
+                        type: 'checkbox' as const,
+                        checked: column.getIsVisible(),
+                        onUpdateChecked(checked: boolean) {
+                          table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+                        },
+                        onSelect(e?: Event) {
+                          e?.preventDefault()
+                        }
+                      }))
+                  "
+                  :content="{ align: 'end' }"
+                >
+                  <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
+                </UDropdownMenu>
+              </div>
             </div>
-          </template>
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <UInput
-              :model-value="table?.tableApi?.getColumn('email')?.getFilterValue() as string"
-              class="max-w-sm"
-              icon="i-lucide-search"
-              placeholder="Filtrer les patients..."
-              @update:model-value="table?.tableApi?.getColumn('email')?.setFilterValue($event)"
+          </UCard>
+
+          <!-- Table Card -->
+          <UCard>
+            <UTable
+              ref="table"
+              v-model:column-filters="columnFilters"
+              v-model:column-visibility="columnVisibility"
+              v-model:pagination="pagination"
+              :pagination-options="{
+                getPaginationRowModel: getPaginationRowModel()
+              }"
+              :data="data"
+              :columns="columns"
+              :loading="status === 'pending'"
+              @select="(_e, row) => navigateTo(`/patients/${row.original.id}`)"
+              :ui="{
+                base: 'table-fixed border-separate border-spacing-0',
+                thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+                tbody: '[&>tr]:last:[&>td]:border-b-0',
+                th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+                td: 'border-b border-default',
+                tr: 'cursor-pointer hover:bg-muted/50'
+              }"
             />
 
-            <div class="flex flex-wrap items-center gap-1.5">
-              <PatientDeleteModal
-                :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-                :selected-ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map((row) => row.original.id) || []"
-              >
-                <UButton
-                  v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-                  label="Supprimer"
-                  color="error"
-                  variant="subtle"
-                  icon="i-lucide-trash"
-                >
-                  <template #trailing>
-                    <UKbd>
-                      {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
-                    </UKbd>
-                  </template>
-                </UButton>
-              </PatientDeleteModal>
+            <!-- Table Footer with Pagination -->
+            <div v-if="data && data.length > 0" class="border-accented border-t px-6 py-4">
+              <div class="flex items-center justify-between">
+                <div class="text-muted text-sm">
+                  Affichage de
+                  <span class="font-medium">{{ table?.tableApi?.getPaginationRowModel().rows.length || 0 }}</span>
+                  sur
+                  <span class="font-medium">{{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}</span>
+                  résultats
+                </div>
 
-              <USelect
-                v-model="statusFilter"
-                :items="[
-                  { label: 'Tous', value: 'all' },
-                  { label: 'Actif', value: 'active' },
-                  { label: 'Inactif', value: 'inactive' },
-                  { label: 'Sorti', value: 'discharged' }
-                ]"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                placeholder="Filtrer par statut"
-                class="min-w-28"
-              />
-              <UDropdownMenu
-                :items="
-                  table?.tableApi
-                    ?.getAllColumns()
-                    .filter((column: any) => column.getCanHide())
-                    .map((column: any) => ({
-                      label: upperFirst(column.id),
-                      type: 'checkbox' as const,
-                      checked: column.getIsVisible(),
-                      onUpdateChecked(checked: boolean) {
-                        table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
-                      },
-                      onSelect(e?: Event) {
-                        e?.preventDefault()
-                      }
-                    }))
-                "
-                :content="{ align: 'end' }"
-              >
-                <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
-              </UDropdownMenu>
-            </div>
-          </div>
-
-          <UTable
-            ref="table"
-            v-model:column-filters="columnFilters"
-            v-model:column-visibility="columnVisibility"
-            v-model:row-selection="rowSelection"
-            v-model:pagination="pagination"
-            :pagination-options="{
-              getPaginationRowModel: getPaginationRowModel()
-            }"
-            class="mt-6 shrink-0"
-            :data="data"
-            :columns="columns"
-            :loading="status === 'pending'"
-            :ui="{
-              base: 'table-fixed border-separate border-spacing-0',
-              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-              tbody: '[&>tr]:last:[&>td]:border-b-0',
-              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-              td: 'border-b border-default'
-            }"
-          />
-
-          <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
-            <div class="text-muted text-sm">
-              {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-              {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+                <UPagination
+                  :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+                  :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+                  :total="table?.tableApi?.getFilteredRowModel().rows.length"
+                  @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+                />
+              </div>
             </div>
 
-            <div class="flex items-center gap-1.5">
-              <UPagination
-                :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-              />
+            <!-- Empty State -->
+            <div v-else-if="status === 'success'" class="py-12 text-center">
+              <UIcon name="i-lucide-users" class="text-muted mx-auto mb-4 text-6xl" />
+              <h3 class="text-foreground mb-2 text-lg font-medium">Aucun patient trouvé</h3>
+              <p class="text-muted mb-4">Commencez par ajouter votre premier patient</p>
+              <UButton label="Ajouter un patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
             </div>
-          </div>
-        </UCard>
+          </UCard>
+        </div>
       </UContainer>
     </template>
   </UDashboardPanel>
