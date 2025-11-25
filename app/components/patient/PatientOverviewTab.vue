@@ -296,7 +296,7 @@
               <h2 class="text-lg font-bold">Plan de traitement actif</h2>
               <p class="text-muted text-sm">{{ getActiveTreatmentPlan.title }}</p>
             </div>
-            <UBadge color="success" variant="soft" size="sm">Actif</UBadge>
+            <UBadge color="success" variant="subtle">Actif</UBadge>
           </div>
           <div class="mb-5 space-y-4 text-sm">
             <div>
@@ -329,13 +329,6 @@
               <span>{{ getActiveTreatmentPlan.progress }}%</span>
             </div>
             <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="md" />
-          </div>
-          <div class="mt-6 flex flex-wrap gap-2">
-            <UButton variant="soft" color="neutral" icon="i-lucide-edit" block class="flex-1">Modifier plan</UButton>
-            <UButton variant="soft" color="neutral" icon="i-lucide-archive" block class="flex-1">Clôturer plan</UButton>
-            <UButton color="primary" icon="i-lucide-plus" block class="flex-1" @click="openCreateTreatmentPlan">
-              Nouveau plan
-            </UButton>
           </div>
         </template>
         <template v-else>
