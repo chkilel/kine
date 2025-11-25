@@ -28,29 +28,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Read raw body first to preprocess dates
-    const rawBody = await readBody(event)
+    const body = await readValidatedBody(event, patientCreateSchema.parse)
 
-    // Convert date strings to Date objects before validation
-    const processedBody = {
-      ...rawBody,
-      dateOfBirth: rawBody.dateOfBirth ? new Date(rawBody.dateOfBirth) : undefined,
-      notes: rawBody.notes?.map((note: any) => ({
-        ...note,
-        date: note.date ? new Date(note.date) : undefined
-      }))
-    }
-
-    // Validate input
-    const body = patientCreateSchema.parse(processedBody)
-
-    const validatedData = {
-      ...body,
-      organizationId: activeOrganizationId
-    }
-
-    // Create patient
-    const [newPatient] = await db.insert(patients).values(validatedData).returning()
+    const [newPatient] = await db.insert(patients).values(body).returning()
 
     return newPatient
   } catch (error: any) {

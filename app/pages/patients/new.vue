@@ -116,15 +116,7 @@
     }
   }
 
-  // Array management functions
   function addEmergencyContact() {
-    editingContactIndex.value = null
-    editContactName.value = ''
-    editContactPhone.value = ''
-    editContactRelationship.value = ''
-  }
-
-  function addEmergencyContactFromForm() {
     if (!formState.emergencyContacts) formState.emergencyContacts = []
 
     if (editContactPhone.value.trim()) {
@@ -431,10 +423,7 @@
                         <!-- Add/Edit Contact Form -->
                         <div class="contact-form space-y-4 pt-4">
                           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <UFormField label="Nom du contact">
-                              <UInput v-model="editContactName" placeholder="Jeanne Dupont" class="w-full" />
-                            </UFormField>
-                            <UFormField label="Téléphone du contact">
+                            <UFormField label="Téléphone du contact" required>
                               <UInput
                                 v-model="editContactPhone"
                                 placeholder="+1 (555) 987-6543"
@@ -442,7 +431,10 @@
                                 type="tel"
                               />
                             </UFormField>
-                            <UFormField label="Relation" class="md:col-span-2">
+                            <UFormField label="Nom du contact" hint="Optionnel">
+                              <UInput v-model="editContactName" placeholder="Jeanne Dupont" class="w-full" />
+                            </UFormField>
+                            <UFormField label="Relation" hint="Optionnel" class="md:col-span-2">
                               <USelectMenu
                                 v-model="editContactRelationship"
                                 :items="RELATIONSHIPS"
@@ -458,7 +450,7 @@
                               color="primary"
                               variant="subtle"
                               size="sm"
-                              @click="editingContactIndex !== null ? saveEditContact() : addEmergencyContactFromForm()"
+                              @click="editingContactIndex !== null ? saveEditContact() : addEmergencyContact()"
                               :disabled="!editContactPhone"
                             />
                             <UButton
