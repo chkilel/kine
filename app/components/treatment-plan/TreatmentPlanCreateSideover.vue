@@ -313,14 +313,7 @@
         <div class="space-y-6">
           <!-- Patient Information -->
           <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Informations patient</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <UFormField label="Nom du patient">
-                <UInput :model-value="`${patient.firstName} ${patient.lastName}`" disabled class="w-full" />
-              </UFormField>
-              <UFormField label="Date de naissance">
-                <UInput :model-value="patient.dateOfBirth?.toLocaleDateString()" disabled class="w-full" />
-              </UFormField>
               <UFormField label="Médecin prescripteur" name="prescribingDoctor" required>
                 <UInput v-model="form.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
               </UFormField>
@@ -380,10 +373,10 @@
                   value-key="value"
                   label-key="label"
                   orientation="horizontal"
-                  indicator="start"
+                  indicator="hidden"
                   variant="table"
                   size="sm"
-                  :ui="{ item: 'p-2' }"
+                  :ui="{ item: 'p-2 flex-1' }"
                 />
               </UFormField>
               <UFormField label="Nombre de séances" name="numberOfSessions">

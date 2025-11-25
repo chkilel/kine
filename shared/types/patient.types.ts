@@ -80,7 +80,7 @@ export const patientSchema = z.object({
 })
 
 // Treatment Plan schemas
-export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'cancelled'])
+export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'paused', 'cancelled'])
 
 export const treatmentPlanCreateSchema = z.object({
   patientId: z.string().min(1),
