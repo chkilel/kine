@@ -24,7 +24,8 @@
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
   // Session
-  const { user, session, activeOrganization, isAuthenticated } = await useAuth()
+  const { user } = await useAuth()
+  const { activeOrganization } = useOrganization()
   if (!user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }

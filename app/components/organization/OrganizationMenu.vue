@@ -3,10 +3,10 @@
 
   defineProps<{ collapsed?: boolean }>()
 
-  // Better Auth organization hooks
-  const { organizations, activeOrganization, setActiveOrganization } = await useAuth()
-
   const toast = useToast()
+
+  // Better Auth organization hooks
+  const { activeOrganization, organizations, setActiveOrganization } = useOrganization()
 
   // Logo map for organization logos
   const logoUrlMap = ref<Record<string, string>>({})

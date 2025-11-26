@@ -25,7 +25,7 @@
   const rowSelection = ref({})
 
   // Table data
-  const { organizations: orgList, setActiveOrganization } = await useAuth()
+  const { organizations: orgList, setActiveOrganization } = useOrganization()
   const organizations = computed(() => Array.from(orgList.value?.data ?? []))
 
   // Pagination

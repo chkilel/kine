@@ -18,7 +18,8 @@
     useConsultations()
 
   // Get active organization and session
-  const { user, activeOrganization } = await useAuth()
+  const { user } = await useAuth()
+  const { activeOrganization } = useOrganization()
   if (!user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }

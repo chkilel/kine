@@ -7,7 +7,7 @@
 
   const toast = useToast()
   const { uploadFile } = useUploads()
-  const { createOrganization, checkSlug } = await useAuth()
+  const { createOrganization, checkSlug } = useOrganization()
 
   // ✅ Unified reactive form state
   const form = reactive({

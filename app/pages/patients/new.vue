@@ -5,7 +5,7 @@
 
   const toast = useToast()
   const router = useRouter()
-  const { activeOrganization } = await useAuth()
+  const { activeOrganization } = useOrganization()
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
