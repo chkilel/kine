@@ -85,20 +85,7 @@
     {
       accessorKey: 'status',
       header: 'Statut',
-      filterFn: 'equals',
-      cell: ({ row }) => {
-        const config = STATUS_CONFIG[row.original.status] || { color: 'neutral' as const, label: row.original.status }
-
-        return h(
-          UBadge,
-          {
-            variant: 'subtle',
-            color: config.color,
-            class: 'capitalize'
-          },
-          () => config.label
-        )
-      }
+      filterFn: 'equals'
     },
     {
       accessorKey: 'insuranceProvider',
@@ -232,8 +219,18 @@
                 td: 'border-b border-default',
                 tr: 'cursor-pointer hover:bg-muted/50'
               }"
-            />
-
+            >
+              <!-- Custom cell for the 'status' column -->
+              <template #status-cell="{ row }">
+                <UBadge
+                  variant="subtle"
+                  :color="STATUS_CONFIG[row.original.status]?.color || 'neutral'"
+                  class="capitalize"
+                >
+                  {{ STATUS_CONFIG[row.original.status]?.label || row.original.status }}
+                </UBadge>
+              </template>
+            </UTable>
             <!-- Table Footer with Pagination -->
             <div v-if="data && data.length > 0" class="border-accented border-t px-6 py-4">
               <div class="flex items-center justify-between">
