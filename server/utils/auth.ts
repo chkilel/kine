@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { customSession, organization } from 'better-auth/plugins'
+import { eq } from 'drizzle-orm'
 import { useDrizzle } from './database'
 import * as schemas from '~~/server/database/schema'
 
@@ -80,29 +81,42 @@ export function createAuth(event: H3Event) {
       ...authOptions,
       plugins: [
         ...(authOptions.plugins ?? []),
-        customSession(async ({ user, session }, ctx) => {
-          // now both user and session will infer the fields added by plugins and your custom fields
+        customSession(async ({ user, session }, _ctx) => {
+          // Make the session infer the fields added by plugins and custom fields
           return {
             user,
             session
           }
         }, authOptions) // pass options here
-      ]
-      // databaseHooks: {
-      //   session: {
-      //     create: {
-      //       before: async (session) => {
-      //         const organization = await getActiveOrganization(session.userId)
-      //         return {
-      //           data: {
-      //             ...session,
-      //             activeOrganizationId: organization.id
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // },
+      ],
+      databaseHooks: {
+        session: {
+          create: {
+            before: async (session) => {
+              // Get the first organization where the user is a member and set it as active
+              const userOrganizations = await db
+                .select({
+                  organization: schemas.organizations
+                })
+                .from(schemas.members)
+                .innerJoin(schemas.organizations, eq(schemas.members.organizationId, schemas.organizations.id))
+                .where(eq(schemas.members.userId, session.userId))
+                .limit(1)
+
+              if (userOrganizations.length > 0) {
+                return {
+                  data: {
+                    ...session,
+                    activeOrganizationId: userOrganizations[0].organization.id
+                  }
+                }
+              }
+
+              return { data: session }
+            }
+          }
+        }
+      }
     })
   }
 
