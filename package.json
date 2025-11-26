@@ -35,7 +35,7 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.73",
     "@iconify-json/simple-icons": "^1.2.59",
-    "@nuxt/ui": "^4.1.0",
+    "@nuxt/ui": "^4.2.1",
     "@types/node": "^24.9.1",
     "drizzle-kit": "^0.31.7",
     "nitro-cloudflare-dev": "^0.2.2",
@@ -44,7 +44,7 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "wrangler": "^4.49.0"
   },
-  "packageManager": "pnpm@10.22.0",
+  "packageManager": "pnpm@10.23.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
