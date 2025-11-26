@@ -117,7 +117,7 @@ export const treatmentPlans = sqliteTable(
     numberOfSessions: integer(), // Total number of sessions prescribed — e.g., 12
     sessionFrequency: integer(), // Session frequency — e.g., 1,...,7
 
-    status: text({ enum: ['planned', 'ongoing', 'completed', 'cancelled'] })
+    status: text({ enum: ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] })
       .notNull()
       .default('planned'), // Status of treatment plan — e.g., "ongoing"
 
