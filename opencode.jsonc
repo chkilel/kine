@@ -6,7 +6,7 @@
   "mcp": {
     "nuxt": {
       "type": "remote",
-      "url": "https://mcp.nuxt.com/sse",
+      "url": "https://nuxt.com/mcp",
       "enabled": true
     },
     "nuxt-ui": {
