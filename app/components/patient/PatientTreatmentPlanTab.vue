@@ -344,6 +344,42 @@
           </template>
         </UCollapsible>
       </UCard>
+
+      <!-- Notes & Follow-up -->
+      <UCard>
+        <h3 class="mb-4! text-base font-bold">Notes &amp; Suivi</h3>
+        <div class="space-y-4">
+          <div>
+            <UTextarea
+              v-model="newNote"
+              autoresize
+              placeholder="Ajouter une note de suivi..."
+              :rows="3"
+              class="block"
+            />
+            <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
+          </div>
+          <div class="border-default space-y-3 border-t pt-4">
+            <div v-if="!(getActiveTreatmentPlan.notes as any[])?.length" class="py-4 text-center">
+              <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
+            </div>
+            <div
+              v-else
+              v-for="(note, index) in (getActiveTreatmentPlan.notes as any[]) || []"
+              :key="index"
+              class="text-sm"
+            >
+              <p>
+                <strong class="font-semibold">
+                  {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
+                </strong>
+                {{ note.content || '' }}
+              </p>
+              <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
+            </div>
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <!-- Right Column -->
@@ -486,42 +522,6 @@
               </div>
             </template>
           </UTable>
-        </div>
-      </UCard>
-
-      <!-- Notes & Follow-up -->
-      <UCard>
-        <h3 class="mb-5 text-base font-bold">Notes &amp; Suivi</h3>
-        <div class="space-y-4">
-          <div>
-            <UTextarea
-              v-model="newNote"
-              autoresize
-              placeholder="Ajouter une note de suivi..."
-              :rows="3"
-              class="block"
-            />
-            <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
-          </div>
-          <div class="border-default space-y-3 border-t pt-4">
-            <div v-if="!(getActiveTreatmentPlan.notes as any[])?.length" class="py-4 text-center">
-              <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
-            </div>
-            <div
-              v-else
-              v-for="(note, index) in (getActiveTreatmentPlan.notes as any[]) || []"
-              :key="index"
-              class="text-sm"
-            >
-              <p>
-                <strong class="font-semibold">
-                  {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
-                </strong>
-                {{ note.content || '' }}
-              </p>
-              <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
-            </div>
-          </div>
         </div>
       </UCard>
 
