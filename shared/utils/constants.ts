@@ -15,7 +15,7 @@ export const STATUS_FILTER_OPTIONS = [
 // Derived Select options for patient status from STATUS_CONFIG
 export const PATIENT_STATUS_OPTIONS = [...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))]
 
-export const INSURANCE_COVERAGE_PTIONS = [
+export const INSURANCE_COVERAGE_OPTIONS = [
   { value: 'not_required', label: 'Non nécessaire' }, // Patient sans mutuelle ou paie directement
   { value: 'not_provided', label: 'Informations manquantes' }, // Attente des infos de mutuelle / Sécurité Sociale
   { value: 'to_verify', label: 'À vérifier' }, // Infos reçues mais pas encore validées
@@ -91,3 +91,12 @@ export const formatTreatmentPlanStatus = (status: keyof typeof TREATMENT_PLAN_ST
     }
   )
 }
+
+// Docuements
+export const DOCUMENT_TYPE_OPTIONS = [
+  { label: 'Radiologie', value: 'Radiologie' },
+  { label: 'Analyse', value: 'Analyse' },
+  { label: 'Prescription', value: 'Prescription' },
+  { label: 'Rapport médical', value: 'Rapport médical' },
+  { label: 'Autre', value: 'Autre' }
+]

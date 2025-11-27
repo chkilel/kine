@@ -7,40 +7,32 @@
     file: File
     title: string
     type: string
-    status: 'uploading' | 'uploaded' | 'error'
-    progress: number
-    documentId?: string
+    stagedAt: Date
   }
 
-  const props = defineProps<{
-    patient: Patient
-  }>()
-
-  const emit = defineEmits<{
-    close: [data?: any]
-  }>()
+  const props = defineProps<{ patient: Patient }>()
+  const emit = defineEmits<{ close: [data?: any] }>()
 
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
-  // Session
+  const toast = useToast()
+  const { uploadFile } = useUploads()
+
   const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
   if (!user || !activeOrganization.value.data) {
     await navigateTo('/login')
   }
 
-  const currentUser = user
-  const therapists = [user.value!]
+  const uploadedFiles = ref<UploadedFile[]>([])
+  const fileInputRef = ref<HTMLInputElement>()
 
-  // Get active organization
-
-  const toast = useToast()
+  const therapists = computed(() => [user.value!])
   const loading = ref(false)
-
   const form = reactive<TreatmentPlanCreate>({
     patientId: props.patient.id!,
-    therapistId: currentUser.value!.id,
+    therapistId: user.value!.id,
     organizationId: activeOrganization.value.data!.id,
     prescribingDoctor: '',
     prescriptionDate: new Date(),
@@ -101,13 +93,56 @@
     form.endDate = val ? val.toDate(getLocalTimeZone()) : null
   })
 
-  const uploadedFiles = ref<UploadedFile[]>([])
-  const fileInputRef = ref<HTMLInputElement>()
-
   async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate>) {
     loading.value = true
 
     try {
+      // First, upload all staged files
+      const uploadedDocuments = []
+      const failedFiles = []
+
+      for (const uploadedFile of uploadedFiles.value) {
+        try {
+          // Use composable to upload file
+          const fileName = `${Date.now()}-${uploadedFile.file.name}`
+          const storageKey = `orgs/docs/${props.patient.id}/${fileName}`
+          await uploadFile({
+            file: uploadedFile.file,
+            folder: `orgs/docs/${props.patient.id}`,
+            name: fileName
+          })
+
+          // Create document record
+          const documentData = {
+            fileName,
+            originalFileName: uploadedFile.file.name,
+            mimeType: uploadedFile.file.type,
+            fileSize: uploadedFile.file.size,
+            storageKey,
+            category: mapDocumentTypeToCategory(uploadedFile.type),
+            description: uploadedFile.title
+          }
+
+          const document = await $fetch(`/api/patients/${props.patient.id}/documents`, {
+            method: 'POST',
+            body: documentData
+          })
+
+          if (!document) {
+            throw new Error('Failed to create document record')
+          }
+
+          uploadedDocuments.push(document)
+        } catch (error) {
+          console.error('Error uploading file:', error)
+          failedFiles.push({
+            fileName: uploadedFile.file.name,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          })
+        }
+      }
+
+      // Create treatment plan
       const treatmentPlan = await $fetch<TreatmentPlan>(`/api/patients/${props.patient.id}/treatment-plans`, {
         method: 'POST',
         body: event.data
@@ -120,44 +155,38 @@
         })
       }
 
-      // Upload documents and link them to the treatment plan
-      for (const uploadedFile of uploadedFiles.value) {
-        if (uploadedFile.status === 'uploaded' && !uploadedFile.documentId) {
-          try {
-            const documentData = {
-              fileName: `${Date.now()}-${uploadedFile.file.name}`,
-              originalFileName: uploadedFile.file.name,
-              mimeType: uploadedFile.file.type,
-              fileSize: uploadedFile.file.size,
-              storageKey: `orgs/docs/${props.patient.id}/${Date.now()}-${uploadedFile.file.name}`,
-              category: mapDocumentTypeToCategory(uploadedFile.type),
-              description: uploadedFile.title,
-              treatmentPlanId: treatmentPlan.id
-            }
-
-            const document = await $fetch(`/api/patients/${props.patient.id}/documents`, {
-              method: 'POST',
-              body: documentData
-            })
-
-            if (!document) {
-              throw createError({
-                statusCode: 500,
-                statusMessage: 'Failed to attach document to the treatement plan'
-              })
-            }
-            uploadedFile.documentId = document.id
-          } catch (error) {
-            console.error('Error creating document record:', error)
-          }
+      // Link uploaded documents to the treatment plan
+      for (const document of uploadedDocuments) {
+        try {
+          await $fetch(`/api/patients/${props.patient.id}/documents/${document.id}`, {
+            method: 'PUT',
+            body: { treatmentPlanId: treatmentPlan.id }
+          })
+        } catch (error) {
+          console.error('Error linking document to treatment plan:', error)
         }
+      }
+
+      // Show success message with file upload results
+      let successMessage = 'Plan de traitement créé avec succès'
+      if (uploadedDocuments.length > 0) {
+        successMessage += ` et ${uploadedDocuments.length} document(s) téléversé(s)`
       }
 
       toast.add({
         title: 'Succès',
-        description: 'Plan de traitement créé avec succès',
+        description: successMessage,
         color: 'success'
       })
+
+      // Show error messages for failed files if any
+      if (failedFiles.length > 0) {
+        toast.add({
+          title: 'Attention',
+          description: `${failedFiles.length} fichier(s) n'ont pas pu être téléversés`,
+          color: 'warning'
+        })
+      }
 
       await refreshNuxtData(`treatment-plans-${props.patient.id}`)
       emit('close', treatmentPlan)
@@ -213,7 +242,7 @@
     return categoryMap[type] || 'other'
   }
 
-  async function handleFileSelect(event: Event) {
+  function handleFileSelect(event: Event) {
     const target = event.target as HTMLInputElement
     const files = target.files
     if (!files) return
@@ -225,58 +254,9 @@
         file,
         title: file.name,
         type: 'Prescription',
-        status: 'uploading',
-        progress: 0
+        stagedAt: new Date()
       }
       uploadedFiles.value.push(uploadedFile)
-
-      await uploadFile(uploadedFile)
-    }
-  }
-
-  async function uploadFile(uploadedFile: UploadedFile) {
-    try {
-      // Get signed URL for upload
-      const storageKey = `orgs/docs/${props.patient.id}/${Date.now()}-${uploadedFile.file.name}`
-      const { url } = await $fetch('/api/r2/upload', {
-        method: 'POST',
-        body: {
-          key: storageKey,
-          contentType: uploadedFile.file.type
-        }
-      })
-
-      // Simulate progress while uploading
-      const progressInterval = setInterval(() => {
-        if (uploadedFile.progress < 90) {
-          uploadedFile.progress += Math.random() * 20
-          if (uploadedFile.progress > 90) uploadedFile.progress = 90
-        }
-      }, 200)
-
-      // Upload file to R2 using fetch (simpler and more reliable)
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': uploadedFile.file.type },
-        body: uploadedFile.file
-      })
-
-      clearInterval(progressInterval)
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`)
-      }
-
-      uploadedFile.status = 'uploaded'
-      uploadedFile.progress = 100
-    } catch (error) {
-      console.error('Upload error:', error)
-      uploadedFile.status = 'error'
-      toast.add({
-        title: 'Erreur',
-        description: `Échec du téléversement de ${uploadedFile.file.name}`,
-        color: 'error'
-      })
     }
   }
 
@@ -401,11 +381,18 @@
           <!-- Medical Data and Insurance -->
           <UCard variant="outline">
             <h3 class="text-highlighted mb-4 text-base font-bold">Données médicales et assurance</h3>
-            <div class="grid grid-cols-1 gap-6">
-              <UFormField label="Niveau de douleur actuel" name="painLevel" help="Échelle de 0 à 10">
-                <div class="flex items-center gap-4">
-                  <USlider v-model="form.painLevel" :min="0" :max="10" class="w-full flex-1" />
-                  <UInput v-model="form.painLevel" type="number" :min="0" :max="10" class="w-20 text-center" />
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField
+                label="Niveau de douleur actuel"
+                name="painLevel"
+                help="Échelle de 0 à 10"
+                class="md:col-span-2"
+              >
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span v-for="(item, index) in [...Array(11).keys()]" :key="index">{{ item }}</span>
+                  </div>
+                  <USlider v-model="form.painLevel" :min="0" :max="10" :step="0.5" class="w-full flex-1" />
                 </div>
               </UFormField>
               <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
@@ -414,7 +401,7 @@
               <UFormField label="Statut de couverture">
                 <USelectMenu
                   v-model="form.coverageStatus"
-                  :items="INSURANCE_COVERAGE_PTIONS"
+                  :items="INSURANCE_COVERAGE_OPTIONS"
                   value-key="value"
                   label-key="label"
                   placeholder="Selectionner ..."
@@ -452,51 +439,24 @@
                 </div>
               </div>
 
-              <!-- Uploaded Files -->
+              <!-- Staged Files -->
               <div v-if="uploadedFiles.length > 0" class="space-y-3">
                 <div
                   v-for="(uploadedFile, index) in uploadedFiles"
                   :key="index"
                   class="border-default bg-muted space-y-3 rounded-xl border p-4"
                 >
-                  <div class="flex items-center gap-3">
-                    <div class="grow">
-                      <p class="text-default text-sm font-medium">{{ uploadedFile.file.name }}</p>
-                      <div class="bg-muted mt-1 h-1.5 w-full rounded-full">
-                        <div
-                          class="bg-primary h-1.5 rounded-full transition-all duration-300"
-                          :style="{ width: `${uploadedFile.progress}%` }"
-                        ></div>
-                      </div>
+                  <div class="flex w-full items-start gap-10">
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium">
+                        {{ uploadedFile.file.name }}
+                      </p>
                       <p class="text-muted mt-1 text-xs">
-                        {{
-                          uploadedFile.status === 'uploading'
-                            ? `Téléversement en cours... ${uploadedFile.progress}%`
-                            : uploadedFile.status === 'uploaded'
-                              ? 'Téléversé avec succès'
-                              : 'Erreur de téléversement'
-                        }}
+                        Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
                       </p>
                     </div>
-                    <UIcon
-                      :name="
-                        uploadedFile.status === 'uploading'
-                          ? 'i-lucide-loader-2'
-                          : uploadedFile.status === 'uploaded'
-                            ? 'i-lucide-check-circle'
-                            : 'i-lucide-x-circle'
-                      "
-                      :class="[
-                        'animate-spin text-xl',
-                        uploadedFile.status === 'uploaded'
-                          ? 'text-green-500'
-                          : uploadedFile.status === 'error'
-                            ? 'text-red-500'
-                            : 'text-blue-500'
-                      ]"
-                    />
+
                     <UButton
-                      v-if="uploadedFile.status !== 'uploading'"
                       icon="i-lucide-trash"
                       variant="ghost"
                       color="error"
@@ -506,40 +466,20 @@
                     />
                   </div>
 
-                  <div
-                    v-if="uploadedFile.status === 'uploaded'"
-                    class="border-default bg-elevated rounded-lg border p-3"
-                  >
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div class="sm:col-span-2">
-                        <UFormField label="Titre descriptif du document" size="xs">
-                          <UInput
-                            v-model="uploadedFile.title"
-                            placeholder="Titre descriptif"
-                            size="sm"
-                            class="w-full"
-                          />
-                        </UFormField>
-                      </div>
-                      <div>
-                        <UFormField label="Type de document" size="xs">
-                          <USelectMenu
-                            v-model="uploadedFile.type"
-                            size="sm"
-                            :options="[
-                              { label: 'Radiologie', value: 'Radiologie' },
-                              { label: 'Analyse', value: 'Analyse' },
-                              { label: 'Prescription', value: 'Prescription' },
-                              { label: 'Rapport médical', value: 'Rapport médical' },
-                              { label: 'Autre', value: 'Autre' }
-                            ]"
-                            class="w-full"
-                          />
-                        </UFormField>
-                      </div>
-                      <div class="text-muted text-xs sm:self-end">
-                        <p>Taille: {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB</p>
-                      </div>
+                  <div class="border-default bg-default rounded-lg border p-3">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <UFormField label="Titre descriptif du document" size="xs" class="sm:col-span-2">
+                        <UInput v-model="uploadedFile.title" placeholder="Titre descriptif" size="sm" class="w-full" />
+                      </UFormField>
+                      <UFormField label="Type de document" size="xs">
+                        <USelectMenu
+                          v-model="uploadedFile.type"
+                          value-key="value"
+                          size="sm"
+                          :items="DOCUMENT_TYPE_OPTIONS"
+                          class="w-full"
+                        />
+                      </UFormField>
                     </div>
                   </div>
                 </div>
@@ -548,7 +488,7 @@
               <!-- Existing Documents -->
               <div class="space-y-3 pt-4">
                 <div class="border-default flex items-center gap-4 rounded-lg border p-3">
-                  <UIcon name="i-lucide-image" class="text-3xl text-blue-500" />
+                  <UIcon name="i-lucide-image" class="text-primary text-3xl" />
                   <div class="grow">
                     <p class="text-default font-semibold">Imagerie de la colonne</p>
                     <div class="text-muted mt-1 flex items-center gap-x-2 text-xs">
