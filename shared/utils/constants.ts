@@ -12,6 +12,9 @@ export const STATUS_FILTER_OPTIONS = [
   ...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))
 ]
 
+// Derived Select options for patient status from STATUS_CONFIG
+export const PATIENT_STATUS_OPTIONS = [...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))]
+
 export const INSURANCE_COVERAGE_PTIONS = [
   { value: 'not_required', label: 'Non nécessaire' }, // Patient sans mutuelle ou paie directement
   { value: 'not_provided', label: 'Informations manquantes' }, // Attente des infos de mutuelle / Sécurité Sociale

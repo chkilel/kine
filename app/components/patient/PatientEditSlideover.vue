@@ -11,7 +11,7 @@
   }>()
 
   const toast = useToast()
-  const formRef = ref()
+  const formRef = ref<HTMLFormElement>()
 
   // Emergency contact state
   const emergencyContactName = ref('')
@@ -53,11 +53,20 @@
     state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
+  // Initialize calendar models with patient data
+  onMounted(() => {
+    if (props.patient.dateOfBirth) {
+      const date = new Date(props.patient.dateOfBirth)
+      dobModel.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+    }
+  })
+
   async function onSubmit() {
     if (!formRef.value) return
 
     try {
       const validationResult = await formRef.value.validate()
+
       if (!validationResult) return
 
       const response = await $fetch(`/api/patients/${props.patient.id}`, {
@@ -161,48 +170,6 @@
   function handleCancel() {
     emit('close')
   }
-
-  // Initialize form with patient data
-  onMounted(() => {
-    // Reset state with current patient data
-    Object.assign(state, {
-      firstName: props.patient.firstName,
-      lastName: props.patient.lastName,
-      email: props.patient.email || undefined,
-      phone: props.patient.phone || undefined,
-      dateOfBirth: props.patient.dateOfBirth,
-      gender: props.patient.gender || undefined,
-      address: props.patient.address || undefined,
-      city: props.patient.city || undefined,
-      postalCode: props.patient.postalCode || undefined,
-      country: props.patient.country || undefined,
-      emergencyContacts: props.patient.emergencyContacts || [],
-      insuranceProvider: props.patient.insuranceProvider || undefined,
-      insuranceNumber: props.patient.insuranceNumber || undefined,
-      referralSource: props.patient.referralSource || undefined,
-      status: props.patient.status
-    })
-
-    // Reset emergency contact form
-    emergencyContactName.value = ''
-    emergencyContactPhone.value = ''
-    emergencyContactRelationship.value = ''
-
-    // Reset edit state
-    editingContactIndex.value = null
-    editContactName.value = ''
-    editContactPhone.value = ''
-    editContactRelationship.value = ''
-
-    // Reset notes form
-    newNoteContent.value = ''
-
-    // Initialize calendar models with patient data
-    if (props.patient.dateOfBirth) {
-      const date = new Date(props.patient.dateOfBirth)
-      dobModel.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-    }
-  })
 </script>
 
 <template>
@@ -259,11 +226,7 @@
                 orientation="horizontal"
                 variant="table"
                 v-model="state.status"
-                :items="[
-                  { label: 'Actif', value: 'active' },
-                  { label: 'Inactif', value: 'inactive' },
-                  { label: 'Sorti', value: 'discharged' }
-                ]"
+                :items="PATIENT_STATUS_OPTIONS"
               />
             </UFormField>
           </div>
