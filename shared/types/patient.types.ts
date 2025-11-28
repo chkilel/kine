@@ -114,7 +114,10 @@ export const patientSchema = z.object({
   insuranceNumber: z.string().nullable(),
   referralSource: z.string().nullable(),
   status: patientStatusSchema,
-  notes: z.array(noteSchema).nullable()
+  notes: z.array(noteSchema).nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  deletedAt: z.coerce.date().nullable()
 })
 
 // Treatment Plan schemas

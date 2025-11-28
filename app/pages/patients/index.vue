@@ -1,24 +1,16 @@
 <script setup lang="ts">
   import { getPaginationRowModel } from '@tanstack/table-core'
   import type { TableColumn } from '@nuxt/ui'
+  import type { SerializeObject } from 'nitropack/types'
 
   const UAvatar = resolveComponent('UAvatar')
   const UButton = resolveComponent('UButton')
-  const UBadge = resolveComponent('UBadge')
   const UDropdownMenu = resolveComponent('UDropdownMenu')
   const UBreadcrumb = resolveComponent('UBreadcrumb')
   const UIcon = resolveComponent('UIcon')
 
   // Constants
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
-
-  const STATUS_FILTER_OPTIONS = [
-    { label: 'Tous', value: 'all' },
-    { label: 'Actif', value: 'active' },
-    { label: 'Inactif', value: 'inactive' },
-    { label: 'Sorti', value: 'discharged' },
-    { label: 'Archivé', value: 'archived' }
-  ]
 
   const table = useTemplateRef('table')
   const columnFilters = ref([{ id: 'search', value: '' }])
@@ -28,69 +20,20 @@
     pageSize: 10
   })
 
-  const { data, status } = await useFetch<Patient[]>('/api/patients', { lazy: true })
+  const { data, status, pending: isPending } = await useFetch('/api/patients', { lazy: true })
 
-  const columns: TableColumn<Patient>[] = [
+  const columns: TableColumn<SerializeObject<Patient>>[] = [
     {
       id: 'search',
       accessorFn: (row) => `${row.firstName} ${row.lastName} ${row.email} ${row.phone}`,
       enableColumnFilter: false,
       enableHiding: false
     },
-    {
-      accessorKey: 'name',
-      header: 'Nom',
-      cell: ({ row }) => {
-        const fullName = `${row.original.firstName} ${row.original.lastName}`
-        return h('div', { class: 'flex items-center gap-3' }, [
-          h(UAvatar, {
-            size: 'lg',
-            src: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
-          }),
-          h('div', { class: 'group' }, [
-            h(
-              'p',
-              { class: 'font-semibold text-foreground group-hover:text-primary transition-colors' },
-              formatFullName(row.original)
-            ),
-            row.original.email ? h('div', { class: 'text-xs text-muted' }, row.original.email) : null
-          ])
-        ])
-      }
-    },
-    {
-      accessorKey: 'contact',
-      header: 'Contact',
-      cell: ({ row }) => {
-        return h(
-          'div',
-          row.original.phone
-            ? h('div', { class: 'text-sm' }, row.original.phone)
-            : h('span', { class: 'text-muted' }, '-')
-        )
-      }
-    },
-    {
-      accessorKey: 'dateOfBirth',
-      header: 'Date de Naissance',
-      cell: ({ row }) => {
-        const age = calculateAge(row.original.dateOfBirth)
-        const formattedDate = formatDate(row.original.dateOfBirth)
-        return h('div', [
-          h('p', { class: 'font-semibold' }, formattedDate),
-          h('div', { class: 'text-xs text-muted' }, `(${age} ans)`)
-        ])
-      }
-    },
-    {
-      accessorKey: 'status',
-      header: 'Statut',
-      filterFn: 'equals'
-    },
-    {
-      accessorKey: 'insuranceProvider',
-      header: 'Assurance'
-    }
+    { accessorKey: 'name', header: 'Nom' },
+    { accessorKey: 'contact', header: 'Contact' },
+    { accessorKey: 'dateOfBirth', header: 'Date de Naissance' },
+    { accessorKey: 'status', header: 'Statut', filterFn: 'equals' },
+    { accessorKey: 'insuranceProvider', header: 'Assurance' }
   ]
 
   const statusFilter = ref('all')
@@ -209,7 +152,7 @@
               }"
               :data="data"
               :columns="columns"
-              :loading="status === 'pending'"
+              :loading="isPending"
               @select="(_e, row) => navigateTo(`/patients/${row.original.id}`)"
               :ui="{
                 base: 'table-fixed border-separate border-spacing-0',
@@ -220,6 +163,37 @@
                 tr: 'cursor-pointer hover:bg-muted/50'
               }"
             >
+              <!-- Custom cell for the 'name' column -->
+              <template #name-cell="{ row }">
+                <div class="flex items-center gap-3">
+                  <UAvatar
+                    size="lg"
+                    :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(formatFullName(row.original))}&background=random`"
+                  />
+                  <div class="group">
+                    <p class="text-foreground group-hover:text-primary font-semibold transition-colors">
+                      {{ formatFullName(row.original) }}
+                    </p>
+                    <div v-if="row.original.email" class="text-muted text-xs">
+                      {{ row.original.email }}
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Custom cell for the 'phone' column -->
+              <template #contact-cell="{ row }">
+                <div v-if="row.original.phone" class="text-sm">
+                  {{ row.original.phone }}
+                </div>
+                <span v-else class="text-muted">-</span>
+              </template>
+
+              <!-- Custom cell for the 'dateOfBirth' column -->
+              <template #dateOfBirth-cell="{ row }">
+                <p class="font-semibold">{{ formatDate(row.original.dateOfBirth) }}</p>
+                <div class="text-muted text-xs">({{ calculateAge(row.original.dateOfBirth) }} ans)</div>
+              </template>
               <!-- Custom cell for the 'status' column -->
               <template #status-cell="{ row }">
                 <UBadge
@@ -252,7 +226,7 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="status === 'success'" class="py-12 text-center">
+            <div v-else-if="status === 'success' && data && data.length === 0" class="py-12 text-center">
               <UIcon name="i-lucide-users" class="text-muted mx-auto mb-4 text-6xl" />
               <h3 class="text-foreground mb-2 text-lg font-medium">Aucun patient trouvé</h3>
               <p class="text-muted mb-4">Commencez par ajouter votre premier patient</p>
