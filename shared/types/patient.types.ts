@@ -14,6 +14,44 @@ export const documentCategorySchema = z.enum([
   'prescriptions',
   'other'
 ])
+export const relationshipSchema = z.enum([
+  'husband',
+  'wife',
+  'mother',
+  'father',
+  'daughter',
+  'son',
+  'sister',
+  'brother',
+  'grandmother',
+  'grandfather',
+  'granddaughter',
+  'grandson',
+  'aunt',
+  'uncle',
+  'female_cousin',
+  'male_cousin',
+  'female_friend',
+  'male_friend',
+  'female_neighbor',
+  'male_neighbor',
+  'colleague',
+  'acquaintance',
+  'other'
+])
+// Insurance Coverage Configuration
+export const insuranceCoverageSchema = z.enum([
+  'not_required',
+  'not_provided',
+  'to_verify',
+  'awaiting_agreement',
+  'covered',
+  'partially_covered',
+  'refused',
+  'expired',
+  'cancelled'
+])
+
 export const noteSchema = z.object({
   date: z.coerce.date(),
   author: z.string(),
@@ -24,7 +62,7 @@ export const noteSchema = z.object({
 export const emergencyContactSchema = z.object({
   name: z.string().optional(),
   phone: z.string(),
-  relationship: z.string().optional()
+  relationship: relationshipSchema.optional()
 })
 
 // Patient schemas
@@ -163,7 +201,14 @@ export const consultationSessionTypeSchema = z.enum([
   'reinforcement',
   'reeducation'
 ])
-export const consultationStatusSchema = z.enum(['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'])
+export const consultationStatusSchema = z.enum([
+  'confirmed',
+  'scheduled',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'no_show'
+])
 
 export const consultationCreateSchema = z.object({
   patientId: z.string(),
@@ -329,6 +374,8 @@ export type PatientStatus = z.infer<typeof patientStatusSchema>
 export type DocumentCategory = z.infer<typeof documentCategorySchema>
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>
 export type Note = z.infer<typeof noteSchema>
+export type InsuranceCoverage = z.infer<typeof insuranceCoverageSchema>
+export type Relationship = z.infer<typeof relationshipSchema>
 
 // Extended types/interfaces
 export interface TreatmentPlanWithProgress extends TreatmentPlan {

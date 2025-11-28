@@ -1,102 +1,214 @@
-// ------ app/pages/patients/index.vue
+import type {
+  ConsultationLocation,
+  ConsultationSessionType,
+  ConsultationStatus,
+  DocumentCategory,
+  InsuranceCoverage,
+  PatientStatus,
+  Relationship,
+  TreatmentPlanStatus
+} from '../types/patient.types'
+
+export type ColorVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'primary' | 'secondary'
+
+export interface StatusConfig {
+  label: string
+  color: 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'primary' | 'secondary'
+}
+
+export interface SelectOption<T = string> {
+  label: string
+  value: T
+}
+
+// Patient Status Configuration
 export const STATUS_CONFIG = {
-  active: { color: 'success' as const, label: 'Actif' },
-  inactive: { color: 'warning' as const, label: 'Inactif' },
-  discharged: { color: 'error' as const, label: 'Sorti' },
-  archived: { color: 'neutral' as const, label: 'Archivé' }
-} as const
+  active: { color: 'success', label: 'Actif' },
+  inactive: { color: 'warning', label: 'Inactif' },
+  discharged: { color: 'error', label: 'Sorti' },
+  archived: { color: 'neutral', label: 'Archivé' }
+} as const satisfies Record<PatientStatus, StatusConfig>
 
-// Derived filter options from STATUS_CONFIG
-export const STATUS_FILTER_OPTIONS = [
-  { label: 'Statut: Tous', value: 'all' },
-  ...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))
-]
+export const INSURANCE_COVERAGE_CONFIG = {
+  not_required: 'Non nécessaire',
+  not_provided: 'Informations manquantes',
+  to_verify: 'À vérifier',
+  awaiting_agreement: "En attente d'accord",
+  covered: 'Prise en charge acceptée',
+  partially_covered: 'Prise en charge partielle',
+  refused: 'Prise en charge refusée',
+  expired: 'Prise en charge expirée',
+  cancelled: 'Prise en charge annulée'
+} as const satisfies Record<InsuranceCoverage, string>
 
-// Derived Select options for patient status from STATUS_CONFIG
-export const PATIENT_STATUS_OPTIONS = [...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))]
+export const RELATIONSHIPS_CONFIG = {
+  husband: 'Époux',
+  wife: 'Épouse',
+  mother: 'Mère',
+  father: 'Père',
+  daughter: 'Fille',
+  son: 'Fils',
+  sister: 'Sœur',
+  brother: 'Frère',
+  grandmother: 'Grand-mère',
+  grandfather: 'Grand-père',
+  granddaughter: 'Petite-fille',
+  grandson: 'Petit-fils',
+  aunt: 'Tante',
+  uncle: 'Oncle',
+  female_cousin: 'Cousine',
+  male_cousin: 'Cousin',
+  female_friend: 'Amie',
+  male_friend: 'Ami',
+  female_neighbor: 'Voisine',
+  male_neighbor: 'Voisin',
+  colleague: 'Collègue',
+  acquaintance: 'Connaissance',
+  other: 'Autre'
+} as const satisfies Record<Relationship, string>
 
-export const INSURANCE_COVERAGE_OPTIONS = [
-  { value: 'not_required', label: 'Non nécessaire' }, // Patient sans mutuelle ou paie directement
-  { value: 'not_provided', label: 'Informations manquantes' }, // Attente des infos de mutuelle / Sécurité Sociale
-  { value: 'to_verify', label: 'À vérifier' }, // Infos reçues mais pas encore validées
-  { value: 'awaiting_agreement', label: "En attente d'accord" }, // Attente d'accord préalable de l'organisme
-  { value: 'covered', label: 'Prise en charge acceptée' }, // Accord total obtenu
-  { value: 'partially_covered', label: 'Prise en charge partielle' }, // Une partie reste à la charge du patient
-  { value: 'refused', label: 'Prise en charge refusée' }, // Accord refusé par l'organisme
-  { value: 'expired', label: 'Prise en charge expirée' }, // Accord dépassé ou non renouvelé
-  { value: 'cancelled', label: 'Prise en charge annulée' } // Annulée à la demande du patient ou de l'assureur
-]
-
-// Relationships
-export const RELATIONSHIPS = [
-  { label: 'Époux', value: 'husband' },
-  { label: 'Épouse', value: 'wife' },
-
-  { label: 'Mère', value: 'mother' },
-  { label: 'Père', value: 'father' },
-
-  { label: 'Fille', value: 'daughter' },
-  { label: 'Fils', value: 'son' },
-
-  { label: 'Sœur', value: 'sister' },
-  { label: 'Frère', value: 'brother' },
-
-  { label: 'Grand-mère', value: 'grandmother' },
-  { label: 'Grand-père', value: 'grandfather' },
-
-  { label: 'Petite-fille', value: 'granddaughter' },
-  { label: 'Petit-fils', value: 'grandson' },
-
-  { label: 'Tante', value: 'aunt' },
-  { label: 'Oncle', value: 'uncle' },
-
-  { label: 'Cousine', value: 'female_cousin' },
-  { label: 'Cousin', value: 'male_cousin' },
-
-  { label: 'Amie', value: 'female_friend' },
-  { label: 'Ami', value: 'male_friend' },
-
-  { label: 'Voisine', value: 'female_neighbor' },
-  { label: 'Voisin', value: 'male_neighbor' },
-
-  { label: 'Collègue', value: 'colleague' },
-  { label: 'Connaissance', value: 'acquaintance' },
-  { label: 'Autre', value: 'other' }
-]
-
-export const getRelationshipLabel = (value: string): string => {
-  const relationship = RELATIONSHIPS.find((r) => r.value === value)
-  return relationship?.label || value
-}
-
-// Treatment plan status configuration
+// Treatment Plan Status Configuration
 export const TREATMENT_PLAN_STATUS_CONFIG = {
-  planned: { label: 'Planifié', color: 'warning' as const },
-  ongoing: { label: 'Actif', color: 'success' as const },
-  completed: { label: 'Terminé', color: 'neutral' as const },
-  paused: { label: 'En pause', color: 'warning' as const },
-  cancelled: { label: 'Annulé', color: 'error' as const }
-} as const
+  planned: { label: 'Planifié', color: 'warning' },
+  ongoing: { label: 'Actif', color: 'success' },
+  completed: { label: 'Terminé', color: 'neutral' },
+  paused: { label: 'En pause', color: 'warning' },
+  cancelled: { label: 'Annulé', color: 'error' }
+} as const satisfies Record<TreatmentPlanStatus, StatusConfig>
 
-export const PLAN_STATUS_OPTIONS = [
-  ...Object.entries(TREATMENT_PLAN_STATUS_CONFIG).map(([value, { label }]) => ({ label, value }))
-] as const
+// Document Categories Configuration
+export const DOCUMENT_CATEGORIES_CONFIG = {
+  referral: 'Lettre de recommandation',
+  imaging: 'Imagerie',
+  lab_results: 'Résultats de laboratoire',
+  treatment_notes: 'Notes de traitement',
+  prescriptions: 'Ordonnances',
+  other: 'Autre'
+} as const satisfies Record<DocumentCategory, string>
 
-// Helper function to format treatment plan status
-export const formatTreatmentPlanStatus = (status: keyof typeof TREATMENT_PLAN_STATUS_CONFIG) => {
-  return (
-    TREATMENT_PLAN_STATUS_CONFIG[status] || {
-      label: status,
-      color: 'neutral' as const
-    }
-  )
+// Session Status Configuration
+export const SESSION_STATUS_CONFIG = {
+  confirmed: { color: 'success', label: 'Confirmée' },
+  scheduled: { color: 'info', label: 'À venir' },
+  completed: { color: 'success', label: 'Terminée' },
+  cancelled: { color: 'error', label: 'Annulée' },
+  in_progress: { color: 'warning', label: 'En cours' },
+  no_show: { color: 'error', label: 'Absence' }
+} as const satisfies Record<ConsultationStatus, StatusConfig>
+
+// Consultation Types Configuration
+export const CONSULTATION_TYPES_CONFIG = {
+  initial: 'Évaluation initiale',
+  follow_up: 'Suivi',
+  evaluation: 'Évaluation',
+  discharge: 'Sortie',
+  mobilization: 'Mobilisation',
+  reinforcement: 'Renforcement',
+  reeducation: 'Rééducation'
+} as const satisfies Record<ConsultationSessionType, string>
+
+// Consultation Locations Configuration
+export const CONSULTATION_LOCATIONS_CONFIG = {
+  clinic: 'Cabinet',
+  home: 'Domicile',
+  telehealth: 'Téléconsultation'
+} as const satisfies Record<ConsultationLocation, string>
+
+// Document Icons Configuration
+export const DOCUMENT_ICONS_CONFIG = {
+  imaging: 'i-lucide-image',
+  treatment_notes: 'i-lucide-file-text',
+  prescriptions: 'i-lucide-pill',
+  referral: 'i-lucide-file-text',
+  lab_results: 'i-lucide-file-text',
+  other: 'i-lucide-file-text'
+} as const satisfies Record<DocumentCategory, string>
+
+// Document Colors Configuration
+export const DOCUMENT_COLORS_CONFIG = {
+  imaging: 'primary',
+  treatment_notes: 'info',
+  prescriptions: 'secondary',
+  referral: 'neutral',
+  lab_results: 'neutral',
+  other: 'neutral'
+} as const satisfies Record<DocumentCategory, string>
+
+// Generic helper to create select options from a config object
+const createSelectOptions = <T extends string>(config: Record<T, string | StatusConfig>): SelectOption<T>[] => {
+  return Object.entries(config).map(([value, labelOrConfig]) => ({
+    label: typeof labelOrConfig === 'string' ? labelOrConfig : (labelOrConfig as StatusConfig).label,
+    value: value as T
+  }))
 }
 
-// Docuements
-export const DOCUMENT_TYPE_OPTIONS = [
-  { label: 'Radiologie', value: 'Radiologie' },
-  { label: 'Analyse', value: 'Analyse' },
-  { label: 'Prescription', value: 'Prescription' },
-  { label: 'Rapport médical', value: 'Rapport médical' },
-  { label: 'Autre', value: 'Autre' }
+// Generic helper to get label from config
+const getLabel = <T extends string>(value: T, config: Record<T, string | StatusConfig>, fallback?: string): string => {
+  const item = config[value]
+  if (!item) return fallback || value
+  return typeof item === 'string' ? item : item.label
+}
+
+// Generic helper to get color from config
+const getColor = <T extends string>(
+  value: T,
+  config: Record<T, StatusConfig>,
+  fallback: ColorVariant = 'neutral'
+): ColorVariant => {
+  return config[value]?.color || fallback
+}
+
+// Generic helper to get status config
+const getStatusConfig = <T extends string>(
+  value: T,
+  config: Record<T, StatusConfig>,
+  fallback: StatusConfig = { label: '', color: 'neutral' }
+): StatusConfig => {
+  return config[value] || { ...fallback, label: fallback.label || value }
+}
+
+// Patient Status Options
+export const STATUS_FILTER_OPTIONS: SelectOption[] = [
+  { label: 'Statut: Tous', value: 'all' },
+  ...createSelectOptions(STATUS_CONFIG)
 ]
+
+export const PATIENT_STATUS_OPTIONS = createSelectOptions(STATUS_CONFIG)
+
+// Insurance Coverage Options
+export const INSURANCE_COVERAGE_OPTIONS = createSelectOptions(INSURANCE_COVERAGE_CONFIG)
+
+// Relationship Options
+export const RELATIONSHIP_OPTIONS = createSelectOptions(RELATIONSHIPS_CONFIG)
+export const getRelationshipLabel = (value: Relationship): string => getLabel(value, RELATIONSHIPS_CONFIG)
+
+// Treatment Plan Options
+export const TREATMENT_PLAN_STATUS_OPTIONS = createSelectOptions(TREATMENT_PLAN_STATUS_CONFIG)
+export const formatTreatmentPlanStatus = (status: TreatmentPlanStatus): StatusConfig =>
+  getStatusConfig(status, TREATMENT_PLAN_STATUS_CONFIG)
+
+// Document Options
+export const DOCUMENT_CATEGORY_OPTIONS = createSelectOptions(DOCUMENT_CATEGORIES_CONFIG)
+export const getDocumentCategoryLabel = (category: DocumentCategory): string =>
+  getLabel(category, DOCUMENT_CATEGORIES_CONFIG)
+export const getDocumentIcon = (category: DocumentCategory): string =>
+  DOCUMENT_ICONS_CONFIG[category] || 'i-lucide-file-text'
+export const getDocumentColor = (category: DocumentCategory): ColorVariant =>
+  DOCUMENT_COLORS_CONFIG[category] || 'neutral'
+
+// Session Status Helpers
+export const getSessionStatusLabel = (status: ConsultationStatus): string => getLabel(status, SESSION_STATUS_CONFIG)
+export const getSessionStatusColor = (status: ConsultationStatus): ColorVariant =>
+  getColor(status, SESSION_STATUS_CONFIG)
+export const getSessionStatusConfig = (status: ConsultationStatus): StatusConfig =>
+  getStatusConfig(status, SESSION_STATUS_CONFIG)
+
+// Consultation Type Helpers
+export const CONSULTATION_TYPE_OPTIONS = createSelectOptions(CONSULTATION_TYPES_CONFIG)
+export const getConsultationTypeLabel = (type: ConsultationSessionType): string =>
+  getLabel(type, CONSULTATION_TYPES_CONFIG)
+
+// Consultation Location Helpers
+export const CONSULTATION_LOCATION_OPTIONS = createSelectOptions(CONSULTATION_LOCATIONS_CONFIG)
+export const getConsultationLocationLabel = (location: ConsultationLocation): string =>
+  getLabel(location, CONSULTATION_LOCATIONS_CONFIG)

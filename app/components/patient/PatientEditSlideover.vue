@@ -16,13 +16,13 @@
   // Emergency contact state
   const emergencyContactName = ref('')
   const emergencyContactPhone = ref('')
-  const emergencyContactRelationship = ref('')
+  const emergencyContactRelationship = ref<Relationship>()
 
   // Edit state for emergency contacts
   const editingContactIndex = ref<number | null>(null)
   const editContactName = ref('')
   const editContactPhone = ref('')
-  const editContactRelationship = ref('')
+  const editContactRelationship = ref<Relationship>()
 
   // Notes state
   const newNoteContent = ref('')
@@ -135,7 +135,7 @@
     // Reset form
     emergencyContactName.value = ''
     emergencyContactPhone.value = ''
-    emergencyContactRelationship.value = ''
+    emergencyContactRelationship.value = undefined
   }
 
   function startEditContact(index: number) {
@@ -145,7 +145,7 @@
     editingContactIndex.value = index
     editContactName.value = contact.name || ''
     editContactPhone.value = contact.phone
-    editContactRelationship.value = contact.relationship || ''
+    editContactRelationship.value = contact.relationship
   }
 
   function saveEditContact() {
@@ -164,7 +164,7 @@
     editingContactIndex.value = null
     editContactName.value = ''
     editContactPhone.value = ''
-    editContactRelationship.value = ''
+    editContactRelationship.value = undefined
   }
 
   function handleCancel() {
@@ -270,7 +270,7 @@
                     <UFormField label="Relation" class="md:col-span-2">
                       <USelectMenu
                         v-model="editContactRelationship"
-                        :items="RELATIONSHIPS"
+                        :items="RELATIONSHIP_OPTIONS"
                         value-key="value"
                         placeholder="Sélectionner une relation..."
                         class="w-full"
@@ -342,7 +342,7 @@
                 <UFormField label="Relation" class="md:col-span-2">
                   <USelectMenu
                     v-model="emergencyContactRelationship"
-                    :items="RELATIONSHIPS"
+                    :items="RELATIONSHIP_OPTIONS"
                     value-key="value"
                     placeholder="Sélectionner une relation..."
                     class="w-full"

@@ -56,7 +56,7 @@
   const editingContactIndex = ref<number | null>(null)
   const editContactName = ref('')
   const editContactPhone = ref('')
-  const editContactRelationship = ref('')
+  const editContactRelationship = ref<Relationship>()
   const activateAddingContact = ref(false)
 
   // Date formatter and calendar models
@@ -123,13 +123,13 @@
       formState.emergencyContacts.push({
         name: editContactName.value.trim() || undefined,
         phone: editContactPhone.value.trim(),
-        relationship: editContactRelationship.value.trim() || undefined
+        relationship: editContactRelationship.value || undefined
       })
 
       // Reset form for next add
       editContactName.value = ''
       editContactPhone.value = ''
-      editContactRelationship.value = ''
+      editContactRelationship.value = undefined
     }
   }
 
@@ -144,8 +144,7 @@
     editingContactIndex.value = index
     editContactName.value = contact.name || ''
     editContactPhone.value = contact.phone
-    editContactRelationship.value = contact.relationship || ''
-
+    editContactRelationship.value = contact.relationship
     // Scroll to the form area
     nextTick(() => {
       const formElement = document.querySelector('.contact-form')
@@ -169,7 +168,7 @@
     editingContactIndex.value = null
     editContactName.value = ''
     editContactPhone.value = ''
-    editContactRelationship.value = ''
+    editContactRelationship.value = undefined
     activateAddingContact.value = false
   }
 
@@ -437,7 +436,7 @@
                             <UFormField label="Relation" hint="Optionnel" class="md:col-span-2">
                               <USelectMenu
                                 v-model="editContactRelationship"
-                                :items="RELATIONSHIPS"
+                                :items="RELATIONSHIP_OPTIONS"
                                 value-key="value"
                                 placeholder="Sélectionner une relation..."
                                 class="w-full"

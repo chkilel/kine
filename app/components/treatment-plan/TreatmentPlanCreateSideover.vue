@@ -6,7 +6,7 @@
   interface UploadedFile {
     file: File
     title: string
-    type: string
+    type: DocumentCategory
     stagedAt: Date
   }
 
@@ -253,7 +253,7 @@
       const uploadedFile: UploadedFile = {
         file,
         title: file.name,
-        type: 'Prescription',
+        type: 'prescriptions',
         stagedAt: new Date()
       }
       uploadedFiles.value.push(uploadedFile)
@@ -350,7 +350,7 @@
               <UFormField label="Statut" name="status">
                 <URadioGroup
                   v-model="form.status"
-                  :items="[...PLAN_STATUS_OPTIONS]"
+                  :items="[...TREATMENT_PLAN_STATUS_OPTIONS]"
                   value-key="value"
                   label-key="label"
                   orientation="horizontal"
@@ -476,7 +476,7 @@
                           v-model="uploadedFile.type"
                           value-key="value"
                           size="sm"
-                          :items="DOCUMENT_TYPE_OPTIONS"
+                          :items="DOCUMENT_CATEGORY_OPTIONS"
                           class="w-full"
                         />
                       </UFormField>

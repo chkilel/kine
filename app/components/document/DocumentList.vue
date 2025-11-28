@@ -109,17 +109,6 @@
     }
     return icons[category as keyof typeof icons] || 'i-lucide-file'
   }
-
-  function getCategoryLabel(category: string) {
-    const labels: Record<string, string> = {
-      referral: 'Références',
-      imaging: 'Imagerie',
-      lab_results: 'Résultats de laboratoire',
-      treatment_notes: 'Notes de traitement',
-      other: 'Autre'
-    }
-    return labels[category] || category.replace('_', ' ')
-  }
 </script>
 
 <template>
@@ -148,7 +137,7 @@
 
             <div class="text-muted-foreground mt-2 flex items-center gap-4 text-sm">
               <UBadge :color="getCategoryColor(document.category)" variant="subtle" size="xs">
-                {{ getCategoryLabel(document.category) }}
+                {{ getDocumentCategoryLabel(document.category) }}
               </UBadge>
               <span>{{ formatFileSize(document.fileSize) }}</span>
               <span>{{ formatDate(document.createdAt.toISOString()) }}</span>

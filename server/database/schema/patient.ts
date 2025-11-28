@@ -237,7 +237,7 @@ export const consultations = sqliteTable(
     therapistId: text().references(() => users.id, { onDelete: 'set null' }), // Lead therapist for the session
 
     // ---- Session management ----
-    status: text({ enum: ['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'] })
+    status: text({ enum: ['confirmed', 'scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'] })
       .notNull()
       .default('scheduled'), // Session status — e.g., "completed"
 
