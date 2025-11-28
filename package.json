@@ -20,6 +20,9 @@
     "@aws-sdk/s3-request-presigner": "^3.940.0",
     "@internationalized/date": "^3.10.0",
     "@paralleldrive/cuid2": "^2.3.1",
+    "@pinia/colada": "^0.17.9",
+    "@pinia/colada-nuxt": "0.2.4",
+    "@pinia/nuxt": "0.11.3",
     "@unovis/ts": "^1.6.2",
     "@unovis/vue": "^1.6.2",
     "@vueuse/nuxt": "^14.0.0",
@@ -28,6 +31,7 @@
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "nuxt": "^4.2.1",
+    "pinia": "^3.0.4",
     "vue": "^3.5.25",
     "vue-router": "^4.6.3",
     "zod": "^4.1.13"
