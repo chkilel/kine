@@ -11,32 +11,13 @@
 
   const { fetchTreatmentPlanConsultations, deleteConsultation: deleteConsultationFromComposable } = useConsultations()
 
-  // Treatment plans API call
+  // Use treatment plans composable
   const {
-    data: treatmentPlans,
-    pending: loading,
-    error,
-    refresh: refreshTreatmentPlans
-  } = useFetch(`/api/patients/${props.patient?.id}/treatment-plans`)
-
-  // Computed properties for treatment plan data
-  const getActiveTreatmentPlan = computed(() => {
-    const plans = treatmentPlans.value || []
-    return plans.find((plan: any) => plan.status === 'active') || plans[0]
-  })
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
-  }
-
-  const getTherapistName = (therapist: any) => {
-    if (!therapist) return 'Non assigné'
-    return `${therapist.firstName} ${therapist.lastName}`.trim() || 'Thérapeute'
-  }
+    refetchTreatmentPlans,
+    getActiveTreatmentPlan,
+    loading: treatmentPlansLoading,
+    error: treatmentPlansError
+  } = usePatientTreatmentPlans(() => props.patient?.id)
 
   // Consultations data
   const consultations = ref<any[]>([])
@@ -80,45 +61,6 @@
     })
   }
 
-  // Helper functions for consultation display (consistent with consultation planning)
-  const getSessionStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'success'
-      case 'scheduled':
-        return 'info'
-      case 'completed':
-        return 'success'
-      case 'cancelled':
-        return 'error'
-      case 'in_progress':
-        return 'warning'
-      case 'no_show':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
-
-  const getSessionStatusLabel = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Confirmée'
-      case 'scheduled':
-        return 'À venir'
-      case 'completed':
-        return 'Terminée'
-      case 'cancelled':
-        return 'Annulée'
-      case 'in_progress':
-        return 'En cours'
-      case 'no_show':
-        return 'Absence'
-      default:
-        return status
-    }
-  }
-
   // Delete consultation function
   const deleteConsultation = async (consultationId: string) => {
     if (!props.patient) return
@@ -145,7 +87,7 @@
   // Retry fetch with user feedback
   async function retryFetch() {
     try {
-      await refreshTreatmentPlans()
+      await refetchTreatmentPlans()
       toast.add({
         title: 'Données actualisées',
         description: 'Les plans de traitement ont été rechargés avec succès.',
@@ -167,32 +109,6 @@
     })
   }
 
-  function getDocumentIcon(category: string) {
-    switch (category) {
-      case 'imaging':
-        return 'i-lucide-image'
-      case 'treatment_notes':
-        return 'i-lucide-file-text'
-      case 'prescriptions':
-        return 'i-lucide-pill'
-      default:
-        return 'i-lucide-file-text'
-    }
-  }
-
-  function getDocumentColor(category: string) {
-    switch (category) {
-      case 'imaging':
-        return 'primary'
-      case 'treatment_notes':
-        return 'info'
-      case 'prescriptions':
-        return 'secondary'
-      default:
-        return 'neutral'
-    }
-  }
-
   // Notes and documents state
   const newNote = ref('')
   const documents = ref<any[]>([])
@@ -208,7 +124,7 @@
 
 <template>
   <!-- Loading State -->
-  <div v-if="loading" class="mt-6 flex items-center justify-center py-12">
+  <div v-if="treatmentPlansLoading" class="mt-6 flex items-center justify-center py-12">
     <div class="flex items-center gap-3">
       <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
       <span class="text-muted">Chargement des plans de traitement...</span>
@@ -216,10 +132,10 @@
   </div>
 
   <!-- Error State -->
-  <div v-else-if="error" class="mt-6">
+  <div v-else-if="treatmentPlansError" class="mt-6">
     <UAlert color="error" icon="i-lucide-alert-circle" title="Erreur de chargement">
       <template #description>
-        {{ error.data?.message || error.message || 'Failed to fetch treatment plans' }}
+        {{ treatmentPlansError?.message || 'Failed to fetch treatment plans' }}
         <UButton @click="retryFetch()" variant="link" color="error" size="sm" class="ml-2">Réessayer</UButton>
       </template>
     </UAlert>
@@ -438,23 +354,7 @@
             <template #type-cell="{ row }">
               <div>
                 <div class="font-medium">
-                  {{
-                    row.original.type === 'initial'
-                      ? 'Évaluation initiale'
-                      : row.original.type === 'follow_up'
-                        ? 'Suivi'
-                        : row.original.type === 'evaluation'
-                          ? 'Évaluation'
-                          : row.original.type === 'discharge'
-                            ? 'Sortie'
-                            : row.original.type === 'mobilization'
-                              ? 'Mobilisation'
-                              : row.original.type === 'reinforcement'
-                                ? 'Renforcement'
-                                : row.original.type === 'reeducation'
-                                  ? 'Rééducation'
-                                  : row.original.type || ''
-                  }}
+                  {{ getConsultationTypeLabel(row.original.type) }}
                 </div>
                 <div class="text-muted-foreground text-sm">{{ row.original.chiefComplaint || '' }}</div>
               </div>
@@ -468,15 +368,7 @@
 
             <template #location-cell="{ row }">
               <div class="text-sm">
-                {{
-                  row.original.location === 'clinic'
-                    ? 'Cabinet'
-                    : row.original.location === 'home'
-                      ? 'Domicile'
-                      : row.original.location === 'telehealth'
-                        ? 'Téléconsultation'
-                        : row.original.location || '-'
-                }}
+                {{ getConsultationLocationLabel(row.original.location) }}
               </div>
             </template>
 

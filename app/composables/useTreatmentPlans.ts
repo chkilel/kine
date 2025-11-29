@@ -1,28 +1,23 @@
-export const usePatientTreatmentPlans = (patientId?: string) => {
-  // Only fetch if we have a patientId
+export const usePatientTreatmentPlans = (patientId?: MaybeRefOrGetter<string>) => {
+  const requestFetch = useRequestFetch()
+
   const {
     data: treatmentPlans,
     isLoading: loading,
     error,
-    refetch: refresh
+    refetch: refetchTreatmentPlans
   } = useQuery({
-    key: () => (patientId ? ['treatment-plans', patientId] : ['treatment-plans', 'no-patient']),
+    key: () => {
+      const id = toValue(patientId)
+      return id ? ['treatment-plans', id] : ['treatment-plans', 'no-patient']
+    },
     query: async () => {
-      if (!patientId) return []
-      return $fetch(`/api/patients/${patientId}/treatment-plans`)
-    }
+      const id = toValue(patientId)
+      if (!id) return []
+      return requestFetch(`/api/patients/${id}/treatment-plans`)
+    },
+    enabled: () => !!toValue(patientId)
   })
-
-  const fetchTreatmentPlans = async (id?: string) => {
-    if (id && id !== patientId) {
-      // For different patient, use $fetch directly
-      const data = await $fetch(`/api/patients/${id}/treatment-plans`)
-      return data
-    } else if (patientId) {
-      // For same patient, just refresh existing data
-      await refresh()
-    }
-  }
 
   const getActiveTreatmentPlan = computed(() => {
     if (!treatmentPlans.value) return null
@@ -45,8 +40,7 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     treatmentPlans: readonly(treatmentPlans),
     loading: readonly(loading),
     error: readonly(error),
-    refresh,
-    fetchTreatmentPlans,
+    refetchTreatmentPlans,
     getActiveTreatmentPlan,
     getCompletedTreatmentPlans,
     getTreatmentPlanHistory

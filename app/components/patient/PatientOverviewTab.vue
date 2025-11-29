@@ -41,12 +41,12 @@
 
   // Use treatment plans composable
   const {
-    fetchTreatmentPlans,
+    refetchTreatmentPlans,
     getActiveTreatmentPlan,
     getTreatmentPlanHistory,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
-  } = usePatientTreatmentPlans(patient?.id)
+  } = usePatientTreatmentPlans(() => patient?.id)
 
   // Computed properties for database fields
   const fullAddress = computed(() => {
@@ -265,7 +265,7 @@
         <template v-else-if="treatmentPlansError">
           <div class="py-8 text-center">
             <p class="text-muted">Erreur lors du chargement des plans de traitement</p>
-            <UButton variant="ghost" size="sm" @click="fetchTreatmentPlans(patient.id)">Réessayer</UButton>
+            <UButton variant="ghost" size="sm" @click="refetchTreatmentPlans()">Réessayer</UButton>
           </div>
         </template>
         <template v-else-if="getActiveTreatmentPlan">
