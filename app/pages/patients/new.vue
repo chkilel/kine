@@ -3,15 +3,16 @@
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
   import { nextTick } from 'vue'
 
-  const toast = useToast()
-  const router = useRouter()
-  const { activeOrganization } = useOrganization()
-
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { label: 'Dashboard', to: '/' },
     { label: 'Patients', to: '/patients' },
     { label: 'Nouvelle fiche patient' }
   ])
+
+  const toast = useToast()
+  const router = useRouter()
+  const { activeOrganization } = useOrganization()
+  const queryCache = useQueryCache()
 
   const form = useTemplateRef<HTMLFormElement>('createPatientForm')
   const formState = reactive<Partial<PatientCreate>>({
@@ -67,53 +68,61 @@
     formState.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
-  async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
-    try {
-      const submitData = {
-        ...event.data,
-        // Filter out empty values from arrays
-        medicalConditions: event.data.medicalConditions?.filter((condition) => condition.trim() !== '') || [],
-        surgeries: event.data.surgeries?.filter((surgery) => surgery.trim() !== '') || [],
-        allergies: event.data.allergies?.filter((allergy) => allergy.trim() !== '') || [],
-        medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
-        // Filter out empty emergency contacts numbers, name and relationship are optional
-        emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
-        // Combine existing notes with new notes as array of objects
-        notes: (() => {
-          const notesArray: Array<Note> = []
-
-          // Add existing notes if any
-          if (event.data.notes && Array.isArray(event.data.notes)) {
-            notesArray.push(...event.data.notes.filter((note) => note.content && note.content.trim() !== ''))
-          }
-
-          // Add patient notes
-          notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
-
-          return notesArray.length > 0 ? notesArray : undefined
-        })()
-      }
-
-      await $fetch('/api/patients', {
+  const { mutate: createPatient, isLoading } = useMutation({
+    mutation: async (patientData: PatientCreate) =>
+      $fetch('/api/patients', {
         method: 'POST',
-        body: submitData
-      })
-
+        body: patientData
+      }),
+    onSuccess: (_, variables) => {
       toast.add({
         title: 'Succès',
-        description: `Nouveau patient ${event.data.firstName} ${event.data.lastName} ajouté`,
+        description: `Nouveau patient ${variables.firstName} ${variables.lastName} ajouté`,
         color: 'success'
       })
 
+      // Invalidate patients list cache
+      queryCache.invalidateQueries({ key: ['patients'] })
+
       // Redirect to patient list or detail page
-      await router.push('/patients')
-    } catch (error: any) {
+      router.push('/patients')
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: error.data?.statusMessage || 'Échec de la création du patient',
         color: 'error'
       })
     }
+  })
+
+  async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
+    const submitData = {
+      ...event.data,
+      // Filter out empty values from arrays
+      medicalConditions: event.data.medicalConditions?.filter((condition) => condition.trim() !== '') || [],
+      surgeries: event.data.surgeries?.filter((surgery) => surgery.trim() !== '') || [],
+      allergies: event.data.allergies?.filter((allergy) => allergy.trim() !== '') || [],
+      medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
+      // Filter out empty emergency contacts numbers, name and relationship are optional
+      emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
+      // Combine existing notes with new notes as array of objects
+      notes: (() => {
+        const notesArray: Array<Note> = []
+
+        // Add existing notes if any
+        if (event.data.notes && Array.isArray(event.data.notes)) {
+          notesArray.push(...event.data.notes.filter((note) => note.content && note.content.trim() !== ''))
+        }
+
+        // Add patient notes
+        notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
+
+        return notesArray.length > 0 ? notesArray : undefined
+      })()
+    }
+
+    createPatient(submitData)
   }
 
   function addEmergencyContact() {
@@ -821,7 +830,13 @@
           <div class="flex items-center justify-end gap-3">
             <UButton label="Annuler" color="neutral" variant="subtle" @click="router.push('/patients')" />
             <UFieldGroup>
-              <UButton @click="submitButton" color="primary" label="Enregistrer" />
+              <UButton
+                @click="submitButton"
+                :loading="isLoading"
+                :disabled="isLoading"
+                color="primary"
+                label="Enregistrer"
+              />
 
               <UDropdownMenu
                 :items="[

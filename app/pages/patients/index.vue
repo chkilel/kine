@@ -12,6 +12,12 @@
   // Constants
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
 
+  const requestFetch = useRequestFetch()
+  const { data, status, isPending } = useQuery({
+    key: ['patients'],
+    query: () => requestFetch('/api/patients')
+  })
+
   const table = useTemplateRef('table')
   const columnFilters = ref([{ id: 'search', value: '' }])
   const columnVisibility = ref({ search: false })
@@ -19,8 +25,6 @@
     pageIndex: 0,
     pageSize: 10
   })
-
-  const { data, status, pending: isPending } = await useFetch('/api/patients', { lazy: true })
 
   const columns: TableColumn<SerializeObject<Patient>>[] = [
     {
