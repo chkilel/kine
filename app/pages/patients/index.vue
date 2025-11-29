@@ -196,7 +196,7 @@
               <!-- Custom cell for the 'dateOfBirth' column -->
               <template #dateOfBirth-cell="{ row }">
                 <p class="font-semibold">{{ formatDate(row.original.dateOfBirth) }}</p>
-                <div class="text-muted text-xs">({{ calculateAge(row.original.dateOfBirth) }} ans)</div>
+                <div class="text-muted text-xs">({{ getAge(row.original.dateOfBirth) }} ans)</div>
               </template>
               <!-- Custom cell for the 'status' column -->
               <template #status-cell="{ row }">

@@ -2,18 +2,21 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
   // Only fetch if we have a patientId
   const {
     data: treatmentPlans,
-    pending: loading,
+    isLoading: loading,
     error,
-    refresh
-  } = useFetch<TreatmentPlanWithProgress[]>(() => `/api/patients/${patientId}/treatment-plans`, {
-    key: () => `treatment-plans-${patientId}`,
-    immediate: !!patientId
+    refetch: refresh
+  } = useQuery({
+    key: () => (patientId ? ['treatment-plans', patientId] : ['treatment-plans', 'no-patient']),
+    query: async () => {
+      if (!patientId) return []
+      return $fetch(`/api/patients/${patientId}/treatment-plans`)
+    }
   })
 
   const fetchTreatmentPlans = async (id?: string) => {
     if (id && id !== patientId) {
       // For different patient, use $fetch directly
-      const data = await $fetch<TreatmentPlanWithProgress[]>(`/api/patients/${id}/treatment-plans`)
+      const data = await $fetch(`/api/patients/${id}/treatment-plans`)
       return data
     } else if (patientId) {
       // For same patient, just refresh existing data
@@ -31,38 +34,12 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     return treatmentPlans.value.filter((plan) => plan.status === 'completed')
   })
 
-  const getCancelledTreatmentPlans = computed(() => {
-    if (!treatmentPlans.value) return []
-    return treatmentPlans.value.filter((plan) => plan.status === 'cancelled')
-  })
-
   const getTreatmentPlanHistory = computed(() => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value
       .filter((plan) => plan.status === 'completed' || plan.status === 'cancelled')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   })
-
-  const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return '-'
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
-
-  const formatDateRange = (startDate: Date | string, endDate: Date | string | null) => {
-    const start = formatDate(startDate)
-    const end = endDate ? formatDate(endDate) : 'En cours'
-    return `${start} - ${end}`
-  }
-
-  const getTherapistName = (therapist: TreatmentPlanWithProgress['therapist']) => {
-    if (!therapist) return 'Non assigné'
-    return `${therapist.firstName || ''} ${therapist.lastName || ''}`.trim() || therapist.email || 'Non assigné'
-  }
 
   return {
     treatmentPlans: readonly(treatmentPlans),
@@ -72,10 +49,6 @@ export const usePatientTreatmentPlans = (patientId?: string) => {
     fetchTreatmentPlans,
     getActiveTreatmentPlan,
     getCompletedTreatmentPlans,
-    getCancelledTreatmentPlans,
-    getTreatmentPlanHistory,
-    formatDate,
-    formatDateRange,
-    getTherapistName
+    getTreatmentPlanHistory
   }
 }

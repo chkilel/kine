@@ -24,29 +24,34 @@
   const editSlideover = overlay.create(LazyPatientEditSlideover)
   const activeTab = ref('overview')
 
+  const requestFetch = useRequestFetch()
   const {
     data: patient,
-    status,
-    error
-  } = await useFetch(`/api/patients/${route.params.id}`, {
-    key: () => `user-${route.params.id}`,
-    transform: (data) => {
-      return {
+    error,
+    isPending
+  } = useQuery({
+    enabled: () => !!route.params.id,
+    key: () => ['patient', route.params.id as string],
+    query: () =>
+      requestFetch(`/api/patients/${route.params.id}`).then((data) => ({
         ...data,
         dateOfBirth: parseISO(data.dateOfBirth),
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt),
         deletedAt: data.deletedAt ? parseISO(data.deletedAt) : null
-      }
-    }
+      }))
   })
 
-  if (error.value) {
-    throw createError({
-      statusCode: error.value?.statusCode || 404,
-      statusMessage: error.value?.statusMessage || 'Patient introuvable'
-    })
-  }
+  // Handle error after the query
+  watchEffect(() => {
+    if (error.value) {
+      const err = error.value as any
+      throw createError({
+        statusCode: err.statusCode || err.status || 404,
+        statusMessage: err.statusMessage || err.message || 'Patient introuvable'
+      })
+    }
+  })
 
   function openEditSlideover() {
     if (!patient.value) return
@@ -69,7 +74,7 @@
 
     <template #body>
       <UContainer>
-        <div v-if="status === 'pending'" class="flex justify-center py-8">
+        <div v-if="isPending" class="flex justify-center py-8">
           <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
         </div>
 

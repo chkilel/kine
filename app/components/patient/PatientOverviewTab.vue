@@ -3,9 +3,38 @@
   import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
-  const { patient } = defineProps<{
-    patient: Patient
-  }>()
+  const { patient } = defineProps<{ patient: Patient }>()
+
+  // Static data for fields not yet connected to database
+  const staticData = {
+    upcomingSessions: [
+      {
+        date: '18',
+        month: 'OCT',
+        type: 'Renforcement',
+        time: '11:00 - 30 min',
+        status: 'scheduled' as ConsultationStatus
+      },
+      {
+        date: '15',
+        month: 'OCT',
+        type: 'Bilan initial',
+        time: '10:00 - 45 min',
+        status: 'completed' as ConsultationStatus
+      },
+      {
+        date: '12',
+        month: 'OCT',
+        type: 'Mobilisation',
+        time: '09:00 - 30 min',
+        status: 'no_show' as ConsultationStatus
+      }
+    ],
+    recentDocuments: [
+      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
+      { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
+    ]
+  }
 
   const overlay = useOverlay()
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
@@ -15,21 +44,9 @@
     fetchTreatmentPlans,
     getActiveTreatmentPlan,
     getTreatmentPlanHistory,
-    formatDateRange,
-    getTherapistName,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
   } = usePatientTreatmentPlans(patient?.id)
-
-  // Watch for patient changes
-  watch(
-    () => patient?.id,
-    (newId) => {
-      if (newId) {
-        fetchTreatmentPlans(newId)
-      }
-    }
-  )
 
   // Computed properties for database fields
   const fullAddress = computed(() => {
@@ -87,47 +104,8 @@
     return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
   }
 
-  function getSessionBadgeColor(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'primary'
-      case 'completed':
-        return 'success'
-      case 'missed':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
-
-  function getSessionBadgeLabel(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'À venir'
-      case 'completed':
-        return 'Terminé'
-      case 'missed':
-        return 'Manqué'
-      default:
-        return status
-    }
-  }
-
   function openCreateTreatmentPlan() {
     treatmentPlanCreateOverlay.open({ patient })
-  }
-
-  // Static data for fields not yet connected to database
-  const staticData = {
-    upcomingSessions: [
-      { date: '18', month: 'OCT', type: 'Renforcement', time: '11:00 - 30 min', status: 'upcoming' },
-      { date: '15', month: 'OCT', type: 'Bilan initial', time: '10:00 - 45 min', status: 'completed' },
-      { date: '12', month: 'OCT', type: 'Mobilisation', time: '09:00 - 30 min', status: 'missed' }
-    ],
-    recentDocuments: [
-      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
-      { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
-    ]
   }
 </script>
 
@@ -314,7 +292,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-user" class="text-muted text-base" />
-                <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
+                <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist ?? undefined) }}</span>
               </div>
             </div>
           </div>
@@ -364,8 +342,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <UBadge :color="getSessionBadgeColor(session.status)" variant="soft" size="sm">
-                  {{ getSessionBadgeLabel(session.status) }}
+                <UBadge :color="getSessionStatusColor(session.status)" variant="soft" size="sm">
+                  {{ getSessionStatusLabel(session.status) }}
                 </UBadge>
                 <UButton variant="ghost" size="sm" icon="i-lucide-eye" square />
               </div>

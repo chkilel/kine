@@ -83,10 +83,7 @@
       // Refresh the patient data
       await refreshNuxtData(`user-${response.id}`)
 
-      emit('close', {
-        ...response,
-        dateOfBirth: parseISO(response.dateOfBirth)
-      })
+      emit('close')
     } catch (error: any) {
       toast.add({
         title: 'Erreur',

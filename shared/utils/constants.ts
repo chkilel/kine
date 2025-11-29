@@ -13,7 +13,7 @@ export type ColorVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info' 
 
 export interface StatusConfig {
   label: string
-  color: 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'primary' | 'secondary'
+  color: ColorVariant
 }
 
 export interface SelectOption<T = string> {

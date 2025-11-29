@@ -1,5 +1,4 @@
-import { differenceInYears, isBefore } from 'date-fns'
-import type { Patient } from '../types/patient.types'
+import type { Patient, TreatmentPlanWithProgress } from '../types/patient.types'
 
 // Slugify a string
 export function slugify(name: string) {
@@ -14,40 +13,8 @@ export function formatFullName(patient: Pick<Patient, 'firstName' | 'lastName'>)
   return `${patient.firstName} ${patient.lastName}`
 }
 
-export function getSessionBadgeColor(status: string) {
-  switch (status) {
-    case 'upcoming':
-      return 'warning'
-    case 'completed':
-      return 'success'
-    case 'missed':
-      return 'error'
-    default:
-      return 'neutral'
-  }
-}
-
-export function getSessionBadgeLabel(status: string) {
-  switch (status) {
-    case 'upcoming':
-      return 'À venir'
-    case 'completed':
-      return 'Terminée'
-    case 'missed':
-      return 'Manquée'
-    default:
-      return status
-  }
-}
-
-
-// Calculate age from date of birth
-
-export function calculateAge(dob: string | Date): number {
-  const date = new Date(dob)
-  const now = new Date()
-
-  const years = differenceInYears(now, date)
-
-  return isBefore(now, new Date(now.getFullYear(), date.getMonth(), date.getDate())) ? years - 1 : years
+// Get therapist name
+export const getTherapistName = (therapist?: TreatmentPlanWithProgress['therapist'] | null) => {
+  if (!therapist) return 'Non assigné'
+  return `${therapist.firstName || ''} ${therapist.lastName || ''}`.trim() || therapist.email || 'Non assigné'
 }

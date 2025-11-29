@@ -107,7 +107,7 @@ export function createAuth(event: H3Event) {
                 return {
                   data: {
                     ...session,
-                    activeOrganizationId: userOrganizations[0].organization.id
+                    activeOrganizationId: userOrganizations[0]?.organization.id
                   }
                 }
               }
