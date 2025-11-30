@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { fr } from 'zod/locales'
+import type { SerializeObject } from 'nitropack/types'
 
 z.config(fr())
 
@@ -381,13 +382,13 @@ export type InsuranceCoverage = z.infer<typeof insuranceCoverageSchema>
 export type Relationship = z.infer<typeof relationshipSchema>
 
 // Extended types/interfaces
-export interface TreatmentPlanWithProgress extends TreatmentPlan {
-  therapist?: {
+export type TreatmentPlanWithProgress = TreatmentPlan & {
+  therapist: {
     id: string
     firstName?: string
     lastName?: string | null
     email?: string
-  }
+  } | null
   progress: number
   completedConsultations: number
 }

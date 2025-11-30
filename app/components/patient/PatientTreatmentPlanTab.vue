@@ -109,6 +109,18 @@
     })
   }
 
+  // Open edit slideover with treatment plan data
+  async function openEditSlideover() {
+    const activePlan = getActiveTreatmentPlan.value
+
+    if (!activePlan) return
+
+    treatmentPlanCreateOverlay.open({
+      patient: props.patient,
+      treatmentPlan: activePlan
+    })
+  }
+
   // Notes and documents state
   const newNote = ref('')
   const documents = ref<any[]>([])
@@ -193,7 +205,16 @@
           <UProgress :model-value="getActiveTreatmentPlan.progress || 0" size="lg" />
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
-          <UButton icon="i-lucide-edit" variant="outline" color="neutral" size="md" class="flex-1">Modifier</UButton>
+          <UButton
+            icon="i-lucide-edit"
+            variant="outline"
+            color="neutral"
+            size="md"
+            class="flex-1"
+            @click="openEditSlideover"
+          >
+            Modifier
+          </UButton>
           <UButton icon="i-lucide-archive" variant="outline" color="neutral" size="md" class="flex-1">Clôturer</UButton>
           <UButton
             icon="i-lucide-plus"

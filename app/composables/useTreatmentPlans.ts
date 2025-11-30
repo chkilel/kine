@@ -1,5 +1,19 @@
-export const usePatientTreatmentPlans = (patientId?: MaybeRefOrGetter<string>) => {
+import { parseISO } from 'date-fns'
+import type { SerializeObject } from 'nitropack/types'
+
+export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
+
+  // Helper to convert date strings to Date objects and fix therapist type
+  const convertDates = (plan: SerializeObject<TreatmentPlan>) => ({
+    ...plan,
+    prescriptionDate: toDate(plan.prescriptionDate),
+    startDate: parseISO(plan.startDate),
+    endDate: toDate(plan.endDate),
+    createdAt: parseISO(plan.createdAt),
+    updatedAt: parseISO(plan.updatedAt),
+    deletedAt: toDate(plan.deletedAt)
+  })
 
   const {
     data: treatmentPlans,
@@ -14,14 +28,19 @@ export const usePatientTreatmentPlans = (patientId?: MaybeRefOrGetter<string>) =
     query: async () => {
       const id = toValue(patientId)
       if (!id) return []
-      return requestFetch(`/api/patients/${id}/treatment-plans`)
+      const data = await requestFetch(`/api/patients/${id}/treatment-plans`)
+      return data.map(convertDates)
     },
     enabled: () => !!toValue(patientId)
   })
 
   const getActiveTreatmentPlan = computed(() => {
     if (!treatmentPlans.value) return null
-    return treatmentPlans.value.find((plan) => plan.status === 'ongoing' || plan.status === 'planned') || null
+    return (
+      treatmentPlans.value.find(
+        (plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused'
+      ) || null
+    )
   })
 
   const getCompletedTreatmentPlans = computed(() => {

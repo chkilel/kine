@@ -10,12 +10,65 @@
     stagedAt: Date
   }
 
-  const props = defineProps<{ patient: Patient }>()
+  const props = defineProps<{
+    patient: Patient
+    treatmentPlan?: TreatmentPlan
+  }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
+  const requestFetch = useRequestFetch()
+  const queryCache = useQueryCache()
+
+  const { mutate: updateTreatmentPlan, data: updatedPlan } = useMutation({
+    mutation: ({ planId, data }: { planId: string; data: TreatmentPlanUpdate }) =>
+      requestFetch(`/api/patients/${props.patient.id}/treatment-plans/${planId}`, {
+        method: 'PUT',
+        body: data
+      }),
+    onSuccess: () => {
+      queryCache.invalidateQueries({ key: ['treatment-plans', props.patient.id] })
+      toast.add({
+        title: 'Succès',
+        description: 'Plan de traitement mis à jour avec succès',
+        color: 'success'
+      })
+    },
+    onError: (error: any) => {
+      console.error('Error updating treatment plan:', error)
+      toast.add({
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la mise à jour du plan de traitement',
+        color: 'error'
+      })
+    }
+  })
+
+  const { mutate: createTreatmentPlan, data: createdPlan } = useMutation({
+    mutation: ({ data }: { data: TreatmentPlanUpdate }) =>
+      requestFetch(`/api/patients/${props.patient.id}/treatment-plans`, {
+        method: 'POST',
+        body: data
+      }),
+    onSuccess: () => {
+      queryCache.invalidateQueries({ key: ['treatment-plans', props.patient.id] })
+      toast.add({
+        title: 'Succès',
+        description: 'Plan de traitement mis à jour avec succès',
+        color: 'success'
+      })
+    },
+    onError: (error: any) => {
+      console.error('Error updating treatment plan:', error)
+      toast.add({
+        title: 'Erreur',
+        description: error.data?.statusMessage || 'Échec de la mise à jour du plan de traitement',
+        color: 'error'
+      })
+    }
+  })
   const toast = useToast()
   const { uploadFile } = useUploads()
 
@@ -30,24 +83,33 @@
 
   const therapists = computed(() => [user.value!])
   const loading = ref(false)
+  const isEditMode = computed(() => !!props.treatmentPlan)
+
+  // Helper to convert date strings to Date objects
+  const toDate = (date: Date | string | null | undefined): Date | null => {
+    if (!date) return null
+    return typeof date === 'string' ? new Date(date) : date
+  }
+
+  // Initialize form based on mode
   const form = reactive<TreatmentPlanCreate>({
     patientId: props.patient.id!,
-    therapistId: user.value!.id,
+    therapistId: props.treatmentPlan?.therapistId || user.value!.id,
     organizationId: activeOrganization.value.data!.id,
-    prescribingDoctor: '',
-    prescriptionDate: new Date(),
-    title: '',
-    diagnosis: '',
-    objective: '',
-    status: 'planned',
-    startDate: new Date(),
-    endDate: null,
-    numberOfSessions: 0,
-    sessionFrequency: undefined,
-    painLevel: 10,
-    coverageStatus: 'not_required',
-    insuranceInfo: '',
-    notes: null
+    prescribingDoctor: props.treatmentPlan?.prescribingDoctor || '',
+    prescriptionDate: toDate(props.treatmentPlan?.prescriptionDate) || new Date(),
+    title: props.treatmentPlan?.title || '',
+    diagnosis: props.treatmentPlan?.diagnosis || '',
+    objective: props.treatmentPlan?.objective || '',
+    status: props.treatmentPlan?.status || 'planned',
+    startDate: toDate(props.treatmentPlan?.startDate) || new Date(),
+    endDate: toDate(props.treatmentPlan?.endDate),
+    numberOfSessions: props.treatmentPlan?.numberOfSessions || 0,
+    sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
+    painLevel: props.treatmentPlan?.painLevel || 10,
+    coverageStatus: props.treatmentPlan?.coverageStatus || 'not_required',
+    insuranceInfo: props.treatmentPlan?.insuranceInfo || '',
+    notes: props.treatmentPlan?.notes || null
   })
 
   // Calendar models for date components
@@ -57,21 +119,21 @@
 
   // Initialize calendar models from form dates
   onMounted(() => {
-    if (form.prescriptionDate) {
+    if (form.prescriptionDate && form.prescriptionDate instanceof Date) {
       prescriptionDateModel.value = new CalendarDate(
         form.prescriptionDate.getFullYear(),
         form.prescriptionDate.getMonth() + 1,
         form.prescriptionDate.getDate()
       )
     }
-    if (form.startDate) {
+    if (form.startDate && form.startDate instanceof Date) {
       startDateModel.value = new CalendarDate(
         form.startDate.getFullYear(),
         form.startDate.getMonth() + 1,
         form.startDate.getDate()
       )
     }
-    if (form.endDate) {
+    if (form.endDate && form.endDate instanceof Date) {
       endDateModel.value = new CalendarDate(
         form.endDate.getFullYear(),
         form.endDate.getMonth() + 1,
@@ -142,16 +204,16 @@
         }
       }
 
-      // Create treatment plan
-      const treatmentPlan = await $fetch<TreatmentPlan>(`/api/patients/${props.patient.id}/treatment-plans`, {
-        method: 'POST',
-        body: event.data
-      })
-
-      if (!treatmentPlan) {
-        throw createError({
-          statusCode: 500,
-          statusMessage: 'Failed to create treatment plan'
+      if (isEditMode.value) {
+        // Update existing treatment plan
+        updateTreatmentPlan({
+          planId: props.treatmentPlan!.id,
+          data: event.data
+        })
+      } else {
+        // Create new treatment plan
+        createTreatmentPlan({
+          data: event.data
         })
       }
 
@@ -160,42 +222,22 @@
         try {
           await $fetch(`/api/patients/${props.patient.id}/documents/${document.id}`, {
             method: 'PUT',
-            body: { treatmentPlanId: treatmentPlan.id }
+            body: { treatmentPlanId: createdPlan.value?.id || updatedPlan.value?.id }
           })
         } catch (error) {
           console.error('Error linking document to treatment plan:', error)
         }
       }
 
-      // Show success message with file upload results
-      let successMessage = 'Plan de traitement créé avec succès'
-      if (uploadedDocuments.length > 0) {
-        successMessage += ` et ${uploadedDocuments.length} document(s) téléversé(s)`
-      }
-
-      toast.add({
-        title: 'Succès',
-        description: successMessage,
-        color: 'success'
-      })
-
-      // Show error messages for failed files if any
-      if (failedFiles.length > 0) {
-        toast.add({
-          title: 'Attention',
-          description: `${failedFiles.length} fichier(s) n'ont pas pu être téléversés`,
-          color: 'warning'
-        })
-      }
-
       await refreshNuxtData(`treatment-plans-${props.patient.id}`)
-      emit('close', treatmentPlan)
+      emit('close')
       resetForm()
     } catch (error: any) {
-      console.error('Error creating treatment plan:', error)
+      console.error('Error creating/updating treatment plan:', error)
+      const action = isEditMode.value ? 'mise à jour' : 'création'
       toast.add({
         title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la création du plan de traitement',
+        description: error.data?.statusMessage || `Échec de la ${action} du plan de traitement`,
         color: 'error'
       })
     } finally {
@@ -277,8 +319,12 @@
 <template>
   <USlideover
     :dismissible="false"
-    title="Créer un plan de traitement"
-    description="Ajoutez les informations de base du plan de traitement."
+    :title="isEditMode ? 'Modifier un plan de traitement' : 'Créer un plan de traitement'"
+    :description="
+      isEditMode
+        ? 'Modifiez les informations du plan de traitement.'
+        : 'Ajoutez les informations de base du plan de traitement.'
+    "
     :ui="{
       content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated'
     }"
@@ -579,7 +625,7 @@
           :loading="loading"
           :disabled="loading"
         >
-          Enregistrer le plan
+          {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }} le plan
         </UButton>
       </div>
     </template>

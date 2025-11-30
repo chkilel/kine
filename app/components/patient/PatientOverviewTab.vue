@@ -107,6 +107,16 @@
   function openCreateTreatmentPlan() {
     treatmentPlanCreateOverlay.open({ patient })
   }
+
+  function openEditTreatmentPlan() {
+    const activePlan = getActiveTreatmentPlan.value
+    if (!activePlan) return
+
+    treatmentPlanCreateOverlay.open({
+      patient,
+      treatmentPlan: activePlan
+    })
+  }
 </script>
 
 <template>
@@ -274,7 +284,17 @@
               <h2 class="text-lg font-bold">Plan de traitement actif</h2>
               <p class="text-muted text-sm">{{ getActiveTreatmentPlan.title }}</p>
             </div>
-            <UBadge color="success" variant="subtle">Actif</UBadge>
+            <div class="flex items-center gap-2">
+              <UBadge color="success" variant="subtle">Actif</UBadge>
+              <UButton
+                icon="i-lucide-edit"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                square
+                @click="openEditTreatmentPlan"
+              />
+            </div>
           </div>
           <div class="mb-5 space-y-4 text-sm">
             <div>
