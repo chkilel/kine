@@ -2,27 +2,25 @@
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
-  // Types
-  interface UploadedFile {
-    file: File
-    title: string
-    type: DocumentCategory
-    stagedAt: Date
-  }
-
   const props = defineProps<{
     patient: Patient
     treatmentPlan?: TreatmentPlan
   }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  const { user } = await useAuth()
+  const { activeOrganization } = useOrganization()
+  if (!user || !activeOrganization.value.data) {
+    await navigateTo('/login')
+  }
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
   const requestFetch = useRequestFetch()
   const queryCache = useQueryCache()
 
-  const { mutate: updateTreatmentPlan, data: updatedPlan } = useMutation({
+  // Update Treatment Plan mutation
+  const { mutate: updateTreatmentPlan } = useMutation({
     mutation: ({ planId, data }: { planId: string; data: TreatmentPlanUpdate }) =>
       requestFetch(`/api/patients/${props.patient.id}/treatment-plans/${planId}`, {
         method: 'PUT',
@@ -46,7 +44,8 @@
     }
   })
 
-  const { mutate: createTreatmentPlan, data: createdPlan } = useMutation({
+  // Create Treatment Plan mutation
+  const { mutate: createTreatmentPlan } = useMutation({
     mutation: ({ data }: { data: TreatmentPlanUpdate }) =>
       requestFetch(`/api/patients/${props.patient.id}/treatment-plans`, {
         method: 'POST',
@@ -70,26 +69,10 @@
     }
   })
   const toast = useToast()
-  const { uploadFile } = useUploads()
-
-  const { user } = await useAuth()
-  const { activeOrganization } = useOrganization()
-  if (!user || !activeOrganization.value.data) {
-    await navigateTo('/login')
-  }
-
-  const uploadedFiles = ref<UploadedFile[]>([])
-  const fileInputRef = ref<HTMLInputElement>()
 
   const therapists = computed(() => [user.value!])
   const loading = ref(false)
   const isEditMode = computed(() => !!props.treatmentPlan)
-
-  // Helper to convert date strings to Date objects
-  const toDate = (date: Date | string | null | undefined): Date | null => {
-    if (!date) return null
-    return typeof date === 'string' ? new Date(date) : date
-  }
 
   // Initialize form based on mode
   const form = reactive<TreatmentPlanCreate>({
@@ -97,7 +80,7 @@
     therapistId: props.treatmentPlan?.therapistId || user.value!.id,
     organizationId: activeOrganization.value.data!.id,
     prescribingDoctor: props.treatmentPlan?.prescribingDoctor || '',
-    prescriptionDate: toDate(props.treatmentPlan?.prescriptionDate) || new Date(),
+    prescriptionDate: props.treatmentPlan?.prescriptionDate || new Date(),
     title: props.treatmentPlan?.title || '',
     diagnosis: props.treatmentPlan?.diagnosis || '',
     objective: props.treatmentPlan?.objective || '',
@@ -159,51 +142,6 @@
     loading.value = true
 
     try {
-      // First, upload all staged files
-      const uploadedDocuments = []
-      const failedFiles = []
-
-      for (const uploadedFile of uploadedFiles.value) {
-        try {
-          // Use composable to upload file
-          const fileName = `${Date.now()}-${uploadedFile.file.name}`
-          const storageKey = `orgs/docs/${props.patient.id}/${fileName}`
-          await uploadFile({
-            file: uploadedFile.file,
-            folder: `orgs/docs/${props.patient.id}`,
-            name: fileName
-          })
-
-          // Create document record
-          const documentData = {
-            fileName,
-            originalFileName: uploadedFile.file.name,
-            mimeType: uploadedFile.file.type,
-            fileSize: uploadedFile.file.size,
-            storageKey,
-            category: mapDocumentTypeToCategory(uploadedFile.type),
-            description: uploadedFile.title
-          }
-
-          const document = await $fetch(`/api/patients/${props.patient.id}/documents`, {
-            method: 'POST',
-            body: documentData
-          })
-
-          if (!document) {
-            throw new Error('Failed to create document record')
-          }
-
-          uploadedDocuments.push(document)
-        } catch (error) {
-          console.error('Error uploading file:', error)
-          failedFiles.push({
-            fileName: uploadedFile.file.name,
-            error: error instanceof Error ? error.message : 'Unknown error'
-          })
-        }
-      }
-
       if (isEditMode.value) {
         // Update existing treatment plan
         updateTreatmentPlan({
@@ -215,18 +153,6 @@
         createTreatmentPlan({
           data: event.data
         })
-      }
-
-      // Link uploaded documents to the treatment plan
-      for (const document of uploadedDocuments) {
-        try {
-          await $fetch(`/api/patients/${props.patient.id}/documents/${document.id}`, {
-            method: 'PUT',
-            body: { treatmentPlanId: createdPlan.value?.id || updatedPlan.value?.id }
-          })
-        } catch (error) {
-          console.error('Error linking document to treatment plan:', error)
-        }
       }
 
       await refreshNuxtData(`treatment-plans-${props.patient.id}`)
@@ -269,41 +195,6 @@
     prescriptionDateModel.value = null
     startDateModel.value = null
     endDateModel.value = null
-
-    uploadedFiles.value = []
-  }
-
-  function mapDocumentTypeToCategory(type: string): string {
-    const categoryMap: Record<string, string> = {
-      Radiologie: 'imaging',
-      Analyse: 'lab_results',
-      Prescription: 'prescriptions',
-      'Rapport médical': 'treatment_notes',
-      Autre: 'other'
-    }
-    return categoryMap[type] || 'other'
-  }
-
-  function handleFileSelect(event: Event) {
-    const target = event.target as HTMLInputElement
-    const files = target.files
-    if (!files) return
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (!file) continue
-      const uploadedFile: UploadedFile = {
-        file,
-        title: file.name,
-        type: 'prescriptions',
-        stagedAt: new Date()
-      }
-      uploadedFiles.value.push(uploadedFile)
-    }
-  }
-
-  function removeFile(index: number) {
-    uploadedFiles.value.splice(index, 1)
   }
 
   function handleCancel() {
@@ -454,134 +345,6 @@
                   class="w-full"
                 />
               </UFormField>
-            </div>
-          </UCard>
-
-          <!-- Documents -->
-          <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Documents liés</h3>
-            <div class="space-y-4">
-              <!-- Upload Section -->
-              <div>
-                <h4 class="text-default mb-2 text-sm font-semibold">Téléverser de nouveaux documents</h4>
-                <div
-                  class="border-default hover:bg-muted cursor-pointer rounded-xl border-2 border-dashed p-6 text-center"
-                  @click="fileInputRef?.click()"
-                >
-                  <UIcon name="i-lucide-upload" class="text-muted mb-2 text-4xl" />
-                  <p class="text-muted text-sm">
-                    Glissez-déposez un fichier ou
-                    <span class="text-primary font-semibold">cliquez pour téléverser</span>
-                    .
-                  </p>
-                  <input
-                    ref="fileInputRef"
-                    type="file"
-                    multiple
-                    class="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    @change="handleFileSelect"
-                  />
-                </div>
-              </div>
-
-              <!-- Staged Files -->
-              <div v-if="uploadedFiles.length > 0" class="space-y-3">
-                <div
-                  v-for="(uploadedFile, index) in uploadedFiles"
-                  :key="index"
-                  class="border-default bg-muted space-y-3 rounded-xl border p-4"
-                >
-                  <div class="flex w-full items-start gap-10">
-                    <div class="min-w-0 flex-1">
-                      <p class="truncate text-sm font-medium">
-                        {{ uploadedFile.file.name }}
-                      </p>
-                      <p class="text-muted mt-1 text-xs">
-                        Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
-                      </p>
-                    </div>
-
-                    <UButton
-                      icon="i-lucide-trash"
-                      variant="ghost"
-                      color="error"
-                      size="sm"
-                      square
-                      @click="removeFile(index)"
-                    />
-                  </div>
-
-                  <div class="border-default bg-default rounded-lg border p-3">
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <UFormField label="Titre descriptif du document" size="xs" class="sm:col-span-2">
-                        <UInput v-model="uploadedFile.title" placeholder="Titre descriptif" size="sm" class="w-full" />
-                      </UFormField>
-                      <UFormField label="Type de document" size="xs">
-                        <USelectMenu
-                          v-model="uploadedFile.type"
-                          value-key="value"
-                          size="sm"
-                          :items="DOCUMENT_CATEGORY_OPTIONS"
-                          class="w-full"
-                        />
-                      </UFormField>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Existing Documents -->
-              <div class="space-y-3 pt-4">
-                <div class="border-default flex items-center gap-4 rounded-lg border p-3">
-                  <UIcon name="i-lucide-image" class="text-primary text-3xl" />
-                  <div class="grow">
-                    <p class="text-default font-semibold">Imagerie de la colonne</p>
-                    <div class="text-muted mt-1 flex items-center gap-x-2 text-xs">
-                      <span>Radiologie</span>
-                      <span class="text-muted">•</span>
-                      <span>Radio_Epaule.pdf</span>
-                      <span class="text-muted">•</span>
-                      <span>25/09/2024</span>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
-                    <UButton icon="i-lucide-download" variant="ghost" color="neutral" size="sm" square />
-                    <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square />
-                  </div>
-                </div>
-
-                <div class="border-default flex items-center gap-4 rounded-lg border p-3">
-                  <UIcon name="i-lucide-file-text" class="text-3xl text-purple-500" />
-                  <div class="grow">
-                    <p class="text-default font-semibold">Analyse sanguine</p>
-                    <div class="text-muted mt-1 flex items-center gap-x-2 text-xs">
-                      <span>Analyse</span>
-                      <span class="text-muted">•</span>
-                      <span>analyse_sanguine.pdf</span>
-                      <span class="text-muted">•</span>
-                      <span>24/09/2024</span>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
-                    <UButton icon="i-lucide-download" variant="ghost" color="neutral" size="sm" square />
-                    <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Add Document Button -->
-              <UButton
-                icon="i-lucide-plus"
-                variant="outline"
-                color="neutral"
-                size="sm"
-                class="flex h-9 items-center justify-center gap-2 px-3 text-sm font-semibold"
-              >
-                Joindre un document
-              </UButton>
             </div>
           </UCard>
 

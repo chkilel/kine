@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyTreatmentPlanCreateSideover, LazyConsultaionPlanningSlideover } from '#components'
+  import { LazyTreatmentPlanCreateSlideover, LazyConsultaionPlanningSlideover } from '#components'
   import { useConsultations } from '~/composables/useConsultations'
 
   const props = defineProps<{ patient: Patient }>()
@@ -7,7 +7,9 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultaionPlanningSlideover)
-  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
+  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
+  const requestFetch = useRequestFetch()
+  const queryCache = useQueryCache()
 
   const { fetchTreatmentPlanConsultations, deleteConsultation: deleteConsultationFromComposable } = useConsultations()
 
@@ -121,9 +123,8 @@
     })
   }
 
-  // Notes and documents state
+  // Notes state
   const newNote = ref('')
-  const documents = ref<any[]>([])
 
   function addNote() {
     if (newNote.value.trim()) {
@@ -439,47 +440,7 @@
       </UCard>
 
       <!-- Documents -->
-      <UCard>
-        <div class="mb-5 flex items-center justify-between">
-          <h3 class="text-base font-bold">Documents du plan de traitement</h3>
-          <UButton icon="i-lucide-plus" color="primary" size="sm">Ajouter un document</UButton>
-        </div>
-        <div class="space-y-4">
-          <UFileUpload
-            label="Glissez-déposez un fichier ou"
-            description="cliquez pour téléverser"
-            class="hover:bg-elevated min-h-24 w-full"
-          />
-
-          <div class="divide-default divide-y">
-            <div v-if="!documents?.length" class="py-4 text-center">
-              <p class="text-muted text-sm">Aucun document pour ce plan de traitement</p>
-            </div>
-            <div v-else v-for="doc in documents" :key="doc.id" class="flex items-center justify-between py-3">
-              <div class="flex items-center gap-4">
-                <UBadge
-                  :icon="getDocumentIcon(doc.category)"
-                  :color="getDocumentColor(doc.category)"
-                  variant="soft"
-                  size="lg"
-                  square
-                />
-                <div>
-                  <p class="font-semibold">{{ doc.originalFileName }}</p>
-                  <p class="text-muted text-xs">
-                    Téléversé le {{ new Date(doc.createdAt).toLocaleDateString('fr-FR') }} par {{ doc.uploadedById }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
-                <UButton icon="i-lucide-download" variant="ghost" color="neutral" size="sm" square />
-                <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square />
-              </div>
-            </div>
-          </div>
-        </div>
-      </UCard>
+      <PatientTreatmentPlanDocuments :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
     </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyTreatmentPlanCreateSideover } from '#components'
+  import { LazyTreatmentPlanCreateSlideover } from '#components'
   import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -37,7 +37,7 @@
   }
 
   const overlay = useOverlay()
-  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSideover)
+  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
 
   // Use treatment plans composable
   const {
