@@ -79,10 +79,10 @@ export const TREATMENT_PLAN_STATUS_CONFIG = {
 // Document Categories Configuration
 export const DOCUMENT_CATEGORIES_CONFIG = {
   referral: 'Lettre de recommandation',
-  imaging: 'Imagerie',
+  imaging: 'Radiologie',
   lab_results: 'Résultats de laboratoire',
   treatment_notes: 'Notes de traitement',
-  prescriptions: 'Ordonnances',
+  prescriptions: 'Ordonnance',
   other: 'Autre'
 } as const satisfies Record<DocumentCategory, string>
 
