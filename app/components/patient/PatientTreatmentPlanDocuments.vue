@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { parseISO } from 'date-fns'
+  import { LazyDocumentViewerModal } from '#components'
 
   // Types
   interface UploadedFile {
@@ -106,29 +107,28 @@
 
       for (const uploadedFile of uploadedFiles.value) {
         try {
-          // Upload file to R2
-          const fileName = `${Date.now()}-${uploadedFile.file.name}`
-          const folder = `orgs/${organizationId}/docs/${patientId}`
-          const storageKey = `${folder}/${fileName}`
-
-          await uploadFile({
+          // Upload file to R2 and get actual storage key
+          console.log('Uploading file:', uploadedFile.file.name)
+          const uploadResult = await uploadFile({
             file: uploadedFile.file,
             folder: `orgs/${organizationId}/docs/${patientId}`,
-            name: fileName
+            name: uploadedFile.file.name
           })
+          console.log('Upload result:', uploadResult)
 
-          // Create document record
+          // Create document record with the actual storage key
           const documentData = {
             organizationId,
             treatmentPlanId: planId,
-            fileName,
+            fileName: uploadedFile.file.name,
             originalFileName: uploadedFile.file.name,
             mimeType: uploadedFile.file.type,
             fileSize: uploadedFile.file.size,
-            storageKey,
+            storageKey: uploadResult.key,
             category: uploadedFile.type,
             description: uploadedFile.title
           }
+          console.log('Document data to save:', documentData)
 
           const document = await $fetch(`/api/patients/${patientId}/documents`, {
             method: 'POST',
@@ -403,8 +403,7 @@
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <UButton icon="i-lucide-eye" variant="ghost" color="neutral" size="sm" square />
-              <UButton icon="i-lucide-download" variant="ghost" color="neutral" size="sm" square />
+              <LazyDocumentViewerModal :document="doc" :patient-id="props.patient.id" />
               <UButton
                 icon="i-lucide-edit"
                 variant="ghost"

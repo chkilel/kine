@@ -9,9 +9,36 @@ export function useUploads() {
 
   async function getPresignUrl(key: string, expiresIn?: number): Promise<string> {
     try {
-      const { url } = await $fetch<{ url: string }>('/api/r2/signed-url', { params: { key, expiresIn } })
+      console.log('getPresignUrl - Requesting URL for key:', key)
+      const { urls, errors } = await $fetch<{ urls: Record<string, string | null>; errors?: Record<string, string> }>(
+        '/api/r2/signed-url',
+        { params: { keys: key, expiresIn } }
+      )
+      console.log('getPresignUrl - API response:', { urls, errors })
+
+      if (errors && errors[key]) {
+        console.error('getPresignUrl - API returned error for key:', key, errors[key])
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Failed to get presigned GET URL',
+          data: { details: errors[key] }
+        })
+      }
+
+      const url = urls[key]
+      if (!url) {
+        console.error('getPresignUrl - No URL returned for key:', key)
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Failed to get presigned GET URL',
+          data: { details: 'No URL returned for key' }
+        })
+      }
+
+      console.log('getPresignUrl - Returning URL:', url)
       return url
     } catch (err: any) {
+      console.error('getPresignUrl - Error:', err)
       throw createError({
         statusCode: 500,
         statusMessage: 'Failed to get presigned GET URL',
