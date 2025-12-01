@@ -1,6 +1,6 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler } from 'h3'
 import z from 'zod'
 import { getR2Client, getR2BucketName } from '~~/server/utils/r2'
 
