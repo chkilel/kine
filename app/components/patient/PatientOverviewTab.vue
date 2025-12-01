@@ -1,96 +1,90 @@
 <script setup lang="ts">
-  import { differenceInDays } from 'date-fns'
-  import type { Patient } from '~~/shared/types/patient.types'
+  import { LazyTreatmentPlanCreateSlideover } from '#components'
+  import { differenceInDays, formatDistanceToNow, parseISO } from 'date-fns'
+  import { fr } from 'date-fns/locale'
 
-  const props = defineProps<{
-    patient: Patient
-  }>()
+  const { patient } = defineProps<{ patient: Patient }>()
+
+  // Static data for fields not yet connected to database
+  const staticData = {
+    upcomingSessions: [
+      {
+        date: '18',
+        month: 'OCT',
+        type: 'Renforcement',
+        time: '11:00 - 30 min',
+        status: 'scheduled' as ConsultationStatus
+      },
+      {
+        date: '15',
+        month: 'OCT',
+        type: 'Bilan initial',
+        time: '10:00 - 45 min',
+        status: 'completed' as ConsultationStatus
+      },
+      {
+        date: '12',
+        month: 'OCT',
+        type: 'Mobilisation',
+        time: '09:00 - 30 min',
+        status: 'no_show' as ConsultationStatus
+      }
+    ],
+    recentDocuments: [
+      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
+      { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
+    ]
+  }
+
+  const overlay = useOverlay()
+  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
 
   // Use treatment plans composable
   const {
+    refetchTreatmentPlans,
     getActiveTreatmentPlan,
     getTreatmentPlanHistory,
-    formatTreatmentPlanStatus,
-    formatDateRange,
-    getTherapistName,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
-  } = usePatientTreatmentPlans(props.patient?.id)
-
-  // Watch for patient changes
-  watch(
-    () => props.patient?.id,
-    (newId) => {
-      if (newId) {
-        fetchTreatmentPlans(newId)
-      }
-    }
-  )
+  } = usePatientTreatmentPlans(() => patient?.id)
 
   // Computed properties for database fields
   const fullAddress = computed(() => {
     const parts = []
-    if (props.patient?.address) parts.push(props.patient.address)
-    if (props.patient?.city) parts.push(props.patient.city)
-    if (props.patient?.postalCode) parts.push(props.patient.postalCode)
-    if (props.patient?.country) parts.push(props.patient.country)
+    if (patient?.address) parts.push(patient.address)
+    if (patient?.city) parts.push(patient.city)
+    if (patient?.postalCode) parts.push(patient.postalCode)
+    if (patient?.country) parts.push(patient.country)
     return parts.join(', ') || '-'
   })
 
   const insuranceDetails = computed(() => {
-    if (props.patient?.insuranceProvider) {
-      let details = props.patient.insuranceProvider
-      if (props.patient?.insuranceNumber) {
-        details += ` (${props.patient.insuranceNumber})`
+    if (patient?.insuranceProvider) {
+      let details = patient.insuranceProvider
+      if (patient?.insuranceNumber) {
+        details += ` (${patient.insuranceNumber})`
       }
       return details
     }
     return '-'
   })
 
-  const primaryEmergencyContact = computed(() => {
-    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
-      const contact = props.patient.emergencyContacts[0]
-      return contact?.name || 'Sans nom'
+  const allEmergencyContacts = computed(() => {
+    if (!patient?.emergencyContacts || patient.emergencyContacts.length === 0) {
+      return ['-']
     }
-    return '-'
-  })
 
-  const primaryEmergencyPhone = computed(() => {
-    if (props.patient?.emergencyContacts && props.patient.emergencyContacts.length > 0) {
-      return props.patient.emergencyContacts[0]?.phone || '-'
-    }
-    return '-'
-  })
-
-  const allergiesList = computed(() => {
-    if (props.patient?.allergies && props.patient.allergies.length > 0) {
-      return props.patient.allergies
-    }
-    return []
-  })
-
-  const medicalHistoryList = computed(() => {
-    if (props.patient?.medicalConditions && props.patient.medicalConditions.length > 0) {
-      return props.patient.medicalConditions
-    }
-    return []
-  })
-
-  const currentTreatmentList = computed(() => {
-    if (props.patient?.medications && props.patient.medications.length > 0) {
-      return props.patient.medications
-    }
-    return []
-  })
-
-  const referralSource = computed(() => {
-    return props.patient?.referralSource || '-'
+    return patient.emergencyContacts.map((contact) => {
+      const name = contact.name || 'Sans nom'
+      const relationship = contact.relationship ? `(${getRelationshipLabel(contact.relationship)})` : ''
+      const phone = contact.phone || '-'
+      return `${name} ${relationship} - ${phone}`
+    })
   })
 
   const practitionerNotes = computed(() => {
-    if (props.patient?.notes && props.patient.notes.length > 0) {
-      return props.patient.notes.map((note) => ({
+    if (patient?.notes && patient.notes.length > 0) {
+      return patient.notes.map((note) => ({
         text: note.content,
         author: note.author,
         date: formatDate(note.date)
@@ -100,55 +94,28 @@
   })
 
   function formatDate(date: Date | string) {
-    const noteDate = typeof date === 'string' ? new Date(date) : date
+    const noteDate = typeof date === 'string' ? parseISO(date) : date
     const now = new Date()
     const diffInDays = differenceInDays(now, noteDate)
 
     if (diffInDays === 0) return "Aujourd'hui"
     if (diffInDays === 1) return 'Hier'
-    if (diffInDays <= 7) return `il y a ${diffInDays} jours`
-    if (diffInDays <= 30) return `il y a ${Math.floor(diffInDays / 7)} semaines`
-    if (diffInDays <= 365) return `il y a ${Math.floor(diffInDays / 30)} mois`
-    return `il y a ${Math.floor(diffInDays / 365)} ans`
+
+    return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
   }
 
-  // Static data for fields not yet connected to database
-  const staticData = {
-    upcomingSessions: [
-      { date: '18', month: 'OCT', type: 'Renforcement', time: '11:00 - 30 min', status: 'upcoming' },
-      { date: '15', month: 'OCT', type: 'Bilan initial', time: '10:00 - 45 min', status: 'completed' },
-      { date: '12', month: 'OCT', type: 'Mobilisation', time: '09:00 - 30 min', status: 'missed' }
-    ],
-    recentDocuments: [
-      { name: 'Radio_Epaule_Post-Chute.pdf', date: '02 Oct. 2024', type: 'radiology', icon: 'i-lucide-file-image' },
-      { name: 'Rapport_Medecin_Traitant.docx', date: '01 Oct. 2024', type: 'document', icon: 'i-lucide-file-text' }
-    ]
+  function openCreateTreatmentPlan() {
+    treatmentPlanCreateOverlay.open({ patient })
   }
 
-  function getSessionBadgeColor(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'warning'
-      case 'completed':
-        return 'success'
-      case 'missed':
-        return 'error'
-      default:
-        return 'neutral'
-    }
-  }
+  function openEditTreatmentPlan() {
+    const activePlan = getActiveTreatmentPlan.value
+    if (!activePlan) return
 
-  function getSessionBadgeLabel(status: string) {
-    switch (status) {
-      case 'upcoming':
-        return 'À venir'
-      case 'completed':
-        return 'Terminée'
-      case 'missed':
-        return 'Manquée'
-      default:
-        return status
-    }
+    treatmentPlanCreateOverlay.open({
+      patient,
+      treatmentPlan: activePlan
+    })
   }
 </script>
 
@@ -156,66 +123,6 @@
   <div class="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="flex flex-col gap-6 lg:col-span-1">
-      <!-- Résumé rapide -->
-      <UCard variant="outline">
-        <template v-if="treatmentPlansLoading">
-          <div class="flex items-center justify-center py-8">
-            <UIcon name="i-lucide-loader-2" class="animate-spin text-2xl" />
-          </div>
-        </template>
-        <template v-else-if="treatmentPlansError">
-          <div class="py-8 text-center">
-            <p class="text-muted">Erreur lors du chargement des données</p>
-          </div>
-        </template>
-        <template v-else-if="getActiveTreatmentPlan">
-          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
-          <div class="space-y-4 text-sm">
-            <div>
-              <h3 class="text-muted font-semibold">Pathologie principale</h3>
-              <p class="font-medium">{{ getActiveTreatmentPlan.diagnosis }}</p>
-            </div>
-            <div>
-              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-              <p class="font-medium">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
-            </div>
-            <div>
-              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
-              <div class="flex items-center gap-3">
-                <UProgress
-                  :model-value="(getActiveTreatmentPlan.painLevel || 0) * 10"
-                  :max="100"
-                  color="primary"
-                  size="md"
-                  class="flex-1"
-                />
-                <span class="font-semibold">{{ getActiveTreatmentPlan.painLevel || 0 }}/10</span>
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <h2 class="mb-5 text-lg font-bold">Résumé rapide</h2>
-          <div class="space-y-4 text-sm">
-            <div>
-              <h3 class="text-muted font-semibold">Pathologie principale</h3>
-              <p class="text-muted font-medium">Aucun plan de traitement actif</p>
-            </div>
-            <div>
-              <h3 class="text-muted font-semibold">Objectif du traitement</h3>
-              <p class="text-muted font-medium">Non spécifié</p>
-            </div>
-            <div>
-              <h3 class="text-muted mb-1 font-semibold">Niveau de douleur actuel</h3>
-              <div class="flex items-center gap-3">
-                <UProgress :model-value="0" :max="100" color="primary" size="md" class="flex-1" />
-                <span class="font-semibold">0/10</span>
-              </div>
-            </div>
-          </div>
-        </template>
-      </UCard>
-
       <!-- Données administratives -->
       <UCard variant="outline">
         <h2 class="mb-5 text-lg font-bold">Données administratives</h2>
@@ -238,14 +145,34 @@
             <UIcon name="i-lucide-stethoscope" class="text-muted mt-0.5 shrink-0 text-base" />
             <div>
               <h3 class="text-muted font-semibold">Médecin prescripteur</h3>
-              <p class="font-medium">{{ referralSource }}</p>
+              <p class="font-medium">{{ patient.referralSource || '-' }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
-            <div>
-              <h3 class="text-muted font-semibold">Contact d'urgence</h3>
-              <p class="font-medium">{{ primaryEmergencyContact }} - {{ primaryEmergencyPhone }}</p>
+            <div class="w-full">
+              <h3 class="text-muted font-semibold">Contacts d'urgence</h3>
+              <div class="space-y-2">
+                <div
+                  v-for="(contact, index) in patient?.emergencyContacts"
+                  :key="index"
+                  class="flex w-full items-center justify-between"
+                >
+                  <div class="text-gray-800 dark:text-gray-200">
+                    <p class="font-semibold">
+                      {{ contact.name || 'Sans nom' }}
+
+                      <span v-if="contact.relationship" class="font-normal">
+                        ({{ getRelationshipLabel(contact.relationship) }})
+                      </span>
+                    </p>
+                    <p class="font-title">{{ contact.phone || '-' }}</p>
+                  </div>
+                </div>
+                <div v-if="allEmergencyContacts.length === 0" class="text-muted text-sm">
+                  Aucun contact d'urgence enregistré
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -259,48 +186,62 @@
             <h3 class="text-muted mb-2 font-semibold">Allergies / Contre-indications</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="allergy in allergiesList"
+                v-for="allergy in patient.allergies"
                 :key="allergy"
                 color="error"
                 variant="subtle"
-                size="md"
                 class="rounded-full"
               >
                 {{ allergy }}
               </UBadge>
-              <span v-if="allergiesList.length === 0" class="text-muted">Aucune allergie connue</span>
+              <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-muted mb-2 font-semibold">Chirurgies</h3>
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                v-for="surgery in patient.surgeries"
+                :key="surgery"
+                color="error"
+                variant="subtle"
+                class="rounded-full"
+              >
+                {{ surgery }}
+              </UBadge>
+              <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Antécédents médicaux</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="condition in medicalHistoryList"
+                v-for="condition in patient.medicalConditions"
                 :key="condition"
                 color="warning"
                 variant="subtle"
-                size="md"
-                class="text-error rounded-full"
+                class="rounded-full"
               >
                 {{ condition }}
               </UBadge>
-              <span v-if="medicalHistoryList.length === 0" class="text-muted">Aucun antécédent médical connu</span>
+              <span v-if="patient.medicalConditions?.length === 0" class="text-muted">
+                Aucun antécédent médical connu
+              </span>
             </div>
           </div>
           <div>
             <h3 class="text-muted mb-2 font-semibold">Traitement actuel</h3>
             <div class="flex flex-wrap gap-2">
               <UBadge
-                v-for="medication in currentTreatmentList"
+                v-for="medication in patient.medications"
                 :key="medication"
                 color="primary"
                 variant="subtle"
-                size="md"
                 class="rounded-full"
               >
                 {{ medication }}
               </UBadge>
-              <span v-if="currentTreatmentList.length === 0" class="text-muted">Aucun traitement en cours</span>
+              <span v-if="patient.medications?.length === 0" class="text-muted">Aucun traitement en cours</span>
             </div>
           </div>
         </div>
@@ -334,7 +275,7 @@
         <template v-else-if="treatmentPlansError">
           <div class="py-8 text-center">
             <p class="text-muted">Erreur lors du chargement des plans de traitement</p>
-            <UButton variant="ghost" size="sm" @click="fetchTreatmentPlans(props.patient.id)">Réessayer</UButton>
+            <UButton variant="ghost" size="sm" @click="refetchTreatmentPlans()">Réessayer</UButton>
           </div>
         </template>
         <template v-else-if="getActiveTreatmentPlan">
@@ -343,23 +284,36 @@
               <h2 class="text-lg font-bold">Plan de traitement actif</h2>
               <p class="text-muted text-sm">{{ getActiveTreatmentPlan.title }}</p>
             </div>
-            <UBadge
-              :color="formatTreatmentPlanStatus(getActiveTreatmentPlan.status).color"
-              variant="soft"
-              size="lg"
-              class="rounded-full"
-            >
-              {{ formatTreatmentPlanStatus(getActiveTreatmentPlan.status).label }}
-            </UBadge>
-          </div>
-          <div class="text-muted mb-5 space-y-3 text-sm">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-calendar" class="shrink-0 text-base" />
-              <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+              <UBadge color="success" variant="subtle">Actif</UBadge>
+              <UButton
+                icon="i-lucide-edit"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                square
+                @click="openEditTreatmentPlan"
+              />
             </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-user" class="shrink-0 text-base" />
-              <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist) }}</span>
+          </div>
+          <div class="mb-5 space-y-4 text-sm">
+            <div>
+              <h3 class="text-dimmed font-semibold">Pathologie principale</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.diagnosis }}</p>
+            </div>
+            <div>
+              <h3 class="text-dimmed font-semibold">Objectif du traitement</h3>
+              <p class="font-medium">{{ getActiveTreatmentPlan.objective || 'Non spécifié' }}</p>
+            </div>
+            <div class="text-toned flex items-center gap-20">
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-calendar" class="text-muted text-base" />
+                <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-user" class="text-muted text-base" />
+                <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist ?? undefined) }}</span>
+              </div>
             </div>
           </div>
           <div>
@@ -372,22 +326,18 @@
               </span>
               <span>{{ getActiveTreatmentPlan.progress }}%</span>
             </div>
-            <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="lg" />
-          </div>
-          <div class="mt-6 flex flex-wrap justify-end gap-2">
-            <UButton variant="soft" color="neutral" icon="i-lucide-eye">Voir détail</UButton>
-            <UButton variant="soft" color="neutral" icon="i-lucide-edit">Modifier</UButton>
-            <UButton variant="soft" color="neutral" icon="i-lucide-archive">Clôturer</UButton>
-            <UButton color="primary" icon="i-lucide-plus">Nouveau plan</UButton>
+            <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="md" />
           </div>
         </template>
         <template v-else>
-          <div class="py-8 text-center">
-            <UIcon name="i-lucide-clipboard-list" class="text-muted mx-auto mb-4 text-4xl" />
-            <h3 class="mb-2 text-lg font-semibold">Aucun plan de traitement actif</h3>
-            <p class="text-muted mb-4">Commencez par créer un plan de traitement pour ce patient</p>
-            <UButton color="primary" icon="i-lucide-plus">Créer un plan</UButton>
-          </div>
+          <UEmpty
+            icon="i-lucide-clipboard-plus"
+            title="Aucun plan de traitement"
+            description="Ce patient n'a pas encore de plan de traitement. Créez-en un pour commencer le suivi."
+            :actions="[
+              { label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary', onClick: openCreateTreatmentPlan }
+            ]"
+          />
         </template>
       </UCard>
 
@@ -412,8 +362,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <UBadge :color="getSessionBadgeColor(session.status)" variant="soft" size="sm">
-                  {{ getSessionBadgeLabel(session.status) }}
+                <UBadge :color="getSessionStatusColor(session.status)" variant="soft" size="sm">
+                  {{ getSessionStatusLabel(session.status) }}
                 </UBadge>
                 <UButton variant="ghost" size="sm" icon="i-lucide-eye" square />
               </div>

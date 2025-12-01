@@ -1,11 +1,22 @@
 <script setup lang="ts">
   import type { BreadcrumbItem, FormSubmitEvent } from '@nuxt/ui'
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+  import { nextTick } from 'vue'
+
+  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Patients', to: '/patients' },
+    { label: 'Nouvelle fiche patient' }
+  ])
 
   const toast = useToast()
   const router = useRouter()
+  const { activeOrganization } = useOrganization()
+  const queryCache = useQueryCache()
 
-  const state = reactive<Partial<PatientCreate>>({
+  const form = useTemplateRef<HTMLFormElement>('createPatientForm')
+  const formState = reactive<Partial<PatientCreate>>({
+    organizationId: undefined,
     firstName: '',
     lastName: '',
     email: undefined,
@@ -28,7 +39,11 @@
     notes: undefined
   })
 
-  const form = useTemplateRef<HTMLFormElement>('createPatientForm')
+  watchEffect(() => {
+    if (activeOrganization.value.data?.id) {
+      formState.organizationId = activeOrganization.value.data?.id
+    }
+  })
 
   // Array input fields
   const newMedicalCondition = ref('')
@@ -36,98 +51,149 @@
   const newAllergy = ref('')
   const newMedication = ref('')
   const newNote = ref('')
-  const patientNotes = ref<Array<{ content: string; date: Date; author: string }>>([])
+  const patientNotes = ref<Array<Note>>([])
 
-  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { label: 'Dashboard', to: '/' },
-    { label: 'Patients', to: '/patients' },
-    { label: 'Nouvelle fiche patient' }
-  ])
+  // Edit state for emergency contacts
+  const editingContactIndex = ref<number | null>(null)
+  const editContactName = ref('')
+  const editContactPhone = ref('')
+  const editContactRelationship = ref<Relationship>()
+  const activateAddingContact = ref(false)
 
   // Date formatter and calendar models
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
   const dobModel = shallowRef<CalendarDate | null>(null)
-  const referralModel = shallowRef<CalendarDate | null>(null)
 
   watch(dobModel, (val) => {
-    state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
+    formState.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
   })
 
-  async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
-    try {
-      // Prepare the data to match the database schema
-      const submitData = {
-        ...event.data,
-        // Filter out empty values from arrays
-        medicalConditions: event.data.medicalConditions?.filter((condition) => condition.trim() !== '') || [],
-        surgeries: event.data.surgeries?.filter((surgery) => surgery.trim() !== '') || [],
-        allergies: event.data.allergies?.filter((allergy) => allergy.trim() !== '') || [],
-        medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
-        // Filter out empty emergency contacts numbers, name and relationship are optional
-        emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
-        // Combine existing notes with new notes as array of objects
-        notes: (() => {
-          const notesArray: Array<{ content: string; date: Date; author: string }> = []
-
-          // Add existing notes if any
-          if (event.data.notes && Array.isArray(event.data.notes)) {
-            notesArray.push(...event.data.notes.filter((note) => note.content && note.content.trim() !== ''))
-          }
-
-          // Add patient notes
-          notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
-
-          return notesArray.length > 0 ? notesArray : undefined
-        })()
-      }
-
-      const response = await $fetch('/api/patients', {
+  const { mutate: createPatient, isLoading } = useMutation({
+    mutation: async (patientData: PatientCreate) =>
+      $fetch('/api/patients', {
         method: 'POST',
-        body: submitData
-      })
-
+        body: patientData
+      }),
+    onSuccess: (_, variables) => {
       toast.add({
         title: 'Succès',
-        description: `Nouveau patient ${event.data.firstName} ${event.data.lastName} ajouté`,
+        description: `Nouveau patient ${variables.firstName} ${variables.lastName} ajouté`,
         color: 'success'
       })
 
+      // Invalidate patients list cache
+      queryCache.invalidateQueries({ key: ['patients'] })
+
       // Redirect to patient list or detail page
-      await router.push('/patients')
-    } catch (error: any) {
+      router.push('/patients')
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: error.data?.statusMessage || 'Échec de la création du patient',
         color: 'error'
       })
     }
+  })
+
+  async function onSubmit(event: FormSubmitEvent<PatientCreate>) {
+    const submitData = {
+      ...event.data,
+      // Filter out empty values from arrays
+      medicalConditions: event.data.medicalConditions?.filter((condition) => condition.trim() !== '') || [],
+      surgeries: event.data.surgeries?.filter((surgery) => surgery.trim() !== '') || [],
+      allergies: event.data.allergies?.filter((allergy) => allergy.trim() !== '') || [],
+      medications: event.data.medications?.filter((medication) => medication.trim() !== '') || [],
+      // Filter out empty emergency contacts numbers, name and relationship are optional
+      emergencyContacts: event.data.emergencyContacts?.filter((contact) => contact.phone.trim() !== '') || [],
+      // Combine existing notes with new notes as array of objects
+      notes: (() => {
+        const notesArray: Array<Note> = []
+
+        // Add existing notes if any
+        if (event.data.notes && Array.isArray(event.data.notes)) {
+          notesArray.push(...event.data.notes.filter((note) => note.content && note.content.trim() !== ''))
+        }
+
+        // Add patient notes
+        notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
+
+        return notesArray.length > 0 ? notesArray : undefined
+      })()
+    }
+
+    createPatient(submitData)
   }
 
-  // Array management functions
   function addEmergencyContact() {
-    if (!state.emergencyContacts) {
-      state.emergencyContacts = []
+    if (!formState.emergencyContacts) formState.emergencyContacts = []
+
+    if (editContactPhone.value.trim()) {
+      formState.emergencyContacts.push({
+        name: editContactName.value.trim() || undefined,
+        phone: editContactPhone.value.trim(),
+        relationship: editContactRelationship.value || undefined
+      })
+
+      // Reset form for next add
+      editContactName.value = ''
+      editContactPhone.value = ''
+      editContactRelationship.value = undefined
     }
-    state.emergencyContacts.push({ name: '', phone: '', relationship: '' })
   }
 
   function removeEmergencyContact(index: number) {
-    state.emergencyContacts?.splice(index, 1)
+    formState.emergencyContacts?.splice(index, 1)
+  }
+
+  function startEditContact(index: number) {
+    const contact = formState.emergencyContacts?.[index]
+    if (!contact) return
+
+    editingContactIndex.value = index
+    editContactName.value = contact.name || ''
+    editContactPhone.value = contact.phone
+    editContactRelationship.value = contact.relationship
+    // Scroll to the form area
+    nextTick(() => {
+      const formElement = document.querySelector('.contact-form')
+      formElement?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  function saveEditContact() {
+    if (editingContactIndex.value === null || !formState.emergencyContacts) return
+
+    formState.emergencyContacts[editingContactIndex.value] = {
+      name: editContactName.value || undefined,
+      phone: editContactPhone.value,
+      relationship: editContactRelationship.value || undefined
+    }
+
+    resetEditContact()
+  }
+
+  function resetEditContact() {
+    editingContactIndex.value = null
+    editContactName.value = ''
+    editContactPhone.value = ''
+    editContactRelationship.value = undefined
+    activateAddingContact.value = false
   }
 
   function addArrayItem(arrayField: keyof PatientCreate, value: string) {
-    const currentArray = (state[arrayField] as string[]) || []
+    const currentArray = (formState[arrayField] as string[]) || []
     if (value.trim()) {
       currentArray.push(value.trim())
-      const updatedState = state as any
+      const updatedState = formState as any
       updatedState[arrayField] = currentArray
     }
   }
 
   function removeArrayItem(arrayField: keyof PatientCreate, index: number) {
-    const currentArray = (state[arrayField] as string[]) || []
+    const currentArray = (formState[arrayField] as string[]) || []
     currentArray.splice(index, 1)
-    const updatedState = state as any
+    const updatedState = formState as any
     updatedState[arrayField] = currentArray
   }
 
@@ -156,7 +222,7 @@
       patientNotes.value.push({
         content: newNote.value.trim(),
         date: new Date(),
-        author: 'Dr. Martin' // This should come from current user context
+        author: 'Dr. Martin' // FIXME This should come from organization therapist/users
       })
 
       newNote.value = ''
@@ -192,7 +258,7 @@
         <UForm
           ref="createPatientForm"
           :schema="patientCreateSchema"
-          :state="state"
+          :state="formState"
           class="space-y-6"
           @submit="onSubmit"
         >
@@ -201,10 +267,10 @@
             <h2 class="text-highlighted mb-4 text-lg font-bold">Informations Essentielles</h2>
             <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
               <UFormField label="Prénom" name="firstName" required>
-                <UInput v-model="state.firstName" placeholder="ex: Jean" class="w-full" />
+                <UInput v-model="formState.firstName" placeholder="ex: Jean" class="w-full" />
               </UFormField>
               <UFormField label="Nom" name="lastName" required>
-                <UInput v-model="state.lastName" placeholder="ex: Dupont" class="w-full" />
+                <UInput v-model="formState.lastName" placeholder="ex: Dupont" class="w-full" />
               </UFormField>
               <UFormField label="Date de naissance" name="dateOfBirth" required>
                 <UPopover>
@@ -218,7 +284,7 @@
               </UFormField>
               <UFormField label="Sexe" name="gender" required>
                 <USelect
-                  v-model="state.gender"
+                  v-model="formState.gender"
                   placeholder="Sélectionner..."
                   class="w-full"
                   :items="[
@@ -229,7 +295,7 @@
               </UFormField>
               <div class="md:col-span-2">
                 <UFormField label="Téléphone" name="phone" required>
-                  <UInput v-model="state.phone" placeholder="ex: 06 12 34 56 78" type="tel" class="w-full" />
+                  <UInput v-model="formState.phone" placeholder="ex: 06 12 34 56 78" type="tel" class="w-full" />
                 </UFormField>
               </div>
             </div>
@@ -261,7 +327,7 @@
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
                       <UFormField label="Email" name="email">
                         <UInput
-                          v-model="state.email"
+                          v-model="formState.email"
                           placeholder="ex: jean.dupont@email.com"
                           type="email"
                           class="w-full"
@@ -269,7 +335,7 @@
                       </UFormField>
                       <UFormField label="Adresse" name="address">
                         <UTextarea
-                          v-model="state.address"
+                          v-model="formState.address"
                           placeholder="123 Rue de la République, 75001 Paris, France"
                           :rows="3"
                           class="w-full"
@@ -277,14 +343,14 @@
                       </UFormField>
                       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <UFormField label="Ville" name="city">
-                          <UInput v-model="state.city" placeholder="Paris" class="w-full" />
+                          <UInput v-model="formState.city" placeholder="Paris" class="w-full" />
                         </UFormField>
                         <UFormField label="Code Postal" name="postalCode">
-                          <UInput v-model="state.postalCode" placeholder="75001" class="w-full" />
+                          <UInput v-model="formState.postalCode" placeholder="75001" class="w-full" />
                         </UFormField>
                       </div>
                       <UFormField label="Pays" name="country">
-                        <UInput v-model="state.country" placeholder="France" class="w-full" />
+                        <UInput v-model="formState.country" placeholder="France" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -312,43 +378,98 @@
 
                   <template #content>
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <div v-if="state.emergencyContacts && state.emergencyContacts.length > 0" class="space-y-4">
-                        <div
-                          v-for="(contact, index) in state.emergencyContacts"
-                          :key="index"
-                          class="border-default rounded-lg border p-3"
-                        >
-                          <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                            <div class="sm:col-span-2">
-                              <UFormField :label="`Nom complet ${index + 1}`" :name="`emergencyContacts.${index}.name`">
-                                <UInput v-model="contact.name" placeholder="ex: Sophie Dupont" class="w-full" />
-                              </UFormField>
+                      <div
+                        v-if="
+                          (formState.emergencyContacts && formState.emergencyContacts.length > 0) ||
+                          activateAddingContact ||
+                          editingContactIndex !== null
+                        "
+                      >
+                        <div class="divide-default space-y-4 divide-y">
+                          <div
+                            v-for="(contact, index) in formState.emergencyContacts"
+                            :key="index"
+                            class="flex items-center justify-between pb-4"
+                          >
+                            <!-- Display View -->
+                            <div class="flex items-center gap-4">
+                              <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
+                              <div>
+                                <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
+                                <p class="text-muted flex gap-4 text-xs">
+                                  <span class="flex items-center gap-1">
+                                    <UIcon name="i-lucide-phone" class="size-3" />
+                                    {{ contact.phone }}
+                                  </span>
+                                  <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
+                                    <UIcon name="i-lucide-users" class="size-3" />
+                                    {{ getRelationshipLabel(contact.relationship) }}
+                                  </span>
+                                </p>
+                              </div>
                             </div>
-                            <UFormField
-                              :label="`Relation ${index + 1}`"
-                              :name="`emergencyContacts.${index}.relationship`"
-                            >
-                              <UInput v-model="contact.relationship" placeholder="ex: Épouse" class="w-full" />
-                            </UFormField>
-                            <UFormField :label="`Téléphone ${index + 1}`" :name="`emergencyContacts.${index}.phone`">
-                              <UInput
-                                v-model="contact.phone"
-                                placeholder="ex: 06 87 65 43 21"
-                                type="tel"
-                                class="w-full"
+                            <div class="flex items-center gap-2">
+                              <UButton
+                                icon="i-lucide-edit-2"
+                                variant="ghost"
+                                color="neutral"
+                                size="sm"
+                                square
+                                @click="startEditContact(index)"
                               />
-                            </UFormField>
-                            <div class="flex justify-end sm:col-span-2">
-                              <UButton size="xs" color="error" variant="ghost" @click="removeEmergencyContact(index)">
-                                <UIcon name="i-lucide-trash-2" />
-                              </UButton>
+                              <UButton
+                                icon="i-lucide-trash-2"
+                                variant="ghost"
+                                color="error"
+                                size="sm"
+                                square
+                                @click="removeEmergencyContact(index)"
+                              />
                             </div>
                           </div>
                         </div>
-                        <UButton size="xs" color="primary" variant="soft" @click.stop="addEmergencyContact">
-                          <UIcon name="i-lucide-plus" class="mr-1" />
-                          Ajouter
-                        </UButton>
+                        <!-- Add/Edit Contact Form -->
+                        <div class="contact-form space-y-4 pt-4">
+                          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <UFormField label="Téléphone du contact" required>
+                              <UInput
+                                v-model="editContactPhone"
+                                placeholder="+1 (555) 987-6543"
+                                class="w-full"
+                                type="tel"
+                              />
+                            </UFormField>
+                            <UFormField label="Nom du contact" hint="Optionnel">
+                              <UInput v-model="editContactName" placeholder="Jeanne Dupont" class="w-full" />
+                            </UFormField>
+                            <UFormField label="Relation" hint="Optionnel" class="md:col-span-2">
+                              <USelectMenu
+                                v-model="editContactRelationship"
+                                :items="RELATIONSHIP_OPTIONS"
+                                value-key="value"
+                                placeholder="Sélectionner une relation..."
+                                class="w-full"
+                              />
+                            </UFormField>
+                          </div>
+                          <div class="flex gap-2">
+                            <UButton
+                              :label="editingContactIndex !== null ? 'Mettre à jour le contact' : 'Ajouter le contact'"
+                              color="primary"
+                              variant="subtle"
+                              size="sm"
+                              @click="editingContactIndex !== null ? saveEditContact() : addEmergencyContact()"
+                              :disabled="!editContactPhone"
+                            />
+                            <UButton
+                              label="Effacer"
+                              color="neutral"
+                              variant="ghost"
+                              size="sm"
+                              @click="resetEditContact()"
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div v-else>
                         <UEmpty
@@ -363,7 +484,8 @@
                               variant: 'subtle',
                               onClick(event) {
                                 event.stopPropagation()
-                                addEmergencyContact()
+                                resetEditContact()
+                                activateAddingContact = true
                               }
                             }
                           ]"
@@ -396,10 +518,14 @@
                   <template #content>
                     <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
                       <UFormField label="Nom de l'assurance/mutuelle" name="insuranceProvider">
-                        <UInput v-model="state.insuranceProvider" placeholder="ex: Mutuelle SantéPlus" class="w-full" />
+                        <UInput
+                          v-model="formState.insuranceProvider"
+                          placeholder="ex: Mutuelle SantéPlus"
+                          class="w-full"
+                        />
                       </UFormField>
                       <UFormField label="Numéro de police" name="insuranceNumber">
-                        <UInput v-model="state.insuranceNumber" placeholder="ex: 987654321" class="w-full" />
+                        <UInput v-model="formState.insuranceNumber" placeholder="ex: 987654321" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -427,7 +553,7 @@
                   <template #content>
                     <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
                       <UFormField label="Médecin/Praticien" name="referralSource">
-                        <UInput v-model="state.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
+                        <UInput v-model="formState.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
                       </UFormField>
                     </div>
                   </template>
@@ -461,11 +587,11 @@
                       <UFormField label="Antécédents médicaux" name="medicalConditions">
                         <div class="space-y-2">
                           <div
-                            v-if="state.medicalConditions && state.medicalConditions.length > 0"
+                            v-if="formState.medicalConditions && formState.medicalConditions.length > 0"
                             class="flex flex-wrap gap-2"
                           >
                             <UBadge
-                              v-for="(condition, index) in state.medicalConditions"
+                              v-for="(condition, index) in formState.medicalConditions"
                               :key="index"
                               color="neutral"
                               variant="subtle"
@@ -499,9 +625,12 @@
                       <!-- Chirurgies / Interventions -->
                       <UFormField label="Chirurgies / Interventions" name="surgeries">
                         <div class="space-y-2">
-                          <div v-if="state.surgeries && state.surgeries.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.surgeries && formState.surgeries.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(surgery, index) in state.surgeries"
+                              v-for="(surgery, index) in formState.surgeries"
                               :key="index"
                               color="primary"
                               variant="subtle"
@@ -535,9 +664,12 @@
                       <!-- Allergies -->
                       <UFormField label="Allergies" name="allergies">
                         <div class="space-y-2">
-                          <div v-if="state.allergies && state.allergies.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.allergies && formState.allergies.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(allergy, index) in state.allergies"
+                              v-for="(allergy, index) in formState.allergies"
                               :key="index"
                               color="error"
                               variant="subtle"
@@ -571,9 +703,12 @@
                       <!-- Médicaments actuels -->
                       <UFormField label="Médicaments actuels" name="medications">
                         <div class="space-y-2">
-                          <div v-if="state.medications && state.medications.length > 0" class="flex flex-wrap gap-2">
+                          <div
+                            v-if="formState.medications && formState.medications.length > 0"
+                            class="flex flex-wrap gap-2"
+                          >
                             <UBadge
-                              v-for="(medication, index) in state.medications"
+                              v-for="(medication, index) in formState.medications"
                               :key="index"
                               color="info"
                               variant="subtle"
@@ -695,7 +830,13 @@
           <div class="flex items-center justify-end gap-3">
             <UButton label="Annuler" color="neutral" variant="subtle" @click="router.push('/patients')" />
             <UFieldGroup>
-              <UButton @click="submitButton" color="primary" label="Enregistrer" />
+              <UButton
+                @click="submitButton"
+                :loading="isLoading"
+                :disabled="isLoading"
+                color="primary"
+                label="Enregistrer"
+              />
 
               <UDropdownMenu
                 :items="[

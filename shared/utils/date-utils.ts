@@ -127,3 +127,10 @@ export function isValidDateAndConvert(dateString: string | null | undefined): Da
 
   return null
 }
+
+// Formatted date range
+export const formatDateRange = (startDate: Date | string, endDate: Date | string | null) => {
+  const start = formatDate(startDate)
+  const end = endDate ? formatDate(endDate) : 'En cours'
+  return `${start} - ${end}`
+}

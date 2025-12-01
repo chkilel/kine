@@ -14,12 +14,17 @@ export default defineAppConfig({
         variant: 'subtle'
       }
     },
-    selectmenu: {
+    selectMenu: {
       defaultVariants: {
         variant: 'subtle'
       }
     },
     textarea: {
+      defaultVariants: {
+        variant: 'subtle'
+      }
+    },
+    inputNumber: {
       defaultVariants: {
         variant: 'subtle'
       }

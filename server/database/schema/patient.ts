@@ -23,8 +23,8 @@ export const patients = sqliteTable(
     // Personal information
     firstName: text().notNull(), // Patient's first name — e.g., "John"
     lastName: text().notNull(), // Patient's last name — e.g., "Doe"
-    dateOfBirth: requiredDateSchema, // Timestamp (ms) — e.g., 631152000000 for "1990-01-01"
-    gender: text({ enum: ['male', 'female'] }), // Gender — either "male" or "female"
+    dateOfBirth: requiredDateSchema(), // Timestamp (ms) — e.g., 631152000000 for "1990-01-01"
+    gender: text({ enum: ['male', 'female'] }).notNull(), // Gender — either "male" or "female"
     email: text(), // Optional — e.g., "john.doe@example.com"
     phone: text().notNull(), // Patient’s phone number — e.g., "+212612345678"
     address: text(), // Street address — e.g., "123 Main Street"
@@ -112,18 +112,18 @@ export const treatmentPlans = sqliteTable(
     diagnosis: text().notNull(), // Main medical diagnosis — e.g., "Post-operative knee rehabilitation"
     objective: text(), // Goal or objective of treatment — e.g., "Restore full range of motion"
 
-    startDate: requiredDateSchema, // Start date (timestamp ms)
-    endDate: dateSchema, // End date (timestamp ms)
+    startDate: requiredDateSchema(), // Start date (timestamp ms)
+    endDate: dateSchema(), // End date (timestamp ms)
     numberOfSessions: integer(), // Total number of sessions prescribed — e.g., 12
     sessionFrequency: integer(), // Session frequency — e.g., 1,...,7
 
-    status: text({ enum: ['planned', 'ongoing', 'completed', 'cancelled'] })
+    status: text({ enum: ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] })
       .notNull()
       .default('planned'), // Status of treatment plan — e.g., "ongoing"
 
     // Medical staff and prescription info
     prescribingDoctor: text(), // Doctor who prescribed the treatment — e.g., "Dr. Martin"
-    prescriptionDate: dateSchema, // Date when prescription was issued — e.g., 1730246400000 for "2024-10-30"
+    prescriptionDate: dateSchema(), // Date when prescription was issued — e.g., 1730246400000 for "2024-10-30"
 
     // Clinical assessment
     painLevel: integer(), // Initial pain level (0-10 scale) — e.g., 6 for moderate pain
@@ -213,16 +213,18 @@ export const consultations = sqliteTable(
     treatmentPlanId: text().references(() => treatmentPlans.id, { onDelete: 'set null' }), // Optional link to a treatment plan — e.g., for progress tracking
 
     // ---- Scheduling ----
-    date: requiredDateSchema, // Consultation date (timestamp ms) — e.g., 1730332800000 for "2025-10-30"
+    date: requiredDateSchema(), // Consultation date (timestamp ms) — e.g., 1730332800000 for "2025-10-30"
     startTime: text(), // Start time of session — e.g., "10:00"
     endTime: text(), // End time of session — e.g., "11:00"
     duration: integer(), // Session duration in minutes — e.g., 60
-    sessionType: text({ enum: ['initial', 'follow_up', 'evaluation', 'discharge'] }), // Type of consultation — e.g., "follow_up"
+    type: text({
+      enum: ['initial', 'follow_up', 'evaluation', 'discharge', 'mobilization', 'reinforcement', 'reeducation']
+    }), // Type of consultation — e.g., "follow_up"
 
     // ---- Clinical content ----
     chiefComplaint: text(), // The main reason for visit — e.g., "Lower back pain for 3 months"
-    sessionNotes: text(), // Session-specific notes — e.g., "Improving flexibility since last visit"
-    treatmentPlanSummary: text(), // Short summary of applied treatment — e.g., "Manual therapy and stretching"
+    notes: text(), // Session-specific notes — e.g., "Improving flexibility since last visit"
+    treatmentSummary: text(), // Short summary of applied treatment — e.g., "Manual therapy and stretching"
     observations: text(), // Optional field for observations during session — e.g., "Tight hamstrings"
     nextSteps: text(), // Plan or recommendations for next session — e.g., "Increase resistance exercises"
 
@@ -233,17 +235,19 @@ export const consultations = sqliteTable(
 
     // ---- Therapist ----
     therapistId: text().references(() => users.id, { onDelete: 'set null' }), // Lead therapist for the session
-    therapistNotes: text(), // Therapist's personal notes about the session
 
     // ---- Session management ----
-    status: text({ enum: ['scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'] })
+    status: text({ enum: ['confirmed', 'scheduled', 'in_progress', 'completed', 'cancelled', 'no_show'] })
       .notNull()
       .default('scheduled'), // Session status — e.g., "completed"
+
+    // ---- Planning location ----
+    location: text({ enum: ['clinic', 'home', 'telehealth'] }).default('clinic'), // Consultation location — e.g., "clinic"
 
     // ---- Billing & insurance ----
     billed: integer({ mode: 'boolean' }).default(false), // Whether session was billed — e.g., true
     insuranceClaimed: integer({ mode: 'boolean' }).default(false), // Whether insurance claim was submitted — e.g., true
-    sessionCost: integer(), // Cost of session in cents — e.g., 5000 for €50.00
+    cost: integer(), // Cost of session in cents — e.g., 5000 for €50.00
 
     ...timestamps
   },
@@ -266,7 +270,11 @@ export const consultations = sqliteTable(
     index('idx_consultations_org_therapist_date').on(table.organizationId, table.therapistId, table.date),
 
     // Find consultations by session type: WHERE organizationId = ? AND sessionType = ? ORDER BY date DESC
-    index('idx_consultations_org_session_type_date').on(table.organizationId, table.sessionType, table.date),
+    index('idx_consultations_org_session_type_date').on(table.organizationId, table.type, table.date),
+
+    // ---- Location-based indexes ----
+    // Find consultations by location: WHERE organizationId = ? AND location = ? ORDER BY date DESC
+    index('idx_consultations_org_location_date').on(table.organizationId, table.location, table.date),
 
     // ---- Billing and insurance indexes ----
     // Find unbilled consultations: WHERE organizationId = ? AND billed = false ORDER BY date ASC

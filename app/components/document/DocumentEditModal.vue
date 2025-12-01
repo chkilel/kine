@@ -13,7 +13,7 @@
   }>()
 
   const schema = z.object({
-    category: z.enum(['referral', 'imaging', 'lab_results', 'treatment_notes', 'other']),
+    category: z.enum(['referral', 'imaging', 'lab_results', 'treatment_notes', 'prescriptions', 'other']),
     description: z.string().optional()
   })
 
@@ -47,7 +47,7 @@
         color: 'success'
       })
 
-      emit('updated', updatedDocument)
+      emit('updated', updatedDocument as unknown as PatientDocument)
       open.value = false
     } catch (error: any) {
       toast.add({
@@ -75,7 +75,7 @@
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
         <!-- Document Info -->
         <div class="bg-muted rounded-lg p-3">
-          <p class="font-medium">{{ document.originalName }}</p>
+          <p class="font-medium">{{ document.originalFileName }}</p>
           <p class="text-muted-foreground text-sm">
             {{ document.mimeType }} • {{ Math.round(document.fileSize / 1024) }} Ko
           </p>

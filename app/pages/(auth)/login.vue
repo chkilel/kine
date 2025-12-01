@@ -7,6 +7,7 @@
   })
 
   const toast = useToast()
+  const { signIn } = await useAuth()
 
   const fields = [
     {
@@ -51,7 +52,7 @@
 
   async function onSubmit(event: FormSubmitEvent<LoginSchema>) {
     console.log('Début de la connexion')
-    await authClient.signIn.email(
+    await signIn.email(
       {
         email: event.data.email,
         password: event.data.password,

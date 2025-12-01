@@ -43,10 +43,11 @@
 
   const pending = ref(false)
   const toast = useToast()
+  const { signUp } = await useAuth()
 
   async function onSubmit(event: FormSubmitEvent<SignUpSchema>) {
     const { firstName, lastName, email, password } = event.data
-    await authClient.signUp.email(
+    await signUp.email(
       {
         name: `${firstName} ${lastName}`,
         firstName,

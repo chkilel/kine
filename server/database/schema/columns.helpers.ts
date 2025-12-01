@@ -1,7 +1,7 @@
 import { integer } from 'drizzle-orm/sqlite-core'
 
-export const requiredDateSchema = integer({ mode: 'timestamp_ms' }).notNull()
-export const dateSchema = integer({ mode: 'timestamp_ms' })
+export const requiredDateSchema = () => integer({ mode: 'timestamp_ms' }).notNull()
+export const dateSchema = () => integer({ mode: 'timestamp_ms' })
 
 export const timestamps = {
   createdAt: integer({ mode: 'timestamp_ms' })

@@ -57,10 +57,10 @@ export default defineEventHandler(async (event) => {
     // Validate input
     const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
-    // Add org ID
+    // Use org ID from request body or fallback to session
     const validatedData = {
       ...body,
-      organizationId: activeOrganizationId
+      organizationId: body.organizationId || activeOrganizationId
     }
 
     // Create treatment plan

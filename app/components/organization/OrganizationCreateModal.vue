@@ -7,6 +7,7 @@
 
   const toast = useToast()
   const { uploadFile } = useUploads()
+  const { createOrganization, checkSlug } = useOrganization()
 
   // ✅ Unified reactive form state
   const form = reactive({
@@ -76,21 +77,22 @@
 
     try {
       // Upload logo if provided
-      if (form.logoFile) {
+      if (event.data.logoFile) {
         const result = await uploadFile({
-          file: form.logoFile,
+          file: event.data.logoFile,
           folder: 'org-logos',
-          name: `${form.slug}-logo`
+          name: `${event.data.slug}-logo`
         })
-        form.logo = result.key
+        event.data.logo = result.key
       }
 
-      const metadataObj = form.metadataText && form.metadataText.trim() ? JSON.parse(form.metadataText) : undefined
+      const metadataObj =
+        event.data.metadataText && event.data.metadataText.trim() ? JSON.parse(event.data.metadataText) : undefined
 
-      const { error } = await authClient.organization.create({
-        name: form.name,
-        slug: form.slug,
-        logo: form.logo || undefined,
+      const { error } = await createOrganization({
+        name: event.data.name,
+        slug: event.data.slug,
+        logo: event.data.logo || undefined,
         metadata: metadataObj || undefined,
         keepCurrentActiveOrganization: false
       })
@@ -124,7 +126,7 @@
   async function checkSlugAvailability(slug: string): Promise<boolean | null> {
     if (!slug) return null
     try {
-      const { data, error } = await authClient.organization.checkSlug({ slug })
+      const { data, error } = await checkSlug({ slug })
       if (error) {
         return null
       }
@@ -181,7 +183,7 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-end w-full gap-2 ">
+      <div class="flex w-full justify-end gap-2">
         <UButton label="Annuler" color="neutral" variant="outline" :disabled="isCreating" @click="handleCancel" />
         <UButton
           label="Créer une organisation"

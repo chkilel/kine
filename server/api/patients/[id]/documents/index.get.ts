@@ -1,11 +1,7 @@
 import { eq, and, desc, isNull } from 'drizzle-orm'
-import { patientDocuments } from '../../../../database/schema'
-import type { Session } from '~~/shared/types/auth.types'
+import { patientDocuments } from '~~/server/database/schema'
 
-// GET /api/patients/[id]/documents - List patient documents
-// POST /api/patients/[id]/documents - Upload patient document
 export default defineEventHandler(async (event) => {
-  const method = event.method
   const db = useDrizzle(event)
   const patientId = getRouterParam(event, 'id')
 
@@ -38,29 +34,20 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  switch (method) {
-    case 'GET':
-      return handleGetDocuments(db, patientId, activeOrganizationId, getQuery(event))
-
-    case 'POST':
-      return handleUploadDocument(db, patientId, activeOrganizationId, session.user.id, await readBody(event))
-
-    default:
-      throw createError({
-        statusCode: 405,
-        statusMessage: 'Method not allowed'
-      })
-  }
-})
-
-async function handleGetDocuments(db: any, patientId: string, organizationId: string, query: any) {
   try {
+    const query = getQuery(event)
+
     // Build filters
     const filters = [
+      eq(patientDocuments.organizationId, activeOrganizationId),
       eq(patientDocuments.patientId, patientId),
-      eq(patientDocuments.organizationId, organizationId),
       isNull(patientDocuments.deletedAt)
     ]
+
+    // Add treatment plan filter
+    if (query.treatmentPlanId) {
+      filters.push(eq(patientDocuments.treatmentPlanId, query.treatmentPlanId as any))
+    }
 
     // Add category filter
     if (query.category && query.category !== 'all') {
@@ -84,34 +71,4 @@ async function handleGetDocuments(db: any, patientId: string, organizationId: st
       statusMessage: 'Failed to fetch documents'
     })
   }
-}
-
-async function handleUploadDocument(db: any, patientId: string, organizationId: string, uploadedBy: string, body: any) {
-  try {
-    // Validate input
-    const validatedData = patientCreateSchema.parse({
-      ...body,
-      patientId,
-      organizationId,
-      uploadedBy
-    })
-
-    // Create document record
-    const [newDocument] = await db.insert(patientDocuments).values(validatedData).returning()
-
-    return newDocument
-  } catch (error: any) {
-    console.error('Error uploading document:', error)
-    if (error.name === 'ZodError') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid document data',
-        data: error.errors
-      })
-    }
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to upload document'
-    })
-  }
-}
+})

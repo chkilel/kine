@@ -1,9 +1,5 @@
 import { eq, and, isNull } from 'drizzle-orm'
-import { z } from 'zod'
-import { patientDocuments } from '../../../../database/schema'
-import { useDrizzle } from '../../../../utils/database'
-import { createAuth } from '../../../../utils/auth'
-import type { Session } from '~~/shared/types/auth.types'
+import { patientDocuments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -38,26 +34,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const body = await readBody(event)
-
-    const updateSchema = z.object({
-      category: z.enum(['referral', 'imaging', 'lab_results', 'treatment_notes', 'other']),
-      description: z.string().optional()
-    })
-
-    const validatedData = updateSchema.parse(body)
+    const body = await readValidatedBody(event, patientDocumentUpdateSchema.parse)
 
     const [updatedDocument] = await db
       .update(patientDocuments)
-      .set({
-        category: validatedData.category,
-        description: validatedData.description
-      })
+      .set(body)
       .where(
         and(
+          eq(patientDocuments.organizationId, activeOrganizationId),
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
           isNull(patientDocuments.deletedAt)
         )
       )

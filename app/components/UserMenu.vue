@@ -39,13 +39,13 @@
   })
 
   const router = useRouter()
-  const { data: session } = await authClient.useSession(useFetch)
+  const { sessionData, signOut } = await useAuth()
 
   async function handleSignOut() {
-    await authClient.signOut({
+    await signOut({
       fetchOptions: {
         onSuccess: () => {
-          session.value = null
+          sessionData.data.value = null
           router.push('/login') // redirect to login page
         }
       }
