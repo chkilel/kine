@@ -13,12 +13,16 @@
 
   const requestFetch = useRequestFetch()
 
-  // Reactive state for filters and pagination
-  const statusFilter = ref('all')
-  const searchFilter = ref('')
+  // Get current route
+  const route = useRoute()
+  const router = useRouter()
+
+  // Initialize state from URL query parameters
+  const statusFilter = ref((route.query.status as string) || 'all')
+  const searchFilter = ref((route.query.search as string) || '')
   const pagination = ref({
-    pageIndex: 0,
-    pageSize: 10
+    pageIndex: (parseInt(route.query.page as string) || 1) - 1,
+    pageSize: parseInt(route.query.limit as string) || 10
   })
 
   // Debounced search function using VueUse
@@ -26,14 +30,30 @@
     debouncedSearchFilter.value = searchValue
     // Reset to first page when searching
     pagination.value.pageIndex = 0
+    updateURL()
   }, 300)
 
-  const debouncedSearchFilter = ref('')
+  const debouncedSearchFilter = ref((route.query.search as string) || '')
 
   // Watch search filter and trigger debounced search
   watch(searchFilter, (newValue) => {
     debouncedSearch(newValue)
   })
+
+  // Update URL with current state
+  const updateURL = () => {
+    const query: Record<string, string | undefined> = {
+      page: pagination.value.pageIndex + 1 > 1 ? String(pagination.value.pageIndex + 1) : undefined,
+      limit: pagination.value.pageSize !== 10 ? String(pagination.value.pageSize) : undefined,
+      search: debouncedSearchFilter.value || undefined,
+      status: statusFilter.value !== 'all' ? statusFilter.value : undefined
+    }
+
+    // Remove undefined values
+    Object.keys(query).forEach((key) => query[key] === undefined && delete query[key])
+
+    router.replace({ query })
+  }
 
   // Reactive query parameters
   const queryParams = computed(() => ({
@@ -62,10 +82,28 @@
     { accessorKey: 'insuranceProvider', header: 'Assurance' }
   ]
 
-  // Reset to first page when filters change
+  // Reset to first page when filters change and update URL
   watch([statusFilter], () => {
     pagination.value.pageIndex = 0
+    updateURL()
   })
+
+  // Update URL when pagination changes
+  watch(
+    () => pagination.value.pageIndex,
+    () => {
+      updateURL()
+    }
+  )
+
+  // Update URL when page size changes
+  watch(
+    () => pagination.value.pageSize,
+    () => {
+      pagination.value.pageIndex = 0
+      updateURL()
+    }
+  )
 </script>
 
 <template>
@@ -236,7 +274,11 @@
                   :page="data.pagination.page"
                   :items-per-page="data.pagination.limit"
                   :total="data.pagination.total"
-                  @update:page="(p: number) => (pagination.pageIndex = p - 1)"
+                  @update:page="
+                    (p: number) => {
+                      pagination.pageIndex = p - 1
+                    }
+                  "
                 />
               </div>
             </div>
