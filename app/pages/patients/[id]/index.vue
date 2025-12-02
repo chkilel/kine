@@ -22,7 +22,20 @@
   const route = useRoute()
   const overlay = useOverlay()
   const editSlideover = overlay.create(LazyPatientEditSlideover)
-  const activeTab = ref('overview')
+  const router = useRouter()
+  const activeTab = computed({
+    get() {
+      const tabFromQuery = route.query.tab as string
+      const validTabs = ['overview', 'plan', 'seances', 'documents', 'facturation']
+      return validTabs.includes(tabFromQuery) ? tabFromQuery : 'overview'
+    },
+    set(tab) {
+      router.push({
+        path: route.path,
+        query: { ...route.query, tab }
+      })
+    }
+  })
 
   const requestFetch = useRequestFetch()
   const {
@@ -38,7 +51,7 @@
         dateOfBirth: parseISO(data.dateOfBirth),
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt),
-        deletedAt: data.deletedAt ? parseISO(data.deletedAt) : null
+        deletedAt: toDate(data.deletedAt)
       }))
   })
 
