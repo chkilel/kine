@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import { getPaginationRowModel } from '@tanstack/table-core'
   import type { TableColumn } from '@nuxt/ui'
   import type { SerializeObject } from 'nitropack/types'
 
@@ -13,58 +12,60 @@
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
 
   const requestFetch = useRequestFetch()
-  const { data, status, isPending } = useQuery({
-    key: ['patients'],
-    query: () => requestFetch('/api/patients')
-  })
 
-  const table = useTemplateRef('table')
-  const columnFilters = ref([{ id: 'search', value: '' }])
-  const columnVisibility = ref({ search: false })
+  // Reactive state for filters and pagination
+  const statusFilter = ref('all')
+  const searchFilter = ref('')
   const pagination = ref({
     pageIndex: 0,
     pageSize: 10
   })
 
-  const columns: TableColumn<SerializeObject<Patient>>[] = [
-    {
-      id: 'search',
-      accessorFn: (row) => `${row.firstName} ${row.lastName} ${row.email} ${row.phone}`,
-      enableColumnFilter: false,
-      enableHiding: false
+  // Debounced search function using VueUse
+  const debouncedSearch = useDebounceFn((searchValue: string) => {
+    debouncedSearchFilter.value = searchValue
+    // Reset to first page when searching
+    pagination.value.pageIndex = 0
+  }, 300)
+
+  const debouncedSearchFilter = ref('')
+
+  // Watch search filter and trigger debounced search
+  watch(searchFilter, (newValue) => {
+    debouncedSearch(newValue)
+  })
+
+  // Reactive query parameters
+  const queryParams = computed(() => ({
+    page: pagination.value.pageIndex + 1,
+    limit: pagination.value.pageSize,
+    search: debouncedSearchFilter.value || undefined,
+    status: statusFilter.value !== 'all' ? statusFilter.value : undefined
+  }))
+
+  const { data, status, isPending } = useQuery({
+    key: () => {
+      const params = queryParams.value
+      return ['patients', params]
     },
+    query: () => requestFetch('/api/patients', { query: queryParams.value })
+  })
+
+  const table = useTemplateRef('table')
+  const columnVisibility = ref({})
+
+  const columns: TableColumn<SerializeObject<Patient>>[] = [
     { accessorKey: 'name', header: 'Nom' },
     { accessorKey: 'contact', header: 'Contact' },
     { accessorKey: 'dateOfBirth', header: 'Date de Naissance' },
-    { accessorKey: 'status', header: 'Statut', filterFn: 'equals' },
+    { accessorKey: 'status', header: 'Statut' },
     { accessorKey: 'insuranceProvider', header: 'Assurance' }
   ]
 
-  const statusFilter = ref('all')
-  const searchFilter = ref('')
-
-  watch(
-    [() => statusFilter.value, () => searchFilter.value, () => status.value, () => table?.value?.tableApi],
-    ([newStatusFilter, newSearchFilter, dataStatus, tableApi]) => {
-      if (!tableApi || dataStatus !== 'success') return
-
-      // Apply status filter
-      const statusColumn = tableApi.getColumn('status')
-      if (statusColumn) {
-        if (newStatusFilter === 'all') {
-          statusColumn.setFilterValue(undefined)
-        } else {
-          statusColumn.setFilterValue(newStatusFilter)
-        }
-      }
-
-      // Apply search filter
-      const searchColumn = tableApi.getColumn('search')
-      if (searchColumn) {
-        searchColumn.setFilterValue(newSearchFilter)
-      }
-    }
-  )
+  // Reset to first page when filters change
+  watch([statusFilter], () => {
+    pagination.value.pageIndex = 0
+  })
 </script>
 
 <template>
@@ -105,9 +106,21 @@
                 <UInput
                   v-model="searchFilter"
                   icon="i-lucide-search"
-                  placeholder="Rechercher par nom, téléphone, email..."
+                  placeholder="Rechercher par nom ou prénom"
                   size="lg"
-                />
+                  class="w-full"
+                >
+                  <template v-if="searchFilter?.length" #trailing>
+                    <UButton
+                      color="neutral"
+                      variant="link"
+                      size="sm"
+                      icon="i-lucide-x"
+                      aria-label="Effacer le champ de recherche"
+                      @click="searchFilter = ''"
+                    />
+                  </template>
+                </UInput>
               </div>
 
               <!-- Filters -->
@@ -148,13 +161,8 @@
           <UCard>
             <UTable
               ref="table"
-              v-model:column-filters="columnFilters"
               v-model:column-visibility="columnVisibility"
-              v-model:pagination="pagination"
-              :pagination-options="{
-                getPaginationRowModel: getPaginationRowModel()
-              }"
-              :data="data"
+              :data="data?.data || []"
               :columns="columns"
               :loading="isPending"
               @select="(_e, row) => navigateTo(`/patients/${row.original.id}`)"
@@ -210,27 +218,31 @@
               </template>
             </UTable>
             <!-- Table Footer with Pagination -->
-            <div v-if="data && data.length > 0" class="border-accented border-t px-6 py-4">
+            <div v-if="data?.data && data.data.length > 0" class="border-accented border-t px-6 py-4">
               <div class="flex items-center justify-between">
                 <div class="text-muted text-sm">
                   Affichage de
-                  <span class="font-medium">{{ table?.tableApi?.getPaginationRowModel().rows.length || 0 }}</span>
+                  <span class="font-medium">
+                    {{ (data.pagination.page - 1) * data.pagination.limit + 1 }}-{{
+                      Math.min(data.pagination.page * data.pagination.limit, data.pagination.total)
+                    }}
+                  </span>
                   sur
-                  <span class="font-medium">{{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}</span>
+                  <span class="font-medium">{{ data.pagination.total }}</span>
                   résultats
                 </div>
 
                 <UPagination
-                  :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                  :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                  :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                  @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+                  :page="data.pagination.page"
+                  :items-per-page="data.pagination.limit"
+                  :total="data.pagination.total"
+                  @update:page="(p: number) => (pagination.pageIndex = p - 1)"
                 />
               </div>
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="status === 'success' && data && data.length === 0" class="py-12 text-center">
+            <div v-else-if="status === 'success' && data?.data && data.data.length === 0" class="py-12 text-center">
               <UIcon name="i-lucide-users" class="text-muted mx-auto mb-4 text-6xl" />
               <h3 class="text-foreground mb-2 text-lg font-medium">Aucun patient trouvé</h3>
               <p class="text-muted mb-4">Commencez par ajouter votre premier patient</p>

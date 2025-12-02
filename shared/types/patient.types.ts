@@ -348,11 +348,25 @@ export const patientDocumentQuerySchema = z.object({
   uploadedById: z.string().optional()
 })
 
+// Paginated response type
+export const patientPaginatedResponseSchema = z.object({
+  data: z.array(patientSchema),
+  pagination: z.object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+    hasNext: z.boolean(),
+    hasPrev: z.boolean()
+  })
+})
+
 // Type inference
 export type Patient = z.infer<typeof patientSchema>
 export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
+export type PatientPaginatedResponse = z.infer<typeof patientPaginatedResponseSchema>
 
 export type TreatmentPlan = z.infer<typeof treatmentPlanSchema>
 export type TreatmentPlanCreate = z.infer<typeof treatmentPlanCreateSchema>
