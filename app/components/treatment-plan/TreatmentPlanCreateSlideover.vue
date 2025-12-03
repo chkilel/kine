@@ -376,18 +376,9 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="handleCancel">
-          Annuler
-        </UButton>
-        <UButton
-          type="submit"
-          @click="submitButton"
-          color="primary"
-          class="h-9 px-3 text-sm font-semibold"
-          :loading="loading"
-          :disabled="loading"
-        >
+      <div class="flex w-full justify-end gap-3">
+        <UButton variant="outline" color="neutral" size="lg" @click="handleCancel">Annuler</UButton>
+        <UButton type="submit" @click="submitButton" color="primary" size="lg" :loading="loading" :disabled="loading">
           {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }} le plan
         </UButton>
       </div>
