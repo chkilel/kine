@@ -1,4 +1,6 @@
 import { format, differenceInYears, parseISO, isValid } from 'date-fns'
+import { CalendarDate } from '@internationalized/date'
+
 import { fr } from 'date-fns/locale'
 
 /**
@@ -133,4 +135,9 @@ export const formatDateRange = (startDate: Date | string, endDate: Date | string
   const start = formatDate(startDate)
   const end = endDate ? formatDate(endDate) : 'En cours'
   return `${start} - ${end}`
+}
+
+// Helper: Convert Date to CalendarDate
+export const dateToCalendarDate = (date: Date): CalendarDate => {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }

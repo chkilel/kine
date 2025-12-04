@@ -19,6 +19,7 @@ export interface StatusConfig {
 export interface SelectOption<T = string> {
   label: string
   value: T
+  icon?: string
 }
 
 // Patient Status Configuration
@@ -96,23 +97,36 @@ export const SESSION_STATUS_CONFIG = {
   no_show: { color: 'error', label: 'Absence' }
 } as const satisfies Record<ConsultationStatus, StatusConfig>
 
-// Consultation Types Configuration
-export const CONSULTATION_TYPES_CONFIG = {
-  initial: 'Évaluation initiale',
-  follow_up: 'Suivi',
-  evaluation: 'Évaluation',
-  discharge: 'Sortie',
-  mobilization: 'Mobilisation',
-  reinforcement: 'Renforcement',
-  reeducation: 'Rééducation'
-} as const satisfies Record<ConsultationSessionType, string>
+// Consultation Types with Icons Configuration
+export const CONSULTATION_TYPES_WITH_ICONS = [
+  { value: 'initial', label: 'Évaluation initiale' },
+  { value: 'follow_up', label: 'Suivi' },
+  { value: 'evaluation', label: 'Évaluation' },
+  { value: 'discharge', label: 'Sortie' },
+  { value: 'mobilization', label: 'Mobilisation' },
+  { value: 'reinforcement', label: 'Renforcement' },
+  { value: 'reeducation', label: 'Rééducation' }
+] as const satisfies SelectOption<ConsultationSessionType>[]
 
-// Consultation Locations Configuration
-export const CONSULTATION_LOCATIONS_CONFIG = {
-  clinic: 'Cabinet',
-  home: 'Domicile',
-  telehealth: 'Téléconsultation'
-} as const satisfies Record<ConsultationLocation, string>
+// Generate CONSULTATION_TYPES_CONFIG from CONSULTATION_TYPES_WITH_ICONS
+export const CONSULTATION_TYPES_CONFIG: Record<ConsultationSessionType, string> = CONSULTATION_TYPES_WITH_ICONS.reduce(
+  (acc, type) => ({ ...acc, [type.value]: type.label }),
+  {} as Record<ConsultationSessionType, string>
+)
+
+// Consultation Locations with Icons Configuration
+export const CONSULTATION_LOCATIONS_WITH_ICONS = [
+  { value: 'clinic', label: 'Cabinet', icon: 'i-lucide-building' },
+  { value: 'home', label: 'Domicile', icon: 'i-lucide-home' },
+  { value: 'telehealth', label: 'Téléconsultation', icon: 'i-lucide-video' }
+] as const satisfies SelectOption<ConsultationLocation>[]
+
+// Generate CONSULTATION_LOCATIONS_CONFIG from CONSULTATION_LOCATIONS_WITH_ICONS
+export const CONSULTATION_LOCATIONS_CONFIG: Record<ConsultationLocation, string> =
+  CONSULTATION_LOCATIONS_WITH_ICONS.reduce(
+    (acc, loc) => ({ ...acc, [loc.value]: loc.label }),
+    {} as Record<ConsultationLocation, string>
+  )
 
 // Document Icons Configuration
 export const DOCUMENT_ICONS_CONFIG = {
@@ -212,3 +226,22 @@ export const getConsultationTypeLabel = (type: ConsultationSessionType): string 
 export const CONSULTATION_LOCATION_OPTIONS = createSelectOptions(CONSULTATION_LOCATIONS_CONFIG)
 export const getConsultationLocationLabel = (location: ConsultationLocation): string =>
   getLabel(location, CONSULTATION_LOCATIONS_CONFIG)
+
+// Frequency Options
+export const FREQUENCY_OPTIONS: SelectOption<number>[] = [
+  { label: '1 fois', value: 1 },
+  { label: '2 fois', value: 2 },
+  { label: '3 fois', value: 3 },
+  { label: '4 fois', value: 4 },
+  { label: '5 fois', value: 5 }
+]
+
+// Preferred Days Options
+export const PREFERRED_DAYS_OPTIONS: SelectOption<string>[] = [
+  { value: 'Mon', label: 'Lundi' },
+  { value: 'Tue', label: 'Mardi' },
+  { value: 'Wed', label: 'Mercredi' },
+  { value: 'Thu', label: 'Jeudi' },
+  { value: 'Fri', label: 'Vendredi' },
+  { value: 'Sat', label: 'Samedi' }
+]

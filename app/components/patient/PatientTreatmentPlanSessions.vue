@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyConsultaionPlanningSlideover } from '#components'
+  import { LazyConsultationPlanningSlideover } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -8,7 +8,7 @@
 
   const toast = useToast()
   const overlay = useOverlay()
-  const sessionPlanningOverlay = overlay.create(LazyConsultaionPlanningSlideover)
+  const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
   const { fetchTreatmentPlanConsultations, deleteConsultation: deleteConsultationFromComposable } = useConsultations()
 
   // Consultations data
