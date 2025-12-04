@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { fr } from 'zod/locales'
-import type { SerializeObject } from 'nitropack/types'
 
 z.config(fr())
 
@@ -250,8 +249,8 @@ export const consultationSchema = z.object({
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
   duration: z.number().nullable(),
-  type: consultationSessionTypeSchema.nullable(),
-  location: consultationLocationSchema.nullable(),
+  type: consultationSessionTypeSchema,
+  location: consultationLocationSchema,
   chiefComplaint: z.string().nullable(),
   notes: z.string().nullable(),
   treatmentSummary: z.string().nullable(),

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyTreatmentPlanCreateSlideover } from '#components'
+  import { LazyTreatmentPlanCreateSlideover, PatientTreatmentPlanConsultations } from '#components'
 
   const props = defineProps<{ patient: Patient }>()
 
@@ -96,8 +96,8 @@
 
     <!-- Right Column -->
     <div class="flex flex-col gap-6 lg:col-span-2">
-      <!-- Sessions Overview -->
-      <PatientTreatmentPlanSessions :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <!-- Consultations Overview -->
+      <PatientTreatmentPlanConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
 
       <!-- Documents -->
       <PatientTreatmentPlanDocuments :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
