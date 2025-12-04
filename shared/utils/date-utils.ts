@@ -141,3 +141,13 @@ export const formatDateRange = (startDate: Date | string, endDate: Date | string
 export const dateToCalendarDate = (date: Date): CalendarDate => {
   return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }
+
+// Check if date is unavailable (weekends and past dates)
+export const isDateUnavailable = (date: any): boolean => {
+  const dateObj = date instanceof Date ? date : new Date(date.toString())
+  const day = dateObj.getDay()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  //day === 6 if we need to disable Saturdays
+  return day === 0 || dateObj < today
+}

@@ -394,6 +394,16 @@ export type Note = z.infer<typeof noteSchema>
 export type InsuranceCoverage = z.infer<typeof insuranceCoverageSchema>
 export type Relationship = z.infer<typeof relationshipSchema>
 
+// Planning types
+export interface PlanningSettings {
+  sessionsToPlan: number
+  frequency: number
+  duration: number
+  startDate: string
+  preferredDays: string[]
+  location: ConsultationLocation
+}
+
 // Extended types/interfaces
 export type TreatmentPlanWithProgress = TreatmentPlan & {
   therapist: {

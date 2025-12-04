@@ -3,7 +3,7 @@
 
   const props = defineProps<{
     patient: Patient
-    treatmentPlan: TreatmentPlan
+    treatmentPlan: TreatmentPlanWithProgress
   }>()
 
   const toast = useToast()
@@ -74,7 +74,7 @@
   function openSessionPlanning() {
     sessionPlanningOverlay.open({
       patient: props.patient as any,
-      treatmentPlan: props.treatmentPlan ? props.treatmentPlan : undefined
+      treatmentPlan: props.treatmentPlan
     })
   }
 </script>
