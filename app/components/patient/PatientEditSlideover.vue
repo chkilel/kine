@@ -1,28 +1,28 @@
 <script setup lang="ts">
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
-  import { parseISO } from 'date-fns'
 
-  const props = defineProps<{
-    patient: Patient
-  }>()
-
-  const emit = defineEmits<{
-    close: [patient?: Partial<Patient>]
-  }>()
+  const props = defineProps<{ patient: Patient }>()
+  const emit = defineEmits<{ close: [] }>()
 
   const toast = useToast()
   const formRef = ref<HTMLFormElement>()
+  const requestFetch = useRequestFetch()
+  const queryCache = useQueryCache()
 
-  // Emergency contact state
-  const emergencyContactName = ref('')
-  const emergencyContactPhone = ref('')
-  const emergencyContactRelationship = ref<Relationship>()
+  // Emergency contact form state
+  const emergencyContactForm = reactive({
+    name: '',
+    phone: '',
+    relationship: undefined as Relationship | undefined
+  })
 
   // Edit state for emergency contacts
   const editingContactIndex = ref<number | null>(null)
-  const editContactName = ref('')
-  const editContactPhone = ref('')
-  const editContactRelationship = ref<Relationship>()
+  const editContactForm = reactive({
+    name: '',
+    phone: '',
+    relationship: undefined as Relationship | undefined
+  })
 
   // Notes state
   const newNoteContent = ref('')
@@ -47,66 +47,65 @@
 
   // Date formatter and calendar models
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
-  const dobModel = shallowRef<CalendarDate | null>(null)
-
-  watch(dobModel, (val) => {
-    state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
-  })
-
-  // Initialize calendar models with patient data
-  onMounted(() => {
-    if (props.patient.dateOfBirth) {
-      const date = new Date(props.patient.dateOfBirth)
-      dobModel.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+  const dobModel = computed<CalendarDate | null>({
+    get: () => {
+      if (!state.dateOfBirth) return null
+      const date = new Date(state.dateOfBirth)
+      return dateToCalendarDate(date)
+    },
+    set: (val) => {
+      state.dateOfBirth = val ? val.toDate(getLocalTimeZone()) : undefined
     }
   })
 
-  async function onSubmit() {
-    if (!formRef.value) return
-
-    try {
-      const validationResult = await formRef.value.validate()
-
-      if (!validationResult) return
-
-      const response = await $fetch(`/api/patients/${props.patient.id}`, {
+  const updatePatientMutation = useMutation({
+    mutation: () =>
+      requestFetch(`/api/patients/${props.patient.id}`, {
         method: 'PUT',
         body: state
-      })
-
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: `Patient ${state.firstName} ${state.lastName} mis à jour avec succès`,
         color: 'success'
       })
 
-      // Refresh the patient data
-      await refreshNuxtData(`user-${response.id}`)
+      queryCache.invalidateQueries({ key: ['patients'] })
+      queryCache.invalidateQueries({ key: ['patient', props.patient.id] })
 
       emit('close')
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: error.data?.statusMessage || 'Échec de la mise à jour du patient',
         color: 'error'
       })
     }
+  })
+
+  async function onSubmit() {
+    if (!formRef.value) return
+
+    const validationResult = await formRef.value.validate()
+    if (!validationResult) return
+
+    updatePatientMutation.mutate()
   }
 
   function addNote() {
-    if (!newNoteContent.value.trim()) return
+    const content = newNoteContent.value.trim()
+    if (!content) return
 
-    const note = {
+    if (!state.notes) state.notes = []
+
+    state.notes.push({
       date: new Date(),
       author: 'Current User', // TODO: Get from auth context
-      content: newNoteContent.value.trim()
-    }
+      content
+    })
 
-    if (!state.notes) {
-      state.notes = []
-    }
-
-    state.notes.push(note)
     newNoteContent.value = ''
   }
 
@@ -114,25 +113,24 @@
     state.notes?.splice(index, 1)
   }
 
+  function resetEmergencyContactForm() {
+    emergencyContactForm.name = ''
+    emergencyContactForm.phone = ''
+    emergencyContactForm.relationship = undefined
+  }
+
   function addEmergencyContact() {
-    if (!emergencyContactPhone.value) return
+    if (!emergencyContactForm.phone) return
 
-    const newContact = {
-      name: emergencyContactName.value || undefined,
-      phone: emergencyContactPhone.value,
-      relationship: emergencyContactRelationship.value || undefined
-    }
+    if (!state.emergencyContacts) state.emergencyContacts = []
 
-    if (!state.emergencyContacts) {
-      state.emergencyContacts = []
-    }
+    state.emergencyContacts.push({
+      name: emergencyContactForm.name || undefined,
+      phone: emergencyContactForm.phone,
+      relationship: emergencyContactForm.relationship
+    })
 
-    state.emergencyContacts.push(newContact)
-
-    // Reset form
-    emergencyContactName.value = ''
-    emergencyContactPhone.value = ''
-    emergencyContactRelationship.value = undefined
+    resetEmergencyContactForm()
   }
 
   function startEditContact(index: number) {
@@ -140,18 +138,18 @@
     if (!contact) return
 
     editingContactIndex.value = index
-    editContactName.value = contact.name || ''
-    editContactPhone.value = contact.phone
-    editContactRelationship.value = contact.relationship
+    editContactForm.name = contact.name || ''
+    editContactForm.phone = contact.phone
+    editContactForm.relationship = contact.relationship
   }
 
   function saveEditContact() {
     if (editingContactIndex.value === null || !state.emergencyContacts) return
 
     state.emergencyContacts[editingContactIndex.value] = {
-      name: editContactName.value || undefined,
-      phone: editContactPhone.value,
-      relationship: editContactRelationship.value || undefined
+      name: editContactForm.name || undefined,
+      phone: editContactForm.phone,
+      relationship: editContactForm.relationship
     }
 
     cancelEditContact()
@@ -159,14 +157,26 @@
 
   function cancelEditContact() {
     editingContactIndex.value = null
-    editContactName.value = ''
-    editContactPhone.value = ''
-    editContactRelationship.value = undefined
+    editContactForm.name = ''
+    editContactForm.phone = ''
+    editContactForm.relationship = undefined
   }
 
-  function handleCancel() {
-    emit('close')
+  function removeEmergencyContact(index: number) {
+    state.emergencyContacts?.splice(index, 1)
   }
+
+  const isFormValid = computed(() => {
+    return state.firstName && state.lastName
+  })
+
+  const canAddEmergencyContact = computed(() => {
+    return emergencyContactForm.phone.trim().length > 0
+  })
+
+  const canSaveEditContact = computed(() => {
+    return editContactForm.phone.trim().length > 0
+  })
 </script>
 
 <template>
@@ -259,14 +269,19 @@
                 <div v-if="editingContactIndex === index" class="space-y-3">
                   <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <UFormField label="Nom du contact">
-                      <UInput v-model="editContactName" placeholder="Jeanne Dupont" class="w-full" />
+                      <UInput v-model="editContactForm.name" placeholder="Jeanne Dupont" class="w-full" />
                     </UFormField>
                     <UFormField label="Téléphone du contact">
-                      <UInput v-model="editContactPhone" placeholder="+1 (555) 987-6543" class="w-full" type="tel" />
+                      <UInput
+                        v-model="editContactForm.phone"
+                        placeholder="+1 (555) 987-6543"
+                        class="w-full"
+                        type="tel"
+                      />
                     </UFormField>
                     <UFormField label="Relation" class="md:col-span-2">
                       <USelectMenu
-                        v-model="editContactRelationship"
+                        v-model="editContactForm.relationship"
                         :items="RELATIONSHIP_OPTIONS"
                         value-key="value"
                         placeholder="Sélectionner une relation..."
@@ -281,7 +296,7 @@
                       variant="subtle"
                       size="sm"
                       @click="saveEditContact"
-                      :disabled="!editContactPhone"
+                      :disabled="!canSaveEditContact"
                     />
                     <UButton label="Annuler" color="neutral" variant="ghost" size="sm" @click="cancelEditContact" />
                   </div>
@@ -320,7 +335,7 @@
                       color="error"
                       size="sm"
                       square
-                      @click="state.emergencyContacts?.splice(index, 1)"
+                      @click="removeEmergencyContact(index)"
                     />
                   </div>
                 </div>
@@ -331,14 +346,19 @@
             <div v-if="editingContactIndex === null" class="space-y-4">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <UFormField label="Nom du contact">
-                  <UInput v-model="emergencyContactName" placeholder="Jeanne Dupont" class="w-full" />
+                  <UInput v-model="emergencyContactForm.name" placeholder="Jeanne Dupont" class="w-full" />
                 </UFormField>
                 <UFormField label="Téléphone du contact">
-                  <UInput v-model="emergencyContactPhone" placeholder="+1 (555) 987-6543" class="w-full" type="tel" />
+                  <UInput
+                    v-model="emergencyContactForm.phone"
+                    placeholder="+1 (555) 987-6543"
+                    class="w-full"
+                    type="tel"
+                  />
                 </UFormField>
                 <UFormField label="Relation" class="md:col-span-2">
                   <USelectMenu
-                    v-model="emergencyContactRelationship"
+                    v-model="emergencyContactForm.relationship"
                     :items="RELATIONSHIP_OPTIONS"
                     value-key="value"
                     placeholder="Sélectionner une relation..."
@@ -352,7 +372,7 @@
                 variant="subtle"
                 size="sm"
                 @click="addEmergencyContact"
-                :disabled="!emergencyContactPhone"
+                :disabled="!canAddEmergencyContact"
               />
             </div>
           </div>
@@ -384,10 +404,10 @@
           <h3 class="text-highlighted mb-4 text-base font-bold">Notes</h3>
           <div class="space-y-4">
             <div class="text-sm">Notes existantes: {{ state.notes?.length || 0 }}</div>
-            <div v-if="state.notes && state.notes.length > 0" class="space-y-2">
+            <div v-if="state.notes?.length" class="space-y-2">
               <div
                 v-for="(note, index) in state.notes"
-                :key="index"
+                :key="`note-${index}`"
                 class="flex items-start justify-between rounded-lg p-3"
               >
                 <div class="flex-1">
@@ -417,10 +437,17 @@
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="handleCancel">
+        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="emit('close')">
           Annuler
         </UButton>
-        <UButton color="primary" class="h-9 px-3 text-sm font-semibold" type="submit" @click="onSubmit">
+        <UButton
+          color="primary"
+          class="h-9 px-3 text-sm font-semibold"
+          type="submit"
+          @click="onSubmit"
+          :loading="updatePatientMutation.isLoading.value"
+          :disabled="updatePatientMutation.isLoading.value || !isFormValid"
+        >
           Mettre à jour
         </UButton>
       </div>
