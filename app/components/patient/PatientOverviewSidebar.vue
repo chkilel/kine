@@ -54,36 +54,44 @@
       <h2 class="mb-5 text-lg font-bold">Données administratives</h2>
       <div class="space-y-3 text-sm">
         <div class="flex items-start gap-3">
-          <UIcon name="i-lucide-home" class="text-muted mt-0.5 shrink-0 text-base" />
+          <UBadge icon="i-lucide-home" size="md" color="primary" variant="soft" class="p-1.5" />
           <div>
             <h3 class="text-muted font-semibold">Adresse</h3>
             <p class="font-medium">{{ fullAddress }}</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
-          <UIcon name="i-lucide-heart" class="text-muted mt-0.5 shrink-0 text-base" />
+          <UBadge icon="i-lucide-heart" size="md" color="primary" variant="soft" class="p-1.5" />
           <div>
             <h3 class="text-muted font-semibold">Assurance/Mutuelle</h3>
             <p class="font-medium">{{ insuranceDetails }}</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
-          <UIcon name="i-lucide-stethoscope" class="text-muted mt-0.5 shrink-0 text-base" />
+          <UBadge icon="i-lucide-stethoscope" size="md" color="primary" variant="soft" class="p-1.5" />
+
           <div>
             <h3 class="text-muted font-semibold">Médecin prescripteur</h3>
             <p class="font-medium">{{ patient.referralSource || '-' }}</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
-          <UIcon name="i-lucide-phone-call" class="text-muted mt-0.5 shrink-0 text-base" />
+          <UBadge icon="i-lucide-phone-call" size="md" color="primary" variant="soft" class="p-1.5" />
           <div class="w-full">
             <h3 class="text-muted font-semibold">Contacts d'urgence</h3>
-            <div class="space-y-2">
+            <div class="mt-4 space-y-2">
               <div
                 v-for="(contact, index) in patient?.emergencyContacts"
                 :key="index"
-                class="flex w-full items-center justify-between"
+                class="flex w-full items-start gap-3"
               >
+                <UBadge
+                  icon="i-lucide-chevron-right"
+                  size="sm"
+                  color="neutral"
+                  variant="soft"
+                  class="rounded-full p-1.5"
+                />
                 <div>
                   <p class="font-semibold">
                     {{ contact.name || 'Sans nom' }}

@@ -28,10 +28,14 @@
   <UCard variant="outline">
     <h2 class="mb-5 text-lg font-bold">Aperçu des prochaines/dernières séances</h2>
     <div class="flow-root">
-      <ul class="divide-default -my-4 divide-y">
-        <li v-for="session in upcomingSessions" :key="session.date" class="flex items-center justify-between py-4">
+      <ul class="space-y-2">
+        <li
+          v-for="session in upcomingSessions"
+          :key="session.date"
+          class="bg-muted hover:bg-elevated flex items-center justify-between rounded-lg p-3 py-4"
+        >
           <div class="flex items-center gap-4">
-            <div class="w-12 text-center">
+            <div class="border-default bg-default w-12 rounded-lg border py-1 text-center">
               <p class="text-sm font-bold">{{ session.date }}</p>
               <p class="text-muted text-xs">{{ session.month }}</p>
             </div>
@@ -41,10 +45,9 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <UBadge :color="getSessionStatusColor(session.status)" variant="soft" size="sm">
+            <UBadge :color="getSessionStatusColor(session.status)" variant="soft" size="md" class="rounded-full">
               {{ getSessionStatusLabel(session.status) }}
             </UBadge>
-            <UButton variant="ghost" size="sm" icon="i-lucide-eye" square />
           </div>
         </li>
       </ul>
