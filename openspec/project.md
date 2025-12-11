@@ -21,10 +21,43 @@ Kine is a comprehensive physical therapy clinic management web application desig
 - **Formatting**: Prettier with 2-space tabs, single quotes, 120 character width
 - **TypeScript**: Strict mode enabled
 - **Vue**: Composition API with `<script setup lang='ts'>` syntax
-- **CSS**: Nuxt UI base classes first especially for colors and then Tailwind CSS utility classes
+- **Nuxt**: Leverage Nuxt's powerful features such as auto-imports, modules, and its seamless integration with the Vue ecosystem to enhance developer productivity and maintainability.
+- **CSS**: Prioritize the use of Nuxt UI's base classes, especially for consistent color schemes and design language, before utilizing Tailwind CSS utility classes for additional customization and layout adjustments.
+- **Tailwind CSS**: Prioritize the use of Nuxt UI's design system components and utility classes for styling. Avoid custom colors or styles that deviate from the Nuxt UI design language to ensure consistency and maintainability.
 - **Naming**: PascalCase for components, camelCase for functions/variables
 - **File Organization**: Feature-based structure with clear separation of concerns
 - **API calls**: UseFetch and useAsyncData whenever is possible
+
+### Nuxt Directory Structure
+Kine Project Structure:
+
+```
+├── nuxt.config.ts        # Main Nuxt config
+├── .nuxtrc               # Alternative config syntax
+├── .nuxtignore           # Ignore files during build
+├── app/                  # Core of the application
+│   ├── assets/           # Build-processed assets
+│   ├── components/       # Vue components
+│   ├── composables/      # Reusable composables
+│   ├── layouts/          # Page layouts
+│   ├── middleware/       # Client-side route guards
+│   ├── pages/            # File-based routing
+│   ├── plugins/          # Vue plugins
+│   ├── utils/            # App utilities
+│   ├── app.config.ts     # Reactive app config
+│   ├── app.vue           # Root component
+│   └── error.vue         # Error page
+├── public/               # Static files served as-is
+├── server/               # Server-side logic (Nitro)
+│   ├── api/              # API endpoints
+│   ├── routes/           # Server routes (e.g. sitemap)
+│   ├── middleware/       # Server middleware
+│   ├── plugins/          # Server plugins
+│   └── utils/            # Server utilities
+├── shared/               # Code shared between client/server
+├── content/              # Markdown CMS (Nuxt Content)
+└── modules/              # Local Nuxt modules
+
 
 ### Architecture Patterns
 
