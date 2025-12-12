@@ -82,27 +82,6 @@
     }
   )
 
-  // Generate avatar background color based on patient name
-  const getAvatarColor = (firstName: string, lastName: string) => {
-    const colors = ['bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-red-100', 'bg-purple-100', 'bg-pink-100']
-    const index = (firstName.charCodeAt(0) + lastName.charCodeAt(0)) % colors.length
-    return colors[index]
-  }
-
-  // Generate avatar text color
-  const getAvatarTextColor = (firstName: string, lastName: string) => {
-    const colors = [
-      'text-blue-600',
-      'text-green-600',
-      'text-amber-600',
-      'text-red-600',
-      'text-purple-600',
-      'text-pink-600'
-    ]
-    const index = (firstName.charCodeAt(0) + lastName.charCodeAt(0)) % colors.length
-    return colors[index]
-  }
-
   // Check if any filters are active
   const hasActiveFilters = computed(() => {
     return debouncedSearchFilter.value.length > 0 || statusFilter.value !== 'all'
@@ -250,7 +229,7 @@
                   <div
                     class="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-bold"
                     :class="[
-                      getAvatarColor(patient.firstName, patient.lastName),
+                      getAvatarBgColor(patient.firstName, patient.lastName),
                       getAvatarTextColor(patient.firstName, patient.lastName)
                     ]"
                   >
