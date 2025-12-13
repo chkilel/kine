@@ -49,13 +49,21 @@
   - `UButton` for actions
   - `UForm` for form wrapper
   - `UFormField` for form field groups with labels
-  - `UInputTime` for time inputs (start/end times)
+  - `UInputTime` for time inputs (start/end times) - expects `TimeValue | CalendarDateTime | ZonedDateTime` types
   - `USelect` for dropdown selections (day of week, location, reason)
   - `UInputNumber` for numeric inputs (max sessions)
   - `USwitch` for toggles (availability status, full day)
-  - `UInputDate` for date selection (exception date)
+  - `UCalendar` for date selection (exception date) - expects `CalendarDate | CalendarDateTime | ZonedDateTime` types
 - Follow existing slideover patterns from `PatientEditSlideover.vue`
 - Use consistent spacing, colors, and typography
+
+### Type Safety for Time/Date Inputs
+
+- Use proper `@internationalized/date` types: `Time`, `CalendarDate`, `CalendarDateTime`, `ZonedDateTime`
+- Convert string times to proper `Time` objects when needed
+- Ensure `UInputTime` receives `TimeValue` types, not strings
+- Ensure `UCalendar` receives `CalendarDate` types, not strings
+- Use type conversion functions from `@internationalized/date` package
 
 ### Overlay Management
 
