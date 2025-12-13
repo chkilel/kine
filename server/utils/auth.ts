@@ -56,6 +56,29 @@ export function createAuth(event: H3Event) {
         lastName: {
           type: 'string',
           input: true
+        },
+        specialization: {
+          type: 'string[]',
+          required: false,
+          input: true,
+          defaultValue: null
+        },
+        licenseNumber: {
+          type: 'string',
+          required: false,
+          input: true
+        },
+        defaultSessionDuration: {
+          type: 'number',
+          required: false,
+          input: true,
+          defaultValue: 30
+        },
+        phoneNumbers: {
+          type: 'json',
+          required: false,
+          input: true,
+          defaultValue: []
         }
       }
     },

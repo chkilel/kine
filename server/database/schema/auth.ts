@@ -13,6 +13,10 @@ export const users = sqliteTable('users', {
     .notNull()
     .$default(() => false),
   image: text(),
+  specialization: text({ mode: 'json' }).$type<string[]>(),
+  licenseNumber: text(),
+  defaultSessionDuration: integer().default(30),
+  phoneNumbers: text({ mode: 'json' }).$type<{ number: string; category: string; id: string }[]>(),
   ...timestampsSoftDelete
 })
 
