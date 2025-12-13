@@ -4,6 +4,7 @@ import { users } from '~~/server/database/schema'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 import type { PhoneCategory } from '../utils/constants'
+import type { ConsultationLocation } from './patient.types'
 
 z.config(fr())
 
@@ -116,4 +117,69 @@ export type PhoneNumber = {
   id: string
   number: string
   category: PhoneCategory
+}
+
+// Availability Management Schemas
+export const weeklyAvailabilityTemplateCreateSchema = z
+  .object({
+    dayOfWeek: z
+      .enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
+      .refine((val) => val, { message: 'Le jour est requis' }),
+    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)"),
+    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)"),
+    location: z.enum(['clinic', 'home', 'telehealth']).refine((val) => val, { message: 'Le lieu est requis' }),
+    maxSessions: z.number().min(1, 'Minimum 1 session').max(10, 'Maximum 10 sessions')
+  })
+  .refine((data) => data.endTime > data.startTime, {
+    message: "L'heure de fin doit être après l'heure de début",
+    path: ['endTime']
+  })
+
+export const availabilityExceptionCreateSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
+    startTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
+      .optional(),
+    endTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
+      .optional(),
+    isAvailable: z.boolean(),
+    reason: z.string().optional()
+  })
+  .refine(
+    (data) => {
+      if (data.startTime && data.endTime) {
+        return data.endTime > data.startTime
+      }
+      return true
+    },
+    {
+      message: "L'heure de fin doit être après l'heure de début",
+      path: ['endTime']
+    }
+  )
+
+export type WeeklyAvailabilityTemplateCreate = z.infer<typeof weeklyAvailabilityTemplateCreateSchema>
+export type AvailabilityExceptionCreate = z.infer<typeof availabilityExceptionCreateSchema>
+
+// Availability Management Types
+export interface WeeklyAvailabilityTemplate {
+  id: string
+  dayOfWeek: string // 'Mon', 'Tue', etc.
+  startTime: string // '09:00'
+  endTime: string // '12:00'
+  location: ConsultationLocation
+  maxSessions: number
+}
+
+export interface AvailabilityException {
+  id: string
+  date: string // '2024-08-15'
+  startTime?: string // optional for full day
+  endTime?: string // optional for full day
+  isAvailable: boolean
+  reason?: string
 }
