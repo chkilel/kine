@@ -3,7 +3,7 @@ import { authClient } from '~~/app/utils/auth-client'
 import { users } from '~~/server/database/schema'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
-import type { PhoneCategory } from '../utils/constants'
+import type { PhoneCategory, ExceptionTypeValue } from '../utils/constants'
 import type { ConsultationLocation } from './patient.types'
 
 z.config(fr())
@@ -168,7 +168,7 @@ export type AvailabilityExceptionCreate = z.infer<typeof availabilityExceptionCr
 // Availability Management Types
 export interface WeeklyAvailabilityTemplate {
   id: string
-  dayOfWeek: string // 'Mon', 'Tue', etc.
+  dayOfWeek: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat'
   startTime: string // '09:00'
   endTime: string // '12:00'
   location: ConsultationLocation
@@ -181,5 +181,5 @@ export interface AvailabilityException {
   startTime?: string // optional for full day
   endTime?: string // optional for full day
   isAvailable: boolean
-  reason?: string
+  reason?: ExceptionTypeValue
 }

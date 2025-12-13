@@ -264,15 +264,21 @@ export const LOCATION_COLOR_MAPPING: Record<
 
 // Exception Type Configuration
 export const EXCEPTION_TYPE_CONFIG = {
-  leave: { label: 'Congés', color: 'warning', variant: 'subtle' },
-  training: { label: 'Formation', color: 'info', variant: 'subtle' },
-  personal_appointment: { label: 'RDV personnel', color: 'error', variant: 'subtle' },
-  holiday: { label: 'Jour férié', color: 'warning', variant: 'subtle' },
-  reduced_hours: { label: 'Horaires réduits', color: 'info', variant: 'subtle' }
+  vacation: { value: 'vacation', label: 'Congé', color: 'warning', variant: 'subtle' },
+  holiday: { value: 'holiday', label: 'Jour férié', color: 'warning', variant: 'subtle' },
+  sick: { value: 'sick', label: 'Maladie', color: 'error', variant: 'subtle' },
+  training: { value: 'training', label: 'Formation', color: 'info', variant: 'subtle' },
+  meeting: { value: 'meeting', label: 'Réunion', color: 'info', variant: 'subtle' },
+  personal: { value: 'personal', label: 'Personnel', color: 'error', variant: 'subtle' },
+  reduced_hours: { value: 'reduced_hours', label: 'Réduction horaire', color: 'info', variant: 'subtle' },
+  other: { value: 'other', label: 'Autre', color: 'neutral', variant: 'subtle' }
 } as const
 
 // Exception Type Options
 export const EXCEPTION_TYPE_OPTIONS = createSelectOptions(EXCEPTION_TYPE_CONFIG)
+
+// Exception Type
+export type ExceptionTypeValue = (typeof EXCEPTION_TYPE_CONFIG)[keyof typeof EXCEPTION_TYPE_CONFIG]['value']
 
 // Exception Type Color Helpers
 export const getExceptionTypeColor = (

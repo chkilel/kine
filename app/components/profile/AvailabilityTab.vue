@@ -1,5 +1,8 @@
 <script setup lang="ts">
+  import { LazyProfileAvailabilityTemplateSlideover, LazyProfileAvailabilityExceptionSlideover } from '#components'
+
   const toast = useToast()
+  const overlay = useOverlay()
 
   // Availability Management State
   const weeklyTemplates = ref<WeeklyAvailabilityTemplate[]>([
@@ -70,39 +73,11 @@
     }
   ])
 
+  // Create overlay instances
+  const templateOverlay = overlay.create(LazyProfileAvailabilityTemplateSlideover)
+  const exceptionOverlay = overlay.create(LazyProfileAvailabilityExceptionSlideover)
+
   // Template management functions
-  function addNewTemplate() {
-    const newTemplate: WeeklyAvailabilityTemplate = {
-      id: Date.now().toString(),
-      dayOfWeek: 'Mon',
-      startTime: '09:00',
-      endTime: '12:00',
-      location: 'clinic',
-      maxSessions: 4
-    }
-    weeklyTemplates.value.push(newTemplate)
-  }
-
-  function editTemplate(template: WeeklyAvailabilityTemplate) {
-    // TODO: Implement edit functionality
-    toast.add({
-      title: 'Info',
-      description: 'Fonctionnalité de modification bientôt disponible',
-      icon: 'i-lucide-info',
-      color: 'neutral'
-    })
-  }
-
-  function editException(exception: AvailabilityException) {
-    // TODO: Implement edit functionality
-    toast.add({
-      title: 'Info',
-      description: 'Fonctionnalité de modification bientôt disponible',
-      icon: 'i-lucide-info',
-      color: 'neutral'
-    })
-  }
-
   function deleteTemplate(template: WeeklyAvailabilityTemplate) {
     const index = weeklyTemplates.value.findIndex((t: WeeklyAvailabilityTemplate) => t.id === template.id)
     if (index !== -1) {
@@ -117,17 +92,6 @@
   }
 
   // Exception management functions
-  function addNewException() {
-    const newException: AvailabilityException = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0] || '',
-      startTime: undefined,
-      endTime: undefined,
-      isAvailable: false,
-      reason: undefined
-    }
-    exceptions.value.push(newException)
-  }
 
   function deleteException(exception: AvailabilityException) {
     const index = exceptions.value.findIndex((e: AvailabilityException) => e.id === exception.id)
@@ -141,27 +105,6 @@
       })
     }
   }
-
-  // Global action functions
-  function cancelChanges() {
-    // Reset to original data (in real app, this would fetch from API)
-    toast.add({
-      title: 'Info',
-      description: 'Modifications annulées',
-      icon: 'i-lucide-info',
-      color: 'neutral'
-    })
-  }
-
-  function saveAllChanges() {
-    // Save all changes (in real app, this would send to API)
-    toast.add({
-      title: 'Succès',
-      description: 'Disponibilités enregistrées avec succès',
-      icon: 'i-lucide-check-circle',
-      color: 'success'
-    })
-  }
 </script>
 
 <template>
@@ -173,7 +116,7 @@
             <h2 class="text-default text-lg font-bold">Modèles de disponibilité hebdomadaire</h2>
             <p class="text-muted mt-1 text-sm">Horaires récurrents pour ce praticien.</p>
           </div>
-          <UButton icon="i-lucide-plus" variant="soft" @click="addNewTemplate">Ajouter une plage</UButton>
+          <UButton icon="i-lucide-plus" variant="soft" @click="templateOverlay.open()">Ajouter une plage</UButton>
         </div>
       </template>
 
@@ -221,7 +164,7 @@
               size="md"
               color="primary"
               variant="ghost"
-              @click="editTemplate(template)"
+              @click="templateOverlay.open({ template })"
             />
             <UButton icon="i-lucide-trash" size="md" color="error" variant="ghost" @click="deleteTemplate(template)" />
           </div>
@@ -236,7 +179,7 @@
             <h2 class="text-default text-lg font-bold">Exceptions et Absences</h2>
             <p class="text-muted mt-1 text-sm">Gérer les congés ou changements ponctuels.</p>
           </div>
-          <UButton icon="i-lucide-plus" variant="soft" @click="addNewException">Ajouter une exception</UButton>
+          <UButton icon="i-lucide-plus" variant="soft" @click="exceptionOverlay.open()">Ajouter une exception</UButton>
         </div>
       </template>
 
@@ -304,7 +247,7 @@
               size="md"
               color="primary"
               variant="ghost"
-              @click="editException(exception)"
+              @click="exceptionOverlay.open({ exception })"
             />
             <UButton
               icon="i-lucide-trash"
