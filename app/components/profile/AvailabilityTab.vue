@@ -58,7 +58,7 @@
       id: '1',
       date: '2024-12-25',
       isAvailable: false,
-      reason: 'Jour férié - Noël'
+      reason: 'holiday'
     },
     {
       id: '2',
@@ -66,7 +66,7 @@
       startTime: '09:00',
       endTime: '12:00',
       isAvailable: true,
-      reason: 'Horaires réduits'
+      reason: 'reduced_hours'
     }
   ])
 
@@ -81,6 +81,26 @@
       maxSessions: 4
     }
     weeklyTemplates.value.push(newTemplate)
+  }
+
+  function editTemplate(template: WeeklyAvailabilityTemplate) {
+    // TODO: Implement edit functionality
+    toast.add({
+      title: 'Info',
+      description: 'Fonctionnalité de modification bientôt disponible',
+      icon: 'i-lucide-info',
+      color: 'neutral'
+    })
+  }
+
+  function editException(exception: AvailabilityException) {
+    // TODO: Implement edit functionality
+    toast.add({
+      title: 'Info',
+      description: 'Fonctionnalité de modification bientôt disponible',
+      icon: 'i-lucide-info',
+      color: 'neutral'
+    })
   }
 
   function deleteTemplate(template: WeeklyAvailabilityTemplate) {
@@ -146,131 +166,156 @@
 
 <template>
   <div class="mt-5 space-y-6">
-    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800/50">
-      <h3 class="mb-4 text-base font-bold text-gray-900 dark:text-white">Modèles de disponibilité hebdomadaire</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-          <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-800 dark:text-gray-300">
-            <tr>
-              <th class="px-4 py-3" scope="col">Jour de la semaine</th>
-              <th class="px-4 py-3" scope="col">Heure de début</th>
-              <th class="px-4 py-3" scope="col">Heure de fin</th>
-              <th class="px-4 py-3" scope="col">Lieu</th>
-              <th class="px-4 py-3" scope="col">Max séances</th>
-              <th class="px-4 py-3 text-right" scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(template, index) in weeklyTemplates"
-              :key="template.id"
-              class="border-b hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
-            >
-              <td class="min-w-[150px] px-4 py-3">
-                <USelectMenu
-                  v-model="template.dayOfWeek"
-                  :items="PREFERRED_DAYS_OPTIONS"
-                  value-key="value"
-                  size="sm"
-                  class="w-full"
-                />
-              </td>
-              <td class="min-w-[120px] px-4 py-3">
-                <UInput v-model="template.startTime" type="time" size="sm" class="w-full" />
-              </td>
-              <td class="min-w-[120px] px-4 py-3">
-                <UInput v-model="template.endTime" type="time" size="sm" class="w-full" />
-              </td>
-              <td class="min-w-[150px] px-4 py-3">
-                <USelectMenu
-                  v-model="template.location"
-                  :items="CONSULTATION_LOCATION_OPTIONS"
-                  value-key="value"
-                  size="sm"
-                  class="w-full"
-                />
-              </td>
-              <td class="min-w-[120px] px-4 py-3">
-                <UInput v-model="template.maxSessions" type="number" min="1" max="10" size="sm" class="w-full" />
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center justify-end gap-2">
-                  <UButton
-                    icon="i-lucide-trash"
-                    size="xs"
-                    color="error"
-                    variant="ghost"
-                    @click="deleteTemplate(template)"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <UButton icon="i-lucide-plus" size="sm" variant="outline" class="mt-4" @click="addNewTemplate">
-        Ajouter une plage
-      </UButton>
-    </div>
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-default text-lg font-bold">Modèles de disponibilité hebdomadaire</h2>
+            <p class="text-muted mt-1 text-sm">Horaires récurrents pour ce praticien.</p>
+          </div>
+          <UButton icon="i-lucide-plus" variant="soft" @click="addNewTemplate">Ajouter une plage</UButton>
+        </div>
+      </template>
 
-    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800/50">
-      <h3 class="mb-4 text-base font-bold text-gray-900 dark:text-white">Exceptions (indisponibilités spécifiques)</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-          <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-800 dark:text-gray-300">
-            <tr>
-              <th class="px-4 py-3" scope="col">Date</th>
-              <th class="px-4 py-3" scope="col">Heure de début</th>
-              <th class="px-4 py-3" scope="col">Heure de fin</th>
-              <th class="px-4 py-3" scope="col">Disponible</th>
-              <th class="px-4 py-3" scope="col">Motif</th>
-              <th class="px-4 py-3 text-right" scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="exception in exceptions"
-              :key="exception.id"
-              class="border-b hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
+      <div class="divide-default divide-y">
+        <div
+          v-for="template in weeklyTemplates"
+          :key="template.id"
+          class="group hover:bg-elevated flex items-center justify-between gap-4 p-5 transition-colors"
+        >
+          <div class="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+            <!-- Day Indicator -->
+            <div
+              class="border-default bg-muted flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border"
             >
-              <td class="min-w-[150px] px-4 py-3">
-                <UInput v-model="exception.date" type="date" size="sm" class="w-full" />
-              </td>
-              <td class="min-w-[120px] px-4 py-3">
-                <UInput v-model="exception.startTime" type="time" size="sm" class="w-full" />
-              </td>
-              <td class="min-w-[120px] px-4 py-3">
-                <UInput v-model="exception.endTime" type="time" size="sm" class="w-full" />
-              </td>
-              <td class="px-4 py-3">
-                <USwitch v-model="exception.isAvailable" />
-              </td>
-              <td class="min-w-[180px] px-4 py-3">
-                <UInput v-model="exception.reason" placeholder="Motif..." size="sm" class="w-full" />
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center justify-end gap-2">
-                  <UButton
-                    icon="i-lucide-trash"
-                    size="xs"
-                    color="error"
-                    variant="ghost"
-                    @click="deleteException(exception)"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <UButton icon="i-lucide-plus" size="sm" variant="outline" class="mt-4" @click="addNewException">
-        Ajouter une exception
-      </UButton>
-    </div>
+              <span class="text-muted mb-0.5 text-[10px] font-bold uppercase">
+                {{ getDayAbbreviation(template.dayOfWeek) }}
+              </span>
+              <UIcon name="i-lucide-calendar" class="text-primary size-5" />
+            </div>
 
-    <div class="mt-8 flex justify-end gap-4 border-t border-gray-200 pt-6 dark:border-gray-700">
-      <UButton variant="outline" @click="cancelChanges">Annuler</UButton>
-      <UButton color="primary" @click="saveAllChanges">Enregistrer les modifications</UButton>
-    </div>
+            <!-- Template Details -->
+            <div class="flex flex-col gap-1.5">
+              <div class="text-default text-base font-bold">{{ template.startTime }} - {{ template.endTime }}</div>
+              <div class="flex flex-wrap items-center gap-5">
+                <UBadge
+                  :color="getLocationColor(template.location)"
+                  :variant="getLocationVariant(template.location)"
+                  size="sm"
+                  class="rounded-full font-bold tracking-wide uppercase"
+                >
+                  {{ getConsultationLocationLabel(template.location) }}
+                </UBadge>
+                <p class="text-muted flex items-center gap-1.5 text-sm">
+                  <UIcon name="i-lucide-users" class="text-[16px]" />
+                  {{ template.maxSessions }} {{ template.maxSessions === 1 ? 'patient max' : 'patients simultanés' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <UButton
+              icon="i-lucide-pencil-line"
+              size="md"
+              color="primary"
+              variant="ghost"
+              @click="editTemplate(template)"
+            />
+            <UButton icon="i-lucide-trash" size="md" color="error" variant="ghost" @click="deleteTemplate(template)" />
+          </div>
+        </div>
+      </div>
+    </UCard>
+
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-default text-lg font-bold">Exceptions et Absences</h2>
+            <p class="text-muted mt-1 text-sm">Gérer les congés ou changements ponctuels.</p>
+          </div>
+          <UButton icon="i-lucide-plus" variant="soft" @click="addNewException">Ajouter une exception</UButton>
+        </div>
+      </template>
+
+      <div class="divide-default divide-y">
+        <div
+          v-for="exception in exceptions"
+          :key="exception.id"
+          class="group hover:bg-elevated flex items-center justify-between gap-4 p-5 transition-colors"
+        >
+          <div class="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+            <!-- Date Indicator -->
+            <div
+              class="border-default bg-muted flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border"
+            >
+              <span class="text-toned text-[14px] font-bold">
+                {{ new Date(exception.date).getDate() }}
+              </span>
+              <span class="text-dimmed text-[10px] font-bold uppercase">
+                {{ new Date(exception.date).toLocaleDateString('fr-FR', { month: 'short' }) }}
+              </span>
+            </div>
+
+            <!-- Exception Details -->
+            <div class="flex flex-col gap-1.5">
+              <div class="text-default text-base font-bold">
+                <span v-if="exception.startTime && exception.endTime">
+                  {{ exception.startTime }} - {{ exception.endTime }}
+                </span>
+                <span v-else>
+                  {{
+                    new Date(exception.date).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })
+                  }}
+                  (Journée complète)
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-5">
+                <UBadge
+                  v-if="exception.reason"
+                  :color="getExceptionTypeColor(exception.reason)?.color"
+                  :variant="getExceptionTypeColor(exception.reason)?.variant"
+                  size="sm"
+                  class="rounded-full font-bold tracking-wide uppercase"
+                >
+                  {{ getExceptionTypeLabel(exception.reason) }}
+                </UBadge>
+
+                <div class="flex items-center gap-2">
+                  <USwitch v-model="exception.isAvailable" />
+                  <span class="text-muted text-sm">
+                    {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <UButton
+              icon="i-lucide-pencil-line"
+              size="md"
+              color="primary"
+              variant="ghost"
+              @click="editException(exception)"
+            />
+            <UButton
+              icon="i-lucide-trash"
+              size="md"
+              color="error"
+              variant="ghost"
+              @click="deleteException(exception)"
+            />
+          </div>
+        </div>
+      </div>
+    </UCard>
   </div>
 </template>

@@ -239,15 +239,55 @@ export const FREQUENCY_OPTIONS: SelectOption<number>[] = [
   { label: '6 fois', value: 6 }
 ]
 
+// Preferred Days Configuration
+export const PREFERRED_DAYS_CONFIG = {
+  Mon: 'Lundi',
+  Tue: 'Mardi',
+  Wed: 'Mercredi',
+  Thu: 'Jeudi',
+  Fri: 'Vendredi',
+  Sat: 'Samedi'
+} as const
+
 // Preferred Days Options
-export const PREFERRED_DAYS_OPTIONS: SelectOption<string>[] = [
-  { value: 'Mon', label: 'Lundi' },
-  { value: 'Tue', label: 'Mardi' },
-  { value: 'Wed', label: 'Mercredi' },
-  { value: 'Thu', label: 'Jeudi' },
-  { value: 'Fri', label: 'Vendredi' },
-  { value: 'Sat', label: 'Samedi' }
-]
+export const PREFERRED_DAYS_OPTIONS: SelectOption<string>[] = createSelectOptions(PREFERRED_DAYS_CONFIG)
+
+// Location Color Mapping for UI Badges
+export const LOCATION_COLOR_MAPPING: Record<
+  ConsultationLocation,
+  { color: ColorVariant; variant: 'solid' | 'outline' | 'soft' | 'subtle' }
+> = {
+  clinic: { color: 'success', variant: 'subtle' },
+  home: { color: 'warning', variant: 'subtle' },
+  telehealth: { color: 'info', variant: 'subtle' }
+}
+
+// Exception Type Configuration
+export const EXCEPTION_TYPE_CONFIG = {
+  leave: { label: 'Congés', color: 'warning', variant: 'subtle' },
+  training: { label: 'Formation', color: 'info', variant: 'subtle' },
+  personal_appointment: { label: 'RDV personnel', color: 'error', variant: 'subtle' },
+  holiday: { label: 'Jour férié', color: 'warning', variant: 'subtle' },
+  reduced_hours: { label: 'Horaires réduits', color: 'info', variant: 'subtle' }
+} as const
+
+// Exception Type Options
+export const EXCEPTION_TYPE_OPTIONS = createSelectOptions(EXCEPTION_TYPE_CONFIG)
+
+// Exception Type Color Helpers
+export const getExceptionTypeColor = (
+  type: string
+): { color: ColorVariant; variant: 'solid' | 'outline' | 'soft' | 'subtle' } => {
+  const config = EXCEPTION_TYPE_CONFIG[type as keyof typeof EXCEPTION_TYPE_CONFIG]
+  return config ? { color: config.color, variant: config.variant } : { color: 'neutral', variant: 'subtle' }
+}
+
+export const getExceptionTypeColorOnly = (type: string): ColorVariant => getExceptionTypeColor(type).color
+
+export const getExceptionTypeVariant = (type: string): 'solid' | 'outline' | 'soft' | 'subtle' =>
+  getExceptionTypeColor(type).variant
+
+export const getExceptionTypeLabel = (type: string): string => getLabel(type as any, EXCEPTION_TYPE_CONFIG)
 
 // Phone Categories
 export const PHONE_CATEGORIES = [
@@ -326,3 +366,20 @@ export const SPECIALIZATIONS_CONFIG = SPECIALIZATIONS.reduce(
 
 // Specialization Helpers
 export const getSpecializationLabel = (value: string): string => getLabel(value as any, SPECIALIZATIONS_CONFIG, value)
+
+// Day Abbreviation Helper
+export const getDayAbbreviation = (dayOfWeek: string): string => {
+  const label = PREFERRED_DAYS_CONFIG[dayOfWeek as keyof typeof PREFERRED_DAYS_CONFIG]
+  return label ? label.slice(0, 3) : dayOfWeek
+}
+
+// Preferred Day Label Helper
+export const getPreferredDayLabel = (day: string): string => getLabel(day as any, PREFERRED_DAYS_CONFIG)
+
+// Location Color Helper
+export const getLocationColor = (location: ConsultationLocation): ColorVariant =>
+  LOCATION_COLOR_MAPPING[location]?.color || 'neutral'
+
+// Location Variant Helper
+export const getLocationVariant = (location: ConsultationLocation): 'solid' | 'outline' | 'soft' | 'subtle' =>
+  LOCATION_COLOR_MAPPING[location]?.variant || 'soft'
