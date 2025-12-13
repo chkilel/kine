@@ -2,7 +2,21 @@
 
 ## Summary
 
-This change adds a comprehensive availability management interface to the "Disponibilités" tab in the profile page. The UI will allow therapists to manage their weekly availability templates and specific exceptions (unavailability periods).
+This change adds a comprehensive availability management interface to "Disponibilités" tab in profile page. The UI will allow therapists to manage their weekly availability templates and specific exceptions (unavailability periods).
+
+## Why
+
+Therapists need a clear, intuitive way to manage their availability patterns so that the scheduling system can accurately reflect when they are available for appointments. Currently, the availability tab is just a placeholder, making it impossible for therapists to set their working hours or indicate when they're unavailable. This creates friction in the appointment booking process and can lead to scheduling conflicts or missed appointments.
+
+## What Changes
+
+- Replace the placeholder availability tab with a fully functional availability management interface
+- Add weekly availability template management with editable tables for day/time/location settings
+- Add exception management for specific dates with availability toggles and reason fields
+- Implement responsive table layouts using Nuxt UI components
+- Add form validation and user feedback through toast notifications
+- Extract availability functionality into a separate, self-contained component
+- Integrate with existing constants for consultation locations and preferred days
 
 ## User Story
 
