@@ -150,7 +150,7 @@
             :model-value="true"
             disabled
             description="Cette plage sera générée chaque semaine"
-            class="flex-row-reverse justify-end"
+            class="flex-row-reverse justify-between"
           >
             <template #label>
               <span class="text-foreground text-sm font-semibold">Récurrence active</span>
