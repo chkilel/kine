@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
+  import { CalendarDate, Time, getLocalTimeZone } from '@internationalized/date'
 
-  const props = defineProps<{ exception?: AvailabilityException }>()
+  const props = defineProps<{ availabilityException?: AvailabilityException }>()
   const emit = defineEmits<{ close: [] }>()
 
   const toast = useToast()
@@ -9,16 +9,39 @@
 
   // Form state
   const state = reactive<AvailabilityExceptionCreate>({
-    date: props.exception?.date || new Date().toISOString().split('T')[0],
-    startTime: props.exception?.startTime || undefined,
-    endTime: props.exception?.endTime || undefined,
-    isAvailable: props.exception?.isAvailable ?? false,
-    reason: props.exception?.reason || undefined
+    date: props.availabilityException?.date || new Date(),
+    startTime: props.availabilityException?.startTime || undefined,
+    endTime: props.availabilityException?.endTime || undefined,
+    isAvailable: props.availabilityException?.isAvailable ?? false,
+    reason: props.availabilityException?.reason || undefined
   })
 
   // Time values for UI components
-  const startTimeModel = computed(() => state.startTime)
-  const endTimeModel = computed(() => state.endTime)
+  const startTimeModel = computed<Time | undefined>({
+    get: () => {
+      if (!state.startTime) return undefined
+      const [hours, minutes] = state.startTime.split(':').map(Number)
+      return new Time(hours, minutes, 0)
+    },
+    set: (value: Time | undefined) => {
+      state.startTime = value
+        ? `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
+        : undefined
+    }
+  })
+
+  const endTimeModel = computed<Time | undefined>({
+    get: () => {
+      if (!state.endTime) return undefined
+      const [hours, minutes] = state.endTime.split(':').map(Number)
+      return new Time(hours, minutes)
+    },
+    set: (value: Time | undefined) => {
+      state.endTime = value
+        ? `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
+        : undefined
+    }
+  })
 
   // Full day toggle
   const isFullDay = computed({
@@ -29,7 +52,7 @@
         state.endTime = undefined
       } else {
         state.startTime = '09:00'
-        state.endTime = '12:00'
+        state.endTime = '17:00' // 5pm is more typical for end time
       }
     }
   })
@@ -39,14 +62,23 @@
     get: () => {
       if (!state.date) return null
       const date = new Date(state.date)
-      return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+      return dateToCalendarDate(date)
     },
     set: (val) => {
-      state.date = val
-        ? val.toDate(getLocalTimeZone()).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0]
+      state.date = val ? val.toDate(getLocalTimeZone()) : new Date()
     }
   })
+
+  // Reason selection state
+  const selectedReason = computed({
+    get: () => state.reason,
+    set: (value: string) => {
+      state.reason = value === 'other' ? 'other' : value
+    }
+  })
+
+  const isOtherReason = computed(() => selectedReason.value === 'other')
+  const otherReasonText = ref('')
 
   // Form validation
   const isFormValid = computed(() => {
@@ -66,7 +98,7 @@
 
     toast.add({
       title: 'Succès',
-      description: props.exception ? 'Exception mise à jour' : 'Exception ajoutée',
+      description: props.availabilityException ? 'Exception mise à jour' : 'Exception ajoutée',
       icon: 'i-lucide-check-circle',
       color: 'success'
     })
@@ -76,6 +108,17 @@
   function onCancel() {
     emit('close')
   }
+
+  function selectReason(reason: string) {
+    selectedReason.value = reason
+    if (reason !== 'other') {
+      otherReasonText.value = ''
+    }
+  }
+
+  const buttonText = computed(() => {
+    return props.availabilityException ? 'Mettre à jour' : "Ajouter l'exception"
+  })
 </script>
 
 <template>
@@ -83,9 +126,11 @@
     :open="true"
     :dismissible="false"
     @close="onCancel"
-    :title="exception ? 'Modifier l\'exception' : 'Ajouter une exception'"
+    :title="props.availabilityException ? 'Modifier l\'exception' : 'Ajouter une exception'"
     :description="
-      exception ? 'Modifier les disponibilités exceptionnelles' : 'Gérer les absences ou changements ponctuels'
+      props.availabilityException
+        ? 'Modifier les disponibilités exceptionnelles'
+        : 'Définissez une période d\'indisponibilité ou de disponibilité spécifique.'
     "
     :ui="{
       content: 'w-full md:w-1/2 lg:w-1/3 max-w-lg bg-elevated'
@@ -101,38 +146,40 @@
       >
         <!-- Date Section -->
         <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Date</h3>
-          <UFormField label="Date de l'exception" name="date">
-            <UPopover>
-              <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start" block>
-                {{
-                  dateModel ? dateModel.toDate(getLocalTimeZone()).toLocaleDateString('fr-FR') : 'Sélectionner une date'
-                }}
-              </UButton>
-              <template #content>
-                <UCalendar v-model="dateModel" class="p-2" />
-              </template>
-            </UPopover>
+          <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
+            <UIcon name="i-lucide-calendar" class="text-primary" />
+            <h3 class="text-foreground text-base font-bold">Date</h3>
+          </div>
+          <UFormField name="date">
+            <UCalendar v-model="dateModel" size="lg" class="w-full" :ui="{ header: 'capitalize text-lg' }" />
           </UFormField>
         </UCard>
 
         <!-- Timing Section -->
         <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Horaires</h3>
+          <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
+            <UIcon name="i-lucide-clock" class="text-primary" />
+            <h3 class="text-foreground text-base font-bold">Horaires</h3>
+          </div>
           <div class="space-y-4">
             <UFormField name="fullDay">
-              <div class="flex items-center gap-3">
-                <USwitch v-model="isFullDay" />
-                <span class="text-muted text-sm">Journée complète</span>
-              </div>
+              <USwitch
+                v-model="isFullDay"
+                description="Masquera les champs d'heures."
+                class="flex-row-reverse justify-between"
+              >
+                <template #label>
+                  <span class="text-foreground text-sm font-semibold">Journée complète</span>
+                </template>
+              </USwitch>
             </UFormField>
 
             <div v-if="!isFullDay" class="grid grid-cols-2 gap-4">
               <UFormField label="Heure de début" name="startTime">
-                <UInputTime v-model="startTimeModel" class="w-full" />
+                <UInputTime v-model="startTimeModel" icon="i-lucide-clock" class="w-full" size="lg" />
               </UFormField>
               <UFormField label="Heure de fin" name="endTime">
-                <UInputTime v-model="endTimeModel" class="w-full" />
+                <UInputTime v-model="endTimeModel" icon="i-lucide-clock" class="w-full" size="lg" />
               </UFormField>
             </div>
           </div>
@@ -140,24 +187,49 @@
 
         <!-- Availability Section -->
         <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Disponibilité</h3>
+          <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
+            <UIcon name="i-lucide-toggle-left" class="text-primary" />
+            <h3 class="text-foreground text-base font-bold">Disponibilité</h3>
+          </div>
           <div class="space-y-4">
             <UFormField name="isAvailable">
-              <div class="flex items-center gap-3">
-                <USwitch v-model="state.isAvailable" />
-                <span class="text-muted text-sm">
-                  {{ state.isAvailable ? 'Disponible' : 'Indisponible' }}
-                </span>
-              </div>
+              <USwitch
+                v-model="state.isAvailable"
+                description="Le thérapeute est-il disponible sur ce créneau ?"
+                class="flex-row-reverse justify-between"
+              >
+                <template #label>
+                  <span class="text-foreground text-sm font-semibold">
+                    {{ state.isAvailable ? 'Disponible' : 'Indisponible' }}
+                  </span>
+                </template>
+              </USwitch>
             </UFormField>
 
             <UFormField v-if="!state.isAvailable" label="Motif de l'absence" name="reason">
-              <USelect
-                v-model="state.reason"
-                :items="EXCEPTION_TYPE_OPTIONS"
-                placeholder="Sélectionner un motif"
-                class="w-full"
-              />
+              <div class="space-y-3">
+                <div class="flex flex-wrap gap-2">
+                  <UButton
+                    v-for="reason in EXCEPTION_TYPE_OPTIONS"
+                    :key="reason.value"
+                    :variant="selectedReason === reason.value ? 'solid' : 'outline'"
+                    :color="selectedReason === reason.value ? 'primary' : 'neutral'"
+                    :icon="getExceptionTypeIcon(reason.value)"
+                    size="sm"
+                    @click="selectReason(reason.value)"
+                    class="inline-flex items-center gap-2"
+                  >
+                    {{ reason.label }}
+                  </UButton>
+                </div>
+                <UInput
+                  v-if="isOtherReason"
+                  v-model="otherReasonText"
+                  placeholder="Veuillez préciser le motif..."
+                  size="lg"
+                  class="w-full"
+                />
+              </div>
             </UFormField>
           </div>
         </UCard>
@@ -171,12 +243,13 @@
         </UButton>
         <UButton
           color="primary"
-          class="h-9 px-3 text-sm font-semibold"
+          class="shadow-primary/25 h-9 px-3 text-sm font-semibold shadow-lg"
           type="submit"
           @click="onSubmit"
           :disabled="!isFormValid"
         >
-          {{ exception ? 'Mettre à jour' : 'Ajouter' }}
+          <UIcon name="i-lucide-check" class="text-lg" />
+          {{ buttonText }}
         </UButton>
       </div>
     </template>

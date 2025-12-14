@@ -262,7 +262,19 @@ export const LOCATION_COLOR_MAPPING: Record<
   telehealth: { color: 'info', variant: 'subtle' }
 }
 
-// Exception Type Configuration
+// Exception Type Configuration with Icons (Single Source of Truth)
+export const EXCEPTION_TYPE_CONFIG_WITH_ICONS = [
+  { value: 'vacation', label: 'Congé', icon: 'i-lucide-luggage' },
+  { value: 'holiday', label: 'Jour férié', icon: 'i-lucide-home' },
+  { value: 'sick', label: 'Maladie', icon: 'i-lucide-heart-pulse' },
+  { value: 'training', label: 'Formation', icon: 'i-lucide-graduation-cap' },
+  { value: 'meeting', label: 'Réunion', icon: 'i-lucide-users' },
+  { value: 'personal', label: 'Personnel', icon: 'i-lucide-user' },
+  { value: 'reduced_hours', label: 'Réduction horaire', icon: 'i-lucide-clock' },
+  { value: 'other', label: 'Autre', icon: 'i-lucide-more-horizontal' }
+] as const satisfies SelectOption[]
+
+// Exception Type Configuration (Derived from with-icons version)
 export const EXCEPTION_TYPE_CONFIG = {
   vacation: { value: 'vacation', label: 'Congé', color: 'warning', variant: 'subtle' },
   holiday: { value: 'holiday', label: 'Jour férié', color: 'warning', variant: 'subtle' },
@@ -274,8 +286,8 @@ export const EXCEPTION_TYPE_CONFIG = {
   other: { value: 'other', label: 'Autre', color: 'neutral', variant: 'subtle' }
 } as const
 
-// Exception Type Options
-export const EXCEPTION_TYPE_OPTIONS = createSelectOptions(EXCEPTION_TYPE_CONFIG)
+// Exception Type Options (With Icons)
+export const EXCEPTION_TYPE_OPTIONS = EXCEPTION_TYPE_CONFIG_WITH_ICONS as SelectOption[]
 
 // Exception Type
 export type ExceptionTypeValue = (typeof EXCEPTION_TYPE_CONFIG)[keyof typeof EXCEPTION_TYPE_CONFIG]['value']
@@ -294,6 +306,12 @@ export const getExceptionTypeVariant = (type: string): 'solid' | 'outline' | 'so
   getExceptionTypeColor(type).variant
 
 export const getExceptionTypeLabel = (type: string): string => getLabel(type as any, EXCEPTION_TYPE_CONFIG)
+
+// Exception Type Icon Helper (from with-icons config)
+export const getExceptionTypeIcon = (type: string): string => {
+  const config = EXCEPTION_TYPE_CONFIG_WITH_ICONS.find((item) => item.value === type)
+  return config?.icon || 'i-lucide-circle'
+}
 
 // Phone Categories
 export const PHONE_CATEGORIES = [

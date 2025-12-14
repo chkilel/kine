@@ -137,7 +137,7 @@ export const weeklyAvailabilityTemplateCreateSchema = z
 
 export const availabilityExceptionCreateSchema = z
   .object({
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
+    date: z.coerce.date(),
     startTime: z
       .string()
       .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
@@ -175,9 +175,10 @@ export interface WeeklyAvailabilityTemplate {
   maxSessions: number
 }
 
+// TODO must be derived from DB schema
 export interface AvailabilityException {
   id: string
-  date: string // '2024-08-15'
+  date: Date // '2024-08-15'
   startTime?: string // optional for full day
   endTime?: string // optional for full day
   isAvailable: boolean

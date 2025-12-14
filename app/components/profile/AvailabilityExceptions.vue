@@ -33,7 +33,7 @@
   }
 
   function editException(exception: AvailabilityException) {
-    exceptionOverlay.open({ exception })
+    exceptionOverlay.open({ availabilityException: exception })
   }
 
   function addException() {
