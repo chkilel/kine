@@ -2,23 +2,23 @@
 
 ## Why
 
-The current AvailabilityExceptionSlideover component needs to be modernized to match the exact design from the HTML reference while preserving all existing props and events interface, ensuring visual consistency with the design system.
+The current AvailabilityExceptionSlideover component needs to be modernized to match design patterns from AvailabilityTemplateSlideover.vue while preserving all existing props and events interface, ensuring visual consistency across profile components.
 
 ## What Changes
 
-- Update component UI to exactly match the HTML reference design (lines 219-383)
+- Update component UI to match AvailabilityTemplateSlideover.vue design patterns
 - Use UCalendar component for date selection (replacing current UPopover approach)
-- Apply the exact color scheme from HTML: primary (#135bec), surface colors, text colors
+- Apply color scheme from AvailabilityTemplateSlideover.vue (text-primary, text-foreground, text-muted-foreground, bg-elevated, etc.)
 - Preserve all existing props (exception) and emit events (close) without modification
-- Update form layout to match the HTML structure with proper sections
-- Use Material Icons as shown in HTML reference (not Nuxt UI icons)
-- Implement the exact button styling and hover states from HTML
-- Match the calendar design and interaction patterns from HTML
+- Use Lucide icons with Nuxt UI components (i-lucide-\* format) as in AvailabilityTemplateSlideover.vue
+- Implement card-based layout with proper section headers and icons
+- Apply consistent button styling and form field patterns
+- Use UForm, UCard, UFormField, USwitch components consistently
 
 ## Impact
 
 - Affected specs: availability-exception-slideover
 - Affected code: app/components/profile/AvailabilityExceptionSlideover.vue
 - **No changes to props interface or emitted events**
-- Visual consistency with HTML reference design
-- Improved user experience with exact design matching
+- Visual consistency with AvailabilityTemplateSlideover.vue
+- Improved user experience with consistent design patterns
