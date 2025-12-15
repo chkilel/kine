@@ -15,6 +15,13 @@
       "when": 1765560978272,
       "tag": "0001_fast_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765800942000,
+      "tag": "0002_availability_tables",
+      "breakpoints": true
     }
   ]
 }

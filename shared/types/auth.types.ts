@@ -3,8 +3,6 @@ import { authClient } from '~~/app/utils/auth-client'
 import { users } from '~~/server/database/schema'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
-import type { PhoneCategory, ExceptionTypeValue } from '../utils/constants'
-import type { ConsultationLocation } from './patient.types'
 
 z.config(fr())
 
@@ -28,11 +26,13 @@ export const signUpSchema = z
       .max(180, 'La durée maximale de session est de 180 minutes')
       .optional(),
     phoneNumbers: z.array(
-      z.object({
-        number: z.string().nonempty('Le numéro est requis'),
-        category: z.string().nonempty('La catégorie est requise'),
-        id: z.string().nonempty("L'ID est requis")
-      })
+      z
+        .object({
+          number: z.string().nonempty('Le numéro est requis'),
+          category: z.enum(['personal' as const, 'cabinet' as const, 'emergency' as const], 'La catégorie est requise'),
+          id: z.string().nonempty("L'ID est requis")
+        })
+        .optional()
     ),
     password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
     passwordConfirm: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional()
@@ -78,10 +78,10 @@ export const userUpdateSchema = createUpdateSchema(users, {
       z.object({
         id: z.string().nonempty("L'ID est requis"),
         number: z.string().nonempty('Le numéro est requis'),
-        category: z.enum(['personal', 'cabinet', 'emergency'], 'La catégorie est requise')
+        category: z.enum(['personal' as const, 'cabinet' as const, 'emergency' as const], 'La catégorie est requise')
       })
     )
-    .default([])
+    .optional()
 })
 
 // Password update schema
@@ -112,75 +112,3 @@ export type User = NonNullable<SessionData>['user']
 // Session types
 export type UseSessionReturn = Awaited<ReturnType<typeof authClient.useSession>>
 export type SessionData = NonNullable<UseSessionReturn>['data']['value']
-
-export type PhoneNumber = {
-  id: string
-  number: string
-  category: PhoneCategory
-}
-
-// Availability Management Schemas
-export const weeklyAvailabilityTemplateCreateSchema = z
-  .object({
-    dayOfWeek: z
-      .enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
-      .refine((val) => val, { message: 'Le jour est requis' }),
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)"),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)"),
-    location: z.enum(['clinic', 'home', 'telehealth']).refine((val) => val, { message: 'Le lieu est requis' }),
-    maxSessions: z.number().min(1, 'Minimum 1 session').max(10, 'Maximum 10 sessions')
-  })
-  .refine((data) => data.endTime > data.startTime, {
-    message: "L'heure de fin doit être après l'heure de début",
-    path: ['endTime']
-  })
-
-export const availabilityExceptionCreateSchema = z
-  .object({
-    date: z.coerce.date(),
-    startTime: z
-      .string()
-      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
-      .optional(),
-    endTime: z
-      .string()
-      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
-      .optional(),
-    isAvailable: z.boolean(),
-    reason: z.string().optional()
-  })
-  .refine(
-    (data) => {
-      if (data.startTime && data.endTime) {
-        return data.endTime > data.startTime
-      }
-      return true
-    },
-    {
-      message: "L'heure de fin doit être après l'heure de début",
-      path: ['endTime']
-    }
-  )
-
-export type WeeklyAvailabilityTemplateCreate = z.infer<typeof weeklyAvailabilityTemplateCreateSchema>
-export type AvailabilityExceptionCreate = z.infer<typeof availabilityExceptionCreateSchema>
-
-// Availability Management Types
-export interface WeeklyAvailabilityTemplate {
-  id: string
-  dayOfWeek: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat'
-  startTime: string // '09:00'
-  endTime: string // '12:00'
-  location: ConsultationLocation
-  maxSessions: number
-}
-
-// TODO must be derived from DB schema
-export interface AvailabilityException {
-  id: string
-  date: Date // '2024-08-15'
-  startTime?: string // optional for full day
-  endTime?: string // optional for full day
-  isAvailable: boolean
-  reason?: ExceptionTypeValue
-}
