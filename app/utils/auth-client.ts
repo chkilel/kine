@@ -14,16 +14,24 @@ export const authClient = createAuthClient({
           type: 'string'
         },
         specialization: {
-          type: 'string[]'
+          type: 'string[]',
+          required: false,
+          input: false
         },
         licenseNumber: {
-          type: 'string'
+          type: 'string',
+          required: false,
+          input: false
         },
         defaultSessionDuration: {
-          type: 'number'
+          type: 'number',
+          required: false,
+          input: false
         },
         phoneNumbers: {
-          type: 'json'
+          type: 'json',
+          required: false,
+          input: false
         }
       }
     })
