@@ -6,9 +6,8 @@
 </script>
 
 <template>
-  <UCard variant="outline">
+  <AppCard variant="outline" title="Documents récents du plan">
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-lg font-bold">Documents récents du plan</h2>
       <UButton
         variant="ghost"
         class=""
@@ -32,5 +31,5 @@
         </div>
       </div>
     </div>
-  </UCard>
+  </AppCard>
 </template>

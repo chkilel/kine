@@ -193,8 +193,7 @@
     <template #body>
       <UForm ref="formRef" :schema="patientUpdateSchema" :state="state" class="space-y-6">
         <!-- Basic Information -->
-        <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Informations de base</h3>
+        <AppCard title="Informations de base" variant="outline">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UFormField label="Prénom" placeholder="Jean" name="firstName">
               <UInput v-model="state.firstName" class="w-full" />
@@ -237,10 +236,10 @@
               />
             </UFormField>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Address Information -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Adresse</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UFormField label="Adresse" placeholder="123 rue Principale" name="address" class="md:col-span-2">
@@ -256,10 +255,10 @@
               <UInput v-model="state.country" class="w-full" />
             </UFormField>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Emergency Contact -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Contact d'urgence</h3>
           <div class="space-y-4">
             <div class="text-sm">Contacts existants: {{ state.emergencyContacts?.length || 0 }}</div>
@@ -376,10 +375,10 @@
               />
             </div>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Insurance Information -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Informations d'assurance</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UFormField label="Assureur" placeholder="Assureur" name="insuranceProvider">
@@ -389,18 +388,18 @@
               <UInput v-model="state.insuranceNumber" class="w-full" />
             </UFormField>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Referral Information -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Informations de recommandation</h3>
           <UFormField label="Source de recommandation" placeholder="Dr. Martin" name="referralSource">
             <UInput v-model="state.referralSource" class="w-full" />
           </UFormField>
-        </UCard>
+        </AppCard>
 
         <!-- Notes -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Notes</h3>
           <div class="space-y-4">
             <div class="text-sm">Notes existantes: {{ state.notes?.length || 0 }}</div>
@@ -431,7 +430,7 @@
               />
             </div>
           </div>
-        </UCard>
+        </AppCard>
       </UForm>
     </template>
 

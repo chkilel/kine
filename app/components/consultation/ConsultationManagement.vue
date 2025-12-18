@@ -19,14 +19,7 @@
 </script>
 
 <template>
-  <UCard>
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h3 class="text-foreground text-lg font-bold">Gestion des Séances</h3>
-        <p class="text-muted-foreground text-base">Prévisualisez, générez et ajustez les séances ci-dessous.</p>
-      </div>
-    </div>
-
+  <AppCard title="Gestion des Séances" description="Prévisualisez, générez et ajustez les séances ci-dessous.">
     <div class="mt-4 overflow-x-auto">
       <UTable
         :data="consultations"
@@ -129,5 +122,5 @@
         </UButton>
       </div>
     </div>
-  </UCard>
+  </AppCard>
 </template>

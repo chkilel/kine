@@ -6,11 +6,11 @@
 </script>
 
 <template>
-  <UCard variant="outline">
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-lg font-bold">Historique des plans</h2>
+  <AppCard variant="outline" title="Historique des plans">
+    <template #actions>
       <UButton variant="ghost" class="">Voir tous les plans</UButton>
-    </div>
+    </template>
+
     <template v-if="treatmentPlansLoading">
       <div class="flex items-center justify-center py-4">
         <UIcon name="i-lucide-loader-2" class="animate-spin text-xl" />
@@ -32,5 +32,5 @@
     <template v-else>
       <UEmpty icon="i-lucide-history" description="Aucun historique de plans de traitement" class="py-4" />
     </template>
-  </UCard>
+  </AppCard>
 </template>

@@ -83,17 +83,14 @@
 </script>
 
 <template>
-  <UCard :ui="{ body: 'p-0 sm:p-0' }">
-    <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 class="text-default text-lg font-bold">Exceptions et Absences</h2>
-          <p class="text-muted mt-1 text-sm">Gérer les congés ou changements ponctuels.</p>
-        </div>
-        <UButton icon="i-lucide-plus" variant="soft" @click="addException()">Ajouter une exception</UButton>
-      </div>
+  <AppCard
+    title="Exceptions et Absences"
+    description="Gérer les congés ou changements ponctuels."
+    :ui="{ body: 'p-0 sm:p-0' }"
+  >
+    <template #actions>
+      <UButton icon="i-lucide-plus" variant="soft" @click="addException()">Ajouter une exception</UButton>
     </template>
-
     <div class="divide-default divide-y">
       <!-- Loading state -->
       <div v-if="loading" class="space-y-3 p-5">
@@ -160,5 +157,5 @@
         </div>
       </div>
     </div>
-  </UCard>
+  </AppCard>
 </template>

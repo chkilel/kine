@@ -56,15 +56,13 @@
 </script>
 
 <template>
-  <UCard :ui="{ body: 'p-0 sm:p-0' }">
-    <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 class="text-default text-lg font-bold">Modèles de disponibilité hebdomadaire</h2>
-          <p class="text-muted mt-1 text-sm">Horaires récurrents pour ce praticien.</p>
-        </div>
-        <UButton icon="i-lucide-plus" variant="soft" @click="addTemplate()">Ajouter une plage</UButton>
-      </div>
+  <AppCard
+    title="Modèles de disponibilité hebdomadaire"
+    description="Horaires récurrents pour ce praticien."
+    :ui="{ body: 'p-0 sm:p-0' }"
+  >
+    <template #actions>
+      <UButton icon="i-lucide-plus" variant="soft" @click="addTemplate()">Ajouter une plage</UButton>
     </template>
 
     <div class="divide-default divide-y">
@@ -134,5 +132,5 @@
         </div>
       </div>
     </div>
-  </UCard>
+  </AppCard>
 </template>

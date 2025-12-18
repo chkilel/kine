@@ -39,9 +39,7 @@
 </script>
 
 <template>
-  <UCard>
-    <h3 class="text-lg font-bold">Paramètres de planification automatique</h3>
-
+  <AppCard title="Paramètres de planification automatique">
     <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
       <UFormField label="Kinésithérapeute responsable" name="therapistId">
         <USelectMenu
@@ -153,5 +151,5 @@
     <div class="mt-6 flex justify-end">
       <UButton icon="i-lucide-sparkles" color="primary" size="lg" @click="handleGenerate">Générer les séances</UButton>
     </div>
-  </UCard>
+  </AppCard>
 </template>

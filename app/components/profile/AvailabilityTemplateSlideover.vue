@@ -76,7 +76,7 @@
         @submit="onSubmit"
       >
         <!-- Timing Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-clock" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Horaires</h3>
@@ -100,10 +100,10 @@
               </UFormField>
             </div>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Location & Capacity Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-map-pin" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Lieu et Capacité</h3>
@@ -138,10 +138,10 @@
               />
             </div>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Options Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-settings-2" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Options avancées</h3>
@@ -156,7 +156,7 @@
               <span class="text-foreground text-sm font-semibold">Récurrence active</span>
             </template>
           </USwitch>
-        </UCard>
+        </AppCard>
       </UForm>
     </template>
 

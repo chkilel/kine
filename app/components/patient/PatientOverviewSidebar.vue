@@ -50,8 +50,7 @@
 <template>
   <div class="flex flex-col gap-6 lg:col-span-1">
     <!-- Données administratives -->
-    <UCard variant="outline">
-      <h2 class="mb-5 text-lg font-bold">Données administratives</h2>
+    <AppCard variant="outline" title="Données administratives">
       <div class="space-y-3 text-sm">
         <div class="flex items-start gap-3">
           <UBadge icon="i-lucide-home" size="md" color="primary" variant="soft" class="p-1.5" />
@@ -110,10 +109,10 @@
           </div>
         </div>
       </div>
-    </UCard>
+    </AppCard>
 
     <!-- Données médicales -->
-    <UCard variant="outline">
+    <AppCard variant="outline">
       <h2 class="mb-5 text-lg font-bold">Données médicales</h2>
       <div class="space-y-3 text-sm">
         <div>
@@ -179,10 +178,10 @@
           </div>
         </div>
       </div>
-    </UCard>
+    </AppCard>
 
     <!-- Notes du praticien -->
-    <UCard variant="outline">
+    <AppCard variant="outline">
       <template #header>
         <h2 class="text-lg font-bold">Notes du praticien</h2>
       </template>
@@ -194,6 +193,6 @@
         </div>
         <div v-if="practitionerNotes.length === 0" class="text-muted text-sm">Aucune note enregistrée</div>
       </div>
-    </UCard>
+    </AppCard>
   </div>
 </template>

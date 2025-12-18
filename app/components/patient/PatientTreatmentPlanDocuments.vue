@@ -237,9 +237,8 @@
 </script>
 
 <template>
-  <UCard variant="outline">
+  <AppCard variant="outline" title="Documents du plan de traitement">
     <div class="mb-5 flex items-center justify-between">
-      <h3 class="text-base font-bold">Documents du plan de traitement</h3>
       <div class="flex items-center gap-2">
         <!-- Add Document Button -->
         <UButton
@@ -432,7 +431,7 @@
     <!-- Delete Confirmation Modal -->
     <UModal v-model:open="showDeleteModal">
       <template #content>
-        <UCard>
+        <AppCard>
           <div class="mb-4 flex items-center gap-3">
             <UBadge
               icon="i-lucide-trash-2"
@@ -475,8 +474,8 @@
               Supprimer
             </UButton>
           </div>
-        </UCard>
+        </AppCard>
       </template>
     </UModal>
-  </UCard>
+  </AppCard>
 </template>

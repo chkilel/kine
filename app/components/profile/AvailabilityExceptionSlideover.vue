@@ -145,7 +145,7 @@
         @submit="onSubmit"
       >
         <!-- Date Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-calendar" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Date</h3>
@@ -153,10 +153,10 @@
           <UFormField name="date">
             <UCalendar v-model="dateModel" size="lg" class="w-full" :ui="{ header: 'capitalize text-lg' }" />
           </UFormField>
-        </UCard>
+        </AppCard>
 
         <!-- Timing Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-clock" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Horaires</h3>
@@ -183,10 +183,10 @@
               </UFormField>
             </div>
           </div>
-        </UCard>
+        </AppCard>
 
         <!-- Availability Section -->
-        <UCard variant="outline">
+        <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-toggle-left" class="text-primary" />
             <h3 class="text-foreground text-base font-bold">Disponibilité</h3>
@@ -232,7 +232,7 @@
               </div>
             </UFormField>
           </div>
-        </UCard>
+        </AppCard>
       </UForm>
     </template>
 

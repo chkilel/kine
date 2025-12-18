@@ -25,8 +25,7 @@
 </script>
 
 <template>
-  <UCard variant="outline">
-    <h2 class="mb-5 text-lg font-bold">Aperçu des prochaines/dernières séances</h2>
+  <AppCard variant="outline" title="Aperçu des prochaines/dernières séances">
     <div class="flow-root">
       <ul class="space-y-2">
         <li
@@ -52,5 +51,5 @@
         </li>
       </ul>
     </div>
-  </UCard>
+  </AppCard>
 </template>

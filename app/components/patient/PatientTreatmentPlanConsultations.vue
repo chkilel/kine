@@ -80,9 +80,8 @@
 </script>
 
 <template>
-  <UCard>
+  <AppCard title="Aperçu des séances">
     <div class="mb-5 flex items-center justify-between">
-      <h3 class="text-base font-bold">Aperçu des séances</h3>
       <div class="flex items-center gap-2">
         <UButton
           icon="i-lucide-refresh-cw"
@@ -206,5 +205,5 @@
         </template>
       </UTable>
     </div>
-  </UCard>
+  </AppCard>
 </template>

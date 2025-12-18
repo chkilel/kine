@@ -113,9 +113,7 @@
 </script>
 
 <template>
-  <UCard>
-    <h3 class="text-lg font-bold">Planification manuelle des séances</h3>
-
+  <AppCard title="Planification manuelle des séances">
     <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
       <!-- Therapist Selection -->
       <UFormField label="Kinésithérapeute responsable" name="therapistId">
@@ -175,17 +173,17 @@
     <!-- Date & Time Selection -->
     <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
       <!-- Calendar -->
-      <UCard variant="subtle">
+      <AppCard variant="subtle">
         <UCalendar
           v-model="selectedDate"
           :year-controls="false"
           :min-value="minDate"
           :is-date-unavailable="isDateUnavailable"
         />
-      </UCard>
+      </AppCard>
 
       <!-- Time Selection -->
-      <UCard variant="subtle" :ui="{ body: 'h-full flex flex-col justify-between' }">
+      <AppCard variant="subtle" :ui="{ body: 'h-full flex flex-col justify-between' }">
         <UFormField label="Heure de la séance">
           <div class="grid grid-cols-3 gap-2 pb-6 sm:grid-cols-4">
             <UButton
@@ -214,7 +212,7 @@
         >
           Ajouter cette séance au plan
         </UButton>
-      </UCard>
+      </AppCard>
     </div>
-  </UCard>
+  </AppCard>
 </template>
