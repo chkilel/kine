@@ -188,3 +188,19 @@ export type User = NonNullable<SessionData>['user']
 // Session types
 export type UseSessionReturn = Awaited<ReturnType<typeof authClient.useSession>>
 export type SessionData = NonNullable<UseSessionReturn>['data']['value']
+
+// TODO fix this ------------------------------  Session type for API usage
+export interface Session {
+  user: {
+    id: string
+    name: string
+    email: string
+    firstName?: string
+    lastName?: string
+    image?: string
+  }
+  session: {
+    activeOrganizationId?: string
+    activeTeamId?: string
+  }
+}
