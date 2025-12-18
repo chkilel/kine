@@ -61,6 +61,10 @@
         firstName,
         lastName,
         email,
+        defaultSessionDuration: 0,
+        licenseNumber: '',
+        specialization: [],
+        phoneNumbers: [],
         password
       },
       {

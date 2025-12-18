@@ -21,7 +21,10 @@ const phoneNumberSchema = z.object({
   number: z
     .string()
     .min(1, 'Le numéro est requis')
-    .regex(PHONE_REGEX, 'Format de numéro de téléphone invalide')
+    .regex(
+      PHONE_REGEX,
+      'Format de numéro de téléphone invalide. \n Entrez un numéro de téléphone avec ou sans indicatif international, les espaces et tirets sont autorisés.'
+    )
     .transform((val) => val.replace(/\s+/g, '')), // Normalize phone numbers
   category: PhoneCategory
 })
@@ -116,7 +119,7 @@ export const userUpdateSchema = createUpdateSchema(users, {
   firstName: nameSchema,
   lastName: nameSchema,
   specialization: specializationSchema.optional(),
-  licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
+  licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
   defaultSessionDuration: sessionDurationSchema.optional(),
   phoneNumbers: z
     .array(phoneNumberSchema)

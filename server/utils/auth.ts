@@ -50,7 +50,6 @@ export function createAuth(event: H3Event) {
       additionalFields: {
         firstName: {
           type: 'string',
-          required: false,
           input: true
         },
         lastName: {
@@ -59,23 +58,23 @@ export function createAuth(event: H3Event) {
         },
         specialization: {
           type: 'string[]',
-          required: false,
+          required: true,
           input: true
         },
         licenseNumber: {
           type: 'string',
-          required: false,
-          input: false
+          required: true,
+          input: true
         },
         defaultSessionDuration: {
           type: 'number',
           required: false,
-          input: false
+          input: true
         },
         phoneNumbers: {
           type: 'json',
-          required: false,
-          input: false
+          required: true,
+          input: true
         }
       }
     },

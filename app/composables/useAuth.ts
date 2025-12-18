@@ -2,12 +2,19 @@ import { createSharedComposable } from '@vueuse/core'
 import { authClient } from '~/utils/auth-client'
 
 const _useAuth = async () => {
-  // Session data - resolve the promise
   const sessionData = await authClient.useSession(useFetch)
 
   // Extract the underlying session data and user
   const session = computed(() => sessionData.data.value?.session ?? null)
-  const user = computed(() => sessionData.data.value?.user ?? null)
+  const user = computed(() => {
+    const user = sessionData.data.value?.user
+    return user
+      ? {
+          ...user,
+          phoneNumbers: user.phoneNumbers as PhoneNumber[] // fix phone type
+        }
+      : null
+  })
 
   // Computed properties for convenience
   const isAuthenticated = computed(() => !!sessionData.data.value)
