@@ -63,8 +63,8 @@
   <div class="space-y-4">
     <!-- Add/Edit Form -->
     <h4 class="mb-1 text-sm font-medium">Numéros de téléphone</h4>
-    <div class="bg-muted border-accented space-y-4 rounded-lg border border-dashed p-3">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="space-y-2">
+      <div class="bg-muted border-accented grid grid-cols-1 gap-4 rounded-lg border border-dashed p-3 sm:grid-cols-2">
         <UFormField>
           <UInput
             v-model="form.number"
@@ -110,43 +110,50 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Phone List -->
-    <div v-if="phoneNumbers?.length && phoneNumbers.length > 0" class="space-y-2">
-      <ClientOnly>
-        <template #fallback>
-          <USkeleton
-            v-for="item in [1, 2]"
-            :key="item"
-            class="bg-muted flex h-13 items-center justify-between rounded-lg"
-          />
-        </template>
-        <div
-          v-for="phone in phoneNumbers"
-          :key="phone.id"
-          class="flex items-center justify-between rounded-lg p-3"
-          :class="isEditMode && form.id === phone.id ? 'hidden' : 'bg-muted'"
-        >
-          <div class="flex items-center gap-5">
-            <p class="text-highlighted text-sm font-medium">{{ phone.number }}</p>
-            <UBadge variant="subtle" color="neutral" class="rounded-full">
-              {{ getPhoneCategoryLabel(phone.category) }}
-            </UBadge>
-          </div>
-          <div class="flex items-center gap-2">
-            <UButton
-              icon="i-lucide-edit-2"
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              square
-              @click="startEdit(phone)"
+      <!-- Phone List -->
+      <template v-if="phoneNumbers?.length && phoneNumbers.length > 0">
+        <ClientOnly>
+          <template #fallback>
+            <USkeleton
+              v-for="item in [1, 2]"
+              :key="item"
+              class="bg-muted flex h-13 items-center justify-between rounded-lg"
             />
-            <UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="sm" square @click="remove(phone.id)" />
+          </template>
+          <div
+            v-for="phone in phoneNumbers"
+            :key="phone.id"
+            class="flex items-center justify-between rounded-lg p-3"
+            :class="isEditMode && form.id === phone.id ? 'hidden' : 'bg-muted'"
+          >
+            <div class="flex items-center gap-5">
+              <p class="text-highlighted text-sm font-medium tabular-nums">{{ phone.number }}</p>
+              <UBadge variant="subtle" color="neutral" class="rounded-full">
+                {{ getPhoneCategoryLabel(phone.category) }}
+              </UBadge>
+            </div>
+            <div class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-edit-2"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                square
+                @click="startEdit(phone)"
+              />
+              <UButton
+                icon="i-lucide-trash-2"
+                variant="ghost"
+                color="error"
+                size="sm"
+                square
+                @click="remove(phone.id)"
+              />
+            </div>
           </div>
-        </div>
-      </ClientOnly>
+        </ClientOnly>
+      </template>
     </div>
     <UAlert v-if="props.error" color="error" variant="subtle" title="Attention !" icon="i-lucide-info">
       <template #description>
