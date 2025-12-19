@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { CalendarDate, Time, getLocalTimeZone } from '@internationalized/date'
+  import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{ availabilityException?: AvailabilityException }>()
   const emit = defineEmits<{ close: [] }>()
@@ -17,29 +18,22 @@
   })
 
   // Time values for UI components
-  const startTimeModel = computed<Time | undefined>({
+  const startTimeModel = computed<Time>({
     get: () => {
-      if (!state.startTime) return undefined
-      const [hours, minutes] = state.startTime.split(':').map(Number)
+      const [hours, minutes] = (state.startTime || '09:00').split(':').map(Number)
       return new Time(hours, minutes, 0)
     },
-    set: (value: Time | undefined) => {
-      state.startTime = value
-        ? `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-        : undefined
+    set: (value: Time) => {
+      state.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
     }
   })
-
-  const endTimeModel = computed<Time | undefined>({
+  const endTimeModel = computed<Time>({
     get: () => {
-      if (!state.endTime) return undefined
-      const [hours, minutes] = state.endTime.split(':').map(Number)
-      return new Time(hours, minutes)
+      const [hours, minutes] = (state.endTime || '12:00').split(':').map(Number)
+      return new Time(hours, minutes, 0)
     },
-    set: (value: Time | undefined) => {
-      state.endTime = value
-        ? `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-        : undefined
+    set: (value: Time) => {
+      state.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
     }
   })
 
@@ -80,21 +74,10 @@
   const isOtherReason = computed(() => selectedReason.value === 'other')
   const otherReasonText = ref('')
 
-  // Form validation
-  const isFormValid = computed(() => {
-    try {
-      availabilityExceptionCreateSchema.parse(state)
-      return true
-    } catch {
-      return false
-    }
-  })
+  function handleSubmit(event: FormSubmitEvent<AvailabilityExceptionCreate>) {
+    console.log('🚀 >>> ', 'event', ': ', event.data)
 
-  async function onSubmit() {
     if (!formRef.value) return
-
-    const validationResult = await formRef.value.validate()
-    if (!validationResult) return
 
     toast.add({
       title: 'Succès',
@@ -142,7 +125,7 @@
         :schema="availabilityExceptionCreateSchema"
         :state="state"
         class="space-y-6"
-        @submit="onSubmit"
+        @submit="handleSubmit"
       >
         <!-- Date Section -->
         <AppCard variant="outline">
@@ -245,8 +228,7 @@
           color="primary"
           class="shadow-primary/25 h-9 px-3 text-sm font-semibold shadow-lg"
           type="submit"
-          @click="onSubmit"
-          :disabled="!isFormValid"
+          @click="formRef?.submit()"
         >
           <UIcon name="i-lucide-check" class="text-lg" />
           {{ buttonText }}

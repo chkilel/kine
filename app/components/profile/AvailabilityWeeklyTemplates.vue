@@ -1,10 +1,6 @@
 <script setup lang="ts">
   import { LazyProfileAvailabilityTemplateSlideover } from '#components'
 
-  const emit = defineEmits<{
-    edit: [template: WeeklyAvailabilityTemplate]
-  }>()
-
   // Use availability templates composable
   const { templates, loading, error, fetchTemplates, deleteTemplate } = useAvailabilityTemplates()
 
@@ -33,25 +29,6 @@
 
   function addTemplate() {
     templateOverlay.open()
-  }
-
-  // Helper functions for location display
-  function getLocationIcon(location: string) {
-    const icons = {
-      clinic: 'i-lucide-building',
-      home: 'i-lucide-home',
-      telehealth: 'i-lucide-video'
-    }
-    return icons[location as keyof typeof icons] || 'i-lucide-map-pin'
-  }
-
-  function getLocationLabel(location: string) {
-    const labels = {
-      clinic: 'Cabinet',
-      home: 'Domicile',
-      telehealth: 'Téléconsultation'
-    }
-    return labels[location as keyof typeof labels] || location
   }
 </script>
 
@@ -101,7 +78,7 @@
               <p class="text-default text-sm font-medium">{{ template.startTime }} - {{ template.endTime }}</p>
               <div class="text-muted flex items-center gap-1.5 text-xs">
                 <UIcon :name="getLocationIcon(template.location)" class="text-[14px]" />
-                <p>{{ getLocationLabel(template.location) }}</p>
+                <p>{{ getConsultationLocationLabel(template.location) }}</p>
               </div>
             </div>
           </div>

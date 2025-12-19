@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { Time } from '@internationalized/date'
+  import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{ template?: WeeklyAvailabilityTemplate }>()
   const emit = defineEmits<{ close: [] }>()
@@ -17,31 +18,27 @@
   })
 
   // Time values for UI components
-  const startTimeModel = computed(() => (state.startTime ? parseTimeString(state.startTime) : new Time(9, 0)))
-  const endTimeModel = computed(() => (state.endTime ? parseTimeString(state.endTime) : new Time(12, 0)))
-
-  // Helper function to parse time string to Time object
-  function parseTimeString(timeString: string): Time {
-    const [hours, minutes] = timeString.split(':').map(Number)
-    return new Time(hours, minutes, 0)
-  }
-
-  // Form validation
-  const isFormValid = computed(() => {
-    try {
-      weeklyAvailabilityTemplateCreateSchema.parse(state)
-      return true
-    } catch {
-      return false
+  const startTimeModel = computed<Time>({
+    get: () => {
+      const [hours, minutes] = (state.startTime || '09:00').split(':').map(Number)
+      return new Time(hours, minutes, 0)
+    },
+    set: (value: Time) => {
+      state.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
+    }
+  })
+  const endTimeModel = computed<Time>({
+    get: () => {
+      const [hours, minutes] = (state.endTime || '12:00').split(':').map(Number)
+      return new Time(hours, minutes, 0)
+    },
+    set: (value: Time) => {
+      state.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
     }
   })
 
-  async function onSubmit() {
-    if (!formRef.value) return
-
-    const validationResult = await formRef.value.validate()
-    if (!validationResult) return
-
+  function handleSubmit(event: FormSubmitEvent<WeeklyAvailabilityTemplateCreate>) {
+    console.log('🚀 >>> ', 'event', ': ', event.data)
     toast.add({
       title: 'Succès',
       description: props.template ? 'Modèle de disponibilité mis à jour' : 'Modèle de disponibilité ajouté',
@@ -73,7 +70,7 @@
         :schema="weeklyAvailabilityTemplateCreateSchema"
         :state="state"
         class="space-y-6"
-        @submit="onSubmit"
+        @submit="handleSubmit"
       >
         <!-- Timing Section -->
         <AppCard variant="outline">
@@ -174,8 +171,7 @@
           color="primary"
           class="shadow-primary/25 w-full rounded-lg px-6 py-2.5 font-semibold shadow-lg sm:w-auto"
           type="submit"
-          @click="onSubmit"
-          :disabled="!isFormValid"
+          @click="formRef?.value.submit()"
         >
           <UIcon name="i-lucide-check" class="text-lg" />
           {{ template ? 'Mettre à jour' : 'Ajouter la plage' }}
