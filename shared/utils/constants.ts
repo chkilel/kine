@@ -24,6 +24,9 @@ export interface SelectOption<T = string> {
   icon?: string
 }
 
+// Business validation constants
+export const MINIMUM_SESSION_GAP_MINUTES = 15
+
 // Patient Status Configuration
 export const STATUS_CONFIG = {
   active: { color: 'success', label: 'Actif' },

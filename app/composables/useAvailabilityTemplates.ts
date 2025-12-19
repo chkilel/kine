@@ -1,6 +1,9 @@
+import { parseISO } from 'date-fns'
+
 export function useAvailabilityTemplates() {
   const toast = useToast()
   const requestFetch = useRequestFetch()
+  const queryCache = useQueryCache()
 
   // Query for fetching templates
   const {
@@ -9,7 +12,14 @@ export function useAvailabilityTemplates() {
     refetch: fetchTemplates
   } = useQuery({
     key: ['availability-templates'],
-    query: () => requestFetch('/api/availability/templates')
+    query: () =>
+      requestFetch('/api/availability/templates').then((resp) =>
+        resp.map((item) => ({
+          ...item,
+          createdAt: parseISO(item.createdAt),
+          updatedAt: parseISO(item.updatedAt)
+        }))
+      )
   })
 
   // Mutation for creating templates
@@ -22,22 +32,22 @@ export function useAvailabilityTemplates() {
 
       return response
     },
-    onSettled: (_, error) => {
-      if (error) {
-        const errorMessage =
-          (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de créer le modèle'
-        toast.add({
-          title: 'Erreur',
-          description: errorMessage,
-          color: 'error'
-        })
-      } else {
-        toast.add({
-          title: 'Succès',
-          description: 'Modèle de disponibilité créé',
-          color: 'success'
-        })
-      }
+    onSuccess() {
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      toast.add({
+        title: 'Succès',
+        description: 'Modèle de disponibilité créé',
+        color: 'success'
+      })
+    },
+    onError(error) {
+      const errorMessage =
+        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de créer le modèle'
+      toast.add({
+        title: 'Erreur',
+        description: errorMessage,
+        color: 'error'
+      })
     }
   })
 
@@ -51,22 +61,22 @@ export function useAvailabilityTemplates() {
 
       return response
     },
-    onSettled: (_, error) => {
-      if (error) {
-        const errorMessage =
-          (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de mettre à jour le modèle'
-        toast.add({
-          title: 'Erreur',
-          description: errorMessage,
-          color: 'error'
-        })
-      } else {
-        toast.add({
-          title: 'Succès',
-          description: 'Modèle mis à jour',
-          color: 'success'
-        })
-      }
+    onSuccess() {
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      toast.add({
+        title: 'Succès',
+        description: 'Modèle mis à jour',
+        color: 'success'
+      })
+    },
+    onError(error) {
+      const errorMessage =
+        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de mettre à jour le modèle'
+      toast.add({
+        title: 'Erreur',
+        description: errorMessage,
+        color: 'error'
+      })
     }
   })
 
@@ -79,45 +89,32 @@ export function useAvailabilityTemplates() {
 
       return true
     },
-    onSettled: (_, error) => {
-      if (error) {
-        const errorMessage =
-          (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de supprimer le modèle'
-        toast.add({
-          title: 'Erreur',
-          description: errorMessage,
-          color: 'error'
-        })
-      } else {
-        toast.add({
-          title: 'Succès',
-          description: 'Modèle supprimé',
-          color: 'success'
-        })
-      }
+    onSuccess() {
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      toast.add({
+        title: 'Succès',
+        description: 'Modèle supprimé',
+        color: 'success'
+      })
+    },
+    onError(error) {
+      const errorMessage =
+        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de supprimer le modèle'
+      toast.add({
+        title: 'Erreur',
+        description: errorMessage,
+        color: 'error'
+      })
     }
   })
 
-  // Convenience methods
-  const createTemplate = (templateData: WeeklyAvailabilityTemplateCreate) => {
-    return createTemplateMutation.mutate(templateData)
-  }
-
-  const updateTemplate = (id: string, templateData: WeeklyAvailabilityTemplateUpdate) => {
-    return updateTemplateMutation.mutate({ id, data: templateData })
-  }
-
-  const deleteTemplate = (id: string) => {
-    return deleteTemplateMutation.mutate(id)
-  }
-
   return {
-    templates: readonly(computed(() => state.value?.data?.data || [])),
+    templates: readonly(computed(() => state.value?.data || [])),
     loading,
     error: readonly(computed(() => state.value?.error)),
     fetchTemplates,
-    createTemplate,
-    updateTemplate,
-    deleteTemplate
+    createTemplateMutation,
+    updateTemplateMutation,
+    deleteTemplateMutation
   }
 }

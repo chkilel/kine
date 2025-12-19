@@ -1,7 +1,5 @@
-import { eq, and, count, sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { weeklyAvailabilityTemplates } from '~~/server/database/schema'
-import { availabilityTemplateQuerySchema } from '~~/shared/types/availability.types'
-import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/availability/templates - Get weekly availability templates for current user
 export default defineEventHandler(async (event) => {
@@ -52,19 +50,6 @@ export default defineEventHandler(async (event) => {
       filters.push(eq(weeklyAvailabilityTemplates.location, validatedQuery.location))
     }
 
-    // Calculate pagination
-    const limit = validatedQuery.limit
-    const offset = (validatedQuery.page - 1) * limit
-
-    // Get total count for pagination metadata
-    const totalCountResult = await db
-      .select({ count: count() })
-      .from(weeklyAvailabilityTemplates)
-      .where(and(...filters))
-
-    const total = totalCountResult[0]?.count || 0
-    const totalPages = Math.ceil(total / limit)
-
     // Define day order for proper weekly sorting - use raw SQL with proper syntax
     const dayOrderCase = sql`CASE weekly_availability_templates.dayOfWeek
       WHEN 'Mon' THEN 0
@@ -82,21 +67,8 @@ export default defineEventHandler(async (event) => {
       .from(weeklyAvailabilityTemplates)
       .where(and(...filters))
       .orderBy(dayOrderCase, weeklyAvailabilityTemplates.startTime)
-      .limit(limit)
-      .offset(offset)
 
-    // Return paginated response
-    return {
-      data: templatesList,
-      pagination: {
-        total,
-        page: validatedQuery.page,
-        limit,
-        totalPages,
-        hasNext: validatedQuery.page < totalPages,
-        hasPrev: validatedQuery.page > 1
-      }
-    }
+    return templatesList
   } catch (error: unknown) {
     console.error('Error fetching availability templates:', error)
     throw createError({

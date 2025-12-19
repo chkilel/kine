@@ -6,39 +6,7 @@ import { fr } from 'zod/locales'
 z.config(fr())
 
 // Business validation constants
-export const MINIMUM_SESSION_GAP_MINUTES = 15
 export const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-
-// Helper functions for time comparison
-export const timeToMinutes = (time: string): number => {
-  const parts = time.split(':').map(Number)
-  const hours = parts[0] || 0
-  const minutes = parts[1] || 0
-  return hours * 60 + minutes
-}
-
-export const minutesToTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
-}
-
-// Helper function to check time overlap with minimum gap
-export const checkTimeOverlap = (
-  existingStart: string,
-  existingEnd: string,
-  newStart: string,
-  newEnd: string,
-  minGap: number = MINIMUM_SESSION_GAP_MINUTES
-): boolean => {
-  const existingStartMin = timeToMinutes(existingStart)
-  const existingEndMin = timeToMinutes(existingEnd)
-  const newStartMin = timeToMinutes(newStart)
-  const newEndMin = timeToMinutes(newEnd)
-
-  // Check overlap with minimum gap
-  return !(newEndMin + minGap <= existingStartMin || newStartMin >= existingEndMin + minGap)
-}
 
 // Helper function to convert date to timestamp for database
 export const dateToTimestamp = (date: Date): number => {

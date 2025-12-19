@@ -2,33 +2,21 @@
   import { LazyProfileAvailabilityTemplateSlideover } from '#components'
 
   // Use availability templates composable
-  const { templates, loading, error, fetchTemplates, deleteTemplate } = useAvailabilityTemplates()
+  const { templates, loading, error, fetchTemplates, deleteTemplateMutation } = useAvailabilityTemplates()
 
-  const toast = useToast()
   const overlay = useOverlay()
 
   // Create overlay instance
   const templateOverlay = overlay.create(LazyProfileAvailabilityTemplateSlideover)
 
-  // Load data on mount
-  onMounted(async () => {
-    await fetchTemplates()
-  })
-
   // Handle delete with confirmation
   const handleDeleteTemplate = async (template: any) => {
-    const confirmed = confirm(`Êtes-vous sûr de vouloir supprimer ce modèle le ${template.dayOfWeek}?`)
+    const dayLabel = getPreferredDayLabel(template.dayOfWeek)
+    // TODO confirmation modal
+    const confirmed = confirm(`Êtes-vous sûr de vouloir supprimer ce modèle du ${dayLabel}?`)
     if (confirmed) {
-      deleteTemplate(template.id)
+      deleteTemplateMutation.mutate(template.id)
     }
-  }
-
-  function editTemplate(template: any) {
-    templateOverlay.open({ template })
-  }
-
-  function addTemplate() {
-    templateOverlay.open()
   }
 </script>
 
@@ -39,7 +27,7 @@
     :ui="{ body: 'p-0 sm:p-0' }"
   >
     <template #actions>
-      <UButton icon="i-lucide-plus" variant="soft" @click="addTemplate()">Ajouter une plage</UButton>
+      <UButton icon="i-lucide-plus" variant="soft" @click="templateOverlay.open()">Ajouter une plage</UButton>
     </template>
 
     <div class="divide-default divide-y">
@@ -61,7 +49,7 @@
       <div v-else-if="templates.length === 0" class="p-5 text-center">
         <UIcon name="i-lucide-calendar-x" class="text-muted mb-3 text-4xl" />
         <p class="text-muted">Aucun modèle de disponibilité</p>
-        <UButton @click="addTemplate()" class="mt-3" size="sm">Ajouter un modèle</UButton>
+        <UButton @click="templateOverlay.open()" class="mt-3" size="sm">Ajouter un modèle</UButton>
       </div>
 
       <!-- Templates list -->
@@ -72,21 +60,37 @@
         class="group hover:bg-elevated flex items-center justify-between gap-4 p-5 transition-colors"
       >
         <div class="flex w-full gap-5">
-          <div class="flex items-center gap-2">
-            <UBadge :label="template.dayOfWeek" color="primary" variant="subtle" />
-            <div class="space-y-1">
-              <p class="text-default text-sm font-medium">{{ template.startTime }} - {{ template.endTime }}</p>
-              <div class="text-muted flex items-center gap-1.5 text-xs">
-                <UIcon :name="getLocationIcon(template.location)" class="text-[14px]" />
-                <p>{{ getConsultationLocationLabel(template.location) }}</p>
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-muted border-accented flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border"
+            >
+              <span class="text-highlighted mb-0.5 text-[10px] font-bold uppercase">
+                {{ getDayAbbreviation(template.dayOfWeek) }}
+              </span>
+              <UIcon name="i-lucide-calendar" class="text-primary text-xl" />
+            </div>
+            <div class="space-y-1.5">
+              <div class="text-highlighted text-md font-semibold">
+                {{ template.startTime }} - {{ template.endTime }}
+              </div>
+              <div class="flex gap-5">
+                <UBadge
+                  :icon="getLocationIcon(template.location)"
+                  :color="getLocationColor(template.location)"
+                  size="sm"
+                  variant="subtle"
+                  class="rounded-full font-semibold uppercase"
+                >
+                  {{ getLocationLabel(template.location) }}
+                </UBadge>
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-users" class="size-4" />
+                  <span class="text-toned text-sm">
+                    {{ template.maxSessions }} {{ template.maxSessions === 1 ? 'patient max' : 'patients simultanés' }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="flex flex-col items-end justify-between gap-3">
-            <p class="text-muted flex items-center gap-1.5 text-sm">
-              <UIcon name="i-lucide-users" class="text-[16px]" />
-              {{ template.maxSessions }} {{ template.maxSessions === 1 ? 'patient max' : 'patients simultanés' }}
-            </p>
           </div>
         </div>
 
@@ -97,7 +101,7 @@
             size="md"
             color="primary"
             variant="ghost"
-            @click="editTemplate(template)"
+            @click="templateOverlay.open({ template })"
           />
           <UButton
             icon="i-lucide-trash"

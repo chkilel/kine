@@ -2,6 +2,7 @@ import { format, differenceInYears, parseISO, isValid } from 'date-fns'
 import { CalendarDate } from '@internationalized/date'
 
 import { fr } from 'date-fns/locale'
+import { MINIMUM_SESSION_GAP_MINUTES } from './constants'
 
 /**
  * Safely converts ISO date string to Date object
@@ -150,4 +151,35 @@ export const isDateUnavailable = (date: any): boolean => {
   today.setHours(0, 0, 0, 0)
   //day === 6 if we need to disable Saturdays
   return day === 0 || dateObj < today
+}
+
+// Helper functions for time comparison
+export const timeToMinutes = (time: string): number => {
+  const parts = time.split(':').map(Number)
+  const hours = parts[0] || 0
+  const minutes = parts[1] || 0
+  return hours * 60 + minutes
+}
+
+export const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+}
+
+// Helper function to check time overlap with minimum gap
+export const checkTimeOverlap = (
+  existingStart: string,
+  existingEnd: string,
+  newStart: string,
+  newEnd: string,
+  minGap: number = MINIMUM_SESSION_GAP_MINUTES
+): boolean => {
+  const existingStartMin = timeToMinutes(existingStart)
+  const existingEndMin = timeToMinutes(existingEnd)
+  const newStartMin = timeToMinutes(newStart)
+  const newEndMin = timeToMinutes(newEnd)
+
+  // Check overlap with minimum gap
+  return !(newEndMin + minGap <= existingStartMin || newStartMin >= existingEndMin + minGap)
 }

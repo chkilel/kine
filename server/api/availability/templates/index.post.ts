@@ -1,11 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { weeklyAvailabilityTemplates } from '~~/server/database/schema'
-import {
-  weeklyAvailabilityTemplateCreateSchema,
-  checkTimeOverlap,
-  MINIMUM_SESSION_GAP_MINUTES
-} from '~~/shared/types/availability.types'
-import type { Session } from '~~/shared/types/auth.types'
 
 // POST /api/availability/templates - Create new weekly availability template
 export default defineEventHandler(async (event) => {

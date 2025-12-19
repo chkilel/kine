@@ -5,11 +5,18 @@
   const props = defineProps<{ template?: WeeklyAvailabilityTemplate }>()
   const emit = defineEmits<{ close: [] }>()
 
-  const toast = useToast()
+  // Use availability templates composable for API operations
+  const { createTemplateMutation, updateTemplateMutation } = useAvailabilityTemplates()
+
   const formRef = ref<HTMLFormElement>()
 
+  // Loading state for form submission
+  const isSubmitting = computed(() => {
+    return updateTemplateMutation.isLoading.value || createTemplateMutation.isLoading.value
+  })
+
   // Form state
-  const state = reactive<WeeklyAvailabilityTemplateCreate>({
+  const formState = reactive<WeeklyAvailabilityTemplateCreate>({
     dayOfWeek: props.template?.dayOfWeek || 'Mon',
     startTime: props.template?.startTime || '09:00',
     endTime: props.template?.endTime || '12:00',
@@ -20,33 +27,41 @@
   // Time values for UI components
   const startTimeModel = computed<Time>({
     get: () => {
-      const [hours, minutes] = (state.startTime || '09:00').split(':').map(Number)
+      const [hours, minutes] = (formState.startTime || '09:00').split(':').map(Number)
       return new Time(hours, minutes, 0)
     },
     set: (value: Time) => {
-      state.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
+      formState.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
     }
   })
   const endTimeModel = computed<Time>({
     get: () => {
-      const [hours, minutes] = (state.endTime || '12:00').split(':').map(Number)
+      const [hours, minutes] = (formState.endTime || '12:00').split(':').map(Number)
       return new Time(hours, minutes, 0)
     },
     set: (value: Time) => {
-      state.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
+      formState.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
     }
   })
 
-  function handleSubmit(event: FormSubmitEvent<WeeklyAvailabilityTemplateCreate>) {
-    console.log('🚀 >>> ', 'event', ': ', event.data)
-    toast.add({
-      title: 'Succès',
-      description: props.template ? 'Modèle de disponibilité mis à jour' : 'Modèle de disponibilité ajouté',
-      icon: 'i-lucide-check-circle',
-      color: 'success'
-    })
+  async function handleSubmit(event: FormSubmitEvent<WeeklyAvailabilityTemplateCreate>) {
+    try {
+      if (props.template) {
+        // Update existing template
+        updateTemplateMutation.mutate({
+          id: props.template.id,
+          data: event.data
+        })
+      } else {
+        // Create new template
+        createTemplateMutation.mutate(event.data)
+      }
 
-    emit('close')
+      emit('close')
+    } catch (error) {
+      console.error('Error saving template:', error)
+    } finally {
+    }
   }
 
   function onCancel() {
@@ -68,7 +83,7 @@
       <UForm
         ref="formRef"
         :schema="weeklyAvailabilityTemplateCreateSchema"
-        :state="state"
+        :state="formState"
         class="space-y-6"
         @submit="handleSubmit"
       >
@@ -81,7 +96,7 @@
           <div class="space-y-4">
             <UFormField label="Jour de la semaine" name="dayOfWeek">
               <USelect
-                v-model="state.dayOfWeek"
+                v-model="formState.dayOfWeek"
                 :items="PREFERRED_DAYS_OPTIONS"
                 placeholder="Sélectionner un jour"
                 class="w-full"
@@ -108,7 +123,7 @@
           <div class="space-y-5">
             <UFormField label="Lieu de consultation" name="location">
               <USelect
-                v-model="state.location"
+                v-model="formState.location"
                 :items="CONSULTATION_LOCATIONS_WITH_ICONS"
                 placeholder="Sélectionner un lieu"
                 class="w-full"
@@ -121,7 +136,7 @@
             <div class="grid gap-4">
               <UFormField label="Max. séances simultanées" name="maxSessions">
                 <UFieldGroup class="w-full">
-                  <UInputNumber v-model="state.maxSessions" :min="1" :max="10" placeholder="1" class="w-full" />
+                  <UInputNumber v-model="formState.maxSessions" :min="1" :max="10" placeholder="1" class="w-full" />
                   <UBadge color="neutral" variant="outline" label="pers." />
                 </UFieldGroup>
 
@@ -158,23 +173,19 @@
     </template>
 
     <template #footer>
-      <UButton
-        variant="outline"
-        color="neutral"
-        class="w-full rounded-lg px-5 py-2.5 font-semibold sm:w-auto"
-        @click="onCancel"
-      >
-        Annuler
-      </UButton>
+      <UButton size="lg" variant="outline" color="neutral" class="font-semibold" @click="onCancel">Annuler</UButton>
       <div class="flex w-full justify-end gap-4 sm:w-auto">
         <UButton
+          :loading="isSubmitting"
+          :disabled="isSubmitting"
+          :icon="!isSubmitting ? 'i-lucide-check' : undefined"
+          size="lg"
           color="primary"
-          class="shadow-primary/25 w-full rounded-lg px-6 py-2.5 font-semibold shadow-lg sm:w-auto"
           type="submit"
-          @click="formRef?.value.submit()"
+          class="shadow-primary/25 font-semibold"
+          @click="formRef?.submit()"
         >
-          <UIcon name="i-lucide-check" class="text-lg" />
-          {{ template ? 'Mettre à jour' : 'Ajouter la plage' }}
+          {{ isSubmitting ? 'Enregistrement...' : template ? 'Mettre à jour' : 'Ajouter la plage' }}
         </UButton>
       </div>
     </template>
