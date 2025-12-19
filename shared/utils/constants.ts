@@ -226,8 +226,12 @@ export const getConsultationTypeLabel = (type: ConsultationSessionType): string 
 
 // Consultation Location Helpers
 export const CONSULTATION_LOCATION_OPTIONS = createSelectOptions(CONSULTATION_LOCATIONS_CONFIG)
-export const getConsultationLocationLabel = (location: ConsultationLocation): string =>
+export const getLocationLabel = (location: ConsultationLocation): string =>
   getLabel(location, CONSULTATION_LOCATIONS_CONFIG)
+export const getLocationIcon = (location: ConsultationLocation): string => {
+  const config = CONSULTATION_LOCATIONS_WITH_ICONS.find((item) => item.value === location)
+  return config?.icon || 'i-lucide-map-pin'
+}
 
 // Frequency Options
 export const FREQUENCY_OPTIONS: SelectOption<number>[] = [

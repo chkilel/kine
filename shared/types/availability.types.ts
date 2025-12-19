@@ -61,8 +61,7 @@ export const weeklyAvailabilityTemplateCreateSchema = weeklyAvailabilityTemplate
     organizationId: true,
     userId: true,
     createdAt: true,
-    updatedAt: true,
-    deletedAt: true
+    updatedAt: true
   })
   .extend({
     dayOfWeek: z
@@ -84,8 +83,7 @@ export const availabilityExceptionCreateSchema = availabilityExceptionInsertSche
     organizationId: true,
     userId: true,
     createdAt: true,
-    updatedAt: true,
-    deletedAt: true
+    updatedAt: true
   })
   .extend({
     date: z.coerce.date(),
