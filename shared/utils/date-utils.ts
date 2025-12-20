@@ -1,8 +1,11 @@
 import { format, differenceInYears, parseISO, isValid } from 'date-fns'
 import { CalendarDate } from '@internationalized/date'
+import { MINIMUM_SESSION_GAP_MINUTES } from './constants.consultation'
 
 import { fr } from 'date-fns/locale'
-import { MINIMUM_SESSION_GAP_MINUTES } from './constants'
+
+
+
 
 /**
  * Safely converts ISO date string to Date object
@@ -182,4 +185,8 @@ export const checkTimeOverlap = (
 
   // Check overlap with minimum gap
   return !(newEndMin + minGap <= existingStartMin || newStartMin >= existingEndMin + minGap)
+}
+
+export function getShortMonthName(date: Date): string {
+  return format(date, 'MMM', { locale: fr })
 }
