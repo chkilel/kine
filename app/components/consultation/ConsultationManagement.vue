@@ -63,8 +63,8 @@
         </template>
 
         <template #status-cell="{ row }">
-          <UBadge :color="getSessionStatusColor(row.original.status)" variant="soft" size="xs">
-            {{ getSessionStatusLabel(row.original.status) }}
+          <UBadge :color="getConsultationStatusColor(row.original.status)" variant="soft" size="xs">
+            {{ getConsultationStatusLabel(row.original.status) }}
           </UBadge>
         </template>
 

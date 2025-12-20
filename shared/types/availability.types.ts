@@ -64,7 +64,6 @@ export const availabilityExceptionCreateSchema = availabilityExceptionInsertSche
       .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format d'heure invalide (HH:MM)")
       .optional(),
     isAvailable: z.boolean(),
-    reason: z.string().optional()
   })
   .refine(
     (data) => {
@@ -106,6 +105,7 @@ export type WeeklyAvailabilityTemplateUpdate = z.infer<typeof weeklyAvailability
 export type AvailabilityException = z.infer<typeof availabilityExceptionSelectSchema>
 export type AvailabilityExceptionCreate = z.infer<typeof availabilityExceptionCreateSchema>
 export type AvailabilityExceptionUpdate = z.infer<typeof availabilityExceptionUpdateSchema>
+export type AvailabilityExceptionReason = AvailabilityException['reason']
 
 // Query types
 export type AvailabilityTemplateQuery = z.infer<typeof availabilityTemplateQuerySchema>

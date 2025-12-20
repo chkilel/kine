@@ -90,7 +90,7 @@
           <UFormField class="w-full">
             <USelectMenu
               v-model="form.category"
-              :items="[...PHONE_CATEGORIES]"
+              :items="[...PHONE_CATEGORIES_OPTIONS]"
               value-key="value"
               placeholder="Sélectionner une catégorie..."
               class="w-full"

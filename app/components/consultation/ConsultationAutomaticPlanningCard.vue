@@ -55,7 +55,7 @@
       <UFormField label="Lieu" class="">
         <UFieldGroup class="flex">
           <UButton
-            v-for="loc in CONSULTATION_LOCATIONS_WITH_ICONS"
+            v-for="loc in CONSULTATION_LOCATION_OPTIONS"
             :key="loc.value"
             :variant="planningSettings.location === loc.value ? 'solid' : 'subtle'"
             :color="planningSettings.location === loc.value ? 'primary' : 'neutral'"
@@ -72,7 +72,7 @@
       <UFormField label="Type de séance">
         <USelect
           v-model="planningSettings.type"
-          :items="CONSULTATION_TYPES_WITH_ICONS"
+          :items="CONSULTATION_TYPES_OPTIONS"
           option-attribute="label"
           value-attribute="value"
           class="w-full"

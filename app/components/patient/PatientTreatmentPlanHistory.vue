@@ -23,8 +23,8 @@
             <p class="font-semibold">{{ plan.title }}</p>
             <p class="text-muted text-xs">{{ formatDateRange(plan.startDate, plan.endDate) }}</p>
           </div>
-          <UBadge :color="formatTreatmentPlanStatus(plan.status).color" variant="soft" size="md">
-            {{ formatTreatmentPlanStatus(plan.status).label }}
+          <UBadge :color="getTreatmentPlanStatusColor(plan.status)" variant="soft" size="md">
+            {{ getTreatmentPlanStatusLabel(plan.status) }}
           </UBadge>
         </div>
       </div>

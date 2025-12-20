@@ -46,11 +46,11 @@
       <div class="mb-4 flex items-start justify-between">
         <h2 class="text-lg font-bold">{{ props.treatmentPlan.title }}</h2>
         <UBadge
-          :color="formatTreatmentPlanStatus(props.treatmentPlan.status).color"
+          :color="getTreatmentPlanStatusColor(props.treatmentPlan.status)"
           variant="soft"
           class="rounded-full"
         >
-          {{ formatTreatmentPlanStatus(props.treatmentPlan.status).label }}
+          {{ getTreatmentPlanStatusLabel(props.treatmentPlan.status) }}
         </UBadge>
       </div>
       <div class="text-muted space-y-3 text-sm">

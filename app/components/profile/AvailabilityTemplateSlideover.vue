@@ -124,7 +124,7 @@
             <UFormField label="Lieu de consultation" name="location">
               <USelect
                 v-model="formState.location"
-                :items="CONSULTATION_LOCATIONS_WITH_ICONS"
+                :items="CONSULTATION_LOCATION_OPTIONS"
                 placeholder="Sélectionner un lieu"
                 class="w-full"
                 size="lg"

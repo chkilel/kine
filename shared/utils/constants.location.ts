@@ -1,3 +1,4 @@
+import type { keyof } from 'zod';
 import type { ConsultationLocation } from '../types/patient.types'
 
 // =================================================================================================
@@ -13,8 +14,8 @@ export const CONSULTATION_LOCATIONS_CONFIG = {
 export const CONSULTATION_LOCATION_OPTIONS = Object.entries(CONSULTATION_LOCATIONS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
-  icon: item.icon
-}))
+  icon: item.icon,
+})) as { label: string; value: ConsultationLocation; icon: string }[]
 
 // Location Helpers
 export const getLocationLabel = (location: ConsultationLocation) =>

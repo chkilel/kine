@@ -44,8 +44,8 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <UBadge :color="getSessionStatusColor(session.status)" variant="soft" size="md" class="rounded-full">
-              {{ getSessionStatusLabel(session.status) }}
+            <UBadge :color="getConsultationStatusColor(session.status)" variant="soft" size="md" class="rounded-full">
+              {{ getConsultationStatusLabel(session.status) }}
             </UBadge>
           </div>
         </li>

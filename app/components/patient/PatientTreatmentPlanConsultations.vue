@@ -146,13 +146,13 @@
 
         <template #location-cell="{ row }">
           <div class="text-sm">
-            {{ getConsultationLocationLabel(row.original.location) }}
+            {{ getLocationLabel(row.original.location) }}
           </div>
         </template>
 
         <template #status-cell="{ row }">
-          <UBadge :color="getSessionStatusColor(row.original.status)" variant="soft" size="xs">
-            {{ getSessionStatusLabel(row.original.status) }}
+          <UBadge :color="getConsultationStatusColor(row.original.status)" variant="soft" size="xs">
+            {{ getConsultationStatusLabel(row.original.status) }}
           </UBadge>
         </template>
 

@@ -2,6 +2,8 @@
 // Treatment Plan Status Constants
 // =================================================================================================
 
+import type { TreatmentPlanStatus } from '../types/patient.types'
+
 export const TREATMENT_PLAN_STATUS_CONFIG = {
   planned: { label: 'Planifié', color: 'warning' },
   ongoing: { label: 'Actif', color: 'success' },
@@ -16,6 +18,9 @@ export const TREATMENT_PLAN_STATUS_OPTIONS = Object.entries(TREATMENT_PLAN_STATU
   value: key,
   color: item.color
 }))
+
+export const getTreatmentPlanStatusLabel = (status: TreatmentPlanStatus) => TREATMENT_PLAN_STATUS_CONFIG[status].label
+export const getTreatmentPlanStatusColor = (status: TreatmentPlanStatus) => TREATMENT_PLAN_STATUS_CONFIG[status].color
 
 // Frequency Options
 export const FREQUENCY_OPTIONS = [

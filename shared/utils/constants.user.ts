@@ -12,6 +12,14 @@ export const PHONE_CATEGORIES_CONFIG = {
 // Phone Category Type
 export type PhoneCategory = keyof typeof PHONE_CATEGORIES_CONFIG
 
+// Phone Categories Options
+export const PHONE_CATEGORIES_OPTIONS = Object.entries(PHONE_CATEGORIES_CONFIG).map(
+  ([key, config]) => ({
+    label: config.label,
+    value: key
+  })
+)
+
 // Phone Category Helpers
 export const getPhoneCategoryLabel = (category: PhoneCategory) => PHONE_CATEGORIES_CONFIG[category]?.label || category
 

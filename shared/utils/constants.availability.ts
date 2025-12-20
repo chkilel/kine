@@ -1,4 +1,5 @@
 import type { SelectItem } from '@nuxt/ui'
+import type { AvailabilityExceptionReason } from '../types/availability.types'
 
 // =================================================================================================
 // Availability Exception Types Constants
@@ -20,17 +21,19 @@ export const AVAILABILITY_EXCEPTION_CONFIG = {
   other: { value: 'other', label: 'Autre', color: 'neutral', variant: 'subtle', icon: 'i-lucide-more-horizontal' }
 } as const
 
+const typedEntries = <T extends Record<string, any>>(obj: T) =>
+  Object.entries(obj) as {
+    [K in keyof T]: [K, T[K]]
+  }[keyof T][]
+
 // Availability Exception Type Options
-export const EXCEPTION_TYPE_OPTIONS = Object.entries(AVAILABILITY_EXCEPTION_CONFIG).map(([key, item]) => ({
+export const EXCEPTION_TYPE_OPTIONS = typedEntries(AVAILABILITY_EXCEPTION_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
   icon: item.icon
-})) as SelectItem[]
-
-// Exception Type Values
-export type ExceptionTypeValue = keyof typeof AVAILABILITY_EXCEPTION_CONFIG
+}))
 
 // Availability Exception Type Helpers
-export const getExceptionTypeColor = (type: ExceptionTypeValue) => AVAILABILITY_EXCEPTION_CONFIG[type].color
-export const getExceptionTypeLabel = (type: ExceptionTypeValue) => AVAILABILITY_EXCEPTION_CONFIG[type].label
-export const getExceptionTypeIcon = (type: ExceptionTypeValue) => AVAILABILITY_EXCEPTION_CONFIG[type].icon
+export const getExceptionTypeColor = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].color
+export const getExceptionTypeLabel = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].label
+export const getExceptionTypeIcon = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].icon
