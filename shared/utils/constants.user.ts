@@ -1,26 +1,23 @@
 import type { SelectMenuItem } from '@nuxt/ui'
-import { getLabel, type ColorVariant } from '.'
 
+// =================================================================================================
+// Phone Categories Constants
+// =================================================================================================
+export const PHONE_CATEGORIES_CONFIG = {
+  personal: { label: 'Personnel' },
+  cabinet: { label: 'Cabinet' },
+  emergency: { label: 'Urgence' }
+} as const
 
-// Phone Categories
-export const PHONE_CATEGORIES = [
-  { value: 'personal', label: 'Personnel' },
-  { value: 'cabinet', label: 'Cabinet' },
-  { value: 'emergency', label: 'Urgence' }
-] as const
-
-export type PhoneCategory = (typeof PHONE_CATEGORIES)[number]['value']
-
-// Phone Categories Configuration
-export const PHONE_CATEGORIES_CONFIG = PHONE_CATEGORIES.reduce(
-  (acc, category) => ({ ...acc, [category.value]: category.label }),
-  {} as Record<PhoneCategory, string>
-)
+// Phone Category Type
+export type PhoneCategory = keyof typeof PHONE_CATEGORIES_CONFIG
 
 // Phone Category Helpers
-export const getPhoneCategoryLabel = (category: PhoneCategory): string => getLabel(category, PHONE_CATEGORIES_CONFIG)
+export const getPhoneCategoryLabel = (category: PhoneCategory) => PHONE_CATEGORIES_CONFIG[category]?.label || category
 
-// Specialization Options
+// =================================================================================================
+// Specializations Constants
+// =================================================================================================
 export const SPECIALIZATIONS: SelectMenuItem[] = [
   // Group 1
   { type: 'label', label: 'Domaines principaux' },
@@ -75,4 +72,4 @@ export const SPECIALIZATIONS_CONFIG = SPECIALIZATIONS.reduce(
 )
 
 // Specialization Helpers
-export const getSpecializationLabel = (value: string): string => getLabel(value as any, SPECIALIZATIONS_CONFIG, value)
+export const getSpecializationLabel = (value: string) => SPECIALIZATIONS_CONFIG[value]

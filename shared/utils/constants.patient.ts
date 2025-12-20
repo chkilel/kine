@@ -1,15 +1,42 @@
-import { createSelectOptions, getLabel, type SelectOption, type StatusConfig } from "."
-import type { InsuranceCoverage, PatientStatus, Relationship } from "../types/patient.types"
+import type { InsuranceCoverage, PatientStatus, Relationship } from '../types/patient.types'
 
-// Patient Status Configuration
+// =================================================================================================
+// Patient Status Constants
+// =================================================================================================
+
 export const STATUS_CONFIG = {
   active: { color: 'success', label: 'Actif' },
   inactive: { color: 'warning', label: 'Inactif' },
   discharged: { color: 'error', label: 'Sorti' },
   archived: { color: 'neutral', label: 'Archivé' }
-} as const satisfies Record<PatientStatus, StatusConfig>
+} as const
 
-// Insurance Coverage Configuration
+// Status Filter Options
+export const STATUS_FILTER_OPTIONS = [
+  { label: 'Statut: Tous', value: 'all' },
+  ...Object.entries(STATUS_CONFIG).map(([key, item]) => ({
+    label: item.label,
+    value: key,
+    color: item.color
+  }))
+]
+
+// Patient Status Options
+export const PATIENT_STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([key, item]) => ({
+  label: item.label,
+  value: key,
+  color: item.color
+}))
+
+// Patient Status Helpers
+export const getPatientStatusLabel = (status: PatientStatus) => STATUS_CONFIG[status]?.label || status
+export const getPatientStatusColor = (status: PatientStatus) => STATUS_CONFIG[status].color
+export const getPatientStatusConfig = (status: PatientStatus) => STATUS_CONFIG[status]
+
+// =================================================================================================
+// Insurance Coverage and Relationships Constants
+// =================================================================================================
+
 export const INSURANCE_COVERAGE_CONFIG = {
   not_required: 'Non nécessaire',
   not_provided: 'Informations manquantes',
@@ -20,10 +47,20 @@ export const INSURANCE_COVERAGE_CONFIG = {
   refused: 'Prise en charge refusée',
   expired: 'Prise en charge expirée',
   cancelled: 'Prise en charge annulée'
-} as const satisfies Record<InsuranceCoverage, string>
+} as const
 
+// Insurance Coverage Options
+export const INSURANCE_COVERAGE_OPTIONS = Object.entries(INSURANCE_COVERAGE_CONFIG).map(([key, label]) => ({
+  label,
+  value: key
+}))
 
-// Relationships Configuration
+// Insurance Coverage Helpers
+export const getInsuranceCoverageLabel = (value: InsuranceCoverage) => INSURANCE_COVERAGE_CONFIG[value]
+
+// =================================================================================================
+// Relationships Constants
+// =================================================================================================
 export const RELATIONSHIPS_CONFIG = {
   husband: 'Époux',
   wife: 'Épouse',
@@ -48,21 +85,13 @@ export const RELATIONSHIPS_CONFIG = {
   colleague: 'Collègue',
   acquaintance: 'Connaissance',
   other: 'Autre'
-} as const satisfies Record<Relationship, string>
-
-
-// Patient Status Options
-export const STATUS_FILTER_OPTIONS: SelectOption[] = [
-  { label: 'Statut: Tous', value: 'all' },
-  ...createSelectOptions(STATUS_CONFIG)
-]
-
-// Patient Status Options
-export const PATIENT_STATUS_OPTIONS = createSelectOptions(STATUS_CONFIG)
-
-// Insurance Coverage Options
-export const INSURANCE_COVERAGE_OPTIONS = createSelectOptions(INSURANCE_COVERAGE_CONFIG)
+} as const
 
 // Relationship Options
-export const RELATIONSHIP_OPTIONS = createSelectOptions(RELATIONSHIPS_CONFIG)
-export const getRelationshipLabel = (value: Relationship): string => getLabel(value, RELATIONSHIPS_CONFIG)
+export const RELATIONSHIP_OPTIONS = Object.entries(RELATIONSHIPS_CONFIG).map(([key, label]) => ({
+  label,
+  value: key
+}))
+
+// Relationship Helpers
+export const getRelationshipLabel = (value: Relationship) => RELATIONSHIPS_CONFIG[value]

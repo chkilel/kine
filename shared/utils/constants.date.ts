@@ -1,23 +1,27 @@
-import { createSelectOptions, getLabel, type SelectOption } from "."
+// =================================================================================================
+// Preferred Days Constants
+// =================================================================================================
 
-// Preferred Days Configuration
 export const PREFERRED_DAYS_CONFIG = {
-  Mon: 'Lundi',
-  Tue: 'Mardi',
-  Wed: 'Mercredi',
-  Thu: 'Jeudi',
-  Fri: 'Vendredi',
-  Sat: 'Samedi'
+  Mon: { label: 'Lundi', short: 'Lun' },
+  Tue: { label: 'Mardi', short: 'Mar' },
+  Wed: { label: 'Mercredi', short: 'Mer' },
+  Thu: { label: 'Jeudi', short: 'Jeu' },
+  Fri: { label: 'Vendredi', short: 'Ven' },
+  Sat: { label: 'Samedi', short: 'Sam' }
 } as const
 
+// Preferred Days Type
+export type Days = keyof typeof PREFERRED_DAYS_CONFIG
+
 // Preferred Days Options
-export const PREFERRED_DAYS_OPTIONS: SelectOption<string>[] = createSelectOptions(PREFERRED_DAYS_CONFIG)
+export const PREFERRED_DAYS_OPTIONS = Object.entries(PREFERRED_DAYS_CONFIG).map(([key, item]) => ({
+  label: item.label,
+  value: key
+}))
 
 // Day Abbreviation Helper
-export const getDayAbbreviation = (dayOfWeek: string): string => {
-  const label = PREFERRED_DAYS_CONFIG[dayOfWeek as keyof typeof PREFERRED_DAYS_CONFIG]
-  return label ? label.slice(0, 3) : dayOfWeek
-}
+export const getDayAbbreviation = (dayOfWeek: Days)=> PREFERRED_DAYS_CONFIG[dayOfWeek].short
 
 // Preferred Day Label Helper
-export const getPreferredDayLabel = (day: string): string => getLabel(day as any, PREFERRED_DAYS_CONFIG)
+export const getPreferredDayLabel = (day: string) => PREFERRED_DAYS_CONFIG[day as Days].label
