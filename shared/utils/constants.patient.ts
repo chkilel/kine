@@ -1,8 +1,8 @@
-import type { InsuranceCoverage, PatientStatus, Relationship } from '../types/patient.types'
-
 // =================================================================================================
 // Patient Status Constants
 // =================================================================================================
+
+import type { InsuranceCoverageStatus, PatientStatus, Relationship } from '../types/base.types'
 
 // Valid relationship types for emergency contacts
 export const VALID_RELATIONSHIP_TYPES = [
@@ -89,7 +89,7 @@ export const INSURANCE_COVERAGE_OPTIONS = Object.entries(INSURANCE_COVERAGE_CONF
 }))
 
 // Insurance Coverage Helpers
-export const getInsuranceCoverageLabel = (value: InsuranceCoverage) => INSURANCE_COVERAGE_CONFIG[value]
+export const getInsuranceCoverageLabel = (value: InsuranceCoverageStatus) => INSURANCE_COVERAGE_CONFIG[value]
 
 // =================================================================================================
 // Relationships Constants

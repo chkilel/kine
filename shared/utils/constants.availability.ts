@@ -1,8 +1,8 @@
-import type { AvailabilityExceptionReason } from '../types/availability.types'
-
 // =================================================================================================
 // Availability Exception Types Constants
 // =================================================================================================
+
+import type { Reason } from '../types/base.types'
 
 // Valid days of the week for scheduling
 export const VALID_SCHEDULE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
@@ -49,6 +49,6 @@ export const EXCEPTION_TYPE_OPTIONS = typedEntries(AVAILABILITY_EXCEPTION_CONFIG
 }))
 
 // Availability Exception Type Helpers
-export const getExceptionTypeColor = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].color
-export const getExceptionTypeLabel = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].label
-export const getExceptionTypeIcon = (type: AvailabilityExceptionReason) => AVAILABILITY_EXCEPTION_CONFIG[type].icon
+export const getExceptionTypeColor = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].color
+export const getExceptionTypeLabel = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].label
+export const getExceptionTypeIcon = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].icon

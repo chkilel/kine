@@ -1,8 +1,8 @@
-import type { ConsultationSessionType, ConsultationStatus } from '../types/patient.types'
-
 // =================================================================================================
 // Consultation Duration and Status Constants
 // =================================================================================================
+
+import type { ConsultationStatus, ConsultationType } from '../types/base.types'
 
 // Consultation Duration Options
 export const CONSULTATION_DURATIONS = [30, 45, 60, 75, 90, 105, 120]
@@ -71,4 +71,4 @@ export const getConsultationStatusColor = (status: ConsultationStatus) => SESSIO
 export const getConsultationStatusConfig = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status]
 
 // Consultation Type Helpers
-export const getConsultationTypeLabel = (type: ConsultationSessionType) => CONSULTATION_TYPES_CONFIG[type].label
+export const getConsultationTypeLabel = (type: ConsultationType) => CONSULTATION_TYPES_CONFIG[type].label

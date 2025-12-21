@@ -21,7 +21,7 @@ export const PREFERRED_DAYS_OPTIONS = Object.entries(PREFERRED_DAYS_CONFIG).map(
 }))
 
 // Day Abbreviation Helper
-export const getDayAbbreviation = (dayOfWeek: Days)=> PREFERRED_DAYS_CONFIG[dayOfWeek].short
+export const getDayAbbreviation = (dayOfWeek: Days) => PREFERRED_DAYS_CONFIG[dayOfWeek].short
 
 // Preferred Day Label Helper
 export const getPreferredDayLabel = (day: string) => PREFERRED_DAYS_CONFIG[day as Days].label

@@ -2,7 +2,7 @@
 // Treatment Plan Status Constants
 // =================================================================================================
 
-import type { TreatmentPlanStatus } from '../types/patient.types'
+import type { TreatmentPlanStatus } from '../types/base.types'
 
 // Valid status values for treatment plan coverage
 export const VALID_COVERAGE_STATUSES = [

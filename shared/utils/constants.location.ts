@@ -1,8 +1,8 @@
-import type { ConsultationLocation } from '../types/patient.types'
-
 // =================================================================================================
 // Consultation Locations Constants
 // =================================================================================================
+
+import type { ConsultationLocation } from "../types/base.types";
 
 // Valid location types for consultations
 export const VALID_CONSULTATION_LOCATIONS = ['clinic', 'home', 'telehealth'] as const

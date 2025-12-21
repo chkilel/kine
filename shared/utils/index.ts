@@ -1,4 +1,5 @@
-import type { Patient, TreatmentPlanWithProgress } from '../types/patient.types'
+import type { Patient } from '../types/patient.types'
+import type { TreatmentPlanWithProgress } from '../types/treatment-plan'
 
 // Slugify a string
 export function slugify(name: string) {

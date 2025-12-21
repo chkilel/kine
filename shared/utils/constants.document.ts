@@ -1,8 +1,8 @@
-import type { DocumentCategory } from '../types/patient.types'
-
 // =================================================================================================
 // Document Categories Constants
 // =================================================================================================
+
+import type { DocumentCategory } from '../types/base.types'
 
 // Valid document types for patient files
 export const VALID_DOCUMENT_TYPES = [

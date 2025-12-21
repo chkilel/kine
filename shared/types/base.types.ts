@@ -55,7 +55,7 @@ export const documentCategorySchema = z.enum(VALID_DOCUMENT_TYPES)
 export type DocumentCategory = z.infer<typeof documentCategorySchema>
 
 export const relationshipSchema = z.enum(VALID_RELATIONSHIP_TYPES)
-export type RelationshipType = z.infer<typeof relationshipSchema>
+export type Relationship = z.infer<typeof relationshipSchema>
 
 export const insuranceCoverageSchema = z.enum(VALID_COVERAGE_STATUSES)
 export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
