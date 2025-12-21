@@ -1,114 +1,85 @@
 <script setup lang="ts">
-  import { CalendarDate, Time, getLocalTimeZone } from '@internationalized/date'
+  import { CalendarDate, Time, getLocalTimeZone, parseDate, parseTime, today } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{ availabilityException?: AvailabilityException }>()
   const emit = defineEmits<{ close: [] }>()
 
-  const toast = useToast()
+  // Use availability exceptions composable for API operations
+  const { createException, updateException, isCreating, isUpdating } = useAvailabilityExceptions()
+
   const formRef = ref<HTMLFormElement>()
+  const isOtherReason = computed(() => formState.reason === 'other')
+  const otherReasonText = ref('')
 
   // Form state
-  const state = reactive<AvailabilityExceptionCreate>({
-    date: props.availabilityException?.date || new Date(),
+  const formState = reactive<AvailabilityExceptionCreate>({
+    date: props.availabilityException?.date || today(getLocalTimeZone()).toString(),
     startTime: props.availabilityException?.startTime || undefined,
     endTime: props.availabilityException?.endTime || undefined,
     isAvailable: props.availabilityException?.isAvailable ?? false,
-    reason: props.availabilityException?.reason || undefined
+    reason: props.availabilityException?.reason || 'other'
   })
 
   // Time values for UI components
   const startTimeModel = computed<Time>({
-    get: () => {
-      const [hours, minutes] = (state.startTime || '09:00').split(':').map(Number)
-      return new Time(hours, minutes, 0)
-    },
-    set: (value: Time) => {
-      state.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-    }
+    get: () => parseTime(formState.startTime || WORKING_HOURS.start),
+    set: (value: Time) => (formState.startTime = value.toString()) // ex. '09:45:00'
   })
   const endTimeModel = computed<Time>({
-    get: () => {
-      const [hours, minutes] = (state.endTime || '12:00').split(':').map(Number)
-      return new Time(hours, minutes, 0)
-    },
-    set: (value: Time) => {
-      state.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-    }
+    get: () => parseTime(formState.endTime || WORKING_HOURS.end),
+    set: (value: Time) => (formState.endTime = value.toString())
   })
 
   // Full day toggle
   const isFullDay = computed({
-    get: () => !state.startTime && !state.endTime,
+    get: () => !formState.startTime && !formState.endTime,
     set: (value: boolean) => {
       if (value) {
-        state.startTime = undefined
-        state.endTime = undefined
+        formState.startTime = undefined
+        formState.endTime = undefined
       } else {
-        state.startTime = '09:00'
-        state.endTime = '17:00' // 5pm is more typical for end time
+        formState.startTime = WORKING_HOURS.start
+        formState.endTime = WORKING_HOURS.end
       }
     }
   })
 
   // Calendar model for date picker
   const dateModel = computed<CalendarDate | null>({
-    get: () => {
-      if (!state.date) return null
-      const date = new Date(state.date)
-      return dateToCalendarDate(date)
-    },
-    set: (val) => {
-      state.date = val ? val.toDate(getLocalTimeZone()) : new Date()
+    get: () => (formState.date ? parseDate(formState.date) : null),
+    set: (calendarDate) => {
+      formState.date = calendarDate ? calendarDate.toString() : today(getLocalTimeZone()).toString()
     }
   })
 
-  // Reason selection state
-  const selectedReason = computed({
-    get: () => state.reason,
-    set: (value: string) => {
-      state.reason = value === 'other' ? 'other' : value
-    }
-  })
+  async function handleSubmit(_event: FormSubmitEvent<AvailabilityExceptionCreate>) {
+    try {
+      if (props.availabilityException) {
+        // Update existing exception
+        updateException(props.availabilityException.id, formState)
+      } else {
+        // Create new exception
+        createException(formState)
+      }
 
-  const isOtherReason = computed(() => selectedReason.value === 'other')
-  const otherReasonText = ref('')
-
-  function handleSubmit(event: FormSubmitEvent<AvailabilityExceptionCreate>) {
-    console.log('🚀 >>> ', 'event', ': ', event.data)
-
-    if (!formRef.value) return
-
-    toast.add({
-      title: 'Succès',
-      description: props.availabilityException ? 'Exception mise à jour' : 'Exception ajoutée',
-      icon: 'i-lucide-check-circle',
-      color: 'success'
-    })
-    emit('close')
-  }
-
-  function onCancel() {
-    emit('close')
-  }
-
-  function selectReason(reason: string) {
-    selectedReason.value = reason
-    if (reason !== 'other') {
-      otherReasonText.value = ''
+      emit('close')
+    } catch (error) {
+      parseError(error)
     }
   }
 
-  const buttonText = computed(() => {
-    return props.availabilityException ? 'Mettre à jour' : "Ajouter l'exception"
-  })
+  function selectReason(reason: Reason) {
+    formState.reason = reason
+    if (reason !== 'other') otherReasonText.value = ''
+  }
 </script>
 
 <template>
   <USlideover
     :open="true"
     :dismissible="false"
-    @close="onCancel"
+    @close="emit('close')"
     :title="props.availabilityException ? 'Modifier l\'exception' : 'Ajouter une exception'"
     :description="
       props.availabilityException
@@ -123,7 +94,7 @@
       <UForm
         ref="formRef"
         :schema="availabilityExceptionCreateSchema"
-        :state="state"
+        :state="formState"
         class="space-y-6"
         @submit="handleSubmit"
       >
@@ -177,26 +148,26 @@
           <div class="space-y-4">
             <UFormField name="isAvailable">
               <USwitch
-                v-model="state.isAvailable"
+                v-model="formState.isAvailable"
                 description="Le thérapeute est-il disponible sur ce créneau ?"
                 class="flex-row-reverse justify-between"
               >
                 <template #label>
                   <span class="text-foreground text-sm font-semibold">
-                    {{ state.isAvailable ? 'Disponible' : 'Indisponible' }}
+                    {{ formState.isAvailable ? 'Disponible' : 'Indisponible' }}
                   </span>
                 </template>
               </USwitch>
             </UFormField>
 
-            <UFormField v-if="!state.isAvailable" label="Motif de l'absence" name="reason">
+            <UFormField v-if="!formState.isAvailable" label="Motif de l'absence" name="reason">
               <div class="space-y-3">
                 <div class="flex flex-wrap gap-2">
                   <UButton
                     v-for="reason in EXCEPTION_TYPE_OPTIONS"
                     :key="reason.value"
-                    :variant="selectedReason === reason.value ? 'solid' : 'outline'"
-                    :color="selectedReason === reason.value ? 'primary' : 'neutral'"
+                    :variant="formState.reason === reason?.value ? 'solid' : 'outline'"
+                    :color="formState.reason === reason.value ? 'primary' : 'neutral'"
                     :icon="getExceptionTypeIcon(reason.value)"
                     size="sm"
                     @click="selectReason(reason.value)"
@@ -221,17 +192,25 @@
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="onCancel">
+        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="emit('close')">
           Annuler
         </UButton>
         <UButton
           color="primary"
           class="shadow-primary/25 h-9 px-3 text-sm font-semibold shadow-lg"
           type="submit"
+          :loading="isCreating || isUpdating"
+          :disabled="isCreating || isUpdating"
           @click="formRef?.submit()"
         >
-          <UIcon name="i-lucide-check" class="text-lg" />
-          {{ buttonText }}
+          <UIcon v-if="!isCreating && !isUpdating" name="i-lucide-check" class="text-lg" />
+          {{
+            isCreating || isUpdating
+              ? 'Enregistrement...'
+              : props.availabilityException
+                ? 'Mettre à jour'
+                : "Ajouter l'exception"
+          }}
         </UButton>
       </div>
     </template>
