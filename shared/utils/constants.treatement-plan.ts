@@ -4,6 +4,22 @@
 
 import type { TreatmentPlanStatus } from '../types/patient.types'
 
+// Valid status values for treatment plan coverage
+export const VALID_COVERAGE_STATUSES = [
+  'not_required',
+  'not_provided',
+  'to_verify',
+  'awaiting_agreement',
+  'covered',
+  'partially_covered',
+  'refused',
+  'expired',
+  'cancelled'
+] as const
+
+// Valid status values for treatment plans
+export const VALID_TREATMENT_PLAN_STATUSES = ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] as const
+
 export const TREATMENT_PLAN_STATUS_CONFIG = {
   planned: { label: 'Planifié', color: 'warning' },
   ongoing: { label: 'Actif', color: 'success' },

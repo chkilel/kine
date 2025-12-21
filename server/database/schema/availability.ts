@@ -1,9 +1,11 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
-import { timestamps } from './columns.helpers'
+import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
+import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
+import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
 
 /**
  * ================================================================
@@ -16,23 +18,23 @@ import { users as authUsers } from './auth'
 export const weeklyAvailabilityTemplates = sqliteTable(
   'weekly_availability_templates',
   {
-    id: text().primaryKey().$defaultFn(createId), // Unique template ID — e.g., "tpl_01HXYZ1234"
+    id: text().primaryKey().$defaultFn(createId),
     organizationId: text()
       .notNull()
-      .references(() => organizations.id, { onDelete: 'cascade' }), // Foreign key to organization
+      .references(() => organizations.id, { onDelete: 'cascade' }), // Owning organization
     userId: text()
       .notNull()
-      .references(() => authUsers.id, { onDelete: 'cascade' }), // Foreign key to user
+      .references(() => authUsers.id, { onDelete: 'cascade' }), // related therapist user
 
     // ---- Weekly schedule fields ----
-    dayOfWeek: text({ enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] }).notNull(), // Day of week — e.g., 'Mon'
-    startTime: text().notNull(), // Start time in HH:MM format — e.g., '09:00'
-    endTime: text().notNull(), // End time in HH:MM format — e.g., '12:00'
-    location: text({ enum: ['clinic', 'home', 'telehealth'] }).notNull(), // Consultation location — e.g., 'clinic'
+    dayOfWeek: text({ enum: VALID_SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
+    startTime: text().notNull(), // HH:MM format — e.g., '09:00'
+    endTime: text().notNull(), // HH:MM format — e.g., '12:00'
+    location: text({ enum: VALID_CONSULTATION_LOCATIONS }).notNull(), // Consultation location — e.g., 'clinic'
     maxSessions: integer().notNull().default(1), // Maximum simultaneous sessions — e.g., 4
 
     // Created and Updated timestamp
-    ...timestamps
+    ...creationAndUpdateTimestamps
   },
   (table) => [
     // ---- Unique constraints ----
@@ -68,25 +70,24 @@ export const weeklyAvailabilityTemplates = sqliteTable(
 export const availabilityExceptions = sqliteTable(
   'availability_exceptions',
   {
-    id: text().primaryKey().$defaultFn(createId), // Unique exception ID — e.g., "exc_01HXYZ5678"
+    id: text().primaryKey().$defaultFn(createId),
     organizationId: text()
       .notNull()
-      .references(() => organizations.id, { onDelete: 'cascade' }), // Foreign key to organization
+      .references(() => organizations.id, { onDelete: 'cascade' }), // Owning organization
     userId: text()
       .notNull()
-      .references(() => authUsers.id, { onDelete: 'cascade' }), // Foreign key to user
+      .references(() => authUsers.id, { onDelete: 'cascade' }), // related therapist user
 
     // ---- Exception fields ----
-    date: text().notNull(), // YYYY-MM-DD (date-only)
+    date: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
     startTime: text(), // Optional start time for partial day exceptions — e.g., '09:00'
     endTime: text(), // Optional end time for partial day exceptions — e.g., '12:00'
     isAvailable: integer({ mode: 'boolean' }).notNull(), // Whether available during this exception — e.g., false for vacation
-    reason: text({
-      enum: ['vacation', 'holiday', 'sick', 'training', 'meeting', 'personal', 'reduced_hours', 'other']
-    }), // Reason for exception — e.g., 'vacation'
+    reason: text({ enum: VALID_SCHEDULE_EXCEPTION_TYPES }), // Reason for exception — e.g., 'vacation'
+    notes: text(), // Optional notes about the exception if other reason is selected
 
     // Created and Updated timestamp
-    ...timestamps
+    ...creationAndUpdateTimestamps
   },
   (table) => [
     // ---- Unique constraints ----

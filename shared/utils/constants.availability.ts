@@ -1,9 +1,24 @@
-import type { SelectItem } from '@nuxt/ui'
 import type { AvailabilityExceptionReason } from '../types/availability.types'
 
 // =================================================================================================
 // Availability Exception Types Constants
 // =================================================================================================
+
+// Valid days of the week for scheduling
+export const VALID_SCHEDULE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+// Valid exception types for practitioner schedules
+export const VALID_SCHEDULE_EXCEPTION_TYPES = [
+  'vacation',
+  'holiday',
+  'sick',
+  'training',
+  'meeting',
+  'personal',
+  'reduced_hours',
+  'other'
+] as const
+
 export const AVAILABILITY_EXCEPTION_CONFIG = {
   vacation: { label: 'Congé', color: 'warning', icon: 'i-lucide-luggage' },
   holiday: { label: 'Jour férié', color: 'warning', icon: 'i-lucide-home' },

@@ -1,11 +1,32 @@
-import type { ConsultationSessionType, ConsultationStatus } from "../types/patient.types"
+import type { ConsultationSessionType, ConsultationStatus } from '../types/patient.types'
 
 // =================================================================================================
 // Consultation Duration and Status Constants
 // =================================================================================================
 
 // Consultation Duration Options
-export const SESSION_DURATIONS = [30, 45, 60, 75, 90, 105, 120]
+export const CONSULTATION_DURATIONS = [30, 45, 60, 75, 90, 105, 120]
+
+// Valid consultation types for patient sessions
+export const VALID_CONSULTATION_TYPES = [
+  'initial',
+  'follow_up',
+  'evaluation',
+  'discharge',
+  'mobilization',
+  'reinforcement',
+  'reeducation'
+] as const
+
+// Valid status values for appointments
+export const VALID_CONSULTATION_STATUSES = [
+  'confirmed',
+  'scheduled',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'no_show'
+] as const
 
 // Minimum Gap Between Consultations in Minutes
 export const MINIMUM_CONSULTATION_GAP_MINUTES = 15
@@ -45,9 +66,9 @@ export const CONSULTATION_TYPES_OPTIONS = Object.entries(CONSULTATION_TYPES_CONF
 }))
 
 // Consultation Status Helpers
-export const getConsultationStatusLabel = (status: ConsultationStatus)=> SESSION_STATUS_CONFIG[status].label
-export const getConsultationStatusColor = (status: ConsultationStatus)=> SESSION_STATUS_CONFIG[status].color
-export const getConsultationStatusConfig = (status: ConsultationStatus)=> SESSION_STATUS_CONFIG[status]
+export const getConsultationStatusLabel = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status].label
+export const getConsultationStatusColor = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status].color
+export const getConsultationStatusConfig = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status]
 
 // Consultation Type Helpers
-export const getConsultationTypeLabel = (type: ConsultationSessionType)=> CONSULTATION_TYPES_CONFIG[type].label
+export const getConsultationTypeLabel = (type: ConsultationSessionType) => CONSULTATION_TYPES_CONFIG[type].label

@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { timestamps } from './columns.helpers'
+import { creationAndUpdateTimestamps } from './columns.helpers'
 import { users } from './auth'
 
 // Organization table
@@ -10,7 +10,7 @@ export const organizations = sqliteTable('organizations', {
   slug: text().notNull().unique(),
   logo: text(),
   metadata: text({ mode: 'json' }),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 // Member table
@@ -23,7 +23,7 @@ export const members = sqliteTable('members', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   role: text().notNull().default('member'),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 // Invitation table
@@ -40,7 +40,7 @@ export const invitations = sqliteTable('invitations', {
   status: text().notNull().default('pending'), // pending, accepted, expired
   expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
   teamId: text(), // Optional team ID for team-based invitations
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 // Teams table (optional)
@@ -50,7 +50,7 @@ export const teams = sqliteTable('teams', {
   organizationId: text()
     .notNull()
     .references(() => organizations.id, { onDelete: 'cascade' }),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 // Team members table (optional)
@@ -62,5 +62,5 @@ export const teamMembers = sqliteTable('teamMembers', {
   userId: text()
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })

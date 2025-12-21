@@ -1,6 +1,5 @@
 import type { Session } from '~~/shared/types/auth.types'
 import { treatmentPlans, patients } from '~~/server/database/schema'
-import { treatmentPlanCreateSchema } from '~~/shared/types/patient.types'
 import { eq, and, isNull } from 'drizzle-orm'
 
 // POST /api/patients/[id]/treatment-plans - Create new treatment plan

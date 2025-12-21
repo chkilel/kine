@@ -1,9 +1,12 @@
-import type { keyof } from 'zod';
 import type { ConsultationLocation } from '../types/patient.types'
 
 // =================================================================================================
 // Consultation Locations Constants
 // =================================================================================================
+
+// Valid location types for consultations
+export const VALID_CONSULTATION_LOCATIONS = ['clinic', 'home', 'telehealth'] as const
+
 export const CONSULTATION_LOCATIONS_CONFIG = {
   clinic: { label: 'Cabinet', icon: 'i-lucide-building', color: 'success', variant: 'subtle' },
   home: { label: 'Domicile', icon: 'i-lucide-home', color: 'warning', variant: 'subtle' },
@@ -14,7 +17,7 @@ export const CONSULTATION_LOCATIONS_CONFIG = {
 export const CONSULTATION_LOCATION_OPTIONS = Object.entries(CONSULTATION_LOCATIONS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
-  icon: item.icon,
+  icon: item.icon
 })) as { label: string; value: ConsultationLocation; icon: string }[]
 
 // Location Helpers

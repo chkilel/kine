@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { timestamps, timestampsSoftDelete } from './columns.helpers'
+import { creationAndUpdateTimestamps, softDeleteTimestamps } from './columns.helpers'
 import { organizations, teams } from './organization'
 
 export const users = sqliteTable('users', {
@@ -17,7 +17,7 @@ export const users = sqliteTable('users', {
   licenseNumber: text(),
   defaultSessionDuration: integer().default(30),
   phoneNumbers: text({ mode: 'json' }).$type<{ number: string; category: string; id: string }[]>().default([]),
-  ...timestampsSoftDelete
+  ...softDeleteTimestamps
 })
 
 export const sessions = sqliteTable('sessions', {
@@ -31,7 +31,7 @@ export const sessions = sqliteTable('sessions', {
     .references(() => users.id, { onDelete: 'cascade' }),
   activeOrganizationId: text().references(() => organizations.id, { onDelete: 'cascade' }),
   activeTeamId: text().references(() => teams.id, { onDelete: 'cascade' }),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 export const accounts = sqliteTable('accounts', {
@@ -48,7 +48,7 @@ export const accounts = sqliteTable('accounts', {
   refreshTokenExpiresAt: integer({ mode: 'timestamp_ms' }),
   scope: text(),
   password: text(),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })
 
 export const verifications = sqliteTable('verifications', {
@@ -56,5 +56,5 @@ export const verifications = sqliteTable('verifications', {
   identifier: text().notNull(),
   value: text().notNull(),
   expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
-  ...timestamps
+  ...creationAndUpdateTimestamps
 })

@@ -3,6 +3,17 @@ import type { DocumentCategory } from '../types/patient.types'
 // =================================================================================================
 // Document Categories Constants
 // =================================================================================================
+
+// Valid document types for patient files
+export const VALID_DOCUMENT_TYPES = [
+  'referral',
+  'imaging',
+  'lab_results',
+  'treatment_notes',
+  'prescriptions',
+  'other'
+] as const
+
 export const DOCUMENT_CATEGORIES_CONFIG = {
   referral: { label: 'Lettre de recommandation', icon: 'i-lucide-file-text', color: 'neutral' },
   imaging: { label: 'Radiologie', icon: 'i-lucide-image', color: 'primary' },

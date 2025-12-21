@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { consultations } from '~~/server/database/schema'
-import { consultationUpdateSchema } from '~~/shared/types/patient.types'
 import type { Session } from '~~/shared/types/auth.types'
 
 // PUT /api/patients/[id]/consultations/[id] - Update consultation

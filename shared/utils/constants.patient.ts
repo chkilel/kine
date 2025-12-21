@@ -4,6 +4,39 @@ import type { InsuranceCoverage, PatientStatus, Relationship } from '../types/pa
 // Patient Status Constants
 // =================================================================================================
 
+// Valid relationship types for emergency contacts
+export const VALID_RELATIONSHIP_TYPES = [
+  'husband',
+  'wife',
+  'mother',
+  'father',
+  'daughter',
+  'son',
+  'sister',
+  'brother',
+  'grandmother',
+  'grandfather',
+  'granddaughter',
+  'grandson',
+  'aunt',
+  'uncle',
+  'female_cousin',
+  'male_cousin',
+  'female_friend',
+  'male_friend',
+  'female_neighbor',
+  'male_neighbor',
+  'colleague',
+  'acquaintance',
+  'other'
+] as const
+
+// Valid biological sex values for patient records
+export const VALID_SEX_VALUES = ['male', 'female'] as const
+
+// Valid status values for patient records
+export const VALID_PATIENT_STATUSES = ['active', 'inactive', 'discharged', 'archived'] as const
+
 export const STATUS_CONFIG = {
   active: { color: 'success', label: 'Actif' },
   inactive: { color: 'warning', label: 'Inactif' },

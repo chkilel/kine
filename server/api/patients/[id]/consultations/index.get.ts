@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { eq, and, desc } from 'drizzle-orm'
 import { consultations } from '~~/server/database/schema'
-import { consultationQuerySchema } from '~~/shared/types/patient.types'
 import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients/[id]/consultations - List patient consultations

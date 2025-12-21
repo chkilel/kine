@@ -1,50 +1,16 @@
 import { createUpdateSchema } from 'drizzle-zod'
-import { authClient } from '~~/app/utils/auth-client'
-import { users } from '~~/server/database/schema'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
+
+import { authClient } from '~~/app/utils/auth-client'
+import { users } from '~~/server/database/schema'
+import { emailSchema, nameSchema, passwordSchema, phoneEntrySchema } from './base.types'
 
 z.config(fr())
 
 // ============================================================================
 // Shared Schemas & Constants
 // ============================================================================
-
-const PhoneCategory = z.enum(['personal', 'cabinet', 'emergency'], {
-  message: 'La catégorie doit être personal, cabinet ou urgence'
-})
-
-const PHONE_REGEX = /^(\+?\d{1,3}[-.\s]?)?(\(?\d{1,4}\)?[-.\s]?)?[\d\s.-]{7,}$/
-
-const phoneNumberSchema = z.object({
-  id: z.string().min(1, "L'ID est requis"),
-  number: z
-    .string()
-    .min(1, 'Le numéro est requis')
-    .regex(
-      PHONE_REGEX,
-      'Format de numéro de téléphone invalide. \n Entrez un numéro de téléphone avec ou sans indicatif international, les espaces et tirets sont autorisés.'
-    )
-    .transform((val) => val.replace(/\s+/g, '')), // Normalize phone numbers
-  category: PhoneCategory
-})
-
-const nameSchema = z
-  .string()
-  .min(1, 'Ce champ est requis')
-  .max(25, 'Ne peut pas dépasser 25 caractères')
-  .trim()
-  .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Caractères invalides dans le nom')
-
-const emailSchema = z.email('Adresse email invalide').toLowerCase().trim()
-
-const passwordSchema = z
-  .string()
-  .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-  .max(128, 'Le mot de passe ne peut pas dépasser 128 caractères')
-  .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
-  .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
-  .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre')
 
 const specializationSchema = z
   .array(z.string().trim().min(1, 'La spécialisation ne peut pas être vide'))
@@ -69,7 +35,7 @@ export const signUpSchema = z
     licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
     defaultSessionDuration: sessionDurationSchema.default(60).optional(),
     phoneNumbers: z
-      .array(phoneNumberSchema)
+      .array(phoneEntrySchema)
       .min(1, 'Au moins un numéro de téléphone est requis')
       .max(5, 'Maximum 5 numéros de téléphone autorisés')
       .optional(),
@@ -103,13 +69,11 @@ export const signUpSchema = z
 // SignIn Schema
 // ============================================================================
 
-export const loginSchema = z
-  .object({
-    email: emailSchema,
-    password: z.string().min(1, 'Le mot de passe est requis'),
-    rememberMe: z.boolean().default(false).optional()
-  })
-  .strict()
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Le mot de passe est requis'),
+  rememberMe: z.boolean().default(false).optional()
+})
 
 // ============================================================================
 // User Update Schema
@@ -122,26 +86,24 @@ export const userUpdateSchema = createUpdateSchema(users, {
   licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
   defaultSessionDuration: sessionDurationSchema.optional(),
   phoneNumbers: z
-    .array(phoneNumberSchema)
+    .array(phoneEntrySchema)
     .min(1, 'Au moins un numéro de téléphone est requis')
     .max(5, 'Maximum 5 numéros de téléphone autorisés')
     .optional()
-})
-  .strict()
-  .superRefine((data, ctx) => {
-    // Validate unique phone numbers
-    if (data.phoneNumbers && data.phoneNumbers.length > 1) {
-      const numbers = data.phoneNumbers.map((p) => p.number)
-      const uniqueNumbers = new Set(numbers)
-      if (numbers.length !== uniqueNumbers.size) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Les numéros de téléphone doivent être uniques',
-          path: ['phoneNumbers']
-        })
-      }
+}).superRefine((data, ctx) => {
+  // Validate unique phone numbers
+  if (data.phoneNumbers && data.phoneNumbers.length > 1) {
+    const numbers = data.phoneNumbers.map((p) => p.number)
+    const uniqueNumbers = new Set(numbers)
+    if (numbers.length !== uniqueNumbers.size) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Les numéros de téléphone doivent être uniques',
+        path: ['phoneNumbers']
+      })
     }
-  })
+  }
+})
 
 // ============================================================================
 // Password Update Schema
@@ -153,7 +115,6 @@ export const updatePasswordSchema = z
     password: passwordSchema.optional(),
     passwordConfirm: z.string().optional()
   })
-  .strict()
   .superRefine((data, ctx) => {
     // If password is provided, passwordConfirm must also be provided
     if (data.password && !data.passwordConfirm) {
@@ -182,8 +143,6 @@ export type SignUpSchema = z.output<typeof signUpSchema>
 export type LoginSchema = z.output<typeof loginSchema>
 export type UpdateUser = z.output<typeof userUpdateSchema>
 export type UpdatePassword = z.output<typeof updatePasswordSchema>
-export type PhoneNumber = z.output<typeof phoneNumberSchema>
-export type PhoneCategoryType = z.infer<typeof PhoneCategory>
 
 // User Type
 export type User = NonNullable<SessionData>['user']

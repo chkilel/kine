@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { consultations, patients, users } from '~~/server/database/schema'
-import { consultationCreateSchema } from '~~/shared/types/patient.types'
 
 // Create a simplified schema for API that matches database table
 const consultationInsertSchema = consultationCreateSchema

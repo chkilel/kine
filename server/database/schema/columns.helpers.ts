@@ -1,6 +1,7 @@
-import { integer } from 'drizzle-orm/sqlite-core'
+import { integer, text } from 'drizzle-orm/sqlite-core'
 
-export const timestamps = {
+// CreatedAt, UpdatedAt timestamps
+export const creationAndUpdateTimestamps = {
   createdAt: integer({ mode: 'timestamp_ms' })
     .$default(() => new Date())
     .notNull(),
@@ -10,7 +11,11 @@ export const timestamps = {
     .$onUpdateFn(() => new Date())
 }
 
-export const timestampsSoftDelete = {
-  ...timestamps,
+// CreatedAt, UpdatedAt, DeletedAt timestamps for soft deletion
+export const softDeleteTimestamps = {
+  ...creationAndUpdateTimestamps,
   deletedAt: integer({ mode: 'timestamp_ms' })
 }
+
+// YYYY-MM-DD date field, stored as TEXT
+export const calendarDateField = () => text() // YYYY-MM-DD (date-only)

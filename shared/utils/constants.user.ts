@@ -1,24 +1,24 @@
 import type { SelectMenuItem } from '@nuxt/ui'
+import type { PhoneCategory } from '../types/base.types'
 
 // =================================================================================================
 // Phone Categories Constants
 // =================================================================================================
+
+// Valid phone number categories for practitioners
+export const VALID_PHONE_CATEGORIES = ['personal', 'cabinet', 'emergency'] as const
+
 export const PHONE_CATEGORIES_CONFIG = {
   personal: { label: 'Personnel' },
   cabinet: { label: 'Cabinet' },
   emergency: { label: 'Urgence' }
 } as const
 
-// Phone Category Type
-export type PhoneCategory = keyof typeof PHONE_CATEGORIES_CONFIG
-
 // Phone Categories Options
-export const PHONE_CATEGORIES_OPTIONS = Object.entries(PHONE_CATEGORIES_CONFIG).map(
-  ([key, config]) => ({
-    label: config.label,
-    value: key
-  })
-)
+export const PHONE_CATEGORIES_OPTIONS = Object.entries(PHONE_CATEGORIES_CONFIG).map(([key, config]) => ({
+  label: config.label,
+  value: key
+}))
 
 // Phone Category Helpers
 export const getPhoneCategoryLabel = (category: PhoneCategory) => PHONE_CATEGORIES_CONFIG[category]?.label || category
