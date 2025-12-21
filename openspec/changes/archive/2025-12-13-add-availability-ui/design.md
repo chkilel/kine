@@ -31,8 +31,8 @@ Profile Page (existing)
 interface WeeklyAvailabilityTemplate {
   id: string
   dayOfWeek: string // 'Mon', 'Tue', etc.
-  startTime: string // '09:00'
-  endTime: string // '12:00'
+  startTime: string // '09:00:00'
+  endTime: string // '17:00:00'
   location: ConsultationLocation
   maxSessions: number
 }
