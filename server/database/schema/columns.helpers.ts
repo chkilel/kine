@@ -1,5 +1,12 @@
 import { integer, text } from 'drizzle-orm/sqlite-core'
 
+/**
+ * ================================================================
+ * COLUMN HELPERS
+ * ================================================================
+ * Reusable column definitions for database schemas.
+ */
+
 // CreatedAt, UpdatedAt timestamps
 export const creationAndUpdateTimestamps = {
   createdAt: integer({ mode: 'timestamp_ms' })

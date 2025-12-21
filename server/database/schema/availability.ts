@@ -1,11 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
-import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
-import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
+import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../../../shared/utils/constants.availability'
+import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.location'
 
 /**
  * ================================================================

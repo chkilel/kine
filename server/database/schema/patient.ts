@@ -1,12 +1,13 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
+
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { consultations } from './consultation'
 import { treatmentPlans } from './treatment-plan'
 import { patientDocuments } from './document'
-import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES } from '~~/shared/utils/constants.patient'
+import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES } from '../../../shared/utils/constants.patient'
 
 /**
  * ================================================================

@@ -1,7 +1,14 @@
 import { createId } from '@paralleldrive/cuid2'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { users } from './auth'
+
+/** ================================================================
+ * ORGANIZATION SCHEMA
+ * ================================================================
+ * Defines organizations, members, invitations, and teams.
+ */
 
 // Organization table
 export const organizations = sqliteTable('organizations', {

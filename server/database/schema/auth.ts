@@ -1,7 +1,15 @@
 import { createId } from '@paralleldrive/cuid2'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+
 import { creationAndUpdateTimestamps, softDeleteTimestamps } from './columns.helpers'
 import { organizations, teams } from './organization'
+
+/**
+ * ================================================================
+ * USERS TABLE
+ * ================================================================
+ * Stores user profiles and related information.
+ */
 
 export const users = sqliteTable('users', {
   id: text().primaryKey().$defaultFn(createId),

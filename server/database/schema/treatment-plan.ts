@@ -1,11 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { calendarDateField, creationAndUpdateTimestamps, softDeleteTimestamps } from './columns.helpers'
+
+import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users } from './auth'
 import { relations } from 'drizzle-orm'
 import { patients } from './patient'
-import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/utils/constants.treatement-plan'
+import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
 
 /**
  * ================================================================
