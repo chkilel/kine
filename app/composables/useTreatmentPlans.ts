@@ -7,8 +7,6 @@ export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) =>
   const convertDates = (plan: any): TreatmentPlanWithProgress => ({
     ...plan,
     prescriptionDate: toDate(plan.prescriptionDate),
-    startDate: parseISO(plan.startDate),
-    endDate: toDate(plan.endDate),
     createdAt: parseISO(plan.createdAt),
     updatedAt: parseISO(plan.updatedAt),
     deletedAt: toDate(plan.deletedAt),

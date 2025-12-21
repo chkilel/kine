@@ -48,7 +48,6 @@
     query: () =>
       requestFetch(`/api/patients/${route.params.id}`).then((data) => ({
         ...data,
-        dateOfBirth: parseISO(data.dateOfBirth),
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt),
         deletedAt: toDate(data.deletedAt)
