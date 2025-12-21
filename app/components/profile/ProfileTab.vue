@@ -123,7 +123,7 @@
               <template #fallback>
                 <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
                   <USkeleton
-                    v-for="duration in SESSION_DURATIONS"
+                    v-for="duration in CONSULTATION_DURATIONS"
                     :key="duration"
                     class="border-default h-9 rounded-lg border"
                   />
@@ -131,7 +131,7 @@
               </template>
               <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
                 <UButton
-                  v-for="duration in SESSION_DURATIONS"
+                  v-for="duration in CONSULTATION_DURATIONS"
                   :key="duration"
                   :variant="profile.defaultSessionDuration === duration ? 'solid' : 'outline'"
                   :color="profile.defaultSessionDuration === duration ? 'primary' : 'neutral'"
