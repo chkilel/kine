@@ -8,10 +8,11 @@ export function handleApiError(
 
   // Re-throw HTTP errors (from createError) with fallback
   if (error && typeof error === 'object' && 'statusCode' in error) {
-    const httpError = error as { statusCode: number; statusMessage?: string; data?: any }
+    const httpError = error as { statusCode: number; message?: string; statusMessage?: string; data?: any }
+
     throw createError({
       statusCode: httpError.statusCode,
-      statusMessage: httpError.statusMessage || fallbackMessage,
+      message: httpError.message || httpError.statusMessage || fallbackMessage,
       data: httpError.data
     })
   }
@@ -20,7 +21,7 @@ export function handleApiError(
   if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Données invalides',
+      message: 'Données invalides',
       data: (error as any).errors
     })
   }
@@ -29,7 +30,7 @@ export function handleApiError(
   if (error && typeof error === 'object' && 'code' in error) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Erreur de base de données',
+      message: 'Erreur de base de données',
       data: { code: (error as any).code }
     })
   }
@@ -37,6 +38,6 @@ export function handleApiError(
   // Generic error with fallback
   throw createError({
     statusCode: 500,
-    statusMessage: fallbackMessage
+    message: fallbackMessage
   })
 }

@@ -4,15 +4,29 @@ export function parseError(
   fallbackMessage: string = 'Une erreur est survenue',
   logMessage: boolean = true
 ) {
-  if (logMessage) console.log('⛔️ >>>  ', fallbackMessage, ': ', error)
+  if (logMessage) console.log('⛔️ >>>', fallbackMessage, ': ', error)
 
   // Handle Nuxt HTTP errors (from $fetch or useFetch)
   if (error && typeof error === 'object' && 'statusCode' in error) {
-    const httpError = error as { statusCode: number; statusMessage?: string; data?: any }
+    const httpError = error as {
+      statusCode: number
+      statusMessage?: string
+      message?: string
+      data?: any
+    }
+
+    // Priorité: data.data.message > data.message > message > statusMessage > fallback
+    const message =
+      httpError.data?.data?.message ||
+      httpError.data?.message ||
+      httpError.message ||
+      httpError.statusMessage ||
+      fallbackMessage
+
     return {
       statusCode: httpError.statusCode,
-      message: httpError.statusMessage || fallbackMessage,
-      data: httpError.data
+      message,
+      data: httpError.data?.data || httpError.data
     }
   }
 

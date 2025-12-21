@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'ID de modèle requis'
+      message: 'ID de modèle requis'
     })
   }
 
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Non autorisé'
+      message: 'Non autorisé'
     })
   }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Accès interdit'
+      message: 'Accès interdit'
     })
   }
 
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!existingTemplate) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Modèle de disponibilité non trouvé'
+        message: 'Modèle de disponibilité non trouvé'
       })
     }
 
@@ -91,7 +91,7 @@ export default defineEventHandler(async (event) => {
         ) {
           throw createError({
             statusCode: 400,
-            statusMessage: `Conflit d'horaire avec un modèle existant le ${newDayOfWeek}. Veuillez respecter un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes entre les plages horaires.`,
+            message: `Conflit d'horaire avec un modèle existant le ${newDayOfWeek}. Veuillez respecter un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes entre les plages horaires.`,
             data: {
               conflict: {
                 existingTemplate: {
@@ -137,14 +137,14 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Données de modèle invalides',
+        message: 'Données de modèle invalides',
         data: (error as unknown as { errors: unknown }).errors
       })
     }
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Impossible de mettre à jour le modèle de disponibilité'
+      message: 'Impossible de mettre à jour le modèle de disponibilité'
     })
   }
 })

@@ -1,93 +1,39 @@
 import { eq, and } from 'drizzle-orm'
 import { availabilityExceptions } from '~~/server/database/schema'
-import {
-  availabilityExceptionCreateSchema,
-  checkTimeOverlap,
-  MINIMUM_SESSION_GAP_MINUTES
-} from '~~/shared/types/availability.types'
-import type { Session } from '~~/shared/types/auth.types'
+import { handleApiError } from '~~/server/utils/error'
 
 // POST /api/availability/exceptions - Create new availability exception
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Non autorisé'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Accès interdit'
-    })
-  }
-
   try {
+    // 1. Require current user and organization from session
+    const { userId, organizationId } = await requireAuth(event)
+
+    // 2. Validate request body
     const body = await readValidatedBody(event, availabilityExceptionCreateSchema.parse)
 
-    // Check for overlapping exceptions on the same date (simplified logic for now)
-    // In a more complete implementation, we'd filter by the exact date
+    // 3. Check for existing exceptions (always query existing exceptions on the same date)
     const existingExceptions = await db
       .select()
       .from(availabilityExceptions)
       .where(
         and(
-          eq(availabilityExceptions.organizationId, activeOrganizationId),
-          eq(availabilityExceptions.userId, session.user.id)
-          // Date filtering would require more complex timestamp comparison
+          eq(availabilityExceptions.organizationId, organizationId),
+          eq(availabilityExceptions.userId, userId),
+          eq(availabilityExceptions.date, body.date)
         )
       )
 
-    // Validate no overlapping times with minimum gap (if time is specified)
-    if (body.startTime && body.endTime) {
-      for (const existingException of existingExceptions) {
-        // Only check overlap if existing exception has time specified
-        if (existingException.startTime && existingException.endTime) {
-          if (
-            checkTimeOverlap(
-              existingException.startTime,
-              existingException.endTime,
-              body.startTime,
-              body.endTime,
-              MINIMUM_SESSION_GAP_MINUTES
-            )
-          ) {
-            throw createError({
-              statusCode: 400,
-              statusMessage: `Conflit d'horaire avec une exception existante. Veuillez respecter un écart minimum de ${MINIMUM_SESSION_GAP_MINUTES} minutes entre les plages horaires.`,
-              data: {
-                conflict: {
-                  existingException: {
-                    date: existingException.date,
-                    startTime: existingException.startTime,
-                    endTime: existingException.endTime
-                  },
-                  newException: {
-                    date: body.date,
-                    startTime: body.startTime,
-                    endTime: body.endTime
-                  }
-                }
-              }
-            })
-          }
-        }
-      }
-    }
+    console.log('🚀 >>> ', {
+      existingExceptions: JSON.stringify(existingExceptions, null, 2),
+      exceptionDate: JSON.stringify(body.date, null, 2)
+    })
 
-    // Create new exception with organization and user context
+    // 4. Validate time overlaps
+    validateTimeOverlaps(existingExceptions, body)
+
+    // 5. Create new exception
     const [newException] = await db
       .insert(availabilityExceptions)
       .values({
@@ -95,32 +41,85 @@ export default defineEventHandler(async (event) => {
         startTime: body.startTime,
         endTime: body.endTime,
         isAvailable: body.isAvailable,
-        reason: body.reason as any, // Type assertion for enum compatibility
-        organizationId: activeOrganizationId,
-        userId: session.user.id
+        reason: body.reason,
+        organizationId,
+        userId
       })
       .returning()
 
     return newException
   } catch (error: unknown) {
-    console.error('Error creating availability exception:', error)
+    handleApiError(error, 'Error creating availability exception')
+  }
+})
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      // Re-throw custom errors
-      throw error
-    }
+// Helper: Validate time overlaps
+function validateTimeOverlaps(
+  existingExceptions: any[],
+  body: { date: string; startTime?: string | null; endTime?: string | null }
+) {
+  const isNewFullDay = !body.startTime || !body.endTime
 
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+  for (const existing of existingExceptions) {
+    const isExistingFullDay = !existing.startTime || !existing.endTime
+
+    // Case 1: Full-day exception conflicts with anything on the same date
+    if (isNewFullDay || isExistingFullDay) {
       throw createError({
-        statusCode: 400,
-        statusMessage: "Données d'exception invalides",
-        data: (error as unknown as { errors: unknown }).errors
+        statusCode: 409,
+        message: "Conflit d'horaire détecté",
+        data: {
+          message: 'Une exception existe déjà pour cette date.',
+          conflict: {
+            existing: {
+              date: existing.date,
+              startTime: existing.startTime || 'journée complète',
+              endTime: existing.endTime || 'journée complète'
+            },
+            requested: {
+              date: body.date,
+              startTime: body.startTime || 'journée complète',
+              endTime: body.endTime || 'journée complète'
+            }
+          }
+        }
       })
     }
 
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Impossible de créer l'exception de disponibilité"
-    })
+    // Case 2: Both have specific times - check for overlap
+    // At this point, we know both are NOT full-day, so times must exist
+    if (
+      body.startTime &&
+      body.endTime &&
+      existing.startTime &&
+      existing.endTime &&
+      checkTimeOverlap(
+        existing.startTime,
+        existing.endTime,
+        body.startTime,
+        body.endTime,
+        MINIMUM_CONSULTATION_GAP_MINUTES
+      )
+    ) {
+      throw createError({
+        statusCode: 409,
+        message: "Conflit d'horaire détecté",
+        data: {
+          message: `Un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes est requis entre les plages horaires.`,
+          conflict: {
+            existing: {
+              date: existing.date,
+              startTime: existing.startTime,
+              endTime: existing.endTime
+            },
+            requested: {
+              date: body.date,
+              startTime: body.startTime,
+              endTime: body.endTime
+            }
+          }
+        }
+      })
+    }
   }
-})
+}

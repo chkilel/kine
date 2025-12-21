@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Non autorisé'
+      message: 'Non autorisé'
     })
   }
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Accès interdit'
+      message: 'Accès interdit'
     })
   }
 
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     // Define day order for proper weekly sorting - use raw SQL with proper syntax
     const dayOrderCase = sql`CASE weekly_availability_templates.dayOfWeek
       WHEN 'Mon' THEN 0
-      WHEN 'Tue' THEN 1  
+      WHEN 'Tue' THEN 1
       WHEN 'Wed' THEN 2
       WHEN 'Thu' THEN 3
       WHEN 'Fri' THEN 4
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching availability templates:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Impossible de charger les modèles de disponibilité'
+      message: 'Impossible de charger les modèles de disponibilité'
     })
   }
 })

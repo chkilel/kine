@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'ID de modèle requis'
+      message: 'ID de modèle requis'
     })
   }
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Non autorisé'
+      message: 'Non autorisé'
     })
   }
 
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Accès interdit'
+      message: 'Accès interdit'
     })
   }
 
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     if (!existingTemplate) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Modèle de disponibilité non trouvé'
+        message: 'Modèle de disponibilité non trouvé'
       })
     }
 
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Impossible de supprimer le modèle de disponibilité'
+      message: 'Impossible de supprimer le modèle de disponibilité'
     })
   }
 })

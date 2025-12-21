@@ -19,7 +19,7 @@ export function createAuth(event: H3Event) {
   if (!betterAuthSecret) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'BETTER_AUTH_SECRET is not set in environment.'
+      message: 'BETTER_AUTH_SECRET is not set in environment.'
     })
   }
 
@@ -150,7 +150,7 @@ function getBaseURL(event: H3Event) {
     } catch (e) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Could not determine baseURL.'
+        message: 'Could not determine baseURL.'
       })
     }
   }
@@ -167,7 +167,7 @@ export async function requireAuth(event: H3Event) {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Non autorisé'
+      message: 'Non autorisé'
     })
   }
 
@@ -176,7 +176,7 @@ export async function requireAuth(event: H3Event) {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Aucune organisation active'
+      message: 'Aucune organisation active'
     })
   }
 

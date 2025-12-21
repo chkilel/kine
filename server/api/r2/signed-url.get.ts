@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     console.log('Failed to generate signed URLs in GET /api/r2/signed-url', err)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to generate signed URLs',
+      message: 'Failed to generate signed URLs',
       data: {
         message: err.message
       }

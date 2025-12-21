@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -38,13 +38,13 @@ export default defineEventHandler(async (event) => {
     if (error.name === 'ZodError') {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid patient data',
+        message: 'Invalid patient data',
         data: error.errors
       })
     }
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create patient'
+      message: 'Failed to create patient'
     })
   }
 })

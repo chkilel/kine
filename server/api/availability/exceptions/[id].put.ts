@@ -1,127 +1,49 @@
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, not } from 'drizzle-orm'
+import { DrizzleD1Database } from 'drizzle-orm/d1'
 import { availabilityExceptions } from '~~/server/database/schema'
-import {
-  availabilityExceptionUpdateSchema,
-  checkTimeOverlap,
-  MINIMUM_SESSION_GAP_MINUTES
-} from '~~/shared/types/availability.types'
-import type { Session } from '~~/shared/types/auth.types'
+import { handleApiError } from '~~/server/utils/error'
 
 // PUT /api/availability/exceptions/[id] - Update availability exception
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')
 
-  if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "ID d'exception requis"
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Non autorisé'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Accès interdit'
-    })
-  }
-
   try {
-    const body = await readValidatedBody(event, availabilityExceptionUpdateSchema.parse)
-
-    // First, check if exception exists and belongs to current user
-    const [existingException] = await db
-      .select()
-      .from(availabilityExceptions)
-      .where(
-        and(
-          eq(availabilityExceptions.id, id),
-          eq(availabilityExceptions.organizationId, activeOrganizationId),
-          eq(availabilityExceptions.userId, session.user.id)
-        )
-      )
-
-    if (!existingException) {
+    // 1. Validate ID parameter
+    if (!id) {
       throw createError({
-        statusCode: 404,
-        statusMessage: 'Exception de disponibilité non trouvée'
+        statusCode: 400,
+        message: "ID d'exception requis"
       })
     }
 
-    // If time fields are being changed, check for conflicts
-    const newDate = body.date || existingException.date
-    const newStartTime = body.startTime || existingException.startTime
-    const newEndTime = body.endTime || existingException.endTime
+    // 2. Require current user and organization from session
+    const { userId, organizationId } = await requireAuth(event)
 
-    if (body.date || body.startTime || body.endTime) {
-      // Check for overlapping exceptions (excluding current exception)
-      const conflictingExceptions = await db
-        .select()
-        .from(availabilityExceptions)
-        .where(
-          and(
-            eq(availabilityExceptions.organizationId, activeOrganizationId),
-            eq(availabilityExceptions.userId, session.user.id),
-            eq(availabilityExceptions.date, newDate),
-            // Exclude current exception from conflict check
-            sql`${availabilityExceptions.id} != ${id}`
-          )
-        )
+    // 3. Validate request body
+    const body = await readValidatedBody(event, availabilityExceptionUpdateSchema.parse)
 
-      // Validate no overlapping times with minimum gap
-      if (newStartTime && newEndTime) {
-        for (const conflictingException of conflictingExceptions) {
-          if (conflictingException.startTime && conflictingException.endTime) {
-            if (
-              checkTimeOverlap(
-                conflictingException.startTime,
-                conflictingException.endTime,
-                newStartTime,
-                newEndTime,
-                MINIMUM_SESSION_GAP_MINUTES
-              )
-            ) {
-              throw createError({
-                statusCode: 400,
-                statusMessage: `Conflit d'horaire avec une exception existante. Veuillez respecter un écart minimum de ${MINIMUM_SESSION_GAP_MINUTES} minutes entre les plages horaires.`,
-                data: {
-                  conflict: {
-                    existingException: {
-                      date: conflictingException.date,
-                      startTime: conflictingException.startTime,
-                      endTime: conflictingException.endTime
-                    },
-                    newException: {
-                      date: newDate,
-                      startTime: newStartTime,
-                      endTime: newEndTime
-                    }
-                  }
-                }
-              })
-            }
-          }
-        }
-      }
+    // 4. Get existing exception with single query
+    const existingException = await getExistingException(db, id, userId, organizationId)
+
+    // 5. Check for conflicts only if date or time fields have actually changed
+    const dateChanged = body.date !== undefined && body.date !== existingException.date
+    const startTimeChanged = body.startTime !== undefined && body.startTime !== existingException.startTime
+    const endTimeChanged = body.endTime !== undefined && body.endTime !== existingException.endTime
+
+    const hasTimeChanges = dateChanged || startTimeChanged || endTimeChanged
+
+    if (hasTimeChanges) {
+      await validateNoConflicts(db, {
+        exceptionId: id,
+        userId,
+        organizationId,
+        existingException,
+        updates: body
+      })
     }
 
-    // Update exception
+    // 6. Update exception
     const [updatedException] = await db
       .update(availabilityExceptions)
       .set({
@@ -131,32 +53,186 @@ export default defineEventHandler(async (event) => {
       .where(
         and(
           eq(availabilityExceptions.id, id),
-          eq(availabilityExceptions.organizationId, activeOrganizationId),
-          eq(availabilityExceptions.userId, session.user.id)
+          eq(availabilityExceptions.organizationId, organizationId),
+          eq(availabilityExceptions.userId, userId)
         )
       )
       .returning()
 
-    return updatedException
-  } catch (error: unknown) {
-    console.error('Error updating availability exception:', error)
-
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      // Re-throw custom errors
-      throw error
-    }
-
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+    if (!updatedException) {
       throw createError({
-        statusCode: 400,
-        statusMessage: "Données d'exception invalides",
-        data: (error as unknown as { errors: unknown }).errors
+        statusCode: 500,
+        message: "Échec de la mise à jour de l'exception"
       })
     }
 
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Impossible de mettre à jour l'exception de disponibilité"
-    })
+    return updatedException
+  } catch (error: unknown) {
+    return handleApiError(error, 'Error updating availability exception')
   }
 })
+
+// Helper: Get existing exception
+async function getExistingException(
+  db: DrizzleD1Database,
+  id: string,
+  userId: string,
+  organizationId: string
+): Promise<AvailabilityException> {
+  const [existingException] = await db
+    .select()
+    .from(availabilityExceptions)
+    .where(
+      and(
+        eq(availabilityExceptions.id, id),
+        eq(availabilityExceptions.organizationId, organizationId),
+        eq(availabilityExceptions.userId, userId)
+      )
+    )
+    .limit(1)
+
+  if (!existingException) {
+    throw createError({
+      statusCode: 404,
+      message: 'Exception de disponibilité non trouvée'
+    })
+  }
+
+  return existingException
+}
+
+// Helper: Validate no conflicts with other exceptions
+async function validateNoConflicts(
+  db: DrizzleD1Database,
+  params: {
+    exceptionId: string
+    userId: string
+    organizationId: string
+    existingException: AvailabilityException
+    updates: { date?: string; startTime?: string | null; endTime?: string | null }
+  }
+) {
+  const { exceptionId, userId, organizationId, existingException, updates } = params
+
+  const targetDate = updates.date || existingException.date
+
+  // Get other exceptions for the same date (excluding current one)
+  const conflictingExceptions = await db
+    .select()
+    .from(availabilityExceptions)
+    .where(
+      and(
+        eq(availabilityExceptions.organizationId, organizationId),
+        eq(availabilityExceptions.userId, userId),
+        eq(availabilityExceptions.date, targetDate),
+        not(eq(availabilityExceptions.id, exceptionId))
+      )
+    )
+
+  if (conflictingExceptions.length === 0) {
+    return // No conflicts possible
+  }
+
+  // Merge updates with existing values
+  // Important: If either startTime or endTime is explicitly set to null,
+  // both should be treated as null (full day exception)
+  const hasStartTimeUpdate = updates.startTime !== undefined
+  const hasEndTimeUpdate = updates.endTime !== undefined
+
+  let finalStartTime: string | null
+  let finalEndTime: string | null
+
+  if (hasStartTimeUpdate || hasEndTimeUpdate) {
+    // If any time field is updated to null, treat as full day
+    const newStartTime = hasStartTimeUpdate ? updates.startTime! : existingException.startTime
+    const newEndTime = hasEndTimeUpdate ? updates.endTime! : existingException.endTime
+
+    if (newStartTime === null || newEndTime === null) {
+      finalStartTime = null
+      finalEndTime = null
+    } else {
+      finalStartTime = newStartTime
+      finalEndTime = newEndTime
+    }
+  } else {
+    // No time updates, use existing values
+    finalStartTime = existingException.startTime
+    finalEndTime = existingException.endTime
+  }
+
+  const mergedException = {
+    date: targetDate,
+    startTime: finalStartTime,
+    endTime: finalEndTime
+  }
+
+  validateTimeOverlaps(conflictingExceptions, mergedException)
+}
+
+// Helper: Validate time overlaps
+function validateTimeOverlaps(
+  conflictingExceptions: AvailabilityException[],
+  newException: { date: string; startTime: string | null; endTime: string | null }
+) {
+  const isNewFullDay = !newException.startTime || !newException.endTime
+
+  for (const conflicting of conflictingExceptions) {
+    const isConflictingFullDay = !conflicting.startTime || !conflicting.endTime
+
+    // Case 1: Full-day exception conflicts with anything on the same date
+    if (isNewFullDay || isConflictingFullDay) {
+      throw createError({
+        statusCode: 409,
+        message: "Conflit d'horaire détecté",
+        data: {
+          message: 'Une exception existe déjà pour cette date.',
+          conflict: {
+            existing: {
+              date: conflicting.date,
+              startTime: conflicting.startTime || 'journée complète',
+              endTime: conflicting.endTime || 'journée complète'
+            },
+            requested: {
+              date: newException.date,
+              startTime: newException.startTime || 'journée complète',
+              endTime: newException.endTime || 'journée complète'
+            }
+          }
+        }
+      })
+    }
+
+    // Case 2: Both have specific times - check for overlap
+    if (newException.startTime && newException.endTime && conflicting.startTime && conflicting.endTime) {
+      const hasOverlap = checkTimeOverlap(
+        conflicting.startTime,
+        conflicting.endTime,
+        newException.startTime,
+        newException.endTime,
+        MINIMUM_CONSULTATION_GAP_MINUTES
+      )
+
+      if (hasOverlap) {
+        throw createError({
+          statusCode: 409,
+          message: "Conflit d'horaire détecté",
+          data: {
+            message: `Un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes est requis entre les plages horaires.`,
+            conflict: {
+              existing: {
+                date: conflicting.date,
+                startTime: conflicting.startTime,
+                endTime: conflicting.endTime
+              },
+              requested: {
+                date: newException.date,
+                startTime: newException.startTime,
+                endTime: newException.endTime
+              }
+            }
+          }
+        })
+      }
+    }
+  }
+}

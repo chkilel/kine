@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID is required'
+      message: 'Patient ID is required'
     })
   }
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
     }
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch patient treatment plans'
+      message: 'Failed to fetch patient treatment plans'
     })
   }
 })

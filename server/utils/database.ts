@@ -20,7 +20,7 @@ export function useNitroDatabase() {
   if (!db) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Cloudflare D1 binding "DB" is not available.'
+      message: 'Cloudflare D1 binding "DB" is not available.'
     })
   }
   return db
@@ -48,7 +48,7 @@ export function useDB(event: H3Event) {
   if (!db) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Cloudflare D1 binding "DB" is not available.'
+      message: 'Cloudflare D1 binding "DB" is not available.'
     })
   }
   return db
@@ -78,7 +78,7 @@ export function useDrizzle(event: H3Event) {
   if (!db) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Cloudflare D1 binding "DB" is not available.'
+      message: 'Cloudflare D1 binding "DB" is not available.'
     })
   }
   return db
