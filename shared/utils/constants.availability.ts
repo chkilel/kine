@@ -19,6 +19,12 @@ export const VALID_SCHEDULE_EXCEPTION_TYPES = [
   'other'
 ] as const
 
+// Standard working hours
+export const WORKING_HOURS = {
+  start: '09:00:00',
+  end: '17:00:00'
+}
+
 export const AVAILABILITY_EXCEPTION_CONFIG = {
   vacation: { label: 'Congé', color: 'warning', icon: 'i-lucide-luggage' },
   holiday: { label: 'Jour férié', color: 'warning', icon: 'i-lucide-home' },

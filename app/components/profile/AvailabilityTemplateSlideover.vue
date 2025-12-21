@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { Time } from '@internationalized/date'
+  import { parseTime, Time } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{ template?: WeeklyAvailabilityTemplate }>()
@@ -18,30 +18,20 @@
   // Form state
   const formState = reactive<WeeklyAvailabilityTemplateCreate>({
     dayOfWeek: props.template?.dayOfWeek || 'Mon',
-    startTime: props.template?.startTime || '09:00',
-    endTime: props.template?.endTime || '12:00',
+    startTime: props.template?.startTime || WORKING_HOURS.start,
+    endTime: props.template?.endTime || WORKING_HOURS.end,
     location: props.template?.location || 'clinic',
     maxSessions: props.template?.maxSessions || 4
   })
 
   // Time values for UI components
   const startTimeModel = computed<Time>({
-    get: () => {
-      const [hours, minutes] = (formState.startTime || '09:00').split(':').map(Number)
-      return new Time(hours, minutes, 0)
-    },
-    set: (value: Time) => {
-      formState.startTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-    }
+    get: () => parseTime(formState.startTime || WORKING_HOURS.start),
+    set: (value: Time) => (formState.startTime = value.toString()) // ex. '09:45:00'
   })
   const endTimeModel = computed<Time>({
-    get: () => {
-      const [hours, minutes] = (formState.endTime || '12:00').split(':').map(Number)
-      return new Time(hours, minutes, 0)
-    },
-    set: (value: Time) => {
-      formState.endTime = `${String(value.hour).padStart(2, '0')}:${String(value.minute).padStart(2, '0')}`
-    }
+    get: () => parseTime(formState.endTime || WORKING_HOURS.end),
+    set: (value: Time) => (formState.endTime = value.toString())
   })
 
   async function handleSubmit(event: FormSubmitEvent<WeeklyAvailabilityTemplateCreate>) {

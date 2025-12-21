@@ -11,8 +11,8 @@ import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../utils/
 
 z.config(fr())
 
-// Regex pattern for validating time in HH:MM format
-export const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+// Regex pattern for validating time in HH:MM:SS format
+export const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
 
 // Regex pattern for validating phone numbers with optional country code
 export const PHONE_REGEX = /^(\+?\d{1,3}[-.\s]?)?(\(?\d{1,4}\)?[-.\s]?)?[\d\s.-]{7,}$/
@@ -66,7 +66,7 @@ export type DayOfWeek = z.infer<typeof dayOfWeekSchema>
 export const locationSchema = z.enum(VALID_CONSULTATION_LOCATIONS)
 export type ConsultationLocation = z.infer<typeof locationSchema>
 
-export const timeFormatSchema = z.string().regex(TIME_FORMAT_REGEX, "Format d'heure invalide (HH:MM)")
+export const timeFormatSchema = z.string().regex(TIME_FORMAT_REGEX, "Format d'heure invalide (HH:MM:SS)")
 export type TimeFormat = z.infer<typeof timeFormatSchema>
 
 export const reasonSchema = z.enum(VALID_SCHEDULE_EXCEPTION_TYPES)

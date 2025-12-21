@@ -29,8 +29,8 @@ export const weeklyAvailabilityTemplates = sqliteTable(
 
     // ---- Weekly schedule fields ----
     dayOfWeek: text({ enum: VALID_SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
-    startTime: text().notNull(), // HH:MM format — e.g., '09:00'
-    endTime: text().notNull(), // HH:MM format — e.g., '12:00'
+    startTime: text().notNull(), // HH:MM:SS format — e.g., '09:00:00'
+    endTime: text().notNull(), // HH:MM:SS format — e.g., '12:00:00'
     location: text({ enum: VALID_CONSULTATION_LOCATIONS }).notNull(), // Consultation location — e.g., 'clinic'
     maxSessions: integer().notNull().default(1), // Maximum simultaneous sessions — e.g., 4
 
@@ -81,8 +81,8 @@ export const availabilityExceptions = sqliteTable(
 
     // ---- Exception fields ----
     date: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
-    startTime: text(), // Optional start time for partial day exceptions — e.g., '09:00'
-    endTime: text(), // Optional end time for partial day exceptions — e.g., '12:00'
+    startTime: text(), // Optional start time for partial day exceptions — e.g., '09:00:00'
+    endTime: text(), // Optional end time for partial day exceptions — e.g., '12:00:00'
     isAvailable: integer({ mode: 'boolean' }).notNull(), // Whether available during this exception — e.g., false for vacation
     reason: text({ enum: VALID_SCHEDULE_EXCEPTION_TYPES }), // Reason for exception — e.g., 'vacation'
     notes: text(), // Optional notes about the exception if other reason is selected
