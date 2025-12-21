@@ -3,6 +3,17 @@ import { CalendarDate } from '@internationalized/date'
 import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
 import { fr } from 'date-fns/locale'
 
+// Formats time string HH:MM:SS to HH:MM by removing seconds
+export const formatTimeWithoutSeconds = (timeString: string): string => {
+  const timeRegex = /^\d{2}:\d{2}:\d{2}$/
+
+  if (!timeRegex.test(timeString)) {
+    throw new Error('Invalid time format. Expected HH:MM:SS')
+  }
+
+  return timeString.slice(0, 5)
+}
+
 /**
  * Safely converts ISO date string to Date object with validation.
  *
@@ -68,9 +79,7 @@ export function getAge(dateOfBirth: Date | string | null): string {
   if (!dateOfBirth) return ''
 
   try {
-    const birth = dateOfBirth instanceof Date
-      ? dateOfBirth
-      : parseISO(dateOfBirth)
+    const birth = dateOfBirth instanceof Date ? dateOfBirth : parseISO(dateOfBirth)
 
     if (isNaN(birth.getTime())) {
       console.error('Invalid date of birth:', dateOfBirth)
@@ -99,10 +108,7 @@ export function getAge(dateOfBirth: Date | string | null): string {
  * formatDateRange('2023-01-01', '2023-12-31') // => "01/01/2023 - 31/12/2023"
  * formatDateRange('2023-01-01', null) // => "01/01/2023 - En cours"
  */
-export const formatDateRange = (
-  startDate: Date | string,
-  endDate: Date | string | null
-): string => {
+export const formatDateRange = (startDate: Date | string, endDate: Date | string | null): string => {
   const start = formatDate(startDate)
   const end = endDate ? formatDate(endDate) : 'En cours'
   return `${start} - ${end}`
@@ -225,15 +231,24 @@ export const checkTimeOverlap = (
   const newStartMin = timeToMinutes(newStart)
   const newEndMin = timeToMinutes(newEnd)
 
-  // Ranges don't overlap if:
-  // - New ends (+ gap) before existing starts, OR
-  // - New starts after existing ends (+ gap)
-  const noOverlap = (
-    newEndMin + minGap <= existingStartMin ||
-    newStartMin >= existingEndMin + minGap
-  )
+  console.log('🚀 Time overlap check:', {
+    existing: { start: existingStart, end: existingEnd, startMin: existingStartMin, endMin: existingEndMin },
+    new: { start: newStart, end: newEnd, startMin: newStartMin, endMin: newEndMin },
+    minGap
+  })
 
-  // Return true if they DO overlap
+  // Two time ranges DON'T overlap (with gap) if:
+  // 1. New slot ends BEFORE existing starts (with gap)
+  //    Example: New: 9:00-10:00, Existing: 10:30-11:00 (30min gap) ✓
+  // 2. New slot starts AFTER existing ends (with gap)
+  //    Example: Existing: 9:00-10:00, New: 10:30-11:00 (30min gap) ✓
+
+  const newEndsBeforeExisting = newEndMin + minGap <= existingStartMin
+  const newStartsAfterExisting = newStartMin >= existingEndMin + minGap
+
+  const noOverlap = newEndsBeforeExisting || newStartsAfterExisting
+
+  // Return true if they DO overlap (violate the gap requirement)
   return !noOverlap
 }
 
