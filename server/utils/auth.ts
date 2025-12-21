@@ -156,3 +156,32 @@ function getBaseURL(event: H3Event) {
   }
   return baseURL
 }
+
+// Helper: Authentication and authorization
+export async function requireAuth(event: H3Event) {
+  const auth = createAuth(event)
+  const session = await auth.api.getSession({
+    headers: getHeaders(event) as any
+  })
+
+  if (!session?.user?.id) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Non autorisé'
+    })
+  }
+
+  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
+
+  if (!activeOrganizationId) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Aucune organisation active'
+    })
+  }
+
+  return {
+    userId: session.user.id,
+    organizationId: activeOrganizationId
+  }
+}
