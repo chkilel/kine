@@ -109,7 +109,7 @@ export const phoneEntrySchema = z.object({
   number: phoneNumberSchema,
   category: phoneCategorySchema
 })
-export type Phone = z.infer<typeof phoneEntrySchema>
+export type PhoneEntry = z.infer<typeof phoneEntrySchema>
 
 // Emergency contact schema
 export const emergencyContactSchema = z.object({

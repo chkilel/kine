@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
@@ -19,7 +19,7 @@ import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.lo
 export const weeklyAvailabilityTemplates = sqliteTable(
   'weekly_availability_templates',
   {
-    id: text().primaryKey().$defaultFn(createId),
+    id: text().primaryKey().$defaultFn(uuidv7),
     organizationId: text()
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }), // Owning organization
@@ -71,7 +71,7 @@ export const weeklyAvailabilityTemplates = sqliteTable(
 export const availabilityExceptions = sqliteTable(
   'availability_exceptions',
   {
-    id: text().primaryKey().$defaultFn(createId),
+    id: text().primaryKey().$defaultFn(uuidv7),
     organizationId: text()
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }), // Owning organization

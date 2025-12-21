@@ -1,8 +1,8 @@
 <script setup lang="ts">
-  import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 
   // Two-way binding with parent
-  const phoneNumbers = defineModel<PhoneNumber[] | null | undefined>({ required: true })
+  const phoneNumbers = defineModel<PhoneEntry[] | null | undefined>({ required: true })
   const props = defineProps<{ error: string | null }>()
 
   // Single form state for both add and edit modes
@@ -21,7 +21,7 @@
     form.category = 'personal'
   }
 
-  function startEdit(phone: PhoneNumber) {
+  function startEdit(phone: PhoneEntry) {
     form.id = phone.id
     form.number = phone.number
     form.category = phone.category
@@ -38,7 +38,7 @@
     } else {
       // Add new phone
       phoneNumbers.value.push({
-        id: createId(),
+        id: uuidv7(),
         number: form.number.trim(),
         category: form.category
       })

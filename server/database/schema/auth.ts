@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { creationAndUpdateTimestamps, softDeleteTimestamps } from './columns.helpers'
@@ -12,7 +12,7 @@ import { organizations, teams } from './organization'
  */
 
 export const users = sqliteTable('users', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   firstName: text().notNull(),
   lastName: text(),
   name: text().notNull(),
@@ -29,7 +29,7 @@ export const users = sqliteTable('users', {
 })
 
 export const sessions = sqliteTable('sessions', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   token: text().notNull().unique(),
   expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
   ipAddress: text(),
@@ -43,7 +43,7 @@ export const sessions = sqliteTable('sessions', {
 })
 
 export const accounts = sqliteTable('accounts', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   accountId: text().notNull(),
   providerId: text().notNull(),
   userId: text()
@@ -60,7 +60,7 @@ export const accounts = sqliteTable('accounts', {
 })
 
 export const verifications = sqliteTable('verifications', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   identifier: text().notNull(),
   value: text().notNull(),
   expiresAt: integer({ mode: 'timestamp_ms' }).notNull(),

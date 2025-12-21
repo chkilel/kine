@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
@@ -18,7 +18,7 @@ import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../..
 export const treatmentPlans = sqliteTable(
   'treatment_plans',
   {
-    id: text().primaryKey().$defaultFn(createId),
+    id: text().primaryKey().$defaultFn(uuidv7),
     organizationId: text()
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }), // Owning organization

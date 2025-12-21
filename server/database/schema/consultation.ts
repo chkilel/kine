@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
@@ -20,7 +20,7 @@ import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.lo
 export const consultations = sqliteTable(
   'consultations',
   {
-    id: text().primaryKey().$defaultFn(createId),
+    id: text().primaryKey().$defaultFn(uuidv7),
     organizationId: text()
       .notNull()
       .references(() => organizations.id, { onDelete: 'cascade' }),

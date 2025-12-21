@@ -1,4 +1,4 @@
-import { createId } from '@paralleldrive/cuid2'
+import { v7 as uuidv7 } from 'uuid'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { creationAndUpdateTimestamps } from './columns.helpers'
@@ -12,7 +12,7 @@ import { users } from './auth'
 
 // Organization table
 export const organizations = sqliteTable('organizations', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   name: text().notNull(),
   slug: text().notNull().unique(),
   logo: text(),
@@ -22,7 +22,7 @@ export const organizations = sqliteTable('organizations', {
 
 // Member table
 export const members = sqliteTable('members', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   organizationId: text()
     .notNull()
     .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -35,7 +35,7 @@ export const members = sqliteTable('members', {
 
 // Invitation table
 export const invitations = sqliteTable('invitations', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   email: text().notNull(),
   inviterId: text()
     .notNull()
@@ -52,7 +52,7 @@ export const invitations = sqliteTable('invitations', {
 
 // Teams table (optional)
 export const teams = sqliteTable('teams', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   name: text().notNull(),
   organizationId: text()
     .notNull()
@@ -62,7 +62,7 @@ export const teams = sqliteTable('teams', {
 
 // Team members table (optional)
 export const teamMembers = sqliteTable('teamMembers', {
-  id: text().primaryKey().$defaultFn(createId),
+  id: text().primaryKey().$defaultFn(uuidv7),
   teamId: text()
     .notNull()
     .references(() => teams.id, { onDelete: 'cascade' }),
