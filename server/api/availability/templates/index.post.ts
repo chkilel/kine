@@ -5,40 +5,21 @@ import { weeklyAvailabilityTemplates } from '~~/server/database/schema'
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Non autorisé'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Accès interdit'
-    })
-  }
-
   try {
+    // 1. Require current user and organization from session
+    const { userId, organizationId } = await requireAuth(event)
+
+    // 2. Get active organization context
     const body = await readValidatedBody(event, weeklyAvailabilityTemplateCreateSchema.parse)
 
-    // Check for overlapping templates on the same day
+    // 3. Check for overlapping templates on the same day
     const existingTemplates = await db
       .select()
       .from(weeklyAvailabilityTemplates)
       .where(
         and(
-          eq(weeklyAvailabilityTemplates.organizationId, activeOrganizationId),
-          eq(weeklyAvailabilityTemplates.userId, session.user.id),
+          eq(weeklyAvailabilityTemplates.organizationId, organizationId),
+          eq(weeklyAvailabilityTemplates.userId, userId),
           eq(weeklyAvailabilityTemplates.dayOfWeek, body.dayOfWeek)
         )
       )
@@ -78,31 +59,13 @@ export default defineEventHandler(async (event) => {
       .insert(weeklyAvailabilityTemplates)
       .values({
         ...body,
-        organizationId: activeOrganizationId,
-        userId: session.user.id
+        organizationId,
+        userId
       })
       .returning()
 
     return newTemplate
   } catch (error: unknown) {
-    console.error('Error creating availability template:', error)
-
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      // Re-throw custom errors
-      throw error
-    }
-
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
-      throw createError({
-        statusCode: 400,
-        message: 'Données de modèle invalides',
-        data: (error as unknown as { errors: unknown }).errors
-      })
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Impossible de créer le modèle de disponibilité'
-    })
+    handleApiError(error, 'Échec de la création du modèle de disponibilité hebdomadaire')
   }
 })

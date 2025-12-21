@@ -49,8 +49,7 @@
 
       emit('close')
     } catch (error) {
-      console.error('Error saving template:', error)
-    } finally {
+      parseError(error)
     }
   }
 

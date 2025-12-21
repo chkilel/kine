@@ -41,11 +41,9 @@ export function useAvailabilityTemplates() {
       })
     },
     onError(error) {
-      const errorMessage =
-        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de créer le modèle'
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error).message,
         color: 'error'
       })
     }
@@ -70,11 +68,9 @@ export function useAvailabilityTemplates() {
       })
     },
     onError(error) {
-      const errorMessage =
-        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de mettre à jour le modèle'
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error).message,
         color: 'error'
       })
     }
@@ -83,10 +79,7 @@ export function useAvailabilityTemplates() {
   // Mutation for deleting templates
   const deleteTemplateMutation = useMutation({
     mutation: async (id: string) => {
-      await requestFetch(`/api/availability/templates/${id}`, {
-        method: 'DELETE'
-      })
-
+      await requestFetch(`/api/availability/templates/${id}`, { method: 'DELETE' })
       return true
     },
     onSuccess() {
@@ -98,11 +91,9 @@ export function useAvailabilityTemplates() {
       })
     },
     onError(error) {
-      const errorMessage =
-        (error as any)?.data?.statusMessage || (error as any)?.message || 'Impossible de supprimer le modèle'
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error).message,
         color: 'error'
       })
     }

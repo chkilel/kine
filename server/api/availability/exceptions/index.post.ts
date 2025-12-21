@@ -25,11 +25,6 @@ export default defineEventHandler(async (event) => {
         )
       )
 
-    console.log('🚀 >>> ', {
-      existingExceptions: JSON.stringify(existingExceptions, null, 2),
-      exceptionDate: JSON.stringify(body.date, null, 2)
-    })
-
     // 4. Validate time overlaps
     validateTimeOverlaps(existingExceptions, body)
 
@@ -49,7 +44,7 @@ export default defineEventHandler(async (event) => {
 
     return newException
   } catch (error: unknown) {
-    handleApiError(error, 'Error creating availability exception')
+    handleApiError(error, 'Échec de la création de l’exception de disponibilité.')
   }
 })
 

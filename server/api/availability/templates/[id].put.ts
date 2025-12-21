@@ -6,48 +6,30 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')
 
-  if (!id) {
-    throw createError({
-      statusCode: 400,
-      message: 'ID de modèle requis'
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Non autorisé'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Accès interdit'
-    })
-  }
-
   try {
+    // 1. Validate ID param
+    if (!id) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de modèle requis'
+      })
+    }
+
+    // 2. Read and validate request body
     const body = await readValidatedBody(event, weeklyAvailabilityTemplateUpdateSchema.parse)
 
-    // First, check if template exists and belongs to current user
+    // 3. Require current user and organization from session
+    const { userId, organizationId } = await requireAuth(event)
+
+    // 4. First, check if template exists and belongs to current user
     const [existingTemplate] = await db
       .select()
       .from(weeklyAvailabilityTemplates)
       .where(
         and(
           eq(weeklyAvailabilityTemplates.id, id),
-          eq(weeklyAvailabilityTemplates.organizationId, activeOrganizationId),
-          eq(weeklyAvailabilityTemplates.userId, session.user.id)
+          eq(weeklyAvailabilityTemplates.organizationId, organizationId),
+          eq(weeklyAvailabilityTemplates.userId, userId)
         )
       )
 
@@ -70,8 +52,8 @@ export default defineEventHandler(async (event) => {
         .from(weeklyAvailabilityTemplates)
         .where(
           and(
-            eq(weeklyAvailabilityTemplates.organizationId, activeOrganizationId),
-            eq(weeklyAvailabilityTemplates.userId, session.user.id),
+            eq(weeklyAvailabilityTemplates.organizationId, organizationId),
+            eq(weeklyAvailabilityTemplates.userId, userId),
             eq(weeklyAvailabilityTemplates.dayOfWeek, newDayOfWeek),
             // Exclude current template from conflict check
             sql`${weeklyAvailabilityTemplates.id} != ${id}`
@@ -119,32 +101,14 @@ export default defineEventHandler(async (event) => {
       .where(
         and(
           eq(weeklyAvailabilityTemplates.id, id),
-          eq(weeklyAvailabilityTemplates.organizationId, activeOrganizationId),
-          eq(weeklyAvailabilityTemplates.userId, session.user.id)
+          eq(weeklyAvailabilityTemplates.organizationId, organizationId),
+          eq(weeklyAvailabilityTemplates.userId, userId)
         )
       )
       .returning()
 
     return updatedTemplate
   } catch (error: unknown) {
-    console.error('Error updating availability template:', error)
-
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      // Re-throw custom errors
-      throw error
-    }
-
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
-      throw createError({
-        statusCode: 400,
-        message: 'Données de modèle invalides',
-        data: (error as unknown as { errors: unknown }).errors
-      })
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Impossible de mettre à jour le modèle de disponibilité'
-    })
+    handleApiError(error)
   }
 })

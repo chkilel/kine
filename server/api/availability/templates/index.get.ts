@@ -5,47 +5,25 @@ import { weeklyAvailabilityTemplates } from '~~/server/database/schema'
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Non autorisé'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Accès interdit'
-    })
-  }
-
-  const query = getQuery(event)
-
-  // Validate query parameters
-  const validatedQuery = availabilityTemplateQuerySchema.parse(query)
-
   try {
-    // Build filters
+    // 1. Validate query parameters
+    const validatedQuery = await getValidatedQuery(event, availabilityTemplateQuerySchema.parse)
+
+    // 2. Require current user and organization from session
+    const { userId, organizationId } = await requireAuth(event)
+
+    // 3. Build filters
     const filters = [
-      eq(weeklyAvailabilityTemplates.organizationId, activeOrganizationId),
-      eq(weeklyAvailabilityTemplates.userId, session.user.id)
+      eq(weeklyAvailabilityTemplates.organizationId, organizationId),
+      eq(weeklyAvailabilityTemplates.userId, userId)
     ]
 
-    // Add day filter
+    // 4. Add day filter
     if (validatedQuery.dayOfWeek) {
       filters.push(eq(weeklyAvailabilityTemplates.dayOfWeek, validatedQuery.dayOfWeek))
     }
 
-    // Add location filter
+    // 5. Add location filter
     if (validatedQuery.location) {
       filters.push(eq(weeklyAvailabilityTemplates.location, validatedQuery.location))
     }
@@ -70,10 +48,6 @@ export default defineEventHandler(async (event) => {
 
     return templatesList
   } catch (error: unknown) {
-    console.error('Error fetching availability templates:', error)
-    throw createError({
-      statusCode: 500,
-      message: 'Impossible de charger les modèles de disponibilité'
-    })
+    handleApiError(error)
   }
 })
