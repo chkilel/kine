@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
-import { requiredDateSchema, timestamps } from './columns.helpers'
+import { timestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
 
@@ -77,7 +77,7 @@ export const availabilityExceptions = sqliteTable(
       .references(() => authUsers.id, { onDelete: 'cascade' }), // Foreign key to user
 
     // ---- Exception fields ----
-    date: requiredDateSchema(), // Full date (timestamp ms) — e.g., 1730246400000 for "2024-10-30"
+    date: text().notNull(), // YYYY-MM-DD (date-only)
     startTime: text(), // Optional start time for partial day exceptions — e.g., '09:00'
     endTime: text(), // Optional end time for partial day exceptions — e.g., '12:00'
     isAvailable: integer({ mode: 'boolean' }).notNull(), // Whether available during this exception — e.g., false for vacation

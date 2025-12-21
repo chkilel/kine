@@ -1,5 +1,8 @@
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { fr } from 'zod/locales'
+import { ca, fr } from 'zod/locales'
+import { consultations, patientDocuments, patients, treatmentPlans } from '~~/server/database/schema'
+import { calendarDateSchema } from '.'
 
 z.config(fr())
 
@@ -66,11 +69,11 @@ export const emergencyContactSchema = z.object({
 })
 
 // Patient schemas
-export const patientCreateSchema = z.object({
+export const patientCreateSchema = createInsertSchema(patients, {
   organizationId: z.string().min(1),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  dateOfBirth: z.coerce.date(),
+  dateOfBirth: calendarDateSchema,
   gender: genderSchema,
   email: z.email().optional(),
   phone: z.string().min(10),
@@ -91,52 +94,24 @@ export const patientCreateSchema = z.object({
 })
 
 export const patientUpdateSchema = patientCreateSchema.partial()
-
-export const patientSchema = z.object({
-  id: z.string(),
-  organizationId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  dateOfBirth: z.coerce.date(),
-  gender: genderSchema,
-  phone: z.string(),
-  email: z.string().nullable(),
-  address: z.string().nullable(),
-  city: z.string().nullable(),
-  postalCode: z.string().nullable(),
-  country: z.string().nullable(),
-  emergencyContacts: z.array(emergencyContactSchema).nullable(),
-  medicalConditions: z.array(z.string()).nullable(),
-  surgeries: z.array(z.string()).nullable(),
-  allergies: z.array(z.string()).nullable(),
-  medications: z.array(z.string()).nullable(),
-  insuranceProvider: z.string().nullable(),
-  insuranceNumber: z.string().nullable(),
-  referralSource: z.string().nullable(),
-  status: patientStatusSchema,
-  notes: z.array(noteSchema).nullable(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  deletedAt: z.coerce.date().nullable()
-})
+export const patientSchema = createSelectSchema(patients)
 
 // Treatment Plan schemas
 export const treatmentPlanStatusSchema = z.enum(['planned', 'ongoing', 'completed', 'paused', 'cancelled'])
-
-export const treatmentPlanCreateSchema = z.object({
+export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   patientId: z.string().min(1),
   organizationId: z.string().min(1),
   therapistId: z.string().min(1),
   title: z.string().min(3),
   diagnosis: z.string().min(3),
   objective: z.string().optional(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date().nullable().optional(),
+  startDate: calendarDateSchema,
+  endDate: calendarDateSchema.optional(),
   numberOfSessions: z.number().min(1).optional(),
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
   prescribingDoctor: z.string().optional(),
-  prescriptionDate: z.coerce.date().optional(),
+  prescriptionDate: calendarDateSchema.optional(),
   painLevel: z.number().min(0).max(10).optional(),
   coverageStatus: z
     .enum([
@@ -153,40 +128,15 @@ export const treatmentPlanCreateSchema = z.object({
     .optional(),
   insuranceInfo: z.string().optional(),
   notes: z.array(noteSchema).nullable()
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 })
 
 export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
 
-export const treatmentPlanSchema = z.object({
-  id: z.string(),
-  organizationId: z.string(),
-  patientId: z.string(),
-  therapistId: z.string(),
-  title: z.string(),
-  diagnosis: z.string(),
-  objective: z.string().nullable(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date().nullable(),
-  numberOfSessions: z.number().nullable(),
-  sessionFrequency: z.number().nullable(),
-  status: treatmentPlanStatusSchema,
-  prescribingDoctor: z.string().nullable(),
-  prescriptionDate: z.coerce.date().nullable(),
-  painLevel: z.number().nullable(),
-  coverageStatus: z
-    .enum([
-      'not_required',
-      'not_provided',
-      'to_verify',
-      'awaiting_agreement',
-      'covered',
-      'partially_covered',
-      'refused',
-      'expired',
-      'cancelled'
-    ])
-    .nullable(),
-  insuranceInfo: z.string().nullable(),
+export const treatmentPlanSchema = createSelectSchema(treatmentPlans, {
   notes: z.array(noteSchema).nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -213,12 +163,12 @@ export const consultationStatusSchema = z.enum([
   'no_show'
 ])
 
-export const consultationCreateSchema = z.object({
+export const consultationCreateSchema = createInsertSchema(consultations, {
   patientId: z.string(),
   organizationId: z.string().min(1),
   treatmentPlanId: z.string().optional(),
   therapistId: z.string().optional(),
-  date: z.coerce.date(),
+  date: calendarDateSchema,
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   duration: z.number().min(1).optional(),
@@ -240,36 +190,14 @@ export const consultationCreateSchema = z.object({
 
 export const consultationUpdateSchema = consultationCreateSchema.partial()
 
-export const consultationSchema = z.object({
-  id: z.string(),
-  organizationId: z.string(),
-  patientId: z.string(),
-  treatmentPlanId: z.string().nullable(),
-  date: z.coerce.date(),
-  startTime: z.string().nullable(),
-  endTime: z.string().nullable(),
-  duration: z.number().nullable(),
-  type: consultationSessionTypeSchema,
-  location: consultationLocationSchema,
-  chiefComplaint: z.string().nullable(),
-  notes: z.string().nullable(),
-  treatmentSummary: z.string().nullable(),
-  observations: z.string().nullable(),
-  nextSteps: z.string().nullable(),
-  painLevelBefore: z.number().nullable(),
-  painLevelAfter: z.number().nullable(),
-  progressNotes: z.string().nullable(),
-  therapistId: z.string().nullable(),
-  status: consultationStatusSchema,
-  billed: z.boolean(),
-  insuranceClaimed: z.boolean(),
-  cost: z.number().nullable(),
+export const consultationSchema = createSelectSchema(consultations, {
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
-})
+} )
+
 
 // Patient Document schemas
-export const patientDocumentCreateSchema = z.object({
+export const patientDocumentCreateSchema = createInsertSchema(patientDocuments, {
   patientId: z.string(),
   organizationId: z.string().min(1),
   uploadedById: z.string(),
@@ -293,19 +221,7 @@ export const patientDocumentUpdateSchema = patientDocumentCreateSchema.partial()
   storageKey: true
 })
 
-export const patientDocumentSchema = z.object({
-  id: z.string(),
-  patientId: z.string(),
-  organizationId: z.string(),
-  uploadedById: z.string(),
-  treatmentPlanId: z.string().nullable(),
-  fileName: z.string(),
-  originalFileName: z.string(),
-  mimeType: z.string(),
-  fileSize: z.number(),
-  storageKey: z.string(),
-  category: documentCategorySchema,
-  description: z.string().nullable(),
+export const patientDocumentSchema = createSelectSchema(patientDocuments, {
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   deletedAt: z.coerce.date().nullable()
@@ -335,8 +251,8 @@ export const consultationQuerySchema = z.object({
   treatmentPlanId: z.string().optional(),
   status: consultationStatusSchema.optional(),
   type: consultationSessionTypeSchema.optional(),
-  dateFrom: z.coerce.date().optional(),
-  dateTo: z.coerce.date().optional()
+  dateFrom: calendarDateSchema.optional(),
+  dateTo: calendarDateSchema.optional()
 })
 
 export const patientDocumentQuerySchema = z.object({
