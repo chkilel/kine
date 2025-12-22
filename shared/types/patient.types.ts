@@ -20,32 +20,14 @@ z.config(fr())
 // Patient Schemas and Types
 // =============================================================================
 export const patientCreateSchema = createInsertSchema(patients, {
-  organizationId: z.string().min(1),
   firstName: nameSchema,
   lastName: nameSchema,
   dateOfBirth: calendarDateSchema,
   gender: genderSchema,
-  email: emailSchema.optional(),
   phone: phoneNumberSchema,
-  address: z.string().optional(),
-  city: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().optional(),
-  emergencyContacts: z.array(emergencyContactSchema).optional(),
-  medicalConditions: z.array(z.string()).optional(),
-  surgeries: z.array(z.string()).optional(),
-  allergies: z.array(z.string()).optional(),
-  medications: z.array(z.string()).optional(),
-  insuranceProvider: z.string().optional(),
-  insuranceNumber: z.string().optional(),
-  referralSource: z.string().optional(),
-  status: patientStatusSchema.default('active'),
-  notes: z.array(noteSchema).optional()
 })
 
-export const patientUpdateSchema = patientCreateSchema.partial().extend({
-  organizationId: z.string().min(1)
-})
+export const patientUpdateSchema = patientCreateSchema.partial()
 export const patientSchema = createSelectSchema(patients)
 
 // Query schemas
@@ -54,8 +36,6 @@ export const patientQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   search: z.string().optional(),
   status: patientStatusSchema.optional(),
-  gender: genderSchema.optional(),
-  insuranceProvider: z.string().optional()
 })
 
 // Paginated response type

@@ -19,26 +19,9 @@ z.config(fr())
 export const consultationCreateSchema = createInsertSchema(consultations, {
   patientId: z.string(),
   organizationId: z.string().min(1),
-  treatmentPlanId: z.string().optional(),
-  therapistId: z.string().optional(),
   date: calendarDateSchema,
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-  duration: z.number().min(1).optional(),
-  type: consultationTypeSchema.optional(),
   location: locationSchema.default('clinic'),
-  chiefComplaint: z.string().optional(),
-  notes: z.string().optional(),
-  treatmentSummary: z.string().optional(),
-  observations: z.string().optional(),
-  nextSteps: z.string().optional(),
-  painLevelBefore: z.number().min(0).max(10).optional(),
-  painLevelAfter: z.number().min(0).max(10).optional(),
-  progressNotes: z.string().optional(),
   status: consultationStatusSchema.default('scheduled'),
-  billed: z.boolean().default(false),
-  insuranceClaimed: z.boolean().default(false),
-  cost: z.number().min(0).optional()
 })
 
 export const consultationUpdateSchema = consultationCreateSchema.partial()

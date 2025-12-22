@@ -83,8 +83,8 @@ export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
 
 // Note schema
 export const noteSchema = z.object({
-  date: z.coerce.date(),
   author: z.string(),
+  date: z.coerce.date(),
   content: z.string().min(1)
 })
 export type Note = z.infer<typeof noteSchema>
@@ -114,7 +114,7 @@ export type PhoneEntry = z.infer<typeof phoneEntrySchema>
 // Emergency contact schema
 export const emergencyContactSchema = z.object({
   name: z.string().optional(),
-  phone: z.string(),
-  relationship: relationshipSchema.optional()
+  number: z.string(),
+  relationship: relationshipSchema
 })
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>

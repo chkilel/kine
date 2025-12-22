@@ -17,13 +17,11 @@ export const users = sqliteTable('users', {
   lastName: text(),
   name: text().notNull(),
   email: text().notNull().unique(),
-  emailVerified: integer({ mode: 'boolean' })
-    .notNull()
-    .$default(() => false),
+  emailVerified: integer({ mode: 'boolean' }).notNull().default(false),
   image: text(),
-  specialization: text({ mode: 'json' }).$type<string[]>().default([]),
   licenseNumber: text(),
   defaultSessionDuration: integer().default(30),
+  specialization: text({ mode: 'json' }).$type<string[]>().default([]),
   phoneNumbers: text({ mode: 'json' }).$type<{ number: string; category: string; id: string }[]>().default([]),
   ...softDeleteTimestamps
 })

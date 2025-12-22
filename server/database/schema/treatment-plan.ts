@@ -6,6 +6,8 @@ import { organizations } from './organization'
 import { users } from './auth'
 import { relations } from 'drizzle-orm'
 import { patients } from './patient'
+import { consultations } from './consultation'
+import { patientDocuments } from './document'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
 
 /**
@@ -33,7 +35,7 @@ export const treatmentPlans = sqliteTable(
     objective: text(), // Goal of treatment — e.g., "Restore full range of motion"
 
     startDate: calendarDateField().notNull(), // YYYY-MM-DD
-    endDate: calendarDateField().notNull(), // YYYY-MM-DD
+    endDate: calendarDateField(), // YYYY-MM-DD or null
     numberOfSessions: integer(), // Total number of sessions prescribed — e.g., 12
     sessionFrequency: integer(), // Session frequency — e.g., 1,...,7
 
@@ -49,7 +51,7 @@ export const treatmentPlans = sqliteTable(
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
     insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
 
-    notes: text({ mode: 'json' }), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
+    notes: text({ mode: 'json' }).$type<{ author: string; date: string; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
 
     // CreatedAt, UpdatedAt
     ...creationAndUpdateTimestamps
