@@ -60,7 +60,6 @@ export default defineEventHandler(async (event) => {
         notes: treatmentPlans.notes,
         createdAt: treatmentPlans.createdAt,
         updatedAt: treatmentPlans.updatedAt,
-        deletedAt: treatmentPlans.deletedAt,
         // Count completed consultations for each treatment plan
         completedConsultations: sql<number>`COUNT(CASE WHEN ${consultations.status} = 'completed' THEN ${consultations.id} END)`
       })
@@ -69,13 +68,7 @@ export default defineEventHandler(async (event) => {
         consultations,
         and(eq(consultations.treatmentPlanId, treatmentPlans.id), eq(consultations.status, 'completed'))
       )
-      .where(
-        and(
-          eq(treatmentPlans.organizationId, activeOrganizationId),
-          eq(treatmentPlans.patientId, patientId),
-          isNull(treatmentPlans.deletedAt)
-        )
-      )
+      .where(and(eq(treatmentPlans.organizationId, activeOrganizationId), eq(treatmentPlans.patientId, patientId)))
       .groupBy(treatmentPlans.id)
       .orderBy(desc(treatmentPlans.createdAt))
 

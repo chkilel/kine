@@ -6,7 +6,6 @@ export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) =>
   // Helper to convert date strings to Date objects
   const convertDates = (plan: any): TreatmentPlanWithProgress => ({
     ...plan,
-    prescriptionDate: toDate(plan.prescriptionDate),
     createdAt: parseISO(plan.createdAt),
     updatedAt: parseISO(plan.updatedAt),
     deletedAt: toDate(plan.deletedAt),
