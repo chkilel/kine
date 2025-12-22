@@ -23,7 +23,9 @@
     :ui="{ body: 'p-0 sm:p-0' }"
   >
     <template #actions>
-      <UButton icon="i-lucide-plus" variant="soft" @click="exceptionOverlay.open()">Ajouter une exception</UButton>
+      <UButton icon="i-lucide-plus" variant="ghost" color="neutral" @click="exceptionOverlay.open()">
+        Ajouter une exception
+      </UButton>
     </template>
     <div class="divide-default divide-y">
       <!-- Loading state -->
@@ -48,29 +50,59 @@
       </div>
 
       <!-- Exceptions list -->
-      <div v-else v-for="exception in exceptions" :key="exception.id" class="group hover:bg-elevated transition-colors">
-        <div class="flex items-center justify-between p-5">
+      <div
+        v-else
+        v-for="exception in exceptions"
+        :key="exception.id"
+        class="group hover:bg-elevated px-4 py-3 transition-colors sm:px-6"
+      >
+        <div class="flex items-center justify-between">
           <!-- Exception Info -->
-          <div class="flex items-center gap-4">
-            <div class="space-y-1">
-              <p class="font-medium">{{ formatDate(exception.date) }}</p>
-              <div v-if="exception.startTime && exception.endTime" class="text-muted text-sm">
-                {{ formatTimeWithoutSeconds(exception.startTime) }} - {{ formatTimeWithoutSeconds(exception.endTime) }}
+          <div class="flex flex-1 items-center gap-4">
+            <div
+              class="bg-muted border-accented flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border"
+            >
+              <span class="text-highlighted text-[14px] font-bold">{{ getDayAndMonth(exception.date).day }}</span>
+              <span class="text-toned text-[10px] font-bold capitalize">
+                {{ getDayAndMonth(exception.date).month }}
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <div class="text-base font-bold">
+                <template v-if="exception.startTime && exception.endTime">
+                  {{ formatTimeWithoutSeconds(exception.startTime) }} -
+                  {{ formatTimeWithoutSeconds(exception.endTime) }}
+                </template>
+                <div v-else class="flex items-baseline gap-6">
+                  {{ formatDate(exception.date) }}
+                  <span class="text-toned text-sm font-normal">Journée complète</span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <!-- Exception Type Badge -->
+                <div v-if="exception.reason">
+                  <UBadge
+                    :label="getExceptionTypeLabel(exception.reason)"
+                    :color="getExceptionTypeColor(exception.reason)"
+                    :variant="'subtle'"
+                    :icon="getExceptionTypeIcon(exception.reason)"
+                    size="sm"
+                    class="font-bold uppercase"
+                  />
+                </div>
+                <UBadge
+                  :label="exception.isAvailable ? 'Disponible' : 'Indisponible'"
+                  :color="exception.isAvailable ? 'success' : 'error'"
+                  :icon="exception.isAvailable ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+                  variant="subtle"
+                  size="sm"
+                  class="font-bold uppercase"
+                />
               </div>
             </div>
-
-            <!-- Exception Type Badge -->
-            <div v-if="exception.reason">
-              <UBadge
-                :label="getExceptionTypeLabel(exception.reason)"
-                :color="getExceptionTypeColor(exception.reason)"
-                :variant="'subtle'"
-                :icon="getExceptionTypeIcon(exception.reason)"
-                size="sm"
-              />
-            </div>
           </div>
-
           <!-- Action Buttons -->
           <div class="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
             <UButton

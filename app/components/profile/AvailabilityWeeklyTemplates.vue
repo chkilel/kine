@@ -57,7 +57,7 @@
         v-else
         v-for="template in templates"
         :key="template.id"
-        class="group hover:bg-elevated flex items-center justify-between gap-4 p-5 transition-colors"
+        class="group hover:bg-elevated flex items-center justify-between gap-4 px-4 py-3 transition-colors sm:px-6"
       >
         <div class="flex w-full gap-5">
           <div class="flex items-center gap-4">

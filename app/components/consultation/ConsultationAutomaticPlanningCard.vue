@@ -17,7 +17,7 @@
     preferredDays: [] as string[],
     location: 'clinic' as ConsultationLocation,
     therapistId: props.treatmentPlan.therapistId,
-    type: 'follow_up' as ConsultationSessionType
+    type: 'follow_up' as ConsultationType
   })
   const minDate = computed(() => dateToCalendarDate(new Date()))
   // Computed property for calendar date model

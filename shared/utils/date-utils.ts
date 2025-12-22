@@ -14,6 +14,16 @@ export const formatTimeWithoutSeconds = (timeString: string): string => {
   return timeString.slice(0, 5)
 }
 
+// Extracts the day and month (short format, in French) from an ISO date string.
+export function getDayAndMonth(dateString: string): { day: string; month: string } {
+  const date = parseISO(dateString)
+
+  return {
+    day: format(date, 'd', { locale: fr }),
+    month: format(date, 'MMM', { locale: fr }) // ex: "déc."
+  }
+}
+
 /**
  * Safely converts ISO date string to Date object with validation.
  *
