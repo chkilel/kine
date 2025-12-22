@@ -1,50 +1,20 @@
-import type { Session } from '~~/shared/types/auth.types'
 import { patients } from '~~/server/database/schema'
 
 // POST /api/patients - Create new patient
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
-
   try {
+    // 1. Validate request body
     const body = await readValidatedBody(event, patientCreateSchema.parse)
 
+    // 2. Require current user and organization from session
+    await requireAuth(event)
+
+    // 3. Insert new patient record
     const [newPatient] = await db.insert(patients).values(body).returning()
 
     return newPatient
-  } catch (error: any) {
-    console.error('Error creating patient:', error)
-    if (error.name === 'ZodError') {
-      throw createError({
-        statusCode: 400,
-        message: 'Invalid patient data',
-        data: error.errors
-      })
-    }
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to create patient'
-    })
+  } catch (error) {
+    handleApiError(error)
   }
 })

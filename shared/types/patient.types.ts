@@ -11,8 +11,7 @@ import {
   nameSchema,
   noteSchema,
   patientStatusSchema,
-  phoneNumberSchema,
-  treatmentPlanStatusSchema
+  phoneNumberSchema
 } from './base.types'
 
 z.config(fr())
@@ -44,7 +43,9 @@ export const patientCreateSchema = createInsertSchema(patients, {
   notes: z.array(noteSchema).optional()
 })
 
-export const patientUpdateSchema = patientCreateSchema.partial()
+export const patientUpdateSchema = patientCreateSchema.partial().extend({
+  organizationId: z.string().min(1)
+})
 export const patientSchema = createSelectSchema(patients)
 
 // Query schemas

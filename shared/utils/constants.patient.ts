@@ -46,7 +46,7 @@ export const STATUS_CONFIG = {
 
 // Status Filter Options
 export const STATUS_FILTER_OPTIONS = [
-  { label: 'Statut: Tous', value: 'all' },
+  { label: 'Statut: Tous', value: undefined },
   ...Object.entries(STATUS_CONFIG).map(([key, item]) => ({
     label: item.label,
     value: key,

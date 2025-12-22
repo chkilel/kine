@@ -15,13 +15,13 @@ const _usePatient = () => {
       query: async () => {
         const resp = await requestFetch('/api/patients', { query: queryParams.value })
         return {
-          data: resp.data.map((data) => ({
+          data: resp?.data.map((data) => ({
             ...data,
             createdAt: parseISO(data.createdAt),
             updatedAt: parseISO(data.updatedAt),
             deletedAt: toDate(data.deletedAt)
           })),
-          pagination: resp.pagination
+          pagination: resp?.pagination
         }
       }
     })
@@ -67,12 +67,13 @@ const _usePatient = () => {
    * @param patientId - Patient ID to fetch
    * @returns Query result with patient data and loading state
    */
-  const usePatientById = (patientId: Ref<string>) => {
+  const usePatientById = (patientId: MaybeRefOrGetter<string>) => {
     return useQuery({
-      enabled: () => !!patientId.value,
-      key: () => ['patient', patientId.value],
+      enabled: () => !!toValue(patientId),
+      key: () => ['patient', toValue(patientId)],
       query: async () => {
-        const data = await requestFetch(`/api/patients/${patientId.value}`)
+        const data = await requestFetch(`/api/patients/${toValue(patientId)}`)
+        if (!data) return
         return {
           ...data,
           createdAt: new Date(data.createdAt),
