@@ -29,13 +29,13 @@
       return patient.notes.map((note) => ({
         text: note.content,
         author: note.author,
-        date: formatDate(note.date)
+        date: formatHumanDate(note.date)
       }))
     }
     return []
   })
 
-  function formatDate(date: Date | string) {
+  function formatHumanDate(date: Date | string) {
     const noteDate = typeof date === 'string' ? parseISO(date) : date
     const now = new Date()
     const diffInDays = differenceInDays(now, noteDate)
@@ -99,7 +99,7 @@
                       ({{ getRelationshipLabel(contact.relationship) }})
                     </span>
                   </p>
-                  <p class="font-title">{{ contact.phone || '-' }}</p>
+                  <p class="font-title">{{ contact.number || '-' }}</p>
                 </div>
               </div>
               <div v-if="patient?.emergencyContacts?.length === 0" class="text-muted text-sm">
@@ -142,7 +142,7 @@
             >
               {{ surgery }}
             </UBadge>
-            <span v-if="patient.allergies?.length === 0" class="text-muted">Aucune allergie connue</span>
+            <span v-if="patient.surgeries?.length === 0" class="text-muted">Aucune chirurgie connue</span>
           </div>
         </div>
         <div>

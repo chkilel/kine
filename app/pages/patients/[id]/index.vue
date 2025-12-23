@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { BreadcrumbItem } from '@nuxt/ui'
-  import { parseISO } from 'date-fns'
   import { LazyPatientEditSlideover } from '#components'
 
   // Const
@@ -18,11 +17,13 @@
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  // -------------------------
+  const router = useRouter()
   const route = useRoute()
   const overlay = useOverlay()
   const editSlideover = overlay.create(LazyPatientEditSlideover)
-  const router = useRouter()
+
+  const { data: patient, error, isPending } = usePatientById(() => route.params.id as string)
+
   const activeTab = computed({
     get() {
       const tabFromQuery = route.query.tab as string
@@ -35,23 +36,6 @@
         query: { ...route.query, tab }
       })
     }
-  })
-
-  const requestFetch = useRequestFetch()
-  const {
-    data: patient,
-    error,
-    isPending
-  } = useQuery({
-    enabled: () => !!route.params.id,
-    key: () => ['patient', route.params.id as string],
-    query: () =>
-      requestFetch(`/api/patients/${route.params.id}`).then((data) => ({
-        ...data,
-        createdAt: parseISO(data.createdAt),
-        updatedAt: parseISO(data.updatedAt),
-        deletedAt: toDate(data.deletedAt)
-      }))
   })
 
   // Handle error after the query
@@ -67,7 +51,6 @@
 
   function openEditSlideover() {
     if (!patient.value) return
-
     editSlideover.open({ patient: patient.value })
   }
 </script>
@@ -105,13 +88,8 @@
                   <h1 class="text-2xl leading-tight font-bold md:text-3xl">
                     {{ formatFullName(patient) }}
                   </h1>
-                  <UBadge
-                    :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
-                    size="xl"
-                    variant="subtle"
-                    class="self-center"
-                  >
-                    {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
+                  <UBadge :color="getPatientStatusColor(patient.status)" size="xl" variant="subtle" class="self-center">
+                    {{ getPatientStatusLabel(patient.status) }}
                   </UBadge>
                 </div>
                 <div
@@ -166,7 +144,7 @@
 
             <!-- Séances Tab -->
             <template #seances>
-              <PatientSessionsTab />
+              <LazyPatientSessionsTab />
             </template>
 
             <!-- Plan de traitement Tab -->
@@ -176,7 +154,7 @@
 
             <!-- Documents Tab -->
             <template #documents>
-              <PatientDocumentsTab />
+              <LazyPatientDocumentsTab />
             </template>
 
             <!-- Facturation Tab -->
