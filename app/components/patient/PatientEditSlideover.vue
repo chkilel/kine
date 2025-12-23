@@ -168,7 +168,10 @@
         </AppCard>
 
         <!-- Emergency Contact -->
-        <PatientEmergencyContacts v-model="formState.emergencyContacts" />
+        <AppCard variant="outline">
+          <h3 class="text-highlighted mb-4 text-base font-bold">Contact d'urgence</h3>
+          <PatientEmergencyContacts v-model="formState.emergencyContacts" />
+        </AppCard>
 
         <!-- Insurance Information -->
         <AppCard variant="outline">

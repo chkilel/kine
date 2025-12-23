@@ -54,15 +54,6 @@
     note: ''
   })
 
-  // Emergency contact state - consolidated
-  const contactState = reactive({
-    editingIndex: null as number | null,
-    name: '',
-    number: '',
-    relationship: undefined as Relationship | undefined,
-    isAdding: false
-  })
-
   async function onSubmit(_event: FormSubmitEvent<PatientCreate>) {
     if (!formState.organizationId) {
       console.error('Organization ID is missing')
@@ -83,53 +74,6 @@
 
   async function onError(_event: FormErrorEvent) {
     nextTick(() => formRef.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
-  // Emergency contact management
-  function addOrUpdateContact() {
-    if (!contactState.number.trim()) return
-
-    if (!formState.emergencyContacts) formState.emergencyContacts = []
-
-    const contactData = {
-      name: contactState.name.trim() || undefined,
-      number: contactState.number.trim(),
-      relationship: contactState.relationship || undefined
-    }
-
-    if (contactState.editingIndex !== null) {
-      formState.emergencyContacts[contactState.editingIndex] = contactData
-    } else {
-      formState.emergencyContacts.push(contactData)
-    }
-
-    resetContactForm()
-  }
-
-  function startEditContact(index: number) {
-    const contact = formState.emergencyContacts?.[index]
-    if (!contact) return
-
-    contactState.editingIndex = index
-    contactState.name = contact.name || ''
-    contactState.number = contact.number
-    contactState.relationship = contact.relationship
-
-    nextTick(() => {
-      formRef.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    })
-  }
-
-  function removeContact(index: number) {
-    formState.emergencyContacts?.splice(index, 1)
-  }
-
-  function resetContactForm() {
-    contactState.editingIndex = null
-    contactState.name = ''
-    contactState.number = ''
-    contactState.relationship = undefined
-    contactState.isAdding = false
   }
 
   // Generic array item management
@@ -184,18 +128,6 @@
   function removeNote(index: number) {
     formState.notes?.splice(index, 1)
   }
-
-  // Computed properties for UI state
-  const showContactForm = computed(
-    () =>
-      (formState.emergencyContacts && formState.emergencyContacts.length > 0) ||
-      contactState.isAdding ||
-      contactState.editingIndex !== null
-  )
-
-  const contactButtonLabel = computed(() =>
-    contactState.editingIndex !== null ? 'Mettre à jour le contact' : 'Ajouter le contact'
-  )
 </script>
 
 <template>
@@ -340,113 +272,7 @@
 
                   <template #content>
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <div v-if="showContactForm">
-                        <div class="divide-default space-y-4 divide-y">
-                          <div
-                            v-for="(contact, index) in formState.emergencyContacts"
-                            :key="index"
-                            class="flex items-center justify-between pb-4"
-                          >
-                            <div class="flex items-center gap-4">
-                              <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
-                              <div>
-                                <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
-                                <p class="text-muted flex gap-4 text-xs">
-                                  <span class="flex items-center gap-1">
-                                    <UIcon name="i-lucide-phone" class="size-3" />
-                                    {{ contact.number }}
-                                  </span>
-                                  <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
-                                    <UIcon name="i-lucide-users" class="size-3" />
-                                    {{ getRelationshipLabel(contact.relationship) }}
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                              <UButton
-                                icon="i-lucide-edit-2"
-                                variant="ghost"
-                                color="neutral"
-                                size="sm"
-                                square
-                                @click="startEditContact(index)"
-                              />
-                              <UButton
-                                icon="i-lucide-trash-2"
-                                variant="ghost"
-                                color="error"
-                                size="sm"
-                                square
-                                @click="removeContact(index)"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Add/Edit Contact Form -->
-                        <div class="space-y-4 pt-4">
-                          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <UFormField label="Téléphone du contact" required>
-                              <UInput
-                                v-model="contactState.number"
-                                placeholder="+1 (555) 987-6543"
-                                class="w-full"
-                                type="tel"
-                              />
-                            </UFormField>
-                            <UFormField label="Nom du contact" hint="Optionnel">
-                              <UInput v-model="contactState.name" placeholder="Jeanne Dupont" class="w-full" />
-                            </UFormField>
-                            <UFormField label="Relation" hint="Optionnel" class="md:col-span-2">
-                              <USelectMenu
-                                v-model="contactState.relationship"
-                                :items="RELATIONSHIP_OPTIONS"
-                                value-key="value"
-                                placeholder="Sélectionner une relation..."
-                                class="w-full"
-                              />
-                            </UFormField>
-                          </div>
-                          <div class="flex gap-2">
-                            <UButton
-                              :label="contactButtonLabel"
-                              color="primary"
-                              variant="subtle"
-                              size="sm"
-                              :disabled="!contactState.number"
-                              @click="addOrUpdateContact"
-                            />
-                            <UButton
-                              label="Effacer"
-                              color="neutral"
-                              variant="ghost"
-                              size="sm"
-                              @click="resetContactForm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <UEmpty
-                        v-else
-                        variant="naked"
-                        icon="i-lucide-id-card"
-                        title="Aucun contact d'urgence ajouté"
-                        description="Il semble que vous n'ayez ajouté aucun contact. Ajoutez-en un pour commencer."
-                        :actions="[
-                          {
-                            icon: 'i-lucide-plus',
-                            label: 'Ajouter un contact',
-                            variant: 'subtle',
-                            onClick(event) {
-                              event.stopPropagation()
-                              resetContactForm()
-                              contactState.isAdding = true
-                            }
-                          }
-                        ]"
-                        class="p-0 sm:p-0 lg:p-0"
-                      />
+                      <PatientEmergencyContacts v-model="formState.emergencyContacts" />
                     </div>
                   </template>
                 </UCollapsible>
@@ -746,7 +572,7 @@
                                 <div>
                                   <p class="text-foreground text-sm">{{ note.content }}</p>
                                   <p class="text-muted-foreground mt-1 text-xs">
-                                    {{ formatFrenchDate (note.date) }} - {{ note.author }}
+                                    {{ formatFrenchDate(note.date) }} - {{ note.author }}
                                   </p>
                                 </div>
                                 <UButton
