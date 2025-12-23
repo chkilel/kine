@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import type { BreadcrumbItem, FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
-  import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
   import { format } from 'date-fns'
   import { fr } from 'date-fns/locale'
+  import { getLocalTimeZone, parseDate } from '@internationalized/date'
 
   const breadcrumbItems = [
     { label: 'Dashboard', to: '/' },
@@ -10,7 +10,6 @@
     { label: 'Nouvelle fiche patient' }
   ] as Array<BreadcrumbItem>
 
-  const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
   const { mutate: createPatient, isLoading } = useCreatePatient()
 
@@ -45,10 +44,6 @@
     }
   })
 
-  const arrayInputs = reactive({
-    note: ''
-  })
-
   async function onSubmit(_event: FormSubmitEvent<PatientCreate>) {
     if (!formState.organizationId) {
       console.error('Organization ID is missing')
@@ -69,24 +64,6 @@
 
   async function onError(_event: FormErrorEvent) {
     nextTick(() => formRef.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
-  function addNote() {
-    if (!arrayInputs.note.trim()) return
-
-    if (!formState.notes) formState.notes = []
-
-    formState.notes.push({
-      content: arrayInputs.note.trim(),
-      date: today(getLocalTimeZone()).toString(),
-      author: user.value ? `Dr. ${user.value.lastName}` : 'Unknown'
-    })
-
-    arrayInputs.note = ''
-  }
-
-  function removeNote(index: number) {
-    formState.notes?.splice(index, 1)
   }
 </script>
 
@@ -375,66 +352,7 @@
                   </UButton>
 
                   <template #content>
-                    <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <!-- Add new note -->
-                      <div>
-                        <UFormField label="Nouvelle note" name="newNote">
-                          <UTextarea
-                            v-model="arrayInputs.note"
-                            placeholder="Ajouter une nouvelle note..."
-                            :rows="3"
-                            class="w-full"
-                            @keyup.enter.ctrl="addNote"
-                          />
-                        </UFormField>
-                        <div class="mt-3 flex justify-end gap-3">
-                          <UButton label="Annuler" color="neutral" variant="subtle" @click="arrayInputs.note = ''" />
-                          <UButton
-                            label="Enregistrer"
-                            color="primary"
-                            :disabled="!arrayInputs.note.trim()"
-                            @click="addNote"
-                          />
-                        </div>
-                      </div>
-
-                      <div class="border-default border-t">
-                        <!-- Saved notes -->
-                        <template v-if="formState.notes && formState.notes.length > 0">
-                          <h4 class="text-foreground mb-2 text-sm font-semibold">Notes enregistrées</h4>
-                          <ul class="space-y-3">
-                            <li v-for="(note, index) in formState.notes" :key="index" class="bg-muted rounded-lg p-2">
-                              <div class="flex items-start justify-between">
-                                <div>
-                                  <p class="text-foreground text-sm">{{ note.content }}</p>
-                                  <p class="text-muted-foreground mt-1 text-xs">
-                                    {{ formatFrenchDate(note.date) }} - {{ note.author }}
-                                  </p>
-                                </div>
-                                <UButton
-                                  icon="i-lucide-trash-2"
-                                  size="xs"
-                                  color="error"
-                                  variant="ghost"
-                                  @click="removeNote(index)"
-                                  class="ml-2 shrink-0"
-                                />
-                              </div>
-                            </li>
-                          </ul>
-                        </template>
-
-                        <!-- Empty state -->
-                        <UEmpty
-                          v-else
-                          variant="naked"
-                          icon="i-lucide-file-text"
-                          title="Aucune note ajoutée"
-                          description="Ajoutez des notes pour suivre l'évolution du patient."
-                          class="p-0"
-                        />
-                      </div>
-                    </div>
+                    <PatientNotes v-model="formState.notes" />
                   </template>
                 </UCollapsible>
               </UCard>
