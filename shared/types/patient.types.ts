@@ -3,16 +3,7 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { patients } from '~~/server/database/schema'
-import {
-  calendarDateSchema,
-  emailSchema,
-  emergencyContactSchema,
-  genderSchema,
-  nameSchema,
-  noteSchema,
-  patientStatusSchema,
-  phoneNumberSchema
-} from './base.types'
+import { calendarDateSchema, genderSchema, nameSchema, patientStatusSchema, phoneNumberSchema } from './base.types'
 
 z.config(fr())
 
@@ -24,7 +15,7 @@ export const patientCreateSchema = createInsertSchema(patients, {
   lastName: nameSchema,
   dateOfBirth: calendarDateSchema,
   gender: genderSchema,
-  phone: phoneNumberSchema,
+  phone: phoneNumberSchema
 })
 
 export const patientUpdateSchema = patientCreateSchema.partial()
@@ -35,7 +26,7 @@ export const patientQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   search: z.string().optional(),
-  status: patientStatusSchema.optional(),
+  status: patientStatusSchema.optional()
 })
 
 // Paginated response type

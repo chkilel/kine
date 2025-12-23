@@ -115,6 +115,6 @@ export type PhoneEntry = z.infer<typeof phoneEntrySchema>
 export const emergencyContactSchema = z.object({
   name: z.string().optional(),
   number: z.string(),
-  relationship: relationshipSchema
+  relationship: relationshipSchema.optional()
 })
 export type EmergencyContact = z.infer<typeof emergencyContactSchema>
