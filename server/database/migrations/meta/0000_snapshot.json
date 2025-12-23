@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6bf9e505-6ae0-4a6a-9032-8702c4bfbe3d",
+  "id": "ccd0e152-5370-40a8-9c0a-668094390750",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -290,7 +290,8 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": false
         },
         "image": {
           "name": "image",
@@ -298,14 +299,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "specialization": {
-          "name": "specialization",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
         },
         "licenseNumber": {
           "name": "licenseNumber",
@@ -321,6 +314,14 @@
           "notNull": false,
           "autoincrement": false,
           "default": 30
+        },
+        "specialization": {
+          "name": "specialization",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "phoneNumbers": {
           "name": "phoneNumbers",
@@ -1771,35 +1772,40 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "medicalConditions": {
           "name": "medicalConditions",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "surgeries": {
           "name": "surgeries",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "allergies": {
           "name": "allergies",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "medications": {
           "name": "medications",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "insuranceProvider": {
           "name": "insuranceProvider",
@@ -1835,7 +1841,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -2025,7 +2032,7 @@
           "name": "endDate",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "numberOfSessions": {
@@ -2090,7 +2097,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "createdAt": {
           "name": "createdAt",
