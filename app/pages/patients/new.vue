@@ -45,12 +45,7 @@
     }
   })
 
-  // Array input fields - consolidated
   const arrayInputs = reactive({
-    medicalCondition: '',
-    surgery: '',
-    allergy: '',
-    medication: '',
     note: ''
   })
 
@@ -74,41 +69,6 @@
 
   async function onError(_event: FormErrorEvent) {
     nextTick(() => formRef.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
-  // Generic array item management
-  function addArrayItem(arrayField: keyof PatientCreate, value: string) {
-    if (!value.trim()) return
-
-    const currentArray = (formState[arrayField] as string[]) || []
-    currentArray.push(value.trim())
-    ;(formState as any)[arrayField] = currentArray
-  }
-
-  function removeArrayItem(arrayField: keyof PatientCreate, index: number) {
-    const currentArray = (formState[arrayField] as string[]) || []
-    currentArray.splice(index, 1)
-  }
-
-  // Specific add functions using generic handler
-  const addMedicalCondition = () => {
-    addArrayItem('medicalConditions', arrayInputs.medicalCondition)
-    arrayInputs.medicalCondition = ''
-  }
-
-  const addSurgery = () => {
-    addArrayItem('surgeries', arrayInputs.surgery)
-    arrayInputs.surgery = ''
-  }
-
-  const addAllergy = () => {
-    addArrayItem('allergies', arrayInputs.allergy)
-    arrayInputs.allergy = ''
-  }
-
-  const addMedication = () => {
-    addArrayItem('medications', arrayInputs.medication)
-    arrayInputs.medication = ''
   }
 
   function addNote() {
@@ -361,161 +321,37 @@
 
                   <template #content>
                     <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                      <!-- Medical Conditions -->
-                      <UFormField label="Antécédents médicaux" name="medicalConditions">
-                        <div class="space-y-2">
-                          <div
-                            v-if="formState.medicalConditions && formState.medicalConditions.length > 0"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <UBadge
-                              v-for="(condition, index) in formState.medicalConditions"
-                              :key="index"
-                              color="neutral"
-                              variant="subtle"
-                            >
-                              {{ condition }}
-                              <template #trailing>
-                                <UButton
-                                  icon="i-lucide-x"
-                                  size="xs"
-                                  color="neutral"
-                                  variant="ghost"
-                                  @click="removeArrayItem('medicalConditions', index)"
-                                />
-                              </template>
-                            </UBadge>
-                          </div>
-                          <div class="flex gap-2">
-                            <UInput
-                              v-model="arrayInputs.medicalCondition"
-                              placeholder="Ajouter une condition... ex : diabète de type 2, asthme"
-                              class="w-full flex-1"
-                              @keyup.enter="addMedicalCondition"
-                            />
-                            <UButton size="sm" @click="addMedicalCondition">
-                              <UIcon name="i-lucide-plus" />
-                            </UButton>
-                          </div>
-                        </div>
-                      </UFormField>
+                      <PatientMedicalInfoInput
+                        v-model="formState.medicalConditions"
+                        label="Antécédents médicaux"
+                        name="medicalConditions"
+                        placeholder="Ajouter une condition... ex : diabète de type 2, asthme"
+                        badge-color="neutral"
+                      />
 
-                      <!-- Surgeries -->
-                      <UFormField label="Chirurgies / Interventions" name="surgeries">
-                        <div class="space-y-2">
-                          <div
-                            v-if="formState.surgeries && formState.surgeries.length > 0"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <UBadge
-                              v-for="(surgery, index) in formState.surgeries"
-                              :key="index"
-                              color="primary"
-                              variant="subtle"
-                            >
-                              {{ surgery }}
-                              <template #trailing>
-                                <UButton
-                                  icon="i-lucide-x"
-                                  size="xs"
-                                  color="primary"
-                                  variant="ghost"
-                                  @click="removeArrayItem('surgeries', index)"
-                                />
-                              </template>
-                            </UBadge>
-                          </div>
-                          <div class="flex gap-2">
-                            <UInput
-                              v-model="arrayInputs.surgery"
-                              placeholder="Décrire l'intervention... ex : opération du genou (2020)"
-                              class="w-full flex-1"
-                              @keyup.enter="addSurgery"
-                            />
-                            <UButton size="sm" @click="addSurgery">
-                              <UIcon name="i-lucide-plus" />
-                            </UButton>
-                          </div>
-                        </div>
-                      </UFormField>
+                      <PatientMedicalInfoInput
+                        v-model="formState.surgeries"
+                        label="Chirurgies / Interventions"
+                        name="surgeries"
+                        placeholder="Décrire l'intervention... ex : opération du genou (2020)"
+                        badge-color="primary"
+                      />
 
-                      <!-- Allergies -->
-                      <UFormField label="Allergies" name="allergies">
-                        <div class="space-y-2">
-                          <div
-                            v-if="formState.allergies && formState.allergies.length > 0"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <UBadge
-                              v-for="(allergy, index) in formState.allergies"
-                              :key="index"
-                              color="error"
-                              variant="subtle"
-                            >
-                              {{ allergy }}
-                              <template #trailing>
-                                <UButton
-                                  icon="i-lucide-x"
-                                  size="xs"
-                                  color="error"
-                                  variant="ghost"
-                                  @click="removeArrayItem('allergies', index)"
-                                />
-                              </template>
-                            </UBadge>
-                          </div>
-                          <div class="flex gap-2">
-                            <UInput
-                              v-model="arrayInputs.allergy"
-                              placeholder="Ajouter une allergie... ex : pénicilline, latex, pollen"
-                              class="w-full flex-1"
-                              @keyup.enter="addAllergy"
-                            />
-                            <UButton size="sm" @click="addAllergy">
-                              <UIcon name="i-lucide-plus" />
-                            </UButton>
-                          </div>
-                        </div>
-                      </UFormField>
+                      <PatientMedicalInfoInput
+                        v-model="formState.allergies"
+                        label="Allergies"
+                        name="allergies"
+                        placeholder="Ajouter une allergie... ex : pénicilline, latex, pollen"
+                        badge-color="error"
+                      />
 
-                      <!-- Medications -->
-                      <UFormField label="Médicaments actuels" name="medications">
-                        <div class="space-y-2">
-                          <div
-                            v-if="formState.medications && formState.medications.length > 0"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <UBadge
-                              v-for="(medication, index) in formState.medications"
-                              :key="index"
-                              color="info"
-                              variant="subtle"
-                            >
-                              {{ medication }}
-                              <template #trailing>
-                                <UButton
-                                  icon="i-lucide-x"
-                                  size="xs"
-                                  color="info"
-                                  variant="ghost"
-                                  @click="removeArrayItem('medications', index)"
-                                />
-                              </template>
-                            </UBadge>
-                          </div>
-                          <div class="flex gap-2">
-                            <UInput
-                              v-model="arrayInputs.medication"
-                              placeholder="Indiquer le médicament... ex : Paracétamol 500 mg, Lévothyroxine"
-                              class="w-full flex-1"
-                              @keyup.enter="addMedication"
-                            />
-                            <UButton size="sm" @click="addMedication">
-                              <UIcon name="i-lucide-plus" />
-                            </UButton>
-                          </div>
-                        </div>
-                      </UFormField>
+                      <PatientMedicalInfoInput
+                        v-model="formState.medications"
+                        label="Médicaments actuels"
+                        name="medications"
+                        placeholder="Indiquer le médicament... ex : Paracétamol 500 mg, Lévothyroxine"
+                        badge-color="info"
+                      />
                     </div>
                   </template>
                 </UCollapsible>
