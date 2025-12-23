@@ -84,7 +84,7 @@ export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
 // Note schema
 export const noteSchema = z.object({
   author: z.string(),
-  date: z.coerce.date(),
+  date: z.string(),
   content: z.string().min(1)
 })
 export type Note = z.infer<typeof noteSchema>

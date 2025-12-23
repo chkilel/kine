@@ -2,7 +2,6 @@
   // Constants
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
 
-  const { usePatientsList } = usePatient()
   const route = useRoute()
   const router = useRouter()
 
@@ -13,6 +12,9 @@
     status: (route.query.status as PatientStatus) || undefined,
     search: (route.query.search as string) || ''
   })
+
+  // Fetch data
+  const { data, isPending, error } = usePatientsList(queryParams)
 
   // Debounced search
   const debouncedSearch = useDebounceFn((searchValue: string) => {
@@ -49,9 +51,6 @@
   )
 
   watch(() => queryParams.value.page, updateURL)
-
-  // Fetch data
-  const { data, isPending, error } = usePatientsList(queryParams)
 
   // Computed properties
   const hasActiveFilters = computed(() => {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { BreadcrumbItem, FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
-  import { getLocalTimeZone, parseDate } from '@internationalized/date'
+  import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
   import { format } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -10,8 +10,9 @@
     { label: 'Nouvelle fiche patient' }
   ] as Array<BreadcrumbItem>
 
+  const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
-  const { useCreatePatient } = usePatient()
+  const { mutate: createPatient, isLoading } = useCreatePatient()
 
   const formRef = useTemplateRef<HTMLFormElement>('createPatientForm')
   const formState = reactive<PatientCreate>({
@@ -30,6 +31,14 @@
     notes: []
   })
 
+  // Computed property for calendar date model
+  const dobModel = computed({
+    get: () => (formState.dateOfBirth ? parseDate(formState.dateOfBirth) : null),
+    set: (val) => {
+      if (val) formState.dateOfBirth = val.toString()
+    }
+  })
+
   watchEffect(() => {
     if (activeOrganization.value.data?.id) {
       formState.organizationId = activeOrganization.value.data.id
@@ -45,43 +54,15 @@
     note: ''
   })
 
-  const patientNotes = ref<Array<Note>>([])
-
   // Emergency contact state - consolidated
   const contactState = reactive({
     editingIndex: null as number | null,
     name: '',
-    phone: '',
+    number: '',
     relationship: undefined as Relationship | undefined,
     isAdding: false
   })
 
-  // Computed property for calendar date model
-  const dobModel = computed({
-    get: () => (formState.dateOfBirth ? parseDate(formState.dateOfBirth) : null),
-    set: (val) => {
-      if (val) formState.dateOfBirth = val.toString()
-    }
-  })
-
-  // Utility functions
-  const filterNonEmpty = (arr?: string[]) => arr?.filter((item) => item.trim() !== '') || []
-
-  const filterNonEmptyContacts = (contacts?: any[]) => contacts?.filter((contact) => contact.phone.trim() !== '') || []
-
-  const collectNotes = (formNotes?: any[]) => {
-    const notesArray: Array<Note> = []
-
-    if (formNotes && Array.isArray(formNotes)) {
-      notesArray.push(...formNotes.filter((note) => note.content && note.content.trim() !== ''))
-    }
-
-    notesArray.push(...patientNotes.value.filter((note) => note.content.trim() !== ''))
-
-    return notesArray.length > 0 ? notesArray : undefined
-  }
-
-  const { mutate: createPatient, isLoading } = useCreatePatient()
   async function onSubmit(_event: FormSubmitEvent<PatientCreate>) {
     if (!formState.organizationId) {
       console.error('Organization ID is missing')
@@ -89,12 +70,12 @@
     }
     const submitData = {
       ...formState,
-      medicalConditions: filterNonEmpty(formState.medicalConditions),
-      surgeries: filterNonEmpty(formState.surgeries),
-      allergies: filterNonEmpty(formState.allergies),
-      medications: filterNonEmpty(formState.medications),
-      emergencyContacts: filterNonEmptyContacts(formState.emergencyContacts),
-      notes: collectNotes(formState.notes)
+      medicalConditions: formState.medicalConditions?.filter((item) => item !== '') || undefined,
+      surgeries: formState.surgeries?.filter((item) => item !== '') || undefined,
+      allergies: formState.allergies?.filter((item) => item !== '') || undefined,
+      medications: formState.medications?.filter((item) => item !== '') || undefined,
+      emergencyContacts: formState.emergencyContacts?.filter((contact) => contact.number.trim() !== '') || undefined,
+      notes: formState.notes?.filter((note) => note.content.trim() !== '') || undefined
     }
 
     createPatient(submitData)
@@ -106,13 +87,13 @@
 
   // Emergency contact management
   function addOrUpdateContact() {
-    if (!contactState.phone.trim()) return
+    if (!contactState.number.trim()) return
 
     if (!formState.emergencyContacts) formState.emergencyContacts = []
 
     const contactData = {
       name: contactState.name.trim() || undefined,
-      phone: contactState.phone.trim(),
+      number: contactState.number.trim(),
       relationship: contactState.relationship || undefined
     }
 
@@ -131,7 +112,7 @@
 
     contactState.editingIndex = index
     contactState.name = contact.name || ''
-    contactState.phone = contact.phone
+    contactState.number = contact.number
     contactState.relationship = contact.relationship
 
     nextTick(() => {
@@ -146,7 +127,7 @@
   function resetContactForm() {
     contactState.editingIndex = null
     contactState.name = ''
-    contactState.phone = ''
+    contactState.number = ''
     contactState.relationship = undefined
     contactState.isAdding = false
   }
@@ -186,21 +167,22 @@
     arrayInputs.medication = ''
   }
 
-  // Note management
   function addNote() {
     if (!arrayInputs.note.trim()) return
 
-    patientNotes.value.push({
+    if (!formState.notes) formState.notes = []
+
+    formState.notes.push({
       content: arrayInputs.note.trim(),
-      date: new Date(),
-      author: 'Dr. Martin' // FIXME: Should come from organization therapist/users
+      date: today(getLocalTimeZone()).toString(),
+      author: user.value ? `Dr. ${user.value.lastName}` : 'Unknown'
     })
 
     arrayInputs.note = ''
   }
 
   function removeNote(index: number) {
-    patientNotes.value.splice(index, 1)
+    formState.notes?.splice(index, 1)
   }
 
   // Computed properties for UI state
@@ -372,7 +354,7 @@
                                 <p class="text-muted flex gap-4 text-xs">
                                   <span class="flex items-center gap-1">
                                     <UIcon name="i-lucide-phone" class="size-3" />
-                                    {{ contact.phone }}
+                                    {{ contact.number }}
                                   </span>
                                   <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
                                     <UIcon name="i-lucide-users" class="size-3" />
@@ -407,7 +389,7 @@
                           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <UFormField label="Téléphone du contact" required>
                               <UInput
-                                v-model="contactState.phone"
+                                v-model="contactState.number"
                                 placeholder="+1 (555) 987-6543"
                                 class="w-full"
                                 type="tel"
@@ -432,7 +414,7 @@
                               color="primary"
                               variant="subtle"
                               size="sm"
-                              :disabled="!contactState.phone"
+                              :disabled="!contactState.number"
                               @click="addOrUpdateContact"
                             />
                             <UButton
@@ -756,14 +738,16 @@
 
                       <div class="border-default border-t">
                         <!-- Saved notes -->
-                        <template v-if="patientNotes.length > 0">
+                        <template v-if="formState.notes && formState.notes.length > 0">
                           <h4 class="text-foreground mb-2 text-sm font-semibold">Notes enregistrées</h4>
                           <ul class="space-y-3">
-                            <li v-for="(note, index) in patientNotes" :key="index" class="bg-muted rounded-lg p-2">
+                            <li v-for="(note, index) in formState.notes" :key="index" class="bg-muted rounded-lg p-2">
                               <div class="flex items-start justify-between">
                                 <div>
                                   <p class="text-foreground text-sm">{{ note.content }}</p>
-                                  <p class="text-muted-foreground mt-1 text-xs">{{ note.date }} - {{ note.author }}</p>
+                                  <p class="text-muted-foreground mt-1 text-xs">
+                                    {{ formatDate(note.date) }} - {{ note.author }}
+                                  </p>
                                 </div>
                                 <UButton
                                   icon="i-lucide-trash-2"
