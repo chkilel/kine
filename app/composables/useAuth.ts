@@ -11,7 +11,7 @@ const _useAuth = async () => {
     return user
       ? {
           ...user,
-          phoneNumbers: user.phoneNumbers as PhoneNumber[] // fix phone type
+          phoneNumbers: user.phoneNumbers as PhoneEntry[] // Phone numbers type casting
         }
       : null
   })
