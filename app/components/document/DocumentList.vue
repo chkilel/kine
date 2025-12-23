@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import type { PatientDocument } from '~~/shared/types/patient.types'
   import PatientDocumentEditModal from './DocumentEditModal.vue'
 
   const props = defineProps<{
@@ -82,10 +81,6 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString()
-  }
-
   function getCategoryColor(
     category: string
   ): 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral' {
@@ -140,7 +135,7 @@
                 {{ getDocumentCategoryLabel(document.category) }}
               </UBadge>
               <span>{{ formatFileSize(document.fileSize) }}</span>
-              <span>{{ formatDate(document.createdAt.toISOString()) }}</span>
+              <span>{{ formatFrenchDate(document.createdAt) }}</span>
             </div>
           </div>
         </div>

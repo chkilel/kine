@@ -48,7 +48,7 @@
           ...plan,
           createdAt: parseISO(plan.createdAt),
           updatedAt: parseISO(plan.updatedAt),
-          deletedAt: toDate(plan.deletedAt)
+          deletedAt: safeParseISODate(plan.deletedAt)
         }))
       )
     },

@@ -88,7 +88,7 @@ function validateTimeOverlaps(
       body.endTime &&
       existing.startTime &&
       existing.endTime &&
-      checkTimeOverlap(
+      hasTimeConflict(
         existing.startTime,
         existing.endTime,
         body.startTime,

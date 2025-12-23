@@ -98,7 +98,7 @@
                   <div class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-cake" class="text-base" />
                     <span v-if="patient.dateOfBirth">
-                      Né le {{ formatDate(patient.dateOfBirth) }} ({{ getAge(patient.dateOfBirth) }} ans)
+                      Né le {{ formatFrenchDate (patient.dateOfBirth) }} ({{ calculateAge(patient.dateOfBirth) }} ans)
                     </span>
                   </div>
                   <div v-if="patient.phone" class="flex items-center gap-1.5">

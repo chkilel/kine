@@ -19,11 +19,11 @@
     therapistId: props.treatmentPlan.therapistId,
     type: 'follow_up' as ConsultationType
   })
-  const minDate = computed(() => dateToCalendarDate(new Date()))
+  const minDate = computed(() => convertToCalendarDate(new Date()))
   // Computed property for calendar date model
   const planningStartDateModel = computed<CalendarDate | null>({
     get: () => {
-      return planningSettings.value.startDate ? dateToCalendarDate(new Date(planningSettings.value.startDate)) : null
+      return planningSettings.value.startDate ? convertToCalendarDate(new Date(planningSettings.value.startDate)) : null
     },
     set: (val) => {
       if (val) {
@@ -113,7 +113,7 @@
             <template #content>
               <UCalendar
                 v-model="planningStartDateModel"
-                :is-date-unavailable="isDateUnavailable"
+                :is-date-unavailable="isDateDisabled"
                 :min-value="minDate"
                 :year-controls="false"
                 class="p-2"

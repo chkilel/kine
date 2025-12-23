@@ -17,7 +17,7 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
           ...data,
           createdAt: parseISO(data.createdAt),
           updatedAt: parseISO(data.updatedAt),
-          deletedAt: toDate(data.deletedAt)
+          deletedAt: safeParseISODate(data.deletedAt)
         })),
         pagination: resp?.pagination
       }
@@ -78,7 +78,7 @@ const _usePatientById = (patientId: MaybeRefOrGetter<string>) => {
         ...data,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
-        deletedAt: toDate(data.deletedAt)
+        deletedAt: safeParseISODate(data.deletedAt)
       }
     }
   })

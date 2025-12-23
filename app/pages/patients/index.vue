@@ -284,9 +284,9 @@
                   <!-- Date of Birth -->
                   <div class="hidden min-w-0 self-center md:block">
                     <p class="text-foreground font-medium">
-                      {{ formatDate(patient.dateOfBirth) }}
+                      {{ formatFrenchDate (patient.dateOfBirth) }}
                     </p>
-                    <p class="text-muted text-xs">({{ getAge(patient.dateOfBirth) }} ans)</p>
+                    <p class="text-muted text-xs">({{ calculateAge(patient.dateOfBirth) }} ans)</p>
                   </div>
 
                   <!-- Status -->

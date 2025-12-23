@@ -57,8 +57,8 @@
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-calendar" class="text-toned" />
           <span>
-            Début: {{ formatDate(props.treatmentPlan.startDate) }} - Fin:
-            {{ props.treatmentPlan.endDate ? formatDate(props.treatmentPlan.endDate) : 'Non définie' }}
+            Début: {{ formatFrenchDate (props.treatmentPlan.startDate) }} - Fin:
+            {{ props.treatmentPlan.endDate ? formatFrenchDate (props.treatmentPlan.endDate) : 'Non définie' }}
           </span>
         </div>
         <div class="flex items-center gap-2">

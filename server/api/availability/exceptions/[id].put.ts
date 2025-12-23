@@ -204,7 +204,7 @@ function validateTimeOverlaps(
 
     // Case 2: Both have specific times - check for overlap
     if (newException.startTime && newException.endTime && conflicting.startTime && conflicting.endTime) {
-      const hasOverlap = checkTimeOverlap(
+      const hasOverlap = hasTimeConflict(
         conflicting.startTime,
         conflicting.endTime,
         newException.startTime,

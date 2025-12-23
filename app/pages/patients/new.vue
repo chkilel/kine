@@ -746,7 +746,7 @@
                                 <div>
                                   <p class="text-foreground text-sm">{{ note.content }}</p>
                                   <p class="text-muted-foreground mt-1 text-xs">
-                                    {{ formatDate(note.date) }} - {{ note.author }}
+                                    {{ formatFrenchDate (note.date) }} - {{ note.author }}
                                   </p>
                                 </div>
                                 <UButton

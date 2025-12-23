@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     // Validate no overlapping times with minimum gap
     for (const existingTemplate of existingTemplates) {
       if (
-        checkTimeOverlap(
+        hasTimeConflict(
           existingTemplate.startTime,
           existingTemplate.endTime,
           body.startTime,

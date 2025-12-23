@@ -62,20 +62,20 @@
             <div
               class="bg-muted border-accented flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border"
             >
-              <span class="text-highlighted text-[14px] font-bold">{{ getDayAndMonth(exception.date).day }}</span>
+              <span class="text-highlighted text-[14px] font-bold">{{ extractDayAndMonth(exception.date).day }}</span>
               <span class="text-toned text-[10px] font-bold capitalize">
-                {{ getDayAndMonth(exception.date).month }}
+                {{ extractDayAndMonth(exception.date).month }}
               </span>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <div class="text-base font-bold">
                 <template v-if="exception.startTime && exception.endTime">
-                  {{ formatTimeWithoutSeconds(exception.startTime) }} -
-                  {{ formatTimeWithoutSeconds(exception.endTime) }}
+                  {{ removeSecondsFromTime(exception.startTime) }} -
+                  {{ removeSecondsFromTime(exception.endTime) }}
                 </template>
                 <div v-else class="flex items-baseline gap-6">
-                  {{ formatDate(exception.date) }}
+                  {{ formatFrenchDate (exception.date) }}
                   <span class="text-toned text-sm font-normal">Journée complète</span>
                 </div>
               </div>

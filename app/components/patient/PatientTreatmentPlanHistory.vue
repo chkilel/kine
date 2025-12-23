@@ -21,7 +21,7 @@
         <div v-for="plan in getTreatmentPlanHistory" :key="plan.id" class="flex items-center justify-between text-sm">
           <div class="flex flex-col">
             <p class="font-semibold">{{ plan.title }}</p>
-            <p class="text-muted text-xs">{{ formatDateRange(plan.startDate, plan.endDate) }}</p>
+            <p class="text-muted text-xs">{{ formatFrenchDateRange (plan.startDate, plan.endDate) }}</p>
           </div>
           <UBadge :color="getTreatmentPlanStatusColor(plan.status)" variant="soft" size="md">
             {{ getTreatmentPlanStatusLabel(plan.status) }}

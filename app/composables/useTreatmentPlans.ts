@@ -8,7 +8,7 @@ export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) =>
     ...plan,
     createdAt: parseISO(plan.createdAt),
     updatedAt: parseISO(plan.updatedAt),
-    deletedAt: toDate(plan.deletedAt),
+    deletedAt: safeParseISODate(plan.deletedAt),
     // Convert notes date strings back to Date objects
     notes:
       plan.notes?.map((note: any) => ({

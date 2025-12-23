@@ -72,7 +72,7 @@
         <div class="text-toned flex items-center gap-20">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="text-muted text-base" />
-            <span>{{ formatDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+            <span>{{ formatFrenchDateRange (getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="text-muted text-base" />

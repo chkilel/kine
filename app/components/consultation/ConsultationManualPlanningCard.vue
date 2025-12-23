@@ -27,12 +27,12 @@
 
   // State management
   const isCreating = ref(false)
-  const minDate = computed(() => dateToCalendarDate(new Date()))
+  const minDate = computed(() => convertToCalendarDate(new Date()))
 
   // Computed property for calendar date model
   const selectedDate = computed<CalendarDate | null>({
     get: () => {
-      return consultationDetails.value.date ? dateToCalendarDate(consultationDetails.value.date) : null
+      return consultationDetails.value.date ? convertToCalendarDate(consultationDetails.value.date) : null
     },
     set: (val) => {
       if (val) {
@@ -178,7 +178,7 @@
           v-model="selectedDate"
           :year-controls="false"
           :min-value="minDate"
-          :is-date-unavailable="isDateUnavailable"
+          :is-date-unavailable="isDateDisabled"
         />
       </AppCard>
 

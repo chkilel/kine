@@ -71,7 +71,7 @@
             </div>
             <div class="space-y-1.5">
               <div class="text-highlighted text-md font-semibold">
-                {{ formatTimeWithoutSeconds(template.startTime) }} - {{ formatTimeWithoutSeconds(template.endTime) }}
+                {{ removeSecondsFromTime(template.startTime) }} - {{ removeSecondsFromTime(template.endTime) }}
               </div>
               <div class="flex gap-5">
                 <UBadge

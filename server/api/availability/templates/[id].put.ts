@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
       // Validate no overlapping times with minimum gap
       for (const conflictingTemplate of conflictingTemplates) {
         if (
-          checkTimeOverlap(
+          hasTimeConflict(
             conflictingTemplate.startTime,
             conflictingTemplate.endTime,
             newStartTime,
