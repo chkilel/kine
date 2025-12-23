@@ -352,7 +352,9 @@
                   </UButton>
 
                   <template #content>
-                    <PatientNotes v-model="formState.notes" />
+                    <div class="border-default space-y-4 border-t p-4 sm:p-6">
+                      <PatientNotes v-model="formState.notes" />
+                    </div>
                   </template>
                 </UCollapsible>
               </UCard>

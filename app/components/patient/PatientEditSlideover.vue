@@ -1,10 +1,9 @@
 <script setup lang="ts">
-  import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate, today } from '@internationalized/date'
+  import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
 
   const props = defineProps<{ patient: Patient }>()
   const emit = defineEmits<{ close: [] }>()
 
-  const { user } = await useAuth()
   const { mutate: updatePatient, isLoading } = useUpdatePatient()
 
   const formRef = ref<HTMLFormElement>()
@@ -41,7 +40,6 @@
   }
 
   const formState = reactive<PatientUpdate>(getInitialFormState())
-  const newNoteContent = ref('')
 
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
   const dobModel = computed<CalendarDate | null>({
@@ -58,25 +56,6 @@
     if (!validationResult) return
 
     updatePatient({ patientId: props.patient.id, patientData: formState, onSuccess: () => emit('close') })
-  }
-
-  function addNote() {
-    const content = newNoteContent.value.trim()
-    if (!content) return
-
-    if (!formState.notes) formState.notes = []
-
-    formState.notes.push({
-      date: today(getLocalTimeZone()).toString(),
-      author: user.value ? `Dr. ${user.value.lastName}` : 'Unknown',
-      content
-    })
-
-    newNoteContent.value = ''
-  }
-
-  function removeNote(index: number) {
-    formState.notes?.splice(index, 1)
   }
 
   function handleClose() {
@@ -197,34 +176,7 @@
         <!-- Notes -->
         <AppCard variant="outline">
           <h3 class="text-highlighted mb-4 text-base font-bold">Notes</h3>
-          <div class="space-y-4">
-            <div v-if="formState.notes?.length" class="space-y-2">
-              <div
-                v-for="(note, index) in formState.notes"
-                :key="`note-${index}`"
-                class="flex items-start justify-between rounded-lg border p-3"
-              >
-                <div class="flex-1">
-                  <div class="mb-1 flex items-center gap-2">
-                    <span class="text-sm font-medium">{{ note.author }}</span>
-                    <span class="text-muted text-xs">{{ new Date(note.date).toLocaleDateString('fr-FR') }}</span>
-                  </div>
-                  <div class="text-sm">{{ note.content }}</div>
-                </div>
-                <UButton icon="i-lucide-trash-2" size="sm" color="error" variant="ghost" @click="removeNote(index)" />
-              </div>
-            </div>
-            <div class="flex gap-2">
-              <UTextarea v-model="newNoteContent" placeholder="Ajouter une note..." :rows="2" class="flex-1" />
-              <UButton
-                label="Ajouter"
-                color="primary"
-                variant="solid"
-                @click="addNote"
-                :disabled="!newNoteContent.trim()"
-              />
-            </div>
-          </div>
+          <PatientNotes v-model="formState.notes" />
         </AppCard>
       </UForm>
     </template>

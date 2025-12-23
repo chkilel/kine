@@ -27,7 +27,7 @@
 </script>
 
 <template>
-  <div class="border-default space-y-4 border-t p-4 sm:p-6">
+  <div class="space-y-4">
     <div>
       <UFormField label="Nouvelle note" name="newNote">
         <UTextarea
