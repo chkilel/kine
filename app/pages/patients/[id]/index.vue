@@ -58,9 +58,15 @@
 <template>
   <UDashboardPanel id="patient-profil" class="bg-elevated">
     <template #header>
-      <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Profil du patient'">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+        </template>
+
+        <template #title>
+          <ClientOnly>
+            {{ patient ? formatFullName(patient) : 'Profil du patient' }}
+          </ClientOnly>
         </template>
 
         <template #right>notifications</template>
@@ -98,7 +104,7 @@
                   <div class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-cake" class="text-base" />
                     <span v-if="patient.dateOfBirth">
-                      Né le {{ formatFrenchDate (patient.dateOfBirth) }} ({{ calculateAge(patient.dateOfBirth) }} ans)
+                      Né le {{ formatFrenchDate(patient.dateOfBirth) }} ({{ calculateAge(patient.dateOfBirth) }} ans)
                     </span>
                   </div>
                   <div v-if="patient.phone" class="flex items-center gap-1.5">

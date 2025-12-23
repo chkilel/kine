@@ -94,12 +94,21 @@ const _useUpdatePatient = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, patientData }: { patientId: string; patientData: PatientUpdate }) =>
+    mutation: async ({
+      patientId,
+      patientData
+    }: {
+      patientId: string
+      patientData: PatientUpdate
+      onSuccess?: () => void
+    }) =>
       requestFetch(`/api/patients/${patientId}`, {
         method: 'PUT',
         body: patientData
       }),
-    onSuccess: (_, { patientId, patientData }) => {
+    onSuccess: (_, { patientId, patientData, onSuccess }) => {
+      onSuccess?.()
+
       toast.add({
         title: 'Succès',
         description: `Patient ${patientData.firstName} ${patientData.lastName} mis à jour avec succès`,
