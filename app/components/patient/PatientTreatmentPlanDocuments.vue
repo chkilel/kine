@@ -1,8 +1,6 @@
 <script setup lang="ts">
-  import { parseISO } from 'date-fns'
   import { LazyDocumentViewerModal } from '#components'
 
-  // Types
   interface UploadedFile {
     file: File
     title: string
@@ -10,112 +8,79 @@
     stagedAt: Date
   }
 
-  const props = defineProps<{
-    patient: Patient
-    treatmentPlan: TreatmentPlan
-  }>()
+  const props = defineProps<{ treatmentPlan: TreatmentPlan }>()
 
   const toast = useToast()
-  const requestFetch = useRequestFetch()
   const queryCache = useQueryCache()
+
   const { uploadFile } = useUploads()
-  const { updateDocument, deleteDocument, isUpdating, isDeleting } = useDocuments(() => props.patient.id)
+  const { data: documents } = useDocumentsList(
+    () => props.treatmentPlan.patientId,
+    () => props.treatmentPlan.id
+  )
+  const { mutate: updateDocument, isLoading: isUpdating } = useUpdateDocument(() => props.treatmentPlan.patientId)
+  const { mutate: deleteDocument, isLoading: isDeleting } = useDeleteDocument(() => props.treatmentPlan.patientId)
 
-  // Edit mode state
   const editingDocument = ref<PatientDocument | null>(null)
-
-  // Delete confirmation modal
   const showDeleteModal = ref(false)
   const documentToDelete = ref<PatientDocument | null>(null)
-
-  // Documents state
   const uploadedFiles = ref<UploadedFile[]>([])
   const fileInputRef = ref<HTMLInputElement>()
   const documentLoading = ref(false)
 
-  // Docuement Fetch Query
-  const { data: documents } = useQuery({
-    key: () => {
-      const planId = props.treatmentPlan.id
-      const patientId = props.patient.id
-      return ['documents', patientId, planId]
-    },
-    query: async () => {
-      const planId = props.treatmentPlan.id
+  // Computed properties
+  const hasDocuments = computed(() => !!(documents.value?.length || uploadedFiles.value.length))
 
-      return requestFetch(`/api/patients/${props.patient.id}/documents?treatmentPlanId=${planId}`).then((data) =>
-        data?.map((plan) => ({
-          ...plan,
-          createdAt: parseISO(plan.createdAt),
-          updatedAt: parseISO(plan.updatedAt)
-        }))
-      )
-    },
-    enabled: () => !!props.treatmentPlan?.id
-  })
-
-  // File management func
+  // File management
   function handleFileSelect(event: Event) {
     const target = event.target as HTMLInputElement
-    const files = target.files
+    const files = Array.from(target.files || [])
 
-    if (!files) return
+    const newFiles = files.map((file) => ({
+      file,
+      title: file.name,
+      type: 'other' as DocumentCategory,
+      stagedAt: new Date()
+    }))
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (!file) continue
-      const uploadedFile: UploadedFile = {
-        file,
-        title: file.name,
-        type: 'other',
-        stagedAt: new Date()
-      }
-      uploadedFiles.value.push(uploadedFile)
-    }
+    uploadedFiles.value.push(...newFiles)
   }
 
   function removeFile(index: number) {
     uploadedFiles.value.splice(index, 1)
   }
 
-  // Upload documents and link to treatment plan
-  const uploadDocuments = async ({
-    planId,
-    patientId,
-    organizationId
-  }: {
-    planId?: string
-    patientId: string
-    organizationId: string
-  }) => {
+  function openFileDialog() {
+    fileInputRef.value?.click()
+  }
+
+  // Upload documents
+  async function uploadDocuments() {
     if (uploadedFiles.value.length === 0) return
 
-    documentLoading.value = true
+    const { id: planId, patientId, organizationId } = props.treatmentPlan
+
     if (!planId) {
       toast.add({
         title: 'Erreur',
         description: 'Aucun plan de traitement actif',
         color: 'error'
       })
-      documentLoading.value = false
       return
     }
 
-    try {
-      const uploadedDocuments = []
+    documentLoading.value = true
+    const uploadedDocuments = []
 
+    try {
       for (const uploadedFile of uploadedFiles.value) {
         try {
-          // Upload file to R2 and get actual storage key
-          console.log('Uploading file:', uploadedFile.file.name)
           const uploadResult = await uploadFile({
             file: uploadedFile.file,
             folder: `orgs/${organizationId}/docs/${patientId}`,
             name: uploadedFile.file.name
           })
-          console.log('Upload result:', uploadResult)
 
-          // Create document record with the actual storage key
           const documentData = {
             organizationId,
             treatmentPlanId: planId,
@@ -127,20 +92,17 @@
             category: uploadedFile.type,
             description: uploadedFile.title
           }
-          console.log('Document data to save:', documentData)
 
           const document = await $fetch(`/api/patients/${patientId}/documents`, {
             method: 'POST',
             body: documentData
           })
 
-          if (!document) {
-            throw new Error('Failed to create document record')
+          if (document) {
+            uploadedDocuments.push(document)
           }
-
-          uploadedDocuments.push(document)
         } catch (error) {
-          console.error('Error uploading file:', error)
+          console.error('Error uploading file:', uploadedFile.file.name, error)
           toast.add({
             title: 'Erreur',
             description: `Échec du téléversement de ${uploadedFile.file.name}`,
@@ -149,11 +111,13 @@
         }
       }
 
-      // Clear staged files and refresh document list
-      uploadedFiles.value = []
-
       if (uploadedDocuments.length > 0) {
-        queryCache.invalidateQueries({ key: ['documents', patientId, planId] })
+        uploadedFiles.value = []
+        await refreshNuxtData()
+        queryCache.invalidateQueries({
+          key: ['documents', props.treatmentPlan.patientId]
+        })
+
         toast.add({
           title: 'Succès',
           description: `${uploadedDocuments.length} document(s) téléversé(s) avec succès`,
@@ -173,16 +137,16 @@
   }
 
   // Edit functions
-  const startEditDocument = (document: PatientDocument) => {
+  function startEditDocument(document: PatientDocument) {
     editingDocument.value = { ...document }
   }
 
-  const cancelEditDocument = () => {
+  function cancelEditDocument() {
     editingDocument.value = null
   }
 
-  const saveDocumentEdit = async () => {
-    if (!editingDocument.value || !props.patient.id) return
+  async function saveDocumentEdit() {
+    if (!editingDocument.value) return
 
     try {
       updateDocument({
@@ -192,7 +156,6 @@
           category: editingDocument.value.category
         }
       })
-
       cancelEditDocument()
     } catch (error) {
       console.error('Error updating document:', error)
@@ -200,23 +163,23 @@
   }
 
   // Delete functions
-  const confirmDeleteDocument = (document: PatientDocument) => {
+  function confirmDeleteDocument(document: PatientDocument) {
     documentToDelete.value = document
     showDeleteModal.value = true
   }
 
-  const cancelDeleteDocument = () => {
+  function cancelDeleteDocument() {
     documentToDelete.value = null
     showDeleteModal.value = false
   }
 
-  const executeDeleteDocument = async () => {
-    if (!documentToDelete.value || !props.patient.id) return
+  async function executeDeleteDocument() {
+    if (!documentToDelete.value) return
 
     try {
       deleteDocument(documentToDelete.value.id)
 
-      // Remove from local state optimistically
+      // Optimistic UI update
       if (documents.value) {
         documents.value = documents.value.filter((doc) => doc.id !== documentToDelete.value?.id)
       }
@@ -229,7 +192,7 @@
 
   // Keyboard shortcuts
   onKeyStroke('Escape', () => {
-    if (editingDocument.value?.id) {
+    if (editingDocument.value) {
       cancelEditDocument()
     }
   })
@@ -237,29 +200,20 @@
 
 <template>
   <AppCard variant="outline" title="Documents du plan de traitement">
-    <div class="mb-5 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <!-- Add Document Button -->
-        <UButton
-          v-if="uploadedFiles.length > 0 || (documents && documents?.length > 0)"
-          icon="i-lucide-plus"
-          color="primary"
-          size="sm"
-          @click="fileInputRef?.click()"
-        >
-          Ajouter un document
-        </UButton>
-      </div>
+    <template #actions>
+      <UButton v-if="hasDocuments" icon="i-lucide-plus" color="primary" size="sm" @click="openFileDialog">
+        Ajouter un document
+      </UButton>
+    </template>
+    <input
+      ref="fileInputRef"
+      type="file"
+      multiple
+      class="hidden"
+      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+      @change="handleFileSelect"
+    />
 
-      <input
-        ref="fileInputRef"
-        type="file"
-        multiple
-        class="hidden"
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-        @change="handleFileSelect"
-      />
-    </div>
     <div class="space-y-4">
       <!-- Staged Files -->
       <div v-if="uploadedFiles.length > 0" class="space-y-3">
@@ -270,14 +224,11 @@
         >
           <div class="flex w-full items-start gap-10">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">
-                {{ uploadedFile.file.name }}
-              </p>
+              <p class="truncate text-sm font-medium">{{ uploadedFile.file.name }}</p>
               <p class="text-muted mt-1 text-xs">
                 Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
               </p>
             </div>
-
             <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square @click="removeFile(index)" />
           </div>
 
@@ -299,7 +250,7 @@
           </div>
         </div>
 
-        <!-- Upload Button for Staged Files -->
+        <!-- Upload Button -->
         <div class="flex justify-end">
           <UButton
             icon="i-lucide-upload"
@@ -307,24 +258,17 @@
             size="sm"
             :loading="documentLoading"
             :disabled="documentLoading || uploadedFiles.length === 0"
-            @click="
-              uploadDocuments({
-                patientId: props.patient.id,
-                organizationId: props.patient.organizationId,
-                planId: props.treatmentPlan.id
-              })
-            "
+            @click="uploadDocuments"
           >
             Téléverser {{ uploadedFiles.length }} document(s)
           </UButton>
         </div>
       </div>
 
-      {{ documents }}
       <!-- Existing Documents -->
-      <div class="space-y-3 pt-4">
+      <div class="space-y-3">
         <UEmpty
-          v-if="!documents?.length && !uploadedFiles.length"
+          v-if="!hasDocuments"
           icon="i-lucide-file-plus"
           title="Aucun document"
           description="Ce patient n'a pas encore de document. Ajoutez-en un pour commencer le suivi."
@@ -333,12 +277,12 @@
               label: 'Ajouter un document',
               icon: 'i-lucide-plus',
               color: 'primary',
-              onClick: () => fileInputRef?.click()
+              onClick: openFileDialog
             }
           ]"
         />
+
         <div
-          v-else
           v-for="doc in documents"
           :key="doc.id"
           class="border-default flex items-start gap-4 rounded-lg border p-3"
@@ -348,20 +292,18 @@
           <div v-if="editingDocument?.id === doc.id" class="w-full space-y-3">
             <div class="flex items-center gap-3">
               <UBadge
-                :icon="getDocumentIcon(editingDocument?.category || doc.category)"
-                :color="getDocumentColor(editingDocument?.category || doc.category)"
+                :icon="getDocumentIcon(editingDocument.category)"
+                :color="getDocumentColor(editingDocument.category)"
                 variant="soft"
                 size="lg"
                 square
               />
-              <div class="grow">
-                <p class="text-default font-semibold">{{ doc.originalFileName }}</p>
-              </div>
+              <p class="text-default grow font-semibold">{{ doc.originalFileName }}</p>
             </div>
 
-            <div v-if="editingDocument" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <UFormField label="Titre descriptif du document" size="xs" class="sm:col-span-2">
-                <UInput v-model="editingDocument.description" placeholder="Titre descriptif" size="sm" class="w-full" />
+                <UInput v-model="editingDocument.description" placeholder="Titre descriptif" size="sm" />
               </UFormField>
               <UFormField label="Type de document" size="xs">
                 <USelectMenu
@@ -369,7 +311,6 @@
                   value-key="value"
                   size="sm"
                   :items="DOCUMENT_CATEGORY_OPTIONS"
-                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -402,14 +343,14 @@
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <LazyDocumentViewerModal :document="doc" :patient-id="props.patient.id" />
+              <LazyDocumentViewerModal :document="doc" :patientId="props.treatmentPlan.patientId" />
               <UButton
                 icon="i-lucide-edit"
                 variant="ghost"
                 color="neutral"
                 size="sm"
                 square
-                :disabled="!!editingDocument?.id"
+                :disabled="!!editingDocument"
                 @click="startEditDocument(doc)"
               />
               <UButton
@@ -440,7 +381,6 @@
               size="xl"
               class="flex size-12 shrink-0 items-center justify-center rounded-full"
             />
-
             <div>
               <h3 class="text-lg font-semibold">Supprimer le document</h3>
               <p class="text-muted text-sm">

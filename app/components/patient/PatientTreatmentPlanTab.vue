@@ -100,7 +100,7 @@
       <PatientTreatmentPlanConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
 
       <!-- Documents -->
-      <PatientTreatmentPlanDocuments :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanDocuments :treatment-plan="getActiveTreatmentPlan" />
     </div>
   </div>
 </template>

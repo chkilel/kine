@@ -81,7 +81,7 @@
 
 <template>
   <AppCard title="Aperçu des séances">
-    <div class="mb-5 flex items-center justify-between">
+    <template #actions>
       <div class="flex items-center gap-2">
         <UButton
           icon="i-lucide-refresh-cw"
@@ -97,7 +97,7 @@
           Planifier les séances
         </UButton>
       </div>
-    </div>
+    </template>
     <div class="overflow-x-auto">
       <UTable
         :data="consultations"
@@ -183,9 +183,7 @@
             icon="i-lucide-calendar-x"
             title="Aucune séance planifiée pour ce plan de traitement."
             description="Commencez à planifier les séances pour ce patient afin de débuter le suivi."
-            :ui="{
-              body: 'max-w-none'
-            }"
+            :ui="{ body: 'max-w-none' }"
             :actions="[
               {
                 icon: 'i-lucide-plus-circle',

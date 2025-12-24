@@ -16,6 +16,8 @@
   const isDeleting = ref<string | null>(null)
   const isDownloading = ref<string | null>(null)
 
+  const { mutate: deleteDoc } = useDeleteDocument(() => props.patientId)
+
   async function deleteDocument(document: PatientDocument) {
     if (
       !confirm(`Êtes‑vous sûr de vouloir supprimer "${document.originalFileName}" ? Cette action est irréversible.`)
@@ -24,28 +26,8 @@
     }
 
     isDeleting.value = document.id
-
-    try {
-      await $fetch(`/api/patients/${props.patientId}/documents/${document.id}`, {
-        method: 'DELETE'
-      })
-
-      toast.add({
-        title: 'Succès',
-        description: 'Document supprimé avec succès',
-        color: 'success'
-      })
-
-      emit('deleted', document.id)
-    } catch (error: any) {
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la suppression du document',
-        color: 'error'
-      })
-    } finally {
-      isDeleting.value = null
-    }
+    deleteDoc(document.id)
+    emit('deleted', document.id)
   }
 
   async function downloadDocument(doc: PatientDocument) {
@@ -54,7 +36,6 @@
     try {
       const response = await $fetch(`/api/patients/${props.patientId}/documents/${doc.id}`)
 
-      // Create download link
       const link = document.createElement('a')
       link.href = response.downloadUrl
       link.download = doc.originalFileName
@@ -62,10 +43,10 @@
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.add({
         title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec du téléchargement du document',
+        description: (error as any).data?.statusMessage || 'Échec du téléchargement du document',
         color: 'error'
       })
     } finally {
@@ -78,7 +59,7 @@
     const k = 1024
     const sizes = ['octets', 'Ko', 'Mo', 'Go']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    return parseFloat((bytes / 2 ** i).toFixed(2)) + ' ' + sizes[i]
   }
 
   function getCategoryColor(

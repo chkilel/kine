@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import type { PatientDocument } from '~~/shared/types/patient.types'
-
   const props = defineProps<{
     document: PatientDocument
     patientId: string
