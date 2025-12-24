@@ -1,5 +1,3 @@
-import type { PatientDocument, PatientDocumentUpdate } from '~~/shared/types/patient.types'
-
 export function useDocuments(patientId: MaybeRefOrGetter<string>) {
   const requestFetch = useRequestFetch()
   const queryCache = useQueryCache()

@@ -11,22 +11,6 @@
 
   const toast = useToast()
 
-  // Notes state
-  const newNote = ref('')
-
-  function addNote() {
-    if (newNote.value.trim()) {
-      // In a real app, this would save to the API
-      console.log('Adding note:', newNote.value)
-      newNote.value = ''
-      toast.add({
-        title: 'Note ajoutée',
-        description: 'La note de suivi a été ajoutée avec succès.',
-        color: 'success'
-      })
-    }
-  }
-
   // Close treatment plan function
   const closeTreatmentPlan = () => {
     // TODO: Implement close treatment plan logic
@@ -45,11 +29,7 @@
     <UCard>
       <div class="mb-4 flex items-start justify-between">
         <h2 class="text-lg font-bold">{{ props.treatmentPlan.title }}</h2>
-        <UBadge
-          :color="getTreatmentPlanStatusColor(props.treatmentPlan.status)"
-          variant="soft"
-          class="rounded-full"
-        >
+        <UBadge :color="getTreatmentPlanStatusColor(props.treatmentPlan.status)" variant="soft" class="rounded-full">
           {{ getTreatmentPlanStatusLabel(props.treatmentPlan.status) }}
         </UBadge>
       </div>
@@ -57,8 +37,8 @@
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-calendar" class="text-toned" />
           <span>
-            Début: {{ formatFrenchDate (props.treatmentPlan.startDate) }} - Fin:
-            {{ props.treatmentPlan.endDate ? formatFrenchDate (props.treatmentPlan.endDate) : 'Non définie' }}
+            Début: {{ formatFrenchDate(props.treatmentPlan.startDate) }} - Fin:
+            {{ props.treatmentPlan.endDate ? formatFrenchDate(props.treatmentPlan.endDate) : 'Non définie' }}
           </span>
         </div>
         <div class="flex items-center gap-2">
@@ -169,10 +149,6 @@
     <UCard>
       <h3 class="mb-4! text-base font-bold">Notes &amp; Suivi</h3>
       <div class="space-y-4">
-        <div>
-          <UTextarea v-model="newNote" autoresize placeholder="Ajouter une note de suivi..." :rows="3" class="block" />
-          <UButton @click="addNote" color="primary" size="sm" class="mt-2">Ajouter la note</UButton>
-        </div>
         <div class="border-default space-y-3 border-t pt-4">
           <div v-if="!(props.treatmentPlan.notes as any[])?.length" class="py-4 text-center">
             <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>

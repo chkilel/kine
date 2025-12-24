@@ -44,11 +44,10 @@
       const planId = props.treatmentPlan.id
 
       return requestFetch(`/api/patients/${props.patient.id}/documents?treatmentPlanId=${planId}`).then((data) =>
-        data.map((plan) => ({
+        data?.map((plan) => ({
           ...plan,
           createdAt: parseISO(plan.createdAt),
-          updatedAt: parseISO(plan.updatedAt),
-          deletedAt: safeParseISODate(plan.deletedAt)
+          updatedAt: parseISO(plan.updatedAt)
         }))
       )
     },
@@ -321,6 +320,7 @@
         </div>
       </div>
 
+      {{ documents }}
       <!-- Existing Documents -->
       <div class="space-y-3 pt-4">
         <UEmpty

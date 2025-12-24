@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+  import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate, today } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{
@@ -75,17 +75,17 @@
   const isEditMode = computed(() => !!props.treatmentPlan)
 
   // Initialize form based on mode
-  const form = reactive<TreatmentPlanCreate>({
+  const formState = reactive<TreatmentPlanCreate>({
     patientId: props.patient.id!,
     therapistId: props.treatmentPlan?.therapistId || user.value!.id,
     organizationId: activeOrganization.value.data!.id,
     prescribingDoctor: props.treatmentPlan?.prescribingDoctor || '',
-    prescriptionDate: props.treatmentPlan?.prescriptionDate || new Date(),
+    prescriptionDate: props.treatmentPlan?.prescriptionDate || today(getLocalTimeZone()).toString(),
     title: props.treatmentPlan?.title || '',
     diagnosis: props.treatmentPlan?.diagnosis || '',
     objective: props.treatmentPlan?.objective || '',
     status: props.treatmentPlan?.status || 'planned',
-    startDate: props.treatmentPlan?.startDate || new Date(),
+    startDate: props.treatmentPlan?.startDate || today(getLocalTimeZone()).toString(),
     endDate: props.treatmentPlan?.endDate,
     numberOfSessions: props.treatmentPlan?.numberOfSessions || 0,
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
@@ -95,48 +95,22 @@
     notes: props.treatmentPlan?.notes || null
   })
 
-  // Calendar models for date components
-  const prescriptionDateModel = shallowRef<CalendarDate | null>(null)
-  const startDateModel = shallowRef<CalendarDate | null>(null)
-  const endDateModel = shallowRef<CalendarDate | null>(null)
-
-  // Initialize calendar models from form dates
-  onMounted(() => {
-    if (form.prescriptionDate && form.prescriptionDate instanceof Date) {
-      prescriptionDateModel.value = new CalendarDate(
-        form.prescriptionDate.getFullYear(),
-        form.prescriptionDate.getMonth() + 1,
-        form.prescriptionDate.getDate()
-      )
-    }
-    if (form.startDate && form.startDate instanceof Date) {
-      startDateModel.value = new CalendarDate(
-        form.startDate.getFullYear(),
-        form.startDate.getMonth() + 1,
-        form.startDate.getDate()
-      )
-    }
-    if (form.endDate && form.endDate instanceof Date) {
-      endDateModel.value = new CalendarDate(
-        form.endDate.getFullYear(),
-        form.endDate.getMonth() + 1,
-        form.endDate.getDate()
-      )
-    }
+  // Calendar model for date picker
+  const startDateModel = computed({
+    get: () => (formState.startDate ? parseDate(formState.startDate) : null),
+    set: (val) => (formState.startDate = val ? val.toString() : today(getLocalTimeZone()).toString())
   })
 
-  // Watch calendar models and update form state
-  watch(prescriptionDateModel, (val) => {
-    form.prescriptionDate = val ? val.toDate(getLocalTimeZone()) : new Date()
+  const endDateModel = computed({
+    get: () => (formState.endDate ? parseDate(formState.endDate) : null),
+    set: (val) => (formState.endDate = val ? val.toString() : today(getLocalTimeZone()).toString())
   })
 
-  watch(startDateModel, (val) => {
-    form.startDate = val ? val.toDate(getLocalTimeZone()) : new Date()
+  const prescriptionDateModel = computed({
+    get: () => (formState.prescriptionDate ? parseDate(formState.prescriptionDate) : null),
+    set: (val) => (formState.prescriptionDate = val ? val.toString() : today(getLocalTimeZone()).toString())
   })
 
-  watch(endDateModel, (val) => {
-    form.endDate = val ? val.toDate(getLocalTimeZone()) : null
-  })
 
   async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate>) {
     loading.value = true
@@ -172,7 +146,7 @@
   }
 
   function resetForm() {
-    Object.assign(form, {
+    Object.assign(formState, {
       patientId: '',
       prescribingDoctor: '',
       prescriptionDate: new Date(),
@@ -224,7 +198,7 @@
       <UForm
         ref="newPlanRef"
         :schema="treatmentPlanCreateSchema"
-        :state="form"
+        :state="formState"
         class="space-y-6"
         @submit="handleSubmit"
       >
@@ -233,7 +207,7 @@
           <UCard variant="outline">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Médecin prescripteur" name="prescribingDoctor" required>
-                <UInput v-model="form.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
+                <UInput v-model="formState.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
               </UFormField>
               <UFormField label="Date de prescription" name="prescriptionDate" required>
                 <UPopover>
@@ -257,11 +231,11 @@
             <h3 class="text-highlighted mb-4 text-base font-bold">Détails du plan de traitement</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Titre" name="title" required class="md:col-span-2">
-                <UInput v-model="form.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
+                <UInput v-model="formState.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
               </UFormField>
               <UFormField label="Pathologie / Diagnostic" name="diagnosis" required class="md:col-span-2">
                 <UTextarea
-                  v-model="form.diagnosis"
+                  v-model="formState.diagnosis"
                   placeholder="Tendinopathie du supra-épineux..."
                   :rows="3"
                   class="w-full"
@@ -269,7 +243,7 @@
               </UFormField>
               <UFormField label="Objectifs thérapeutiques" name="objective" required class="md:col-span-2">
                 <UTextarea
-                  v-model="form.objective"
+                  v-model="formState.objective"
                   placeholder="Améliorer l'amplitude, réduire la douleur..."
                   :rows="3"
                   class="w-full"
@@ -277,7 +251,7 @@
               </UFormField>
               <UFormField label="Kinésithérapeute responsable" name="therapistId" required>
                 <USelectMenu
-                  v-model="form.therapistId"
+                  v-model="formState.therapistId"
                   value-key="id"
                   label-key="name"
                   :items="therapists"
@@ -286,7 +260,7 @@
               </UFormField>
               <UFormField label="Statut" name="status">
                 <URadioGroup
-                  v-model="form.status"
+                  v-model="formState.status"
                   :items="[...TREATMENT_PLAN_STATUS_OPTIONS]"
                   value-key="value"
                   label-key="label"
@@ -298,7 +272,7 @@
                 />
               </UFormField>
               <UFormField label="Nombre de séances" name="numberOfSessions">
-                <UInputNumber v-model="form.numberOfSessions" :min="1" :max="50" class="w-full" />
+                <UInputNumber v-model="formState.numberOfSessions" :min="1" :max="50" class="w-full" />
               </UFormField>
               <UFormField label="Date de début" name="startDate">
                 <UPopover>
@@ -329,15 +303,15 @@
                   <div class="flex justify-between text-xs">
                     <span v-for="(item, index) in [...Array(11).keys()]" :key="index">{{ item }}</span>
                   </div>
-                  <USlider v-model="form.painLevel" :min="0" :max="10" :step="0.5" class="w-full flex-1" />
+                  <USlider v-model="formState.painLevel" :min="0" :max="10" :step="0.5" class="w-full flex-1" />
                 </div>
               </UFormField>
               <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
-                <UInput v-model="form.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
               </UFormField>
               <UFormField label="Statut de couverture">
                 <USelectMenu
-                  v-model="form.coverageStatus"
+                  v-model="formState.coverageStatus"
                   :items="INSURANCE_COVERAGE_OPTIONS"
                   value-key="value"
                   label-key="label"
@@ -358,11 +332,11 @@
               </p>
               <p>
                 <strong>Plan :</strong>
-                {{ form.title || 'Non défini' }}
+                {{ formState.title || 'Non défini' }}
               </p>
               <p>
                 <strong>Kinésithérapeute :</strong>
-                {{ form.therapistId || 'Non défini' }}
+                {{ formState.therapistId || 'Non défini' }}
               </p>
               <p>
                 <strong>Période :</strong>
