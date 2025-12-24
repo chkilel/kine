@@ -8,6 +8,7 @@
 
   const open = ref(false)
   const toast = useToast()
+  const { mutate: deletePatient } = useDeletePatient()
 
   async function onSubmit() {
     if (props.selectedIds.length === 0) {
@@ -22,9 +23,7 @@
     try {
       // Delete each selected patient
       for (const patientId of props.selectedIds) {
-        await $fetch(`/api/patients/${patientId}`, {
-          method: 'DELETE'
-        })
+        deletePatient(patientId)
       }
 
       toast.add({
@@ -34,15 +33,8 @@
       })
 
       open.value = false
-
-      // Refresh the patient list
-      await refreshNuxtData()
     } catch (error: any) {
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la suppression des patients',
-        color: 'error'
-      })
+      // Error handling is done in composable
     }
   }
 </script>
