@@ -45,7 +45,7 @@ export const treatmentPlans = sqliteTable(
     prescribingDoctor: text(), // Doctor who prescribed the treatment — e.g., "Dr. Martin"
     prescriptionDate: calendarDateField().notNull(), // YYYY-MM-DD
     // Clinical assessment
-    painLevel: integer(), // Initial pain level (0-10 scale) — e.g., 6 for moderate pain
+    painLevel: integer().notNull().default(0), // Initial pain level (0-10 scale) — e.g., 6 for moderate pain
 
     // Insurance and coverage
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),

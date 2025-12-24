@@ -16,59 +16,8 @@
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
-  const requestFetch = useRequestFetch()
-  const queryCache = useQueryCache()
-
-  // Update Treatment Plan mutation
-  const { mutate: updateTreatmentPlan } = useMutation({
-    mutation: ({ planId, data }: { planId: string; data: TreatmentPlanUpdate }) =>
-      requestFetch(`/api/patients/${props.patient.id}/treatment-plans/${planId}`, {
-        method: 'PUT',
-        body: data
-      }),
-    onSuccess: () => {
-      queryCache.invalidateQueries({ key: ['treatment-plans', props.patient.id] })
-      toast.add({
-        title: 'Succès',
-        description: 'Plan de traitement mis à jour avec succès',
-        color: 'success'
-      })
-    },
-    onError: (error: any) => {
-      console.error('Error updating treatment plan:', error)
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la mise à jour du plan de traitement',
-        color: 'error'
-      })
-    }
-  })
-
-  // Create Treatment Plan mutation
-  const { mutate: createTreatmentPlan } = useMutation({
-    mutation: ({ data }: { data: TreatmentPlanUpdate }) =>
-      requestFetch(`/api/patients/${props.patient.id}/treatment-plans`, {
-        method: 'POST',
-        body: data
-      }),
-    onSuccess: () => {
-      queryCache.invalidateQueries({ key: ['treatment-plans', props.patient.id] })
-      toast.add({
-        title: 'Succès',
-        description: 'Plan de traitement mis à jour avec succès',
-        color: 'success'
-      })
-    },
-    onError: (error: any) => {
-      console.error('Error updating treatment plan:', error)
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la mise à jour du plan de traitement',
-        color: 'error'
-      })
-    }
-  })
-  const toast = useToast()
+  const { mutate: createTreatmentPlan } = useCreateTreatmentPlan()
+  const { mutate: updateTreatmentPlan } = useUpdateTreatmentPlan()
 
   const therapists = computed(() => [user.value!])
   const loading = ref(false)
@@ -111,35 +60,30 @@
     set: (val) => (formState.prescriptionDate = val ? val.toString() : today(getLocalTimeZone()).toString())
   })
 
-
   async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate>) {
     loading.value = true
 
     try {
       if (isEditMode.value) {
-        // Update existing treatment plan
         updateTreatmentPlan({
+          patientId: props.patient.id,
           planId: props.treatmentPlan!.id,
-          data: event.data
+          data: event.data,
+          onSuccess: () => {
+            emit('close')
+            resetForm()
+          }
         })
       } else {
-        // Create new treatment plan
         createTreatmentPlan({
+          patientId: props.patient.id,
           data: event.data
         })
+        emit('close')
+        resetForm()
       }
-
-      await refreshNuxtData(`treatment-plans-${props.patient.id}`)
-      emit('close')
-      resetForm()
     } catch (error: any) {
       console.error('Error creating/updating treatment plan:', error)
-      const action = isEditMode.value ? 'mise à jour' : 'création'
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || `Échec de la ${action} du plan de traitement`,
-        color: 'error'
-      })
     } finally {
       loading.value = false
     }
@@ -190,9 +134,7 @@
         ? 'Modifiez les informations du plan de traitement.'
         : 'Ajoutez les informations de base du plan de traitement.'
     "
-    :ui="{
-      content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated'
-    }"
+    :ui="{ content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated' }"
   >
     <template #body>
       <UForm
@@ -303,7 +245,7 @@
                   <div class="flex justify-between text-xs">
                     <span v-for="(item, index) in [...Array(11).keys()]" :key="index">{{ item }}</span>
                   </div>
-                  <USlider v-model="formState.painLevel" :min="0" :max="10" :step="0.5" class="w-full flex-1" />
+                  <USlider v-model="formState.painLevel" :min="0" :max="10" :step="1" class="w-full flex-1" />
                 </div>
               </UFormField>
               <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">

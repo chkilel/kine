@@ -1,15 +1,13 @@
+import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
-export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
+const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
-  // Helper to convert date strings to Date objects
   const convertDates = (plan: any): TreatmentPlanWithProgress => ({
     ...plan,
     createdAt: parseISO(plan.createdAt),
     updatedAt: parseISO(plan.updatedAt),
-    deletedAt: safeParseISODate(plan.deletedAt),
-    // Convert notes date strings back to Date objects
     notes:
       plan.notes?.map((note: any) => ({
         ...note,
@@ -23,13 +21,9 @@ export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) =>
     error,
     refetch: refetchTreatmentPlans
   } = useQuery({
-    key: () => {
-      const id = toValue(patientId)
-      return id ? ['treatment-plans', id] : ['treatment-plans', 'no-patient']
-    },
+    key: () => ['treatment-plans', toValue(patientId)],
     query: async () => {
       const id = toValue(patientId)
-      if (!id) return []
       const data = await requestFetch(`/api/patients/${id}/treatment-plans`)
       return data.map(convertDates)
     },
@@ -67,3 +61,132 @@ export const usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) =>
     getTreatmentPlanHistory
   }
 }
+
+const _useCreateTreatmentPlan = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ patientId, data }: { patientId: string; data: TreatmentPlanCreate; onSuccess?: () => void }) =>
+      requestFetch(`/api/patients/${patientId}/treatment-plans`, {
+        method: 'POST',
+        body: data
+      }),
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
+      toast.add({
+        title: 'Succès',
+        description: 'Plan de traitement créé avec succès',
+        color: 'success'
+      })
+      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+    },
+    onError: (error: any) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Échec de la création du plan de traitement').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateTreatmentPlan = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({
+      patientId,
+      planId,
+      data
+    }: {
+      patientId: string
+      planId: string
+      data: TreatmentPlanUpdate
+      onSuccess?: () => void
+    }) =>
+      requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
+        method: 'PUT',
+        body: data
+      }),
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
+      toast.add({
+        title: 'Succès',
+        description: 'Plan de traitement mis à jour avec succès',
+        color: 'success'
+      })
+      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+    },
+    onError: (error: any) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Échec de la mise à jour du plan de traitement').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useDeleteTreatmentPlan = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ patientId, planId }: { patientId: string; planId: string; onSuccess?: () => void }) =>
+      requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
+        method: 'DELETE'
+      }),
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
+      toast.add({
+        title: 'Succès',
+        description: 'Plan de traitement supprimé avec succès',
+        color: 'success'
+      })
+      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+    },
+    onError: (error: any) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Échec de la suppression du plan de traitement').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useTreatmentPlanConsultations = (
+  treatmentPlanId: MaybeRefOrGetter<string>,
+  queryParams?: Ref<ConsultationQuery>
+) => {
+  const requestFetch = useRequestFetch()
+
+  return useQuery({
+    enabled: () => !!toValue(treatmentPlanId),
+    key: () => {
+      const query = queryParams?.value
+      return query
+        ? ['treatment-plan-consultations', toValue(treatmentPlanId), query]
+        : ['treatment-plan-consultations', toValue(treatmentPlanId)]
+    },
+    query: async () => {
+      const id = toValue(treatmentPlanId)
+      if (!id) return null
+      const data = await requestFetch(`/api/treatment-plans/${id}/consultations`, {
+        query: queryParams?.value
+      })
+      return data
+    }
+  })
+}
+
+export const usePatientTreatmentPlans = createSharedComposable(_usePatientTreatmentPlans)
+export const useCreateTreatmentPlan = createSharedComposable(_useCreateTreatmentPlan)
+export const useUpdateTreatmentPlan = createSharedComposable(_useUpdateTreatmentPlan)
+export const useDeleteTreatmentPlan = createSharedComposable(_useDeleteTreatmentPlan)
+export const useTreatmentPlanConsultations = createSharedComposable(_useTreatmentPlanConsultations)

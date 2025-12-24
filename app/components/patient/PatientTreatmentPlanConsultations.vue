@@ -9,43 +9,15 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
-  const { fetchTreatmentPlanConsultations, deleteConsultation: deleteConsultationFromComposable } = useConsultations()
+  const { data, isLoading, error, refetch } = useTreatmentPlanConsultations(() => props.treatmentPlan.id)
 
   // Consultations data
-  const consultations = ref<any[]>([])
-  const consultationsLoading = ref(false)
-  const consultationsError = ref<any>(null)
-
-  // Fetch consultations for active treatment plan
-  const fetchConsultations = async () => {
-    const planId = props.treatmentPlan?.id
-    if (!planId) return
-
-    consultationsLoading.value = true
-    consultationsError.value = null
-
-    try {
-      const result = await fetchTreatmentPlanConsultations(planId)
-      consultations.value = result.consultations
-    } catch (error) {
-      consultationsError.value = error
-    } finally {
-      consultationsLoading.value = false
-    }
-  }
-
-  // Watch for treatment plan changes and fetch consultations
-  watch(
-    () => props.treatmentPlan,
-    () => {
-      fetchConsultations()
-    },
-    { immediate: true }
-  )
+  const consultations = computed(() => data.value?.data || [])
+  const statistics = computed(() => data.value?.statistics || null)
 
   // Refresh consultations data
   const refreshConsultations = async () => {
-    await fetchConsultations()
+    await refetch()
     toast.add({
       title: 'Consultations actualisées',
       description: 'Les consultations ont été rechargées avec succès.',
@@ -57,11 +29,8 @@
   const deleteConsultation = async (consultationId: string) => {
     if (!props.patient) return
 
+    const { deleteConsultation: deleteConsultationFromComposable } = useConsultations()
     const success = await deleteConsultationFromComposable(props.patient.id, consultationId)
-
-    if (success) {
-      await fetchConsultations()
-    }
   }
 
   // Edit consultation function - opens planning slideover with consultation data
@@ -73,7 +42,7 @@
   // Function to open session planning with event handlers
   function openSessionPlanning() {
     sessionPlanningOverlay.open({
-      patient: props.patient as any,
+      patient: props.patient,
       treatmentPlan: props.treatmentPlan
     })
   }
@@ -88,7 +57,7 @@
           variant="outline"
           color="neutral"
           size="sm"
-          :loading="consultationsLoading"
+          :loading="isLoading"
           @click="refreshConsultations"
         >
           Actualiser
@@ -101,7 +70,7 @@
     <div class="overflow-x-auto">
       <UTable
         :data="consultations"
-        :loading="consultationsLoading"
+        :loading="isLoading"
         :columns="[
           { accessorKey: 'date', header: 'Date & Heure' },
           { accessorKey: 'type', header: 'Type' },
@@ -111,7 +80,7 @@
           { id: 'actions', header: 'Actions' }
         ]"
         :ui="{
-          thead: 'bg-muted'
+          td: 'bg-muted'
         }"
       >
         <template #date-cell="{ row }">
@@ -132,7 +101,7 @@
         <template #type-cell="{ row }">
           <div>
             <div class="font-medium">
-              {{ getConsultationTypeLabel(row.original.type) }}
+              {{ row.original.type ? getConsultationTypeLabel(row.original.type) : '' }}
             </div>
             <div class="text-muted-foreground text-sm">{{ row.original.chiefComplaint || '' }}</div>
           </div>
@@ -146,7 +115,7 @@
 
         <template #location-cell="{ row }">
           <div class="text-sm">
-            {{ getLocationLabel(row.original.location) }}
+            {{ row.original.location ? getLocationLabel(row.original.location) : '' }}
           </div>
         </template>
 

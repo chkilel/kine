@@ -4,6 +4,7 @@ import { fr } from 'zod/locales'
 
 import { calendarDateSchema, noteSchema, treatmentPlanStatusSchema } from './base.types'
 import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
+import { VALID_COVERAGE_STATUSES } from '~~/shared/utils/constants.treatement-plan'
 
 z.config(fr())
 
@@ -20,6 +21,7 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   numberOfSessions: z.number().min(1).optional(),
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
+  coverageStatus: z.enum(VALID_COVERAGE_STATUSES).optional(),
   notes: z.array(noteSchema).nullable()
 }).omit({
   id: true,

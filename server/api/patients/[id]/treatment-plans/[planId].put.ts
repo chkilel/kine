@@ -57,9 +57,7 @@ export default defineEventHandler(async (event) => {
   const [existingPlan] = await db
     .select()
     .from(treatmentPlans)
-    .where(
-      and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId), isNull(treatmentPlans.deletedAt))
-    )
+    .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId)))
     .limit(1)
 
   if (!existingPlan) {
