@@ -16,7 +16,7 @@
       label: 'Adresse email',
       placeholder: 'Entrez votre adresse email',
       required: true,
-      defaultValue: 'adil@chehabi.ma'
+      defaultValue: 'admin@seed.local'
     },
     {
       name: 'password',
@@ -24,7 +24,7 @@
       type: 'password' as const,
       placeholder: 'Entrez votre mot de passe',
       required: true,
-      defaultValue: 'DEV@1loc'
+      defaultValue: 'Password123'
     },
     {
       name: 'rememberMe',
