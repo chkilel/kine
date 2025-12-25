@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
+  import { CalendarDate, getLocalTimeZone, parseDate, today } from '@internationalized/date'
   import { computed } from 'vue'
 
   const props = defineProps<{
@@ -31,12 +31,10 @@
 
   // Computed property for calendar date model
   const selectedDate = computed<CalendarDate | null>({
-    get: () => {
-      return consultationDetails.value.date ? convertToCalendarDate(consultationDetails.value.date) : null
-    },
+    get: () => (consultationDetails.value.date ? parseDate(consultationDetails.value.date) : null),
     set: (val) => {
       if (val) {
-        consultationDetails.value.date = val.toDate(getLocalTimeZone())
+        consultationDetails.value.date = val.toString()
       }
     }
   })
@@ -46,15 +44,15 @@
     organizationId: props.treatmentPlan.organizationId,
     treatmentPlanId: props.treatmentPlan?.id,
     therapistId: props.treatmentPlan.therapistId,
-    date: new Date(),
+    date: today(getLocalTimeZone()).toString(),
     startTime: '',
     duration: 45,
-    type: 'follow_up' as ConsultationSessionType,
+    type: 'follow_up',
     location: 'clinic' as ConsultationLocation,
     status: 'scheduled',
     chiefComplaint: '',
     notes: '',
-    billed: false,
+    billed: null,
     insuranceClaimed: false
   })
 

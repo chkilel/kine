@@ -43,8 +43,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(patientDocuments.organizationId, activeOrganizationId),
           eq(patientDocuments.id, docId),
-          eq(patientDocuments.patientId, patientId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.patientId, patientId)
         )
       )
       .returning()

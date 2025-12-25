@@ -1,9 +1,5 @@
-import { eq, and, isNull } from 'drizzle-orm'
-import { patientDocuments } from '../../../../database/schema'
-import { useDrizzle } from '../../../../utils/database'
-import { createAuth } from '../../../../utils/auth'
-import { deleteR2File } from '../../../../utils/r2'
-import type { Session } from '~~/shared/types/auth.types'
+import { eq, and } from 'drizzle-orm'
+import { patientDocuments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -45,8 +41,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.organizationId, activeOrganizationId)
         )
       )
       .limit(1)
@@ -65,14 +60,12 @@ export default defineEventHandler(async (event) => {
     }
 
     await db
-      .update(patientDocuments)
-      .set({ deletedAt: new Date() })
+      .delete(patientDocuments)
       .where(
         and(
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.organizationId, activeOrganizationId)
         )
       )
       .returning()
