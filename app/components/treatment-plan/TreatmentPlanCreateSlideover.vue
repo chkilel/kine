@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate, today } from '@internationalized/date'
+  import { DateFormatter, getLocalTimeZone, parseDate, today } from '@internationalized/date'
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   const props = defineProps<{
@@ -18,8 +18,8 @@
 
   const { mutate: createTreatmentPlan } = useCreateTreatmentPlan()
   const { mutate: updateTreatmentPlan } = useUpdateTreatmentPlan()
+  const { therapists, getTherapistName } = useOrganizationMembers()
 
-  const therapists = computed(() => [user.value!])
   const loading = ref(false)
   const isEditMode = computed(() => !!props.treatmentPlan)
 
@@ -278,7 +278,7 @@
               </p>
               <p>
                 <strong>Kinésithérapeute :</strong>
-                {{ formState.therapistId || 'Non défini' }}
+                {{ getTherapistName(formState.therapistId) }}
               </p>
               <p>
                 <strong>Période :</strong>

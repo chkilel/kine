@@ -50,12 +50,6 @@ export type TreatmentPlanQuery = z.infer<typeof treatmentPlanQuerySchema>
 
 // Extended types/interfaces
 export type TreatmentPlanWithProgress = TreatmentPlan & {
-  therapist: {
-    id: string
-    firstName?: string
-    lastName?: string | null
-    email?: string
-  } | null
   progress: number
   completedConsultations: number
 }

@@ -5,6 +5,7 @@
 
   const overlay = useOverlay()
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
+  const { getTherapistName } = useOrganizationMembers()
 
   // Use treatment plans composable
   const {
@@ -72,11 +73,11 @@
         <div class="text-toned flex items-center gap-20">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-calendar" class="text-muted text-base" />
-            <span>{{ formatFrenchDateRange (getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
+            <span>{{ formatFrenchDateRange(getActiveTreatmentPlan.startDate, getActiveTreatmentPlan.endDate) }}</span>
           </div>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-user" class="text-muted text-base" />
-            <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapist ?? undefined) }}</span>
+            <span>Thérapeute: {{ getTherapistName(getActiveTreatmentPlan.therapistId) }}</span>
           </div>
         </div>
       </div>
