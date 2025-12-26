@@ -1,7 +1,6 @@
 <script setup lang="ts">
-  import * as z from 'zod'
+  import { z } from 'zod'
   import type { FormSubmitEvent } from '@nuxt/ui'
-  import type { PatientDocument } from '~~/shared/types/patient.types'
 
   const props = defineProps<{
     document: PatientDocument
@@ -12,13 +11,13 @@
     updated: [document: PatientDocument]
   }>()
 
+  const toast = useToast()
   const schema = z.object({
     category: z.enum(['referral', 'imaging', 'lab_results', 'treatment_notes', 'prescriptions', 'other']),
     description: z.string().optional()
   })
 
   const open = ref(false)
-  const isUpdating = ref(false)
 
   type Schema = z.output<typeof schema>
 
@@ -27,15 +26,13 @@
     description: props.document.description || ''
   })
 
-  const toast = useToast()
+  const { mutate: updateDocument, isLoading: isUpdating } = useUpdateDocument(() => props.patientId)
 
   async function onSubmit(event: FormSubmitEvent<Schema>) {
-    isUpdating.value = true
-
     try {
-      const updatedDocument = await $fetch(`/api/patients/${props.patientId}/documents/${props.document.id}`, {
-        method: 'PUT',
-        body: {
+      updateDocument({
+        documentId: props.document.id,
+        data: {
           category: event.data.category,
           description: event.data.description
         }
@@ -47,16 +44,10 @@
         color: 'success'
       })
 
-      emit('updated', updatedDocument as unknown as PatientDocument)
+      emit('updated', { ...props.document, ...event.data } as PatientDocument)
       open.value = false
-    } catch (error: any) {
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec de la mise à jour du document',
-        color: 'error'
-      })
-    } finally {
-      isUpdating.value = false
+    } catch (error: unknown) {
+      console.error('Error updating document:', error)
     }
   }
 

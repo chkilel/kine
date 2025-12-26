@@ -1,9 +1,5 @@
-import { eq, and, isNull } from 'drizzle-orm'
-import { patientDocuments } from '../../../../database/schema'
-import { useDrizzle } from '../../../../utils/database'
-import { createAuth } from '../../../../utils/auth'
-import { deleteR2File } from '../../../../utils/r2'
-import type { Session } from '~~/shared/types/auth.types'
+import { eq, and } from 'drizzle-orm'
+import { patientDocuments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -13,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId || !docId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID and Document ID are required'
+      message: 'Patient ID and Document ID are required'
     })
   }
 
@@ -25,7 +21,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -33,7 +29,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -45,8 +41,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.organizationId, activeOrganizationId)
         )
       )
       .limit(1)
@@ -54,7 +49,7 @@ export default defineEventHandler(async (event) => {
     if (!document) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Document not found'
+        message: 'Document not found'
       })
     }
 
@@ -65,14 +60,12 @@ export default defineEventHandler(async (event) => {
     }
 
     await db
-      .update(patientDocuments)
-      .set({ deletedAt: new Date() })
+      .delete(patientDocuments)
       .where(
         and(
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.organizationId, activeOrganizationId)
         )
       )
       .returning()
@@ -85,7 +78,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error deleting document:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to delete document'
+      message: 'Failed to delete document'
     })
   }
 })

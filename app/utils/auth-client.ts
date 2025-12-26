@@ -5,13 +5,33 @@ export const authClient = createAuthClient({
   plugins: [
     organizationClient(),
     inferAdditionalFields({
-      // Additional fields to be inferred from the user object
+      // Additional fields to be inferred from user object
       user: {
         firstName: {
           type: 'string'
         },
         lastName: {
           type: 'string'
+        },
+        specialization: {
+          type: 'string[]',
+          required: true,
+          input: true
+        },
+        licenseNumber: {
+          type: 'string',
+          required: true,
+          input: true
+        },
+        defaultSessionDuration: {
+          type: 'number',
+          required: true,
+          input: true
+        },
+        phoneNumbers: {
+          type: 'json',
+          required: true,
+          input: true
         }
       }
     })

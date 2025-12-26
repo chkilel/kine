@@ -1,6 +1,5 @@
 import type { Session } from '~~/shared/types/auth.types'
 import { treatmentPlans, patients } from '~~/server/database/schema'
-import { treatmentPlanUpdateSchema } from '~~/shared/types/patient.types'
 import { eq, and, isNull } from 'drizzle-orm'
 
 // PUT /api/patients/[id]/treatment-plans/[planId] - Update existing treatment plan
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId || !planId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID and Plan ID are required'
+      message: 'Patient ID and Plan ID are required'
     })
   }
 
@@ -25,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -34,7 +33,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -50,7 +49,7 @@ export default defineEventHandler(async (event) => {
   if (!patient) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Patient not found'
+      message: 'Patient not found'
     })
   }
 
@@ -58,15 +57,13 @@ export default defineEventHandler(async (event) => {
   const [existingPlan] = await db
     .select()
     .from(treatmentPlans)
-    .where(
-      and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId), isNull(treatmentPlans.deletedAt))
-    )
+    .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId)))
     .limit(1)
 
   if (!existingPlan) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Treatment plan not found'
+      message: 'Treatment plan not found'
     })
   }
 
@@ -90,13 +87,13 @@ export default defineEventHandler(async (event) => {
     if (error.name === 'ZodError') {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid treatment plan data',
+        message: 'Invalid treatment plan data',
         data: error.errors
       })
     }
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to update treatment plan'
+      message: 'Failed to update treatment plan'
     })
   }
 })

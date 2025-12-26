@@ -1,242 +1,334 @@
 <script setup lang="ts">
-  import { getPaginationRowModel } from '@tanstack/table-core'
-  import type { TableColumn } from '@nuxt/ui'
-  import type { SerializeObject } from 'nitropack/types'
-
-  const UAvatar = resolveComponent('UAvatar')
-  const UButton = resolveComponent('UButton')
-  const UDropdownMenu = resolveComponent('UDropdownMenu')
-  const UBreadcrumb = resolveComponent('UBreadcrumb')
-  const UIcon = resolveComponent('UIcon')
-
   // Constants
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
 
-  const requestFetch = useRequestFetch()
-  const { data, status, isPending } = useQuery({
-    key: ['patients'],
-    query: () => requestFetch('/api/patients')
+  const route = useRoute()
+  const router = useRouter()
+
+  // Query state - single source of truth
+  const queryParams = ref<PatientQuery>({
+    page: Number(route.query.page) || 1,
+    limit: Number(route.query.limit) || 10,
+    status: (route.query.status as PatientStatus) || undefined,
+    search: (route.query.search as string) || ''
   })
 
-  const table = useTemplateRef('table')
-  const columnFilters = ref([{ id: 'search', value: '' }])
-  const columnVisibility = ref({ search: false })
-  const pagination = ref({
-    pageIndex: 0,
-    pageSize: 10
-  })
+  // Fetch data
+  const { data, isPending, error } = usePatientsList(queryParams)
 
-  const columns: TableColumn<SerializeObject<Patient>>[] = [
-    {
-      id: 'search',
-      accessorFn: (row) => `${row.firstName} ${row.lastName} ${row.email} ${row.phone}`,
-      enableColumnFilter: false,
-      enableHiding: false
-    },
-    { accessorKey: 'name', header: 'Nom' },
-    { accessorKey: 'contact', header: 'Contact' },
-    { accessorKey: 'dateOfBirth', header: 'Date de Naissance' },
-    { accessorKey: 'status', header: 'Statut', filterFn: 'equals' },
-    { accessorKey: 'insuranceProvider', header: 'Assurance' }
-  ]
+  // Debounced search
+  const debouncedSearch = useDebounceFn((searchValue: string) => {
+    queryParams.value.search = searchValue
+    queryParams.value.page = 1 // Reset to first page when searching
+    updateURL()
+  }, 300)
 
-  const statusFilter = ref('all')
-  const searchFilter = ref('')
-
+  // Watch search and trigger debounced search
   watch(
-    [() => statusFilter.value, () => searchFilter.value, () => status.value, () => table?.value?.tableApi],
-    ([newStatusFilter, newSearchFilter, dataStatus, tableApi]) => {
-      if (!tableApi || dataStatus !== 'success') return
+    () => queryParams.value.search,
+    () => queryParams.value.search && debouncedSearch(queryParams.value.search)
+  )
 
-      // Apply status filter
-      const statusColumn = tableApi.getColumn('status')
-      if (statusColumn) {
-        if (newStatusFilter === 'all') {
-          statusColumn.setFilterValue(undefined)
-        } else {
-          statusColumn.setFilterValue(newStatusFilter)
-        }
-      }
+  // Update URL with current query params
+  const updateURL = () => {
+    const query: Record<string, string> = {}
 
-      // Apply search filter
-      const searchColumn = tableApi.getColumn('search')
-      if (searchColumn) {
-        searchColumn.setFilterValue(newSearchFilter)
-      }
+    if (queryParams.value.page > 1) query.page = queryParams.value.page.toString()
+    if (queryParams.value.limit !== 10) query.limit = queryParams.value.limit.toString()
+    if (queryParams.value.search) query.search = queryParams.value.search
+    if (queryParams.value.status) query.status = queryParams.value.status
+
+    router.replace({ query })
+  }
+
+  // Watch all query params and update URL
+  watch(
+    () => [queryParams.value.status, queryParams.value.limit],
+    () => {
+      queryParams.value.page = 1 // Reset page when filters change
+      updateURL()
     }
   )
+
+  watch(() => queryParams.value.page, updateURL)
+
+  // Computed properties
+  const hasActiveFilters = computed(() => {
+    return queryParams.value.search || queryParams.value.status
+  })
+
+  const emptyStateConfig = computed(() => {
+    if (hasActiveFilters.value) {
+      return {
+        icon: 'i-lucide-search-x',
+        title: 'Aucun patient trouvé',
+        description: 'Essayez de modifier votre recherche ou vos filtres pour trouver des résultats',
+        actions: [
+          {
+            icon: 'i-lucide-refresh-ccw',
+            label: 'Effacer les filtres',
+            variant: 'subtle' as const,
+            onClick: clearFilters
+          }
+        ]
+      }
+    }
+
+    return {
+      icon: 'i-lucide-users',
+      title: 'Aucun patient',
+      description: 'Commencez par ajouter votre premier patient',
+      actions: [
+        {
+          icon: 'i-lucide-plus',
+          label: 'Ajouter un patient',
+          variant: 'subtle' as const,
+          onClick: () => navigateTo('/patients/new')
+        }
+      ]
+    }
+  })
+
+  // Methods
+  const clearFilters = () => {
+    queryParams.value.search = ''
+    queryParams.value.status = undefined
+  }
+
+  const handlePatientClick = (patient: Patient) => {
+    navigateTo(`/patients/${patient.id}`)
+  }
+
+  const handlePatientKeydown = (event: KeyboardEvent, patient: Patient) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      navigateTo(`/patients/${patient.id}`)
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    queryParams.value.page = page
+  }
 </script>
 
 <template>
   <UDashboardPanel id="patients" class="bg-elevated">
     <template #header>
-      <UDashboardNavbar title="Patients">
+      <UDashboardNavbar class="bg-default/75">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
-        <template #right>notif</template>
+        <template #title>
+          <div class="flex items-center gap-4">
+            <h1 class="text-foreground text-xl font-bold">Patients</h1>
+            <div class="bg-border h-4 w-px" />
+            <UBreadcrumb :items="BREADCRUMBS" />
+          </div>
+        </template>
+
+        <template #right>
+          <UChip inset size="xl">
+            <UButton
+              icon="i-lucide-bell"
+              color="neutral"
+              variant="soft"
+              class="rounded-full"
+              aria-label="Notifications"
+            />
+          </UChip>
+        </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <UContainer>
-        <!-- Breadcrumbs -->
         <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <UBreadcrumb :items="BREADCRUMBS" />
-
-            <UButton
-              icon="i-lucide-plus"
-              label="Ajouter un patient"
-              @click="navigateTo('/patients/new')"
-              class="hidden sm:flex"
-            />
-            <UButton icon="i-lucide-plus" label="Patient" @click="navigateTo('/patients/new')" class="sm:hidden" />
-          </div>
-
-          <!-- Page Header -->
-
-          <!-- Filters Card -->
-          <UCard class="mb-6">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Filters Section -->
+          <UCard variant="outline">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <!-- Search Input -->
-              <div class="lg:col-span-1">
+              <div class="flex-1">
                 <UInput
-                  v-model="searchFilter"
+                  v-model="queryParams.search"
                   icon="i-lucide-search"
-                  placeholder="Rechercher par nom, téléphone, email..."
+                  placeholder="Rechercher par nom ou prénom"
                   size="lg"
-                />
+                  class="w-full"
+                  aria-label="Rechercher des patients"
+                >
+                  <template v-if="queryParams.search" #trailing>
+                    <UButton
+                      color="neutral"
+                      variant="link"
+                      size="sm"
+                      icon="i-lucide-x"
+                      aria-label="Effacer la recherche"
+                      @click="queryParams.search = ''"
+                    />
+                  </template>
+                </UInput>
               </div>
 
               <!-- Filters -->
-              <div class="flex items-center justify-start gap-3 overflow-x-auto md:justify-end lg:col-span-2">
+              <div class="flex items-center gap-3">
                 <USelect
-                  v-model="statusFilter"
+                  v-model="queryParams.status"
                   :items="STATUS_FILTER_OPTIONS"
-                  placeholder="Filtrer par statut"
+                  size="lg"
+                  placeholder="Statut: Tous"
                   class="min-w-40"
+                  aria-label="Filtrer par statut"
                 />
 
-                <UDropdownMenu
-                  :items="
-                    table?.tableApi
-                      ?.getAllColumns()
-                      .filter((column: any) => column.getCanHide())
-                      .map((column: any) => ({
-                        label: column.columnDef.header,
-                        type: 'checkbox' as const,
-                        checked: column.getIsVisible(),
-                        onUpdateChecked(checked: boolean) {
-                          table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
-                        },
-                        onSelect(e?: Event) {
-                          e?.preventDefault()
-                        }
-                      }))
-                  "
-                  :content="{ align: 'end' }"
-                >
-                  <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
-                </UDropdownMenu>
+                <UButton
+                  icon="i-lucide-plus"
+                  label="Ajouter un patient"
+                  size="lg"
+                  @click="navigateTo('/patients/new')"
+                  class="hidden sm:flex"
+                />
+                <UButton
+                  icon="i-lucide-plus"
+                  block
+                  label="Patient"
+                  @click="navigateTo('/patients/new')"
+                  class="sm:hidden"
+                />
               </div>
             </div>
           </UCard>
 
-          <!-- Table Card -->
-          <UCard>
-            <UTable
-              ref="table"
-              v-model:column-filters="columnFilters"
-              v-model:column-visibility="columnVisibility"
-              v-model:pagination="pagination"
-              :pagination-options="{
-                getPaginationRowModel: getPaginationRowModel()
-              }"
-              :data="data"
-              :columns="columns"
-              :loading="isPending"
-              @select="(_e, row) => navigateTo(`/patients/${row.original.id}`)"
-              :ui="{
-                base: 'table-fixed border-separate border-spacing-0',
-                thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                tbody: '[&>tr]:last:[&>td]:border-b-0',
-                th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                td: 'border-b border-default',
-                tr: 'cursor-pointer hover:bg-muted/50'
-              }"
-            >
-              <!-- Custom cell for the 'name' column -->
-              <template #name-cell="{ row }">
-                <div class="flex items-center gap-3">
-                  <UAvatar
-                    size="lg"
-                    :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(formatFullName(row.original))}&background=random`"
-                  />
-                  <div class="group">
-                    <p class="text-foreground group-hover:text-primary font-semibold transition-colors">
-                      {{ formatFullName(row.original) }}
-                    </p>
-                    <div v-if="row.original.email" class="text-muted text-xs">
-                      {{ row.original.email }}
+          <!-- Loading State -->
+          <div v-if="isPending" class="space-y-4">
+            <USkeleton v-for="i in 5" :key="i" class="h-24 w-full" :ui="{ background: 'bg-default' }" />
+          </div>
+
+          <!-- Error State -->
+          <UAlert
+            v-else-if="error"
+            icon="i-lucide-alert-circle"
+            color="error"
+            variant="solid"
+            title="Erreur de chargement"
+            :description="error.message"
+          />
+
+          <!-- Patient List -->
+          <template v-else>
+            <!-- Empty State -->
+            <UCard v-if="!data?.data?.length" variant="outline" class="overflow-hidden">
+              <UEmpty
+                :icon="emptyStateConfig.icon"
+                :title="emptyStateConfig.title"
+                :description="emptyStateConfig.description"
+                :actions="emptyStateConfig.actions"
+                class="py-12"
+              />
+            </UCard>
+
+            <!-- Patient Cards -->
+            <div v-else class="space-y-2">
+              <UCard
+                v-for="patient in data.data"
+                :key="patient.id"
+                variant="outline"
+                class="group hover:border-primary/20 focus-visible:border-primary cursor-pointer border border-transparent transition-all duration-200 hover:shadow-md focus-visible:shadow focus-visible:outline-none"
+                :ui="{
+                  body: 'p-4 sm:p-5'
+                }"
+                tabindex="0"
+                role="button"
+                aria-label="Voir les détails du patient"
+                @click="handlePatientClick(patient)"
+                @keydown="handlePatientKeydown($event, patient)"
+              >
+                <div class="grid gap-4 sm:grid-cols-5">
+                  <!-- Patient Info -->
+                  <div class="col-span-2 flex min-w-0 gap-4">
+                    <!-- Avatar -->
+                    <div
+                      class="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-bold"
+                      :class="[
+                        getAvatarBgColor(patient.firstName, patient.lastName),
+                        getAvatarTextColor(patient.firstName, patient.lastName)
+                      ]"
+                    >
+                      {{ patient.firstName[0] }}{{ patient.lastName[0] }}
+                    </div>
+
+                    <!-- Name -->
+                    <div class="min-w-0 flex-1">
+                      <h3 class="text-foreground group-hover:text-primary truncate font-semibold transition-colors">
+                        {{ patient.firstName }}
+                        <br />
+                        {{ patient.lastName }}
+                      </h3>
                     </div>
                   </div>
-                </div>
-              </template>
 
-              <!-- Custom cell for the 'phone' column -->
-              <template #contact-cell="{ row }">
-                <div v-if="row.original.phone" class="text-sm">
-                  {{ row.original.phone }}
-                </div>
-                <span v-else class="text-muted">-</span>
-              </template>
+                  <!-- Contact Info -->
+                  <div class="min-w-0 space-y-2 self-center">
+                    <div v-if="patient.phone" class="text-foreground flex items-center gap-2 text-sm font-medium">
+                      <UIcon name="i-lucide-phone" class="text-muted size-4" />
+                      {{ patient.phone }}
+                    </div>
+                    <span v-else class="text-muted text-sm">-</span>
 
-              <!-- Custom cell for the 'dateOfBirth' column -->
-              <template #dateOfBirth-cell="{ row }">
-                <p class="font-semibold">{{ formatDate(row.original.dateOfBirth) }}</p>
-                <div class="text-muted text-xs">({{ getAge(row.original.dateOfBirth) }} ans)</div>
-              </template>
-              <!-- Custom cell for the 'status' column -->
-              <template #status-cell="{ row }">
-                <UBadge
-                  variant="subtle"
-                  :color="STATUS_CONFIG[row.original.status]?.color || 'neutral'"
-                  class="capitalize"
-                >
-                  {{ STATUS_CONFIG[row.original.status]?.label || row.original.status }}
-                </UBadge>
-              </template>
-            </UTable>
-            <!-- Table Footer with Pagination -->
-            <div v-if="data && data.length > 0" class="border-accented border-t px-6 py-4">
-              <div class="flex items-center justify-between">
-                <div class="text-muted text-sm">
-                  Affichage de
-                  <span class="font-medium">{{ table?.tableApi?.getPaginationRowModel().rows.length || 0 }}</span>
-                  sur
-                  <span class="font-medium">{{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }}</span>
-                  résultats
-                </div>
+                    <div v-if="patient.email" class="text-muted flex items-center gap-1 text-sm">
+                      <UIcon name="i-lucide-mail" class="size-4" />
+                      <span class="truncate">{{ patient.email }}</span>
+                    </div>
+                  </div>
 
-                <UPagination
-                  :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                  :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                  :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                  @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-                />
+                  <!-- Date of Birth -->
+                  <div class="hidden min-w-0 self-center md:block">
+                    <p class="text-foreground font-medium">
+                      {{ formatFrenchDate (patient.dateOfBirth) }}
+                    </p>
+                    <p class="text-muted text-xs">({{ calculateAge(patient.dateOfBirth) }} ans)</p>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="self-center sm:justify-self-end">
+                    <UBadge
+                      variant="subtle"
+                      size="lg"
+                      :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
+                      class="rounded-full px-4 font-semibold capitalize"
+                    >
+                      {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
+                    </UBadge>
+                  </div>
+                </div>
+              </UCard>
+            </div>
+
+            <!-- Pagination -->
+            <div
+              v-if="data?.pagination && data?.pagination?.total > 0"
+              class="border-default flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div class="text-muted text-sm">
+                Affichage de
+                <span class="text-foreground font-medium">
+                  {{ (data.pagination.page - 1) * data.pagination.limit + 1 }}-{{
+                    Math.min(data.pagination.page * data.pagination.limit, data.pagination.total)
+                  }}
+                </span>
+                sur
+                <span class="text-foreground font-medium">{{ data.pagination.total }}</span>
+                résultats
               </div>
-            </div>
 
-            <!-- Empty State -->
-            <div v-else-if="status === 'success' && data && data.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-users" class="text-muted mx-auto mb-4 text-6xl" />
-              <h3 class="text-foreground mb-2 text-lg font-medium">Aucun patient trouvé</h3>
-              <p class="text-muted mb-4">Commencez par ajouter votre premier patient</p>
-              <UButton label="Ajouter un patient" icon="i-lucide-plus" @click="navigateTo('/patients/new')" />
+              <UPagination
+                :page="data.pagination.page"
+                :items-per-page="data.pagination.limit"
+                :total="data.pagination.total"
+                @update:page="handlePageChange"
+              />
             </div>
-          </UCard>
+          </template>
         </div>
       </UContainer>
     </template>

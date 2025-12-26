@@ -38,6 +38,14 @@
       placeholder: 'Entrez votre mot de passe',
       required: true,
       defaultValue: ''
+    },
+    {
+      name: 'passwordConfirm',
+      label: 'Confirmation du mot de passe',
+      type: 'password' as const,
+      placeholder: 'Confirmez votre mot de passe',
+      required: true,
+      defaultValue: ''
     }
   ]
 
@@ -53,6 +61,10 @@
         firstName,
         lastName,
         email,
+        defaultSessionDuration: 0,
+        licenseNumber: '',
+        specialization: [],
+        phoneNumbers: [],
         password
       },
       {

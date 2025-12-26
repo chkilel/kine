@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId || !docId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID and Document ID are required'
+      message: 'Patient ID and Document ID are required'
     })
   }
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -44,8 +44,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(patientDocuments.id, docId),
           eq(patientDocuments.patientId, patientId),
-          eq(patientDocuments.organizationId, activeOrganizationId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.organizationId, activeOrganizationId)
         )
       )
       .limit(1)
@@ -53,7 +52,7 @@ export default defineEventHandler(async (event) => {
     if (!document) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Document not found'
+        message: 'Document not found'
       })
     }
 
@@ -69,7 +68,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching document:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch document'
+      message: 'Failed to fetch document'
     })
   }
 })

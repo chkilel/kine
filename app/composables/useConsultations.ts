@@ -99,34 +99,10 @@ export function useConsultations() {
     }
   }
 
-  const fetchTreatmentPlanConsultations = async (treatmentPlanId: string, query?: ConsultationQuery) => {
-    try {
-      const data = await $fetch(`/api/treatment-plans/${treatmentPlanId}/consultations`, {
-        query
-      })
-
-      return {
-        consultations: data?.data || [],
-        statistics: data?.statistics || null,
-        error: null
-      }
-    } catch (error: any) {
-      const errorMessage =
-        error?.data?.statusMessage || error?.message || 'Impossible de charger les consultations du plan de traitement'
-      toast.add({
-        title: 'Erreur',
-        description: errorMessage,
-        color: 'error'
-      })
-      return { consultations: [], statistics: null, error }
-    }
-  }
-
   return {
     fetchConsultations,
     createConsultation,
     updateConsultation,
-    deleteConsultation,
-    fetchTreatmentPlanConsultations
+    deleteConsultation
   }
 }

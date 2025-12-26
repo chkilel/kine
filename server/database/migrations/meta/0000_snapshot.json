@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bafda508-0dd9-4781-9492-97f9cdca4a01",
+  "id": "ccd0e152-5370-40a8-9c0a-668094390750",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -290,7 +290,8 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": false
         },
         "image": {
           "name": "image",
@@ -298,6 +299,37 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "licenseNumber": {
+          "name": "licenseNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "defaultSessionDuration": {
+          "name": "defaultSessionDuration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 30
+        },
+        "specialization": {
+          "name": "specialization",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "phoneNumbers": {
+          "name": "phoneNumbers",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -383,6 +415,880 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "availability_exceptions": {
+      "name": "availability_exceptions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isAvailable": {
+          "name": "isAvailable",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_exceptions_unique": {
+          "name": "idx_exceptions_unique",
+          "columns": [
+            "organizationId",
+            "userId",
+            "date",
+            "startTime"
+          ],
+          "isUnique": false
+        },
+        "idx_exceptions_org_user": {
+          "name": "idx_exceptions_org_user",
+          "columns": [
+            "organizationId",
+            "userId"
+          ],
+          "isUnique": false
+        },
+        "idx_exceptions_org_user_date": {
+          "name": "idx_exceptions_org_user_date",
+          "columns": [
+            "organizationId",
+            "userId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_exceptions_org_user_date_range": {
+          "name": "idx_exceptions_org_user_date_range",
+          "columns": [
+            "organizationId",
+            "userId",
+            "date",
+            "isAvailable"
+          ],
+          "isUnique": false
+        },
+        "idx_exceptions_org_date": {
+          "name": "idx_exceptions_org_date",
+          "columns": [
+            "organizationId",
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "availability_exceptions_organizationId_organizations_id_fk": {
+          "name": "availability_exceptions_organizationId_organizations_id_fk",
+          "tableFrom": "availability_exceptions",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "availability_exceptions_userId_users_id_fk": {
+          "name": "availability_exceptions_userId_users_id_fk",
+          "tableFrom": "availability_exceptions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "weekly_availability_templates": {
+      "name": "weekly_availability_templates",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dayOfWeek": {
+          "name": "dayOfWeek",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "maxSessions": {
+          "name": "maxSessions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_weekly_templates_unique": {
+          "name": "idx_weekly_templates_unique",
+          "columns": [
+            "organizationId",
+            "userId",
+            "dayOfWeek",
+            "startTime",
+            "endTime"
+          ],
+          "isUnique": false
+        },
+        "idx_weekly_templates_org_user": {
+          "name": "idx_weekly_templates_org_user",
+          "columns": [
+            "organizationId",
+            "userId"
+          ],
+          "isUnique": false
+        },
+        "idx_weekly_templates_org_user_day": {
+          "name": "idx_weekly_templates_org_user_day",
+          "columns": [
+            "organizationId",
+            "userId",
+            "dayOfWeek"
+          ],
+          "isUnique": false
+        },
+        "idx_weekly_templates_org_location": {
+          "name": "idx_weekly_templates_org_location",
+          "columns": [
+            "organizationId",
+            "location"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "weekly_availability_templates_organizationId_organizations_id_fk": {
+          "name": "weekly_availability_templates_organizationId_organizations_id_fk",
+          "tableFrom": "weekly_availability_templates",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "weekly_availability_templates_userId_users_id_fk": {
+          "name": "weekly_availability_templates_userId_users_id_fk",
+          "tableFrom": "weekly_availability_templates",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "consultations": {
+      "name": "consultations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "patientId": {
+          "name": "patientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "treatmentPlanId": {
+          "name": "treatmentPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "therapistId": {
+          "name": "therapistId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "chiefComplaint": {
+          "name": "chiefComplaint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "treatmentSummary": {
+          "name": "treatmentSummary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "observations": {
+          "name": "observations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nextSteps": {
+          "name": "nextSteps",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "painLevelBefore": {
+          "name": "painLevelBefore",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "painLevelAfter": {
+          "name": "painLevelAfter",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "progressNotes": {
+          "name": "progressNotes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'scheduled'"
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'clinic'"
+        },
+        "billed": {
+          "name": "billed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "insuranceClaimed": {
+          "name": "insuranceClaimed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "cost": {
+          "name": "cost",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_consultations_org_patient_date": {
+          "name": "idx_consultations_org_patient_date",
+          "columns": [
+            "organizationId",
+            "patientId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_date": {
+          "name": "idx_consultations_org_date",
+          "columns": [
+            "organizationId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_created_at": {
+          "name": "idx_consultations_org_created_at",
+          "columns": [
+            "organizationId",
+            "createdAt"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_status_date": {
+          "name": "idx_consultations_org_status_date",
+          "columns": [
+            "organizationId",
+            "status",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_therapist_date": {
+          "name": "idx_consultations_org_therapist_date",
+          "columns": [
+            "organizationId",
+            "therapistId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_session_type_date": {
+          "name": "idx_consultations_org_session_type_date",
+          "columns": [
+            "organizationId",
+            "type",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_location_date": {
+          "name": "idx_consultations_org_location_date",
+          "columns": [
+            "organizationId",
+            "location",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_billed_date": {
+          "name": "idx_consultations_org_billed_date",
+          "columns": [
+            "organizationId",
+            "billed",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_insurance_date": {
+          "name": "idx_consultations_org_insurance_date",
+          "columns": [
+            "organizationId",
+            "insuranceClaimed",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_patient_date": {
+          "name": "idx_consultations_patient_date",
+          "columns": [
+            "patientId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_date_patient": {
+          "name": "idx_consultations_org_date_patient",
+          "columns": [
+            "organizationId",
+            "date",
+            "patientId"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_plan_date": {
+          "name": "idx_consultations_org_plan_date",
+          "columns": [
+            "organizationId",
+            "treatmentPlanId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_therapist_date_status": {
+          "name": "idx_consultations_org_therapist_date_status",
+          "columns": [
+            "organizationId",
+            "therapistId",
+            "date",
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_org_patient_plan_date": {
+          "name": "idx_consultations_org_patient_plan_date",
+          "columns": [
+            "organizationId",
+            "patientId",
+            "treatmentPlanId",
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "consultations_organizationId_organizations_id_fk": {
+          "name": "consultations_organizationId_organizations_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "consultations_patientId_patients_id_fk": {
+          "name": "consultations_patientId_patients_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "patients",
+          "columnsFrom": [
+            "patientId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "consultations_treatmentPlanId_treatment_plans_id_fk": {
+          "name": "consultations_treatmentPlanId_treatment_plans_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "treatment_plans",
+          "columnsFrom": [
+            "treatmentPlanId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "consultations_therapistId_users_id_fk": {
+          "name": "consultations_therapistId_users_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "users",
+          "columnsFrom": [
+            "therapistId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "patient_documents": {
+      "name": "patient_documents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "patientId": {
+          "name": "patientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "uploadedById": {
+          "name": "uploadedById",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "treatmentPlanId": {
+          "name": "treatmentPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fileName": {
+          "name": "fileName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "originalFileName": {
+          "name": "originalFileName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mimeType": {
+          "name": "mimeType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fileSize": {
+          "name": "fileSize",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storageKey": {
+          "name": "storageKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "patient_documents_storageKey_unique": {
+          "name": "patient_documents_storageKey_unique",
+          "columns": [
+            "storageKey"
+          ],
+          "isUnique": true
+        },
+        "idx_patient_documents_org_active_patient": {
+          "name": "idx_patient_documents_org_active_patient",
+          "columns": [
+            "organizationId",
+            "patientId"
+          ],
+          "isUnique": false
+        },
+        "idx_patient_documents_org_active_uploaded_at": {
+          "name": "idx_patient_documents_org_active_uploaded_at",
+          "columns": [
+            "organizationId",
+            "createdAt"
+          ],
+          "isUnique": false
+        },
+        "idx_patient_documents_org_active_patient_treatment_plan": {
+          "name": "idx_patient_documents_org_active_patient_treatment_plan",
+          "columns": [
+            "organizationId",
+            "patientId",
+            "treatmentPlanId"
+          ],
+          "isUnique": false
+        },
+        "idx_patient_documents_org_active_uploader": {
+          "name": "idx_patient_documents_org_active_uploader",
+          "columns": [
+            "organizationId",
+            "uploadedById"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "patient_documents_patientId_patients_id_fk": {
+          "name": "patient_documents_patientId_patients_id_fk",
+          "tableFrom": "patient_documents",
+          "tableTo": "patients",
+          "columnsFrom": [
+            "patientId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "patient_documents_organizationId_organizations_id_fk": {
+          "name": "patient_documents_organizationId_organizations_id_fk",
+          "tableFrom": "patient_documents",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "patient_documents_uploadedById_users_id_fk": {
+          "name": "patient_documents_uploadedById_users_id_fk",
+          "tableFrom": "patient_documents",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uploadedById"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "patient_documents_treatmentPlanId_treatment_plans_id_fk": {
+          "name": "patient_documents_treatmentPlanId_treatment_plans_id_fk",
+          "tableFrom": "patient_documents",
+          "tableTo": "treatment_plans",
+          "columnsFrom": [
+            "treatmentPlanId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -774,614 +1680,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "consultations": {
-      "name": "consultations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "organizationId": {
-          "name": "organizationId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "patientId": {
-          "name": "patientId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "treatmentPlanId": {
-          "name": "treatmentPlanId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "date": {
-          "name": "date",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "startTime": {
-          "name": "startTime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "endTime": {
-          "name": "endTime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "chiefComplaint": {
-          "name": "chiefComplaint",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "treatmentSummary": {
-          "name": "treatmentSummary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "observations": {
-          "name": "observations",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "nextSteps": {
-          "name": "nextSteps",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "painLevelBefore": {
-          "name": "painLevelBefore",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "painLevelAfter": {
-          "name": "painLevelAfter",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "progressNotes": {
-          "name": "progressNotes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "therapistId": {
-          "name": "therapistId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'scheduled'"
-        },
-        "location": {
-          "name": "location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'clinic'"
-        },
-        "billed": {
-          "name": "billed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "insuranceClaimed": {
-          "name": "insuranceClaimed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": false
-        },
-        "cost": {
-          "name": "cost",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_consultations_org_patient_date": {
-          "name": "idx_consultations_org_patient_date",
-          "columns": [
-            "organizationId",
-            "patientId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_date": {
-          "name": "idx_consultations_org_date",
-          "columns": [
-            "organizationId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_created_at": {
-          "name": "idx_consultations_org_created_at",
-          "columns": [
-            "organizationId",
-            "createdAt"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_status_date": {
-          "name": "idx_consultations_org_status_date",
-          "columns": [
-            "organizationId",
-            "status",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_therapist_date": {
-          "name": "idx_consultations_org_therapist_date",
-          "columns": [
-            "organizationId",
-            "therapistId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_session_type_date": {
-          "name": "idx_consultations_org_session_type_date",
-          "columns": [
-            "organizationId",
-            "type",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_location_date": {
-          "name": "idx_consultations_org_location_date",
-          "columns": [
-            "organizationId",
-            "location",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_billed_date": {
-          "name": "idx_consultations_org_billed_date",
-          "columns": [
-            "organizationId",
-            "billed",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_insurance_date": {
-          "name": "idx_consultations_org_insurance_date",
-          "columns": [
-            "organizationId",
-            "insuranceClaimed",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_patient_date": {
-          "name": "idx_consultations_patient_date",
-          "columns": [
-            "patientId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_date_patient": {
-          "name": "idx_consultations_org_date_patient",
-          "columns": [
-            "organizationId",
-            "date",
-            "patientId"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_plan_date": {
-          "name": "idx_consultations_org_plan_date",
-          "columns": [
-            "organizationId",
-            "treatmentPlanId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_therapist_date_status": {
-          "name": "idx_consultations_org_therapist_date_status",
-          "columns": [
-            "organizationId",
-            "therapistId",
-            "date",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_patient_plan_date": {
-          "name": "idx_consultations_org_patient_plan_date",
-          "columns": [
-            "organizationId",
-            "patientId",
-            "treatmentPlanId",
-            "date"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "consultations_organizationId_organizations_id_fk": {
-          "name": "consultations_organizationId_organizations_id_fk",
-          "tableFrom": "consultations",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "organizationId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "consultations_patientId_patients_id_fk": {
-          "name": "consultations_patientId_patients_id_fk",
-          "tableFrom": "consultations",
-          "tableTo": "patients",
-          "columnsFrom": [
-            "patientId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "consultations_treatmentPlanId_treatment_plans_id_fk": {
-          "name": "consultations_treatmentPlanId_treatment_plans_id_fk",
-          "tableFrom": "consultations",
-          "tableTo": "treatment_plans",
-          "columnsFrom": [
-            "treatmentPlanId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "consultations_therapistId_users_id_fk": {
-          "name": "consultations_therapistId_users_id_fk",
-          "tableFrom": "consultations",
-          "tableTo": "users",
-          "columnsFrom": [
-            "therapistId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "patient_documents": {
-      "name": "patient_documents",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "patientId": {
-          "name": "patientId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "organizationId": {
-          "name": "organizationId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "uploadedById": {
-          "name": "uploadedById",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "treatmentPlanId": {
-          "name": "treatmentPlanId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "fileName": {
-          "name": "fileName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "originalFileName": {
-          "name": "originalFileName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "mimeType": {
-          "name": "mimeType",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "fileSize": {
-          "name": "fileSize",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "storageKey": {
-          "name": "storageKey",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "category": {
-          "name": "category",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "deletedAt": {
-          "name": "deletedAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "patient_documents_storageKey_unique": {
-          "name": "patient_documents_storageKey_unique",
-          "columns": [
-            "storageKey"
-          ],
-          "isUnique": true
-        },
-        "idx_patient_documents_org_active_patient": {
-          "name": "idx_patient_documents_org_active_patient",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "patientId"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_active_category": {
-          "name": "idx_patient_documents_org_active_category",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "category"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_active_uploaded_at": {
-          "name": "idx_patient_documents_org_active_uploaded_at",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "createdAt"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_active_patient_category": {
-          "name": "idx_patient_documents_org_active_patient_category",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "patientId",
-            "category"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_active_category_uploaded": {
-          "name": "idx_patient_documents_org_active_category_uploaded",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "category",
-            "createdAt"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_active_uploader": {
-          "name": "idx_patient_documents_org_active_uploader",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "uploadedById"
-          ],
-          "isUnique": false
-        },
-        "idx_patient_documents_org_deleted_at": {
-          "name": "idx_patient_documents_org_deleted_at",
-          "columns": [
-            "organizationId",
-            "deletedAt"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "patient_documents_patientId_patients_id_fk": {
-          "name": "patient_documents_patientId_patients_id_fk",
-          "tableFrom": "patient_documents",
-          "tableTo": "patients",
-          "columnsFrom": [
-            "patientId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "patient_documents_organizationId_organizations_id_fk": {
-          "name": "patient_documents_organizationId_organizations_id_fk",
-          "tableFrom": "patient_documents",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "organizationId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "patient_documents_uploadedById_users_id_fk": {
-          "name": "patient_documents_uploadedById_users_id_fk",
-          "tableFrom": "patient_documents",
-          "tableTo": "users",
-          "columnsFrom": [
-            "uploadedById"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "patient_documents_treatmentPlanId_treatment_plans_id_fk": {
-          "name": "patient_documents_treatmentPlanId_treatment_plans_id_fk",
-          "tableFrom": "patient_documents",
-          "tableTo": "treatment_plans",
-          "columnsFrom": [
-            "treatmentPlanId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "patients": {
       "name": "patients",
       "columns": {
@@ -1415,7 +1713,7 @@
         },
         "dateOfBirth": {
           "name": "dateOfBirth",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -1474,35 +1772,40 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "medicalConditions": {
           "name": "medicalConditions",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "surgeries": {
           "name": "surgeries",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "allergies": {
           "name": "allergies",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "medications": {
           "name": "medications",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "insuranceProvider": {
           "name": "insuranceProvider",
@@ -1538,7 +1841,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -1693,7 +1997,7 @@
           "name": "therapistId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "title": {
@@ -1719,14 +2023,14 @@
         },
         "startDate": {
           "name": "startDate",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "endDate": {
           "name": "endDate",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1762,9 +2066,9 @@
         },
         "prescriptionDate": {
           "name": "prescriptionDate",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "painLevel": {
@@ -1793,7 +2097,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'[]'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -1808,13 +2113,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "deletedAt": {
-          "name": "deletedAt",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -1822,7 +2120,6 @@
           "name": "idx_treatment_plans_org_active_patient",
           "columns": [
             "organizationId",
-            "deletedAt",
             "patientId"
           ],
           "isUnique": false
@@ -1831,7 +2128,6 @@
           "name": "idx_treatment_plans_org_active_status",
           "columns": [
             "organizationId",
-            "deletedAt",
             "status"
           ],
           "isUnique": false
@@ -1840,17 +2136,7 @@
           "name": "idx_treatment_plans_org_active_therapist",
           "columns": [
             "organizationId",
-            "deletedAt",
             "therapistId"
-          ],
-          "isUnique": false
-        },
-        "idx_treatment_plans_org_active_prescribing_doctor": {
-          "name": "idx_treatment_plans_org_active_prescribing_doctor",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "prescribingDoctor"
           ],
           "isUnique": false
         },
@@ -1858,16 +2144,7 @@
           "name": "idx_treatment_plans_org_active_start_date",
           "columns": [
             "organizationId",
-            "deletedAt",
-            "startDate"
-          ],
-          "isUnique": false
-        },
-        "idx_treatment_plans_org_active_end_date": {
-          "name": "idx_treatment_plans_org_active_end_date",
-          "columns": [
-            "organizationId",
-            "deletedAt",
+            "startDate",
             "endDate"
           ],
           "isUnique": false
@@ -1876,29 +2153,8 @@
           "name": "idx_treatment_plans_org_active_therapist_status",
           "columns": [
             "organizationId",
-            "deletedAt",
             "therapistId",
             "status"
-          ],
-          "isUnique": false
-        },
-        "idx_treatment_plans_org_active_prescribing_doctor_date": {
-          "name": "idx_treatment_plans_org_active_prescribing_doctor_date",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "prescribingDoctor",
-            "prescriptionDate"
-          ],
-          "isUnique": false
-        },
-        "idx_treatment_plans_org_active_coverage_created": {
-          "name": "idx_treatment_plans_org_active_coverage_created",
-          "columns": [
-            "organizationId",
-            "deletedAt",
-            "coverageStatus",
-            "createdAt"
           ],
           "isUnique": false
         }

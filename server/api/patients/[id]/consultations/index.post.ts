@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { consultations, patients, users } from '~~/server/database/schema'
-import { consultationCreateSchema } from '~~/shared/types/patient.types'
 
 // Create a simplified schema for API that matches database table
 const consultationInsertSchema = consultationCreateSchema
@@ -40,7 +39,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID is required'
+      message: 'Patient ID is required'
     })
   }
 
@@ -53,7 +52,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -62,7 +61,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -77,7 +76,7 @@ export default defineEventHandler(async (event) => {
     if (!patient) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Patient not found'
+        message: 'Patient not found'
       })
     }
 
@@ -123,7 +122,7 @@ export default defineEventHandler(async (event) => {
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid consultation data',
+        message: 'Invalid consultation data',
         data: error.issues
       })
     }
@@ -134,7 +133,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create consultation'
+      message: 'Failed to create consultation'
     })
   }
 })

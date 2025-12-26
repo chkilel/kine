@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId || !docId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID and Document ID are required'
+      message: 'Patient ID and Document ID are required'
     })
   }
 
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -43,8 +43,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(patientDocuments.organizationId, activeOrganizationId),
           eq(patientDocuments.id, docId),
-          eq(patientDocuments.patientId, patientId),
-          isNull(patientDocuments.deletedAt)
+          eq(patientDocuments.patientId, patientId)
         )
       )
       .returning()
@@ -52,7 +51,7 @@ export default defineEventHandler(async (event) => {
     if (!updatedDocument) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Document not found'
+        message: 'Document not found'
       })
     }
 
@@ -61,7 +60,7 @@ export default defineEventHandler(async (event) => {
     if (error.name === 'ZodError') {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid document data',
+        message: 'Invalid document data',
         data: error.errors
       })
     }
@@ -71,7 +70,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error updating document:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to update document'
+      message: 'Failed to update document'
     })
   }
 })

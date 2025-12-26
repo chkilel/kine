@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!patientId || !consultationId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Patient ID and Consultation ID are required'
+      message: 'Patient ID and Consultation ID are required'
     })
   }
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!existingConsultation) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Consultation not found'
+        message: 'Consultation not found'
       })
     }
 
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to delete consultation'
+      message: 'Failed to delete consultation'
     })
   }
 })

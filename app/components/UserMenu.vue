@@ -63,7 +63,8 @@
     [
       {
         label: 'Profil',
-        icon: 'i-lucide-user'
+        icon: 'i-lucide-user',
+        to: '/profile'
       },
       {
         label: 'Facturation',

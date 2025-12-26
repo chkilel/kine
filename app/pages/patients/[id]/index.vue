@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { BreadcrumbItem } from '@nuxt/ui'
-  import { parseISO } from 'date-fns'
   import { LazyPatientEditSlideover } from '#components'
 
   // Const
@@ -18,28 +17,25 @@
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  // -------------------------
+  const router = useRouter()
   const route = useRoute()
   const overlay = useOverlay()
   const editSlideover = overlay.create(LazyPatientEditSlideover)
-  const activeTab = ref('overview')
 
-  const requestFetch = useRequestFetch()
-  const {
-    data: patient,
-    error,
-    isPending
-  } = useQuery({
-    enabled: () => !!route.params.id,
-    key: () => ['patient', route.params.id as string],
-    query: () =>
-      requestFetch(`/api/patients/${route.params.id}`).then((data) => ({
-        ...data,
-        dateOfBirth: parseISO(data.dateOfBirth),
-        createdAt: parseISO(data.createdAt),
-        updatedAt: parseISO(data.updatedAt),
-        deletedAt: data.deletedAt ? parseISO(data.deletedAt) : null
-      }))
+  const { data: patient, error, isPending } = usePatientById(() => route.params.id as string)
+
+  const activeTab = computed({
+    get() {
+      const tabFromQuery = route.query.tab as string
+      const validTabs = ['overview', 'plan', 'seances', 'documents', 'facturation']
+      return validTabs.includes(tabFromQuery) ? tabFromQuery : 'overview'
+    },
+    set(tab) {
+      router.push({
+        path: route.path,
+        query: { ...route.query, tab }
+      })
+    }
   })
 
   // Handle error after the query
@@ -55,7 +51,6 @@
 
   function openEditSlideover() {
     if (!patient.value) return
-
     editSlideover.open({ patient: patient.value })
   }
 </script>
@@ -63,9 +58,15 @@
 <template>
   <UDashboardPanel id="patient-profil" class="bg-elevated">
     <template #header>
-      <UDashboardNavbar :title="patient ? formatFullName(patient) : 'Profil du patient'">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+        </template>
+
+        <template #title>
+          <ClientOnly>
+            {{ patient ? formatFullName(patient) : 'Profil du patient' }}
+          </ClientOnly>
         </template>
 
         <template #right>notifications</template>
@@ -93,13 +94,8 @@
                   <h1 class="text-2xl leading-tight font-bold md:text-3xl">
                     {{ formatFullName(patient) }}
                   </h1>
-                  <UBadge
-                    :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
-                    size="xl"
-                    variant="subtle"
-                    class="self-center"
-                  >
-                    {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
+                  <UBadge :color="getPatientStatusColor(patient.status)" size="xl" variant="subtle" class="self-center">
+                    {{ getPatientStatusLabel(patient.status) }}
                   </UBadge>
                 </div>
                 <div
@@ -108,7 +104,7 @@
                   <div class="flex items-center gap-1.5">
                     <UIcon name="i-lucide-cake" class="text-base" />
                     <span v-if="patient.dateOfBirth">
-                      Né le {{ formatDate(patient.dateOfBirth) }} ({{ getAge(patient.dateOfBirth) }} ans)
+                      Né le {{ formatFrenchDate(patient.dateOfBirth) }} ({{ calculateAge(patient.dateOfBirth) }} ans)
                     </span>
                   </div>
                   <div v-if="patient.phone" class="flex items-center gap-1.5">
@@ -154,7 +150,7 @@
 
             <!-- Séances Tab -->
             <template #seances>
-              <PatientSessionsTab />
+              <LazyPatientSessionsTab />
             </template>
 
             <!-- Plan de traitement Tab -->
@@ -164,7 +160,7 @@
 
             <!-- Documents Tab -->
             <template #documents>
-              <PatientDocumentsTab />
+              <LazyPatientDocumentsTab />
             </template>
 
             <!-- Facturation Tab -->

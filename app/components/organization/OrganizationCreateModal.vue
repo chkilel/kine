@@ -10,7 +10,7 @@
   const { createOrganization, checkSlug } = useOrganization()
 
   // ✅ Unified reactive form state
-  const form = reactive({
+  const form = reactive<OrganizationInsertSchema>({
     name: '',
     slug: '',
     logo: '',

@@ -50,7 +50,6 @@
     isUploading.value = true
 
     try {
-      // First upload file to R2 using new upload endpoint
       const formData = new FormData()
       formData.append('file', selectedFile.value)
 
@@ -59,7 +58,6 @@
         body: formData
       })) as { fileName: string; storageKey: string; originalName: string; mimeType: string; fileSize: number }
 
-      // Then create document record in database
       const documentData = {
         fileName: uploadResponse.fileName,
         originalName: uploadResponse.originalName,
@@ -83,15 +81,14 @@
 
       emit('uploaded', document)
 
-      // Reset form
       selectedFile.value = null
       state.category = undefined
       state.description = undefined
       open.value = false
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.add({
         title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec du téléversement du document',
+        description: (error as any).data?.statusMessage || 'Échec du téléversement du document',
         color: 'error'
       })
     } finally {
@@ -104,12 +101,16 @@
     const k = 1024
     const sizes = ['octets', 'Ko', 'Mo', 'Go']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    return parseFloat((bytes / 2 ** i).toFixed(2)) + ' ' + sizes[i]
   }
 </script>
 
 <template>
-  <UModal v-model:open="open" title="Téléverser un document" description="Téléverser un nouveau document pour ce patient">
+  <UModal
+    v-model:open="open"
+    title="Téléverser un document"
+    description="Téléverser un nouveau document pour ce patient"
+  >
     <UButton label="Téléverser un document" icon="i-lucide-upload" />
 
     <template #body>

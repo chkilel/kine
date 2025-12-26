@@ -19,7 +19,7 @@ export function createAuth(event: H3Event) {
   if (!betterAuthSecret) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'BETTER_AUTH_SECRET is not set in environment.'
+      message: 'BETTER_AUTH_SECRET is not set in environment.'
     })
   }
 
@@ -50,11 +50,30 @@ export function createAuth(event: H3Event) {
       additionalFields: {
         firstName: {
           type: 'string',
-          required: false,
           input: true
         },
         lastName: {
           type: 'string',
+          input: true
+        },
+        specialization: {
+          type: 'string[]',
+          required: true,
+          input: true
+        },
+        licenseNumber: {
+          type: 'string',
+          required: true,
+          input: true
+        },
+        defaultSessionDuration: {
+          type: 'number',
+          required: false,
+          input: true
+        },
+        phoneNumbers: {
+          type: 'json',
+          required: true,
           input: true
         }
       }
@@ -131,9 +150,38 @@ function getBaseURL(event: H3Event) {
     } catch (e) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Could not determine baseURL.'
+        message: 'Could not determine baseURL.'
       })
     }
   }
   return baseURL
+}
+
+// Helper: Authentication and authorization
+export async function requireAuth(event: H3Event) {
+  const auth = createAuth(event)
+  const session = await auth.api.getSession({
+    headers: getHeaders(event) as any
+  })
+
+  if (!session?.user?.id) {
+    throw createError({
+      statusCode: 401,
+      message: 'Non autorisé'
+    })
+  }
+
+  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
+
+  if (!activeOrganizationId) {
+    throw createError({
+      statusCode: 403,
+      message: 'Aucune organisation active'
+    })
+  }
+
+  return {
+    userId: session.user.id,
+    organizationId: activeOrganizationId
+  }
 }

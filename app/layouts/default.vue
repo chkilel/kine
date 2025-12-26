@@ -1,9 +1,6 @@
 <script setup lang="ts">
   import type { NavigationMenuItem } from '@nuxt/ui'
 
-  const route = useRoute()
-  const toast = useToast()
-
   const open = ref(false)
 
   const links = [
@@ -17,8 +14,8 @@
         }
       },
       {
-        label: 'Boîte de réception',
-        icon: 'i-lucide-inbox',
+        label: 'Messagerie',
+        icon: 'i-lucide-message-square',
         to: '/inbox',
         badge: '4',
         onSelect: () => {
@@ -34,8 +31,8 @@
         }
       },
       {
-        label: 'Organisations',
-        icon: 'i-lucide-building',
+        label: 'Cabinets',
+        icon: 'i-lucide-building-2',
         to: '/organizations',
         onSelect: () => {
           open.value = false
@@ -82,15 +79,9 @@
     ],
     [
       {
-        label: 'Retour',
-        icon: 'i-lucide-message-circle',
-        to: 'https://github.com/nuxt-ui-templates/dashboard',
-        target: '_blank'
-      },
-      {
-        label: 'Aide et support',
-        icon: 'i-lucide-info',
-        to: 'https://github.com/nuxt-ui-templates/dashboard',
+        label: 'Support',
+        icon: 'i-lucide-help-circle',
+        to: 'mailto:support@kine.com',
         target: '_blank'
       }
     ]
@@ -98,52 +89,24 @@
 
   const groups = computed(() => [
     {
-      id: 'links',
-      label: 'Aller à',
+      id: 'navigation',
+      label: 'Navigation',
       items: links.flat()
     },
     {
-      id: 'code',
-      label: 'Code',
+      id: 'help',
+      label: 'Aide',
       items: [
         {
-          id: 'source',
-          label: 'Voir le code de la page',
-          icon: 'i-simple-icons-github',
-          to: `https://github.com/nuxt-ui-templates/dashboard/blob/main/app/pages${route.path === '/' ? '/index' : route.path}.vue`,
+          id: 'support',
+          label: 'Contacter le support',
+          icon: 'i-lucide-mail',
+          to: 'mailto:support@kine.com',
           target: '_blank'
         }
       ]
     }
   ])
-
-  onMounted(async () => {
-    const cookie = useCookie('cookie-consent')
-    if (cookie.value === 'accepted') {
-      return
-    }
-
-    toast.add({
-      title: 'Nous utilisons des cookies internes pour améliorer votre expérience sur notre site.',
-      duration: 0,
-      close: false,
-      actions: [
-        {
-          label: 'Accepter',
-          color: 'neutral',
-          variant: 'outline',
-          onClick: () => {
-            cookie.value = 'accepted'
-          }
-        },
-        {
-          label: 'Refuser',
-          color: 'neutral',
-          variant: 'ghost'
-        }
-      ]
-    })
-  })
 </script>
 
 <template>

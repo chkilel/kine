@@ -1,83 +1,81 @@
-import { eq, and, desc, or, ilike, isNull } from 'drizzle-orm'
+import { eq, and, desc, or, isNull, count, sql, like } from 'drizzle-orm'
 import { patients } from '~~/server/database/schema'
-import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients - List patients with filtering
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden'
-    })
-  }
-
-  const query = getQuery(event)
-
   try {
-    // Access deletedAt column defensively to avoid type mismatch
-    const deletedAtCol = patients.deletedAt
+    // 1. Require current user and organization from session
+    const { organizationId } = await requireAuth(event)
 
-    // Build filters
+    // 2. Validate query parameters
+    const validatedQuery = await getValidatedQuery(event, patientQuerySchema.parse)
+
+    // 3. Build filters
     const filters = [
-      eq(patients.organizationId, activeOrganizationId),
-      isNull(deletedAtCol) // Only show non-deleted patients
+      eq(patients.organizationId, organizationId),
+      isNull(patients.deletedAt) // Only show non-deleted patients
     ]
 
-    // Add search filters
-    if (query.search) {
-      const searchTerm = `%${query.search}%`
+    // Add search filters - SQLite LIKE is case-insensitive by default
+    if (validatedQuery.search) {
+      const searchTerm = `%${validatedQuery.search}%`
       filters.push(
         or(
-          ilike(patients.firstName, searchTerm),
-          ilike(patients.lastName, searchTerm),
-          ilike(patients.email, searchTerm),
-          ilike(patients.phone, searchTerm)
+          like(patients.firstName, searchTerm),
+          like(patients.lastName, searchTerm)
+          // like(patients.email, searchTerm),
+          // like(patients.phone, searchTerm)
         )!
       )
     }
 
     // Add status filter
-    if (query.status && query.status !== 'all') {
-      filters.push(eq(patients.status, query.status as any))
+    if (validatedQuery.status) {
+      filters.push(eq(patients.status, validatedQuery.status))
     }
 
     // Add insurance provider filter
-    if (query.insuranceProvider) {
-      filters.push(ilike(patients.insuranceProvider, `%${query.insuranceProvider}%`))
+    if (validatedQuery.insuranceProvider) {
+      filters.push(like(patients.insuranceProvider, `%${validatedQuery.insuranceProvider}%`))
     }
 
-    // Execute query
+    // 4. Calculate pagination
+    const limit = validatedQuery.limit
+    const offset = (validatedQuery.page - 1) * limit
+
+    // Get total count for pagination metadata
+    const totalCountResult = await db
+      .select({ count: count() })
+      .from(patients)
+      .where(and(...filters))
+
+    const total = totalCountResult[0]?.count || 0
+    const totalPages = Math.ceil(total / limit)
+
+    // 5. Execute paginated query
     const patientsList = await db
       .select()
       .from(patients)
       .where(and(...filters))
       .orderBy(desc(patients.createdAt))
-      .limit(query.limit ? parseInt(query.limit as string) : 50)
-      .offset(query.offset ? parseInt(query.offset as string) : 0)
+      .limit(limit)
+      .offset(offset)
 
-    return patientsList
+    // 6. Return paginated response
+    return {
+      data: patientsList,
+      pagination: {
+        total,
+        page: validatedQuery.page,
+        limit,
+        totalPages,
+        hasNext: validatedQuery.page < totalPages,
+        hasPrev: validatedQuery.page > 1
+      }
+    }
   } catch (error: any) {
-    console.error('Error fetching patients:', error)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to fetch patients'
-    })
+    handleApiError(error)
   }
 })

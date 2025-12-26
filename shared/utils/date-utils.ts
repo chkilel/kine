@@ -1,136 +1,160 @@
-import { format, differenceInYears, parseISO, isValid } from 'date-fns'
+import { format, differenceInYears, parseISO, formatDistanceToNow, differenceInDays } from 'date-fns'
+import { CalendarDate } from '@internationalized/date'
+import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
 import { fr } from 'date-fns/locale'
 
-/**
- * Safely converts ISO date string to Date object
- * Handles null/undefined inputs and invalid date strings with graceful fallback
- * @param dateString - ISO date string in YYYY-MM-DD format or null/undefined
- * @returns Date object if valid, null if input is null/undefined or invalid
- * @throws Logs warning to console for invalid date strings
- */
-export function toDate(dateString: string | null): Date | null {
+// ============================================================================
+// TIME UTILITIES
+// ============================================================================
+
+export const removeSecondsFromTime = (timeString: string): string => {
+  const timeRegex = /^\d{2}:\d{2}:\d{2}$/
+
+  if (!timeRegex.test(timeString)) {
+    throw new Error('Invalid time format. Expected HH:MM:SS')
+  }
+
+  return timeString.slice(0, 5)
+}
+
+export const timeToMinutes = (time: string): number => {
+  const [hoursStr = '0', minutesStr = '0'] = time.split(':')
+  const hours = parseInt(hoursStr, 10)
+  const minutes = parseInt(minutesStr, 10)
+  return hours * 60 + minutes
+}
+
+export const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+}
+
+export const hasTimeConflict = (
+  existingStart: string,
+  existingEnd: string,
+  newStart: string,
+  newEnd: string,
+  minGap: number = MINIMUM_CONSULTATION_GAP_MINUTES
+): boolean => {
+  const existingStartMin = timeToMinutes(existingStart)
+  const existingEndMin = timeToMinutes(existingEnd)
+  const newStartMin = timeToMinutes(newStart)
+  const newEndMin = timeToMinutes(newEnd)
+
+  console.log('🚀 Time conflict check:', {
+    existing: { start: existingStart, end: existingEnd, startMin: existingStartMin, endMin: existingEndMin },
+    new: { start: newStart, end: newEnd, startMin: newStartMin, endMin: newEndMin },
+    minGap
+  })
+
+  const newEndsBeforeExisting = newEndMin + minGap <= existingStartMin
+  const newStartsAfterExisting = newStartMin >= existingEndMin + minGap
+  const noConflict = newEndsBeforeExisting || newStartsAfterExisting
+
+  return !noConflict
+}
+
+// ============================================================================
+// DATE PARSING & VALIDATION
+// ============================================================================
+
+export function safeParseISODate(dateString: string | null): Date | null {
   if (!dateString) return null
+
   try {
-    return parseISO(dateString)
-  } catch {
-    console.warn('Invalid date string:', dateString)
+    const date = parseISO(dateString)
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date string:', dateString)
+      return null
+    }
+    return date
+  } catch (error) {
+    console.warn('Invalid date string:', dateString, error)
     return null
   }
 }
 
-/**
- * Formats date for display in French locale (dd/MM/yyyy format)
- * Accepts both Date objects and ISO date strings for maximum flexibility
- * Uses French locale for proper date formatting conventions
- * @param date - Date object or ISO date string (YYYY-MM-DD format)
- * @returns Formatted date string (e.g., "25/12/2023") or "-" if invalid/null
- */
-export function formatDate(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? toDate(date) : date
-  if (!dateObj) return '-'
+export const isDateDisabled = (date: Date | any): boolean => {
+  const dateObj = date instanceof Date ? date : new Date(date.toString())
+  const day = dateObj.getDay()
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return day === 0 || dateObj < today
+}
+
+// ============================================================================
+// DATE FORMATTING
+// ============================================================================
+
+export function getAbbreviatedMonthName(date: Date): string {
+  return format(date, 'MMM', { locale: fr })
+}
+
+export function extractDayAndMonth(dateString: string) {
+  const date = parseISO(dateString)
+
+  return {
+    day: format(date, 'd', { locale: fr }),
+    month: format(date, 'MMM', { locale: fr })
+  }
+}
+
+export function formatRelativeDate(date: Date | string): string {
+  const noteDate = typeof date === 'string' ? parseISO(date) : date
+  const now = new Date()
+  const diffInDays = differenceInDays(now, noteDate)
+
+  if (diffInDays === 0) return "Aujourd'hui"
+  if (diffInDays === 1) return 'Hier'
+
+  return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
+}
+
+export function formatFrenchDate(date: Date | string | null): string {
+  if (!date) return '-'
+
+  const dateObj = typeof date === 'string' ? safeParseISODate(date) : date
+  if (!dateObj || isNaN(dateObj.getTime())) return '-'
 
   return format(dateObj, 'dd/MM/yyyy', { locale: fr })
 }
 
-/**
- * Calculates current age from date of birth
- * Computes precise age in years based on current date
- * Accepts both Date objects and ISO date strings for flexibility
- * @param dateOfBirth - Date object or ISO date string (YYYY-MM-DD format)
- * @returns Age as string (e.g., "25") or empty string if invalid input
- * @throws Logs error to console for invalid date calculations
- */ export function getAge(dateOfBirth: Date | string) {
+export const formatFrenchDateRange = (startDate: Date | string, endDate: Date | string | null): string => {
+  const start = formatFrenchDate(startDate)
+  const end = endDate ? formatFrenchDate(endDate) : 'En cours'
+  return `${start} - ${end}`
+}
+
+// ============================================================================
+// DATE CALCULATIONS
+// ============================================================================
+
+export function calculateAge(dateOfBirth: Date | string | null): string {
   if (!dateOfBirth) return ''
+
   try {
-    let birth: Date
-    if (dateOfBirth instanceof Date) {
-      birth = dateOfBirth
-    } else if (typeof dateOfBirth === 'string') {
-      birth = parseISO(dateOfBirth)
-    } else {
+    const birth = dateOfBirth instanceof Date ? dateOfBirth : parseISO(dateOfBirth)
+
+    if (isNaN(birth.getTime())) {
+      console.error('Invalid date of birth:', dateOfBirth)
       return ''
     }
+
     const age = differenceInYears(new Date(), birth)
-    return age.toString()
+    return age >= 0 ? age.toString() : ''
   } catch (error) {
     console.error('Error calculating age:', error, dateOfBirth)
     return ''
   }
 }
 
-/**
- * Validates date string and converts to Date object if valid
- * Supports multiple date formats with comprehensive validation
- * @param dateString - Date string in various formats (ISO, DD/MM/YYYY, etc.)
- * @returns Date object if valid, null if invalid or null/undefined
- */
-export function isValidDateAndConvert(dateString: string | null | undefined): Date | null {
-  if (!dateString) return null
+// ============================================================================
+// DATE CONVERSIONS
+// ============================================================================
 
-  // Try ISO format first
-  if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
-    try {
-      const date = parseISO(dateString)
-      if (isValid(date)) return date
-    } catch {
-      // Continue to other formats
-    }
-  }
-
-  // Try DD/MM/YYYY format
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-    const parts = dateString.split('/')
-    if (parts.length === 3) {
-      const [dayStr, monthStr, yearStr] = parts
-      const day = Number(dayStr)
-      const month = Number(monthStr)
-      const year = Number(yearStr)
-
-      // Validate that all are valid numbers
-      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-        const date = new Date(year, month - 1, day)
-        if (isValid(date) && date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year) {
-          return date
-        }
-      }
-    }
-  }
-
-  // Try MM/DD/YYYY format
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-    const parts = dateString.split('/')
-    if (parts.length === 3) {
-      const [monthStr, dayStr, yearStr] = parts
-      const month = Number(monthStr)
-      const day = Number(dayStr)
-      const year = Number(yearStr)
-
-      // Validate that all are valid numbers
-      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-        const date = new Date(year, month - 1, day)
-        if (isValid(date) && date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year) {
-          return date
-        }
-      }
-    }
-  }
-
-  // Try generic Date parsing as last resort
-  try {
-    const date = new Date(dateString)
-    if (isValid(date) && !isNaN(date.getTime())) {
-      return date
-    }
-  } catch {
-    // Invalid date
-  }
-
-  return null
-}
-
-// Formatted date range
-export const formatDateRange = (startDate: Date | string, endDate: Date | string | null) => {
-  const start = formatDate(startDate)
-  const end = endDate ? formatDate(endDate) : 'En cours'
-  return `${start} - ${end}`
+export const convertToCalendarDate = (date: Date): CalendarDate => {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }

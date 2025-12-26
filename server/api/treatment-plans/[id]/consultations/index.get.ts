@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { eq, and, desc } from 'drizzle-orm'
 import { consultations, treatmentPlans } from '~~/server/database/schema'
-import { consultationQuerySchema } from '~~/shared/types/patient.types'
 import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!treatmentPlanId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Treatment Plan ID is required'
+      message: 'Treatment Plan ID is required'
     })
   }
 
@@ -25,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized'
+      message: 'Unauthorized'
     })
   }
 
@@ -34,7 +33,7 @@ export default defineEventHandler(async (event) => {
   if (!activeOrganizationId) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Forbidden'
+      message: 'Forbidden'
     })
   }
 
@@ -55,7 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!existingTreatmentPlan) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Treatment plan not found'
+        message: 'Treatment plan not found'
       })
     }
 
@@ -113,7 +112,7 @@ export default defineEventHandler(async (event) => {
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid query parameters',
+        message: 'Invalid query parameters',
         data: error.issues
       })
     }
@@ -124,7 +123,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch treatment plan consultations'
+      message: 'Failed to fetch treatment plan consultations'
     })
   }
 })

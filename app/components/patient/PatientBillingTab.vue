@@ -6,11 +6,7 @@
   <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
     <div class="flex flex-col gap-6 lg:col-span-2">
       <!-- Recent Invoices -->
-      <UCard class="overflow-hidden">
-        <template #header>
-          <h2 class="text-default text-lg font-bold">Factures récentes</h2>
-        </template>
-
+      <AppCard title="Factures récentes" class="overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead class="bg-muted text-toned text-xs uppercase">
@@ -64,10 +60,10 @@
             </tbody>
           </table>
         </div>
-      </UCard>
+      </AppCard>
 
       <!-- Payments Received -->
-      <UCard variant="outline">
+      <AppCard variant="outline">
         <template #header>
           <h2 class="text-default text-lg font-bold">Paiements reçus</h2>
         </template>
@@ -110,12 +106,12 @@
             <span class="text-default font-semibold">En attente de remboursement</span>
           </li>
         </ul>
-      </UCard>
+      </AppCard>
     </div>
 
     <!-- Sidebar -->
     <div class="flex flex-col gap-6 lg:col-span-1">
-      <UCard variant="outline">
+      <AppCard variant="outline">
         <template #header>
           <h2 class="text-default text-lg font-bold">À facturer / En attente</h2>
         </template>
@@ -143,7 +139,7 @@
             <span>Créer une nouvelle facture</span>
           </UButton>
         </div>
-      </UCard>
+      </AppCard>
     </div>
   </div>
 </template>
