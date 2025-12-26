@@ -33,7 +33,7 @@ export const signUpSchema = z
     email: emailSchema,
     specialization: specializationSchema.optional(),
     licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
-    defaultSessionDuration: sessionDurationSchema.default(60).optional(),
+    defaultConsultationDuration: sessionDurationSchema.default(60).optional(),
     phoneNumbers: z
       .array(phoneEntrySchema)
       .min(1, 'Au moins un numéro de téléphone est requis')
@@ -84,7 +84,7 @@ export const userUpdateSchema = createUpdateSchema(users, {
   lastName: nameSchema,
   specialization: specializationSchema.optional(),
   licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
-  defaultSessionDuration: sessionDurationSchema.optional(),
+  defaultConsultationDuration: sessionDurationSchema.optional(),
   phoneNumbers: z
     .array(phoneEntrySchema)
     .min(1, 'Au moins un numéro de téléphone est requis')

@@ -41,7 +41,7 @@ CREATE TABLE `users` (
 	`emailVerified` integer DEFAULT false NOT NULL,
 	`image` text,
 	`licenseNumber` text,
-	`defaultSessionDuration` integer DEFAULT 30,
+	`defaultConsultationDuration` integer DEFAULT 30,
 	`specialization` text DEFAULT '[]',
 	`phoneNumbers` text DEFAULT '[]',
 	`createdAt` integer NOT NULL,
@@ -269,7 +269,7 @@ CREATE TABLE `treatment_plans` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
 	`patientId` text NOT NULL,
-	`therapistId` text,
+	`therapistId` text NOT NULL,
 	`title` text NOT NULL,
 	`diagnosis` text NOT NULL,
 	`objective` text,
@@ -280,7 +280,7 @@ CREATE TABLE `treatment_plans` (
 	`status` text DEFAULT 'planned' NOT NULL,
 	`prescribingDoctor` text,
 	`prescriptionDate` text NOT NULL,
-	`painLevel` integer,
+	`painLevel` integer DEFAULT 0 NOT NULL,
 	`coverageStatus` text,
 	`insuranceInfo` text,
 	`notes` text DEFAULT '[]',
@@ -288,7 +288,7 @@ CREATE TABLE `treatment_plans` (
 	`updatedAt` integer NOT NULL,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE INDEX `idx_treatment_plans_org_active_patient` ON `treatment_plans` (`organizationId`,`patientId`);--> statement-breakpoint
