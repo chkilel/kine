@@ -10,6 +10,7 @@
   }>()
 
   const toast = useToast()
+  const { getTherapistName } = useOrganizationMembers()
 
   // Close treatment plan function
   const closeTreatmentPlan = () => {
@@ -43,7 +44,7 @@
         </div>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-user" class="text-toned" />
-          <span>Thérapeute: {{ getTherapistName(props.treatmentPlan.therapist) }}</span>
+          <span>Thérapeute: {{ getTherapistName(props.treatmentPlan.therapistId) }}</span>
         </div>
       </div>
       <div class="mt-5">

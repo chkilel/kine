@@ -17,8 +17,7 @@
     await navigateTo('/login')
   }
 
-  // FIXME grab therapist from org
-  const therapists = [user.value!]
+  const { therapists } = useOrganizationMembers()
 
   // Tab state
   const activePlanningTab = ref('manual')

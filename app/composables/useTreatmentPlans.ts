@@ -4,17 +4,6 @@ import { parseISO } from 'date-fns'
 const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
-  const convertDates = (plan: any): TreatmentPlanWithProgress => ({
-    ...plan,
-    createdAt: parseISO(plan.createdAt),
-    updatedAt: parseISO(plan.updatedAt),
-    notes:
-      plan.notes?.map((note: any) => ({
-        ...note,
-        date: typeof note.date === 'string' ? new Date(note.date) : note.date
-      })) || null
-  })
-
   const {
     data: treatmentPlans,
     isLoading: loading,
@@ -25,7 +14,16 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     query: async () => {
       const id = toValue(patientId)
       const data = await requestFetch(`/api/patients/${id}/treatment-plans`)
-      return data.map(convertDates)
+      return data?.map((plan) => ({
+        ...plan,
+        createdAt: parseISO(plan.createdAt),
+        updatedAt: parseISO(plan.updatedAt),
+        notes:
+          plan.notes?.map((note: any) => ({
+            ...note,
+            date: typeof note.date === 'string' ? new Date(note.date) : note.date
+          })) || null
+      }))
     },
     enabled: () => !!toValue(patientId)
   })

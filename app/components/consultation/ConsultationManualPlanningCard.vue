@@ -48,7 +48,7 @@
     startTime: '',
     duration: 45,
     type: 'follow_up',
-    location: 'clinic' as ConsultationLocation,
+    location: 'clinic',
     status: 'scheduled',
     chiefComplaint: '',
     notes: '',

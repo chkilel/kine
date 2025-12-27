@@ -1,4 +1,3 @@
-import type { Session } from '~~/shared/types/auth.types'
 import { treatmentPlans, patients } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 

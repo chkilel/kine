@@ -14,7 +14,7 @@
     lastName: user.value?.lastName || '',
     specialization: user.value?.specialization,
     licenseNumber: user.value?.licenseNumber,
-    defaultSessionDuration: user.value?.defaultSessionDuration,
+    defaultConsultationDuration: user.value?.defaultConsultationDuration,
     phoneNumbers: user.value?.phoneNumbers
   })
 
@@ -45,7 +45,7 @@
         lastName: profile.lastName,
         specialization: profile.specialization,
         licenseNumber: profile.licenseNumber,
-        defaultSessionDuration: profile.defaultSessionDuration,
+        defaultConsultationDuration: profile.defaultConsultationDuration,
         phoneNumbers: profile.phoneNumbers
       })
 
@@ -118,7 +118,7 @@
 
           <USeparator />
 
-          <UFormField name="defaultSessionDuration" label="Durée par défaut de la séance">
+          <UFormField name="defaultConsultationDuration" label="Durée par défaut de la séance">
             <ClientOnly>
               <template #fallback>
                 <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
@@ -133,11 +133,11 @@
                 <UButton
                   v-for="duration in CONSULTATION_DURATIONS"
                   :key="duration"
-                  :variant="profile.defaultSessionDuration === duration ? 'solid' : 'outline'"
-                  :color="profile.defaultSessionDuration === duration ? 'primary' : 'neutral'"
+                  :variant="profile.defaultConsultationDuration === duration ? 'solid' : 'outline'"
+                  :color="profile.defaultConsultationDuration === duration ? 'primary' : 'neutral'"
                   size="lg"
                   block
-                  @click="profile.defaultSessionDuration = duration"
+                  @click="profile.defaultConsultationDuration = duration"
                 >
                   {{ duration }} min
                 </UButton>

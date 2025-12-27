@@ -9,11 +9,10 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
-  const { data, isLoading, error, refetch } = useTreatmentPlanConsultations(() => props.treatmentPlan.id)
+  const { data, isLoading, refetch } = useTreatmentPlanConsultations(() => props.treatmentPlan.id)
 
   // Consultations data
   const consultations = computed(() => data.value?.data || [])
-  const statistics = computed(() => data.value?.statistics || null)
 
   // Refresh consultations data
   const refreshConsultations = async () => {
@@ -30,7 +29,7 @@
     if (!props.patient) return
 
     const { deleteConsultation: deleteConsultationFromComposable } = useConsultations()
-    const success = await deleteConsultationFromComposable(props.patient.id, consultationId)
+    await deleteConsultationFromComposable(props.patient.id, consultationId)
   }
 
   // Edit consultation function - opens planning slideover with consultation data

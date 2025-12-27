@@ -1,10 +1,10 @@
 import { v7 as uuidv7 } from 'uuid'
+import { relations } from 'drizzle-orm'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users } from './auth'
-import { relations } from 'drizzle-orm'
 import { patients } from './patient'
 import { consultations } from './consultation'
 import { patientDocuments } from './document'
@@ -27,7 +27,9 @@ export const treatmentPlans = sqliteTable(
     patientId: text()
       .notNull()
       .references(() => patients.id, { onDelete: 'cascade' }), // Associated patient
-    therapistId: text().references(() => users.id, { onDelete: 'set null' }), // Assigned therapist (nullable on deletion)
+    therapistId: text()
+      .references(() => users.id)
+      .notNull(), // Assigned therapist (Cannot be deleted if has treatement plaans)
 
     // ---- Clinical information ----
     title: text().notNull(), // e.g., "Post-operative knee rehabilitation plan"

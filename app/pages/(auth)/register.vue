@@ -61,7 +61,7 @@
         firstName,
         lastName,
         email,
-        defaultSessionDuration: 0,
+        defaultConsultationDuration: 0,
         licenseNumber: '',
         specialization: [],
         phoneNumbers: [],

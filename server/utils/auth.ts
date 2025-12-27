@@ -66,7 +66,7 @@ export function createAuth(event: H3Event) {
           required: true,
           input: true
         },
-        defaultSessionDuration: {
+        defaultConsultationDuration: {
           type: 'number',
           required: false,
           input: true

@@ -23,7 +23,7 @@ export const authClient = createAuthClient({
           required: true,
           input: true
         },
-        defaultSessionDuration: {
+        defaultConsultationDuration: {
           type: 'number',
           required: true,
           input: true

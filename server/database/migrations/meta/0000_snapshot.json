@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ccd0e152-5370-40a8-9c0a-668094390750",
+  "id": "eb7913dd-b28e-4ec5-8e80-f241ae423078",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -307,13 +307,21 @@
           "notNull": false,
           "autoincrement": false
         },
-        "defaultSessionDuration": {
-          "name": "defaultSessionDuration",
+        "defaultConsultationDuration": {
+          "name": "defaultConsultationDuration",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
           "default": 30
+        },
+        "consultationGapMinutes": {
+          "name": "consultationGapMinutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 5
         },
         "specialization": {
           "name": "specialization",
@@ -1997,7 +2005,7 @@
           "name": "therapistId",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "title": {
@@ -2075,8 +2083,9 @@
           "name": "painLevel",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "coverageStatus": {
           "name": "coverageStatus",
@@ -2196,7 +2205,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
