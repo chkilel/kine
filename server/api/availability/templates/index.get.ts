@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm'
-import { weeklyAvailabilityTemplates } from '~~/server/database/schema'
+import { weeklyAvailabilityTemplates, members } from '~~/server/database/schema'
 
-// GET /api/availability/templates - Get weekly availability templates for current user
+// GET /api/availability/templates - Get weekly availability templates for a specific therapist
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
@@ -10,20 +10,34 @@ export default defineEventHandler(async (event) => {
     const validatedQuery = await getValidatedQuery(event, availabilityTemplateQuerySchema.parse)
 
     // 2. Require current user and organization from session
-    const { userId, organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuth(event)
 
-    // 3. Build filters
+    // 3. Validate therapist exists and belongs to the same organization
+    const [therapistMember] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.userId, validatedQuery.therapistId), eq(members.organizationId, organizationId)))
+      .limit(1)
+
+    if (!therapistMember) {
+      throw createError({
+        statusCode: 404,
+        message: 'Therapist not found or not in your organization'
+      })
+    }
+
+    // 4. Build filters
     const filters = [
       eq(weeklyAvailabilityTemplates.organizationId, organizationId),
-      eq(weeklyAvailabilityTemplates.userId, userId)
+      eq(weeklyAvailabilityTemplates.userId, validatedQuery.therapistId)
     ]
 
-    // 4. Add day filter
+    // 5. Add day filter
     if (validatedQuery.dayOfWeek) {
       filters.push(eq(weeklyAvailabilityTemplates.dayOfWeek, validatedQuery.dayOfWeek))
     }
 
-    // 5. Add location filter
+    // 6. Add location filter
     if (validatedQuery.location) {
       filters.push(eq(weeklyAvailabilityTemplates.location, validatedQuery.location))
     }

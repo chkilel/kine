@@ -1,8 +1,19 @@
 <script setup lang="ts">
   import { LazyProfileAvailabilityTemplateSlideover } from '#components'
 
-  // Use availability templates composable
-  const { templates, loading, error, fetchTemplates, deleteTemplateMutation } = useAvailabilityTemplates()
+  // Get current user from auth
+  const { user: therapist } = await useAuth()
+
+  // Use availability templates composables with current user's ID
+  const {
+    data: templates,
+    isLoading,
+    error,
+    refetch: fetchTemplates
+  } = useAvailabilityTemplatesList(() => therapist.value?.id)
+  const deleteTemplate = useDeleteAvailabilityTemplate()
+
+  const loading = isLoading
 
   const overlay = useOverlay()
 
@@ -15,7 +26,7 @@
     // TODO confirmation modal
     const confirmed = confirm(`Êtes-vous sûr de vouloir supprimer ce modèle du ${dayLabel}?`)
     if (confirmed) {
-      deleteTemplateMutation.mutate(template.id)
+      deleteTemplate.mutate(template.id)
     }
   }
 </script>
@@ -46,7 +57,7 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="templates.length === 0" class="p-5 text-center">
+      <div v-else-if="templates?.length === 0" class="p-5 text-center">
         <UIcon name="i-lucide-calendar-x" class="text-muted mb-3 text-4xl" />
         <p class="text-muted">Aucun modèle de disponibilité</p>
         <UButton @click="templateOverlay.open()" class="mt-3" size="sm">Ajouter un modèle</UButton>

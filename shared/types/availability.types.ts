@@ -33,6 +33,7 @@ export const weeklyAvailabilityTemplateSelectSchema = createSelectSchema(weeklyA
 
 // Query schemas for API endpoints
 export const availabilityTemplateQuerySchema = z.object({
+  therapistId: z.string().min(1, 'Therapist ID is required'),
   dayOfWeek: dayOfWeekSchema.optional(),
   location: locationSchema.optional()
 })
@@ -69,6 +70,7 @@ export const availabilityExceptionSelectSchema = createSelectSchema(availability
 export const availabilityExceptionUpdateSchema = availabilityExceptionCreateSchema.partial()
 
 export const availabilityExceptionQuerySchema = z.object({
+  therapistId: z.string().min(1, 'Therapist ID is required'),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   isAvailable: z.coerce.boolean().optional(),
@@ -80,3 +82,15 @@ export type AvailabilityException = z.infer<typeof availabilityExceptionSelectSc
 export type AvailabilityExceptionCreate = z.infer<typeof availabilityExceptionCreateSchema>
 export type AvailabilityExceptionUpdate = z.infer<typeof availabilityExceptionUpdateSchema>
 export type AvailabilityExceptionQuery = z.infer<typeof availabilityExceptionQuerySchema>
+
+// =============================================================================
+// Slots Request Schema and Type
+// =============================================================================
+
+export const slotsRequestSchema = z.object({
+  dates: z.array(calendarDateSchema).min(1, 'Au moins une date est requise'),
+  duration: z.number().min(15, 'La durée minimale est de 15 minutes').max(180, 'La durée maximale est de 3 heures'),
+  location: locationSchema
+})
+
+export type SlotsRequest = z.infer<typeof slotsRequestSchema>

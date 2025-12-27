@@ -1,35 +1,6 @@
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, ne } from 'drizzle-orm'
 import { consultations, patients, users } from '~~/server/database/schema'
-
-// Create a simplified schema for API that matches database table
-const consultationInsertSchema = consultationCreateSchema
-  .pick({
-    patientId: true,
-    treatmentPlanId: true,
-    date: true,
-    startTime: true,
-    duration: true,
-    type: true,
-    location: true,
-    chiefComplaint: true,
-    notes: true,
-    treatmentSummary: true,
-    observations: true,
-    nextSteps: true,
-    painLevelBefore: true,
-    painLevelAfter: true,
-    progressNotes: true,
-    therapistId: true,
-    status: true,
-    billed: true,
-    insuranceClaimed: true,
-    cost: true
-  })
-  .partial({
-    therapistId: true // Make therapistId truly optional
-  })
-import type { Session } from '~~/shared/types/auth.types'
 
 // POST /api/patients/[id]/consultations - Create new consultation
 export default defineEventHandler(async (event) => {
@@ -44,33 +15,14 @@ export default defineEventHandler(async (event) => {
   }
 
   // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
+  const { organizationId } = await requireAuth(event)
 
   try {
     // Verify patient exists and belongs to organization
     const [patient] = await db
       .select()
       .from(patients)
-      .where(and(eq(patients.organizationId, activeOrganizationId), eq(patients.id, patientId)))
+      .where(and(eq(patients.organizationId, organizationId), eq(patients.id, patientId)))
       .limit(1)
 
     if (!patient) {
@@ -83,14 +35,8 @@ export default defineEventHandler(async (event) => {
     // Get request body
     const body = await readBody(event)
 
-    // Parse and validate request body
-    const validatedData = consultationInsertSchema.parse({
-      ...body,
-      patientId
-    })
-
     // Handle therapistId - if provided, validate it's a valid user ID
-    let therapistId = validatedData.therapistId
+    let therapistId = body.therapistId
     if (therapistId) {
       // Check if therapistId is a valid user ID
       const [therapist] = await db.select().from(users).where(eq(users.id, therapistId)).limit(1)
@@ -99,13 +45,52 @@ export default defineEventHandler(async (event) => {
         // If not a valid user ID, set to null
         throw createError({ message: 'Therapeute introuvable', statusCode: 500 })
       }
+
+      // Fetch therapist's gap configuration
+      const [therapistWithGap] = await db
+        .select({ consultationGapMinutes: users.consultationGapMinutes })
+        .from(users)
+        .where(eq(users.id, therapistId))
+        .limit(1)
+
+      const gapMinutes = therapistWithGap?.consultationGapMinutes || 15
+
+      // Fetch existing consultations for conflict check
+      const existingConsultations = await db
+        .select({
+          startTime: consultations.startTime,
+          endTime: consultations.endTime
+        })
+        .from(consultations)
+        .where(
+          and(
+            eq(consultations.therapistId, therapistId),
+            eq(consultations.date, body.date),
+            ne(consultations.status, 'cancelled')
+          )
+        )
+
+      // Calculate end time for new consultation
+      const endTime = calculateEndTime(body.startTime!, body.duration!)
+
+      // Check for conflicts using therapist's configured gap
+      const hasConflict = existingConsultations.some((existing) =>
+        hasTimeConflict(existing.startTime!, existing.endTime!, body.startTime!, endTime, gapMinutes)
+      )
+
+      if (hasConflict) {
+        throw createError({
+          statusCode: 409,
+          message: 'Ce créneau est déjà réservé. Veuillez sélectionner un autre horaire.'
+        })
+      }
     }
 
     // Convert date to timestamp for database
     const consultationData = {
-      ...validatedData,
-      organizationId: activeOrganizationId,
-      date: validatedData.date,
+      ...body,
+      organizationId: organizationId,
+      date: body.date,
       therapistId // Use the processed therapistId (can be null or undefined)
     }
 

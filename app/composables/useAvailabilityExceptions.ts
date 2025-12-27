@@ -1,42 +1,55 @@
+import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
-export function useAvailabilityExceptions() {
-  const toast = useToast()
+/**
+ * Query for fetching availability exceptions
+ * @param therapistId - The therapist's ID to fetch exceptions for
+ * @returns Query result with exceptions data and loading state
+ */
+const _useAvailabilityExceptionsList = (therapistId: MaybeRefOrGetter<string | undefined>) => {
   const requestFetch = useRequestFetch()
-  const queryCache = useQueryCache()
+  const id = toValue(therapistId)
 
-  // Query for fetching exceptions
-  const {
-    state,
-    isLoading: loading,
-    refetch: fetchExceptions
-  } = useQuery({
-    key: ['availability-exceptions'],
-    query: () =>
-      requestFetch('/api/availability/exceptions').then((resp) =>
-        resp?.map((item) => ({
-          ...item,
-          createdAt: parseISO(item.createdAt),
-          updatedAt: parseISO(item.updatedAt)
-        }))
-      )
-  })
-
-  // Mutation for creating exceptions
-  const createExceptionMutation = useMutation({
-    mutation: async (exceptionData: AvailabilityExceptionCreate) => {
-      const response = await requestFetch('/api/availability/exceptions', { method: 'POST', body: exceptionData })
-      return response
+  return useQuery({
+    key: () => (id ? ['availability-exceptions', id] : ['availability-exceptions']),
+    query: async () => {
+      const resp = await requestFetch('/api/availability/exceptions', {
+        query: { therapistId: id }
+      })
+      return resp?.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt)
+      }))
     },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
+    enabled: () => !!id
+  })
+}
+
+/**
+ * Mutation for creating a new availability exception
+ * @returns Mutation with create functionality and error handling
+ */
+const _useCreateAvailabilityException = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async (exceptionData: AvailabilityExceptionCreate) =>
+      requestFetch('/api/availability/exceptions', {
+        method: 'POST',
+        body: exceptionData
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Exception créée',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Impossible de créer l'exception").message,
@@ -44,26 +57,32 @@ export function useAvailabilityExceptions() {
       })
     }
   })
+}
 
-  // Mutation for updating exceptions
-  const updateExceptionMutation = useMutation({
-    mutation: async ({ id, data }: { id: string; data: AvailabilityExceptionUpdate }) => {
-      const response = await requestFetch(`/api/availability/exceptions/${id}`, {
+/**
+ * Mutation for updating an existing availability exception
+ * @returns Mutation with update functionality and error handling
+ */
+const _useUpdateAvailabilityException = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ id, data }: { id: string; data: AvailabilityExceptionUpdate }) =>
+      requestFetch(`/api/availability/exceptions/${id}`, {
         method: 'PUT',
         body: data
-      })
-
-      return response
-    },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Exception mise à jour',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Impossible de mettre à jour l'exception").message,
@@ -71,22 +90,31 @@ export function useAvailabilityExceptions() {
       })
     }
   })
+}
 
-  // Mutation for deleting exceptions
-  const deleteExceptionMutation = useMutation({
-    mutation: async (id: string) => {
-      await requestFetch(`/api/availability/exceptions/${id}`, { method: 'DELETE' })
-      return true
-    },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
+/**
+ * Mutation for deleting an availability exception
+ * @returns Mutation with delete functionality and error handling
+ */
+const _useDeleteAvailabilityException = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async (id: string) =>
+      requestFetch(`/api/availability/exceptions/${id}`, {
+        method: 'DELETE'
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Exception supprimée',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-exceptions'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Impossible de supprimer l'exception").message,
@@ -94,30 +122,9 @@ export function useAvailabilityExceptions() {
       })
     }
   })
-
-  // Convenience methods
-  const createException = (exceptionData: AvailabilityExceptionCreate) => {
-    return createExceptionMutation.mutate(exceptionData)
-  }
-
-  const updateException = (id: string, exceptionData: AvailabilityExceptionUpdate) => {
-    return updateExceptionMutation.mutate({ id, data: exceptionData })
-  }
-
-  const deleteException = (id: string) => {
-    return deleteExceptionMutation.mutate(id)
-  }
-
-  return {
-    exceptions: readonly(computed(() => state.value?.data || [])),
-    loading,
-    error: readonly(computed(() => state.value?.error)),
-    fetchExceptions,
-    createException,
-    isCreating: createExceptionMutation.isLoading,
-    updateException,
-    isUpdating: updateExceptionMutation.isLoading,
-    deleteException,
-    isDeleting: deleteExceptionMutation.isLoading
-  }
 }
+
+export const useAvailabilityExceptionsList = createSharedComposable(_useAvailabilityExceptionsList)
+export const useCreateAvailabilityException = createSharedComposable(_useCreateAvailabilityException)
+export const useUpdateAvailabilityException = createSharedComposable(_useUpdateAvailabilityException)
+export const useDeleteAvailabilityException = createSharedComposable(_useDeleteAvailabilityException)

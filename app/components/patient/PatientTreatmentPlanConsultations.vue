@@ -28,8 +28,11 @@
   const deleteConsultation = async (consultationId: string) => {
     if (!props.patient) return
 
-    const { deleteConsultation: deleteConsultationFromComposable } = useConsultations()
-    await deleteConsultationFromComposable(props.patient.id, consultationId)
+    const deleteConsultationFromComposable = useDeleteConsultation()
+    await deleteConsultationFromComposable.mutateAsync({
+      patientId: props.patient.id,
+      consultationId
+    })
   }
 
   // Edit consultation function - opens planning slideover with consultation data

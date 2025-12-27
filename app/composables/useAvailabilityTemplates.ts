@@ -1,46 +1,55 @@
+import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
-export function useAvailabilityTemplates() {
-  const toast = useToast()
+/**
+ * Query for fetching availability templates
+ * @param therapistId - The therapist's ID to fetch templates for
+ * @returns Query result with templates data and loading state
+ */
+const _useAvailabilityTemplatesList = (therapistId: MaybeRefOrGetter<string | undefined>) => {
   const requestFetch = useRequestFetch()
-  const queryCache = useQueryCache()
+  const id = toValue(therapistId)
 
-  // Query for fetching templates
-  const {
-    state,
-    isLoading: loading,
-    refetch: fetchTemplates
-  } = useQuery({
-    key: ['availability-templates'],
-    query: () =>
-      requestFetch('/api/availability/templates').then((resp) =>
-        resp.map((item) => ({
-          ...item,
-          createdAt: parseISO(item.createdAt),
-          updatedAt: parseISO(item.updatedAt)
-        }))
-      )
+  return useQuery({
+    key: () => (id ? ['availability-templates', id] : ['availability-templates']),
+    query: async () => {
+      const resp = await requestFetch('/api/availability/templates', {
+        query: { therapistId: id }
+      })
+      return resp?.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt)
+      }))
+    },
+    enabled: () => !!id
   })
+}
 
-  // Mutation for creating templates
-  const createTemplateMutation = useMutation({
-    mutation: async (templateData: WeeklyAvailabilityTemplateCreate) => {
-      const response = await requestFetch('/api/availability/templates', {
+/**
+ * Mutation for creating a new availability template
+ * @returns Mutation with create functionality and error handling
+ */
+const _useCreateAvailabilityTemplate = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async (templateData: WeeklyAvailabilityTemplateCreate) =>
+      requestFetch('/api/availability/templates', {
         method: 'POST',
         body: templateData
-      })
-
-      return response
-    },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Modèle de disponibilité créé',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error).message,
@@ -48,26 +57,32 @@ export function useAvailabilityTemplates() {
       })
     }
   })
+}
 
-  // Mutation for updating templates
-  const updateTemplateMutation = useMutation({
-    mutation: async ({ id, data }: { id: string; data: WeeklyAvailabilityTemplateUpdate }) => {
-      const response = await requestFetch(`/api/availability/templates/${id}`, {
+/**
+ * Mutation for updating an existing availability template
+ * @returns Mutation with update functionality and error handling
+ */
+const _useUpdateAvailabilityTemplate = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ id, data }: { id: string; data: WeeklyAvailabilityTemplateUpdate }) =>
+      requestFetch(`/api/availability/templates/${id}`, {
         method: 'PUT',
         body: data
-      })
-
-      return response
-    },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Modèle mis à jour',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error).message,
@@ -75,22 +90,31 @@ export function useAvailabilityTemplates() {
       })
     }
   })
+}
 
-  // Mutation for deleting templates
-  const deleteTemplateMutation = useMutation({
-    mutation: async (id: string) => {
-      await requestFetch(`/api/availability/templates/${id}`, { method: 'DELETE' })
-      return true
-    },
-    onSuccess() {
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+/**
+ * Mutation for deleting an availability template
+ * @returns Mutation with delete functionality and error handling
+ */
+const _useDeleteAvailabilityTemplate = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async (id: string) =>
+      requestFetch(`/api/availability/templates/${id}`, {
+        method: 'DELETE'
+      }),
+    onSuccess: () => {
       toast.add({
         title: 'Succès',
         description: 'Modèle supprimé',
         color: 'success'
       })
+      queryCache.invalidateQueries({ key: ['availability-templates'] })
     },
-    onError(error) {
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error).message,
@@ -98,14 +122,9 @@ export function useAvailabilityTemplates() {
       })
     }
   })
-
-  return {
-    templates: readonly(computed(() => state.value?.data || [])),
-    loading,
-    error: readonly(computed(() => state.value?.error)),
-    fetchTemplates,
-    createTemplateMutation,
-    updateTemplateMutation,
-    deleteTemplateMutation
-  }
 }
+
+export const useAvailabilityTemplatesList = createSharedComposable(_useAvailabilityTemplatesList)
+export const useCreateAvailabilityTemplate = createSharedComposable(_useCreateAvailabilityTemplate)
+export const useUpdateAvailabilityTemplate = createSharedComposable(_useUpdateAvailabilityTemplate)
+export const useDeleteAvailabilityTemplate = createSharedComposable(_useDeleteAvailabilityTemplate)
