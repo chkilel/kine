@@ -16,6 +16,7 @@
     licenseNumber: user.value?.licenseNumber,
     defaultConsultationDuration: user.value?.defaultConsultationDuration || undefined,
     consultationGapMinutes: user.value?.consultationGapMinutes ?? 15,
+    slotIncrementMinutes: user.value?.slotIncrementMinutes ?? 15,
     phoneNumbers: user.value?.phoneNumbers
   })
 
@@ -48,6 +49,7 @@
         licenseNumber: profile.licenseNumber,
         defaultConsultationDuration: profile.defaultConsultationDuration,
         consultationGapMinutes: profile.consultationGapMinutes,
+        slotIncrementMinutes: profile.slotIncrementMinutes,
         phoneNumbers: profile.phoneNumbers
       })
 
@@ -172,6 +174,36 @@
                   @click="profile.consultationGapMinutes = gap"
                 >
                   {{ gap === 0 ? 'Aucun' : `${gap} min` }}
+                </UButton>
+              </div>
+            </ClientOnly>
+          </UFormField>
+
+          <USeparator />
+
+          <UFormField name="slotIncrementMinutes" label="Incrément de créneaux">
+            <template #hint>Interval entre les heures de début possibles (ex: créneaux toutes les 15 minutes)</template>
+            <ClientOnly>
+              <template #fallback>
+                <div class="grid w-full grid-cols-5 gap-2">
+                  <USkeleton
+                    v-for="increment in CONSULTATION_SLOT_INCREMENT_OPTIONS"
+                    :key="increment"
+                    class="border-default h-9 rounded-lg border"
+                  />
+                </div>
+              </template>
+              <div class="grid grid-cols-5 gap-2">
+                <UButton
+                  v-for="increment in CONSULTATION_SLOT_INCREMENT_OPTIONS"
+                  :key="increment"
+                  :variant="profile.slotIncrementMinutes === increment ? 'solid' : 'outline'"
+                  :color="profile.slotIncrementMinutes === increment ? 'primary' : 'neutral'"
+                  size="lg"
+                  block
+                  @click="profile.slotIncrementMinutes = increment"
+                >
+                  {{ increment }} min
                 </UButton>
               </div>
             </ClientOnly>
