@@ -14,7 +14,8 @@
     lastName: user.value?.lastName || '',
     specialization: user.value?.specialization,
     licenseNumber: user.value?.licenseNumber,
-    defaultConsultationDuration: user.value?.defaultConsultationDuration,
+    defaultConsultationDuration: user.value?.defaultConsultationDuration || undefined,
+    consultationGapMinutes: user.value?.consultationGapMinutes ?? 15,
     phoneNumbers: user.value?.phoneNumbers
   })
 
@@ -46,6 +47,7 @@
         specialization: profile.specialization,
         licenseNumber: profile.licenseNumber,
         defaultConsultationDuration: profile.defaultConsultationDuration,
+        consultationGapMinutes: profile.consultationGapMinutes,
         phoneNumbers: profile.phoneNumbers
       })
 
@@ -140,6 +142,36 @@
                   @click="profile.defaultConsultationDuration = duration"
                 >
                   {{ duration }} min
+                </UButton>
+              </div>
+            </ClientOnly>
+          </UFormField>
+
+          <USeparator />
+
+          <UFormField name="consultationGapMinutes" label="Intervalle entre séances">
+            <template #hint>Temps minimum entre deux consultations consécutives</template>
+            <ClientOnly>
+              <template #fallback>
+                <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
+                  <USkeleton
+                    v-for="gap in CONSULTATION_GAP_OPTIONS"
+                    :key="gap"
+                    class="border-default h-9 rounded-lg border"
+                  />
+                </div>
+              </template>
+              <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
+                <UButton
+                  v-for="gap in CONSULTATION_GAP_OPTIONS"
+                  :key="gap"
+                  :variant="profile.consultationGapMinutes === gap ? 'solid' : 'outline'"
+                  :color="profile.consultationGapMinutes === gap ? 'primary' : 'neutral'"
+                  size="lg"
+                  block
+                  @click="profile.consultationGapMinutes = gap"
+                >
+                  {{ gap === 0 ? 'Aucun' : `${gap} min` }}
                 </UButton>
               </div>
             </ClientOnly>
