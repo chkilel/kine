@@ -43,6 +43,7 @@ CREATE TABLE `users` (
 	`licenseNumber` text,
 	`defaultConsultationDuration` integer DEFAULT 30,
 	`consultationGapMinutes` integer DEFAULT 5,
+	`slotIncrementMinutes` integer DEFAULT 15,
 	`specialization` text DEFAULT '[]',
 	`phoneNumbers` text DEFAULT '[]',
 	`createdAt` integer NOT NULL,

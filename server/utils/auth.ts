@@ -40,6 +40,11 @@ export const additionalFields = {
     required: false,
     input: true
   },
+  slotIncrementMinutes: {
+    type: 'number',
+    required: false,
+    input: true
+  },
   phoneNumbers: {
     type: 'json',
     required: true,

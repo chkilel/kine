@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bf073c58-229f-4b15-a146-5bf5c9117b9e",
+  "id": "e7b90c97-12c4-4d70-8ceb-c5d143da3991",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -322,6 +322,14 @@
           "notNull": false,
           "autoincrement": false,
           "default": 5
+        },
+        "slotIncrementMinutes": {
+          "name": "slotIncrementMinutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 15
         },
         "specialization": {
           "name": "specialization",

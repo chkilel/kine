@@ -28,6 +28,12 @@ const consultationGapMinutesSchema = z
   .min(0, "L'intervalle minimum est de 0 minute")
   .max(60, "L'intervalle maximum est de 60 minutes")
 
+const slotIncrementMinutesSchema = z
+  .number("L'incrément de créneaux doit être un nombre")
+  .int("L'incrément de créneaux doit être un nombre entier")
+  .min(5, "L'incrément minimum est de 5 minutes")
+  .max(30, "L'incrément maximum est de 30 minutes")
+
 // ============================================================================
 // SignUp Schema
 // ============================================================================
@@ -41,6 +47,7 @@ export const signUpSchema = z
     licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
     defaultConsultationDuration: sessionDurationSchema.default(60).optional(),
     consultationGapMinutes: consultationGapMinutesSchema.default(5).optional(),
+    slotIncrementMinutes: slotIncrementMinutesSchema.default(15).optional(),
     phoneNumbers: z
       .array(phoneEntrySchema)
       .min(1, 'Au moins un numéro de téléphone est requis')
@@ -93,6 +100,7 @@ export const userUpdateSchema = createUpdateSchema(users, {
   licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
   defaultConsultationDuration: sessionDurationSchema.optional(),
   consultationGapMinutes: consultationGapMinutesSchema.optional(),
+  slotIncrementMinutes: slotIncrementMinutesSchema.optional(),
   phoneNumbers: z
     .array(phoneEntrySchema)
     .min(1, 'Au moins un numéro de téléphone est requis')
@@ -152,6 +160,7 @@ export type LoginSchema = z.output<typeof loginSchema>
 export type UpdateUser = z.output<typeof userUpdateSchema>
 export type UpdatePassword = z.output<typeof updatePasswordSchema>
 export type ConsultationGapMinutes = z.output<typeof consultationGapMinutesSchema>
+export type SlotIncrementMinutes = z.output<typeof slotIncrementMinutesSchema>
 
 // User Type
 export type User = NonNullable<SessionData>['user']
