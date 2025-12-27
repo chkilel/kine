@@ -1,5 +1,5 @@
 import { format, differenceInYears, parseISO, formatDistanceToNow, differenceInDays } from 'date-fns'
-import { CalendarDate } from '@internationalized/date'
+import { CalendarDate, parseTime, Time } from '@internationalized/date'
 import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
 import { fr } from 'date-fns/locale'
 
@@ -18,16 +18,15 @@ export const removeSecondsFromTime = (timeString: string): string => {
 }
 
 export const timeToMinutes = (time: string): number => {
-  const [hoursStr = '0', minutesStr = '0'] = time.split(':')
-  const hours = parseInt(hoursStr, 10)
-  const minutes = parseInt(minutesStr, 10)
-  return hours * 60 + minutes
+  const parsed = parseTime(time)
+  if (!parsed) return 0
+  return parsed.hour * 60 + parsed.minute
 }
 
 export const minutesToTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
+  const hours = Math.floor(minutes / 60) % 24
   const mins = minutes % 60
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+  return new Time(hours, mins).toString().slice(0, 5)
 }
 
 export const hasTimeConflict = (
