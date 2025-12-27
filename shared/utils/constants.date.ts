@@ -3,12 +3,12 @@
 // =================================================================================================
 
 export const PREFERRED_DAYS_CONFIG = {
-  Mon: { label: 'Lundi', short: 'Lun' },
-  Tue: { label: 'Mardi', short: 'Mar' },
-  Wed: { label: 'Mercredi', short: 'Mer' },
-  Thu: { label: 'Jeudi', short: 'Jeu' },
-  Fri: { label: 'Vendredi', short: 'Ven' },
-  Sat: { label: 'Samedi', short: 'Sam' }
+  mon: { label: 'Lundi', short: 'Lun' },
+  tue: { label: 'Mardi', short: 'Mar' },
+  wed: { label: 'Mercredi', short: 'Mer' },
+  thu: { label: 'Jeudi', short: 'Jeu' },
+  fri: { label: 'Vendredi', short: 'Ven' },
+  sat: { label: 'Samedi', short: 'Sam' }
 } as const
 
 // Preferred Days Type

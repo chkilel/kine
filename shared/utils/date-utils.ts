@@ -128,6 +128,11 @@ export const formatFrenchDateRange = (startDate: Date | string, endDate: Date | 
   return `${start} - ${end}`
 }
 
+export function getDayOfWeek(date: string): string {
+  const d = parseISO(date)
+  return format(d, 'EEE').toLowerCase() // Returns 'sun', 'mon', 'tue', 'wed', etc.
+}
+
 // ============================================================================
 // DATE CALCULATIONS
 // ============================================================================

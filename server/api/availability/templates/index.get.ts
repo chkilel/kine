@@ -30,12 +30,12 @@ export default defineEventHandler(async (event) => {
 
     // Define day order for proper weekly sorting - use raw SQL with proper syntax
     const dayOrderCase = sql`CASE weekly_availability_templates.dayOfWeek
-      WHEN 'Mon' THEN 0
-      WHEN 'Tue' THEN 1
-      WHEN 'Wed' THEN 2
-      WHEN 'Thu' THEN 3
-      WHEN 'Fri' THEN 4
-      WHEN 'Sat' THEN 5
+      WHEN 'mon' THEN 0
+      WHEN 'tue' THEN 1
+      WHEN 'wed' THEN 2
+      WHEN 'thu' THEN 3
+      WHEN 'fri' THEN 4
+      WHEN 'sat' THEN 5
       ELSE 6
     END`
 

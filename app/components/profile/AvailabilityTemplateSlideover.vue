@@ -17,7 +17,7 @@
 
   // Form state
   const formState = reactive<WeeklyAvailabilityTemplateCreate>({
-    dayOfWeek: props.template?.dayOfWeek || 'Mon',
+    dayOfWeek: props.template?.dayOfWeek || 'mon',
     startTime: props.template?.startTime || WORKING_HOURS.start,
     endTime: props.template?.endTime || WORKING_HOURS.end,
     location: props.template?.location || 'clinic',
