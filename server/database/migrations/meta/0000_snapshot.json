@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6ecec676-0f8f-4436-9303-23168189f4dd",
+  "id": "eb7913dd-b28e-4ec5-8e80-f241ae423078",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -314,6 +314,14 @@
           "notNull": false,
           "autoincrement": false,
           "default": 30
+        },
+        "consultationGapMinutes": {
+          "name": "consultationGapMinutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 5
         },
         "specialization": {
           "name": "specialization",

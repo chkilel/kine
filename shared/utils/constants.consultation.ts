@@ -7,6 +7,12 @@ import type { ConsultationStatus, ConsultationType } from '../types/base.types'
 // Consultation Duration Options
 export const CONSULTATION_DURATIONS = [30, 45, 60, 75, 90, 105, 120]
 
+// Consultation Gap Options (minutes between sessions)
+export const CONSULTATION_GAP_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60] as const
+
+//FIXME this is not necessary: Minimum Gap Between Consultations in Minutes
+export const MINIMUM_CONSULTATION_GAP_MINUTES = 15
+
 // Valid consultation types for patient sessions
 export const VALID_CONSULTATION_TYPES = [
   'initial',
@@ -27,9 +33,6 @@ export const VALID_CONSULTATION_STATUSES = [
   'cancelled',
   'no_show'
 ] as const
-
-// Minimum Gap Between Consultations in Minutes
-export const MINIMUM_CONSULTATION_GAP_MINUTES = 15
 
 // Consultation Status Configuration
 export const SESSION_STATUS_CONFIG = {
