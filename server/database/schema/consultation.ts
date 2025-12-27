@@ -32,9 +32,9 @@ export const consultations = sqliteTable(
 
     // ---- Scheduling ----
     date: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
-    startTime: text(), // Start time of session — e.g., "10:00"
-    endTime: text(), // End time of session — e.g., "11:00"
-    duration: integer(), // Session duration in minutes — e.g., 60
+    startTime: text().notNull(), // Start time of session — e.g., "10:00"
+    endTime: text().notNull(), // End time of session — e.g., "11:00"
+    duration: integer().notNull(), // Session duration in minutes — e.g., 60
     type: text({ enum: VALID_CONSULTATION_TYPES }), // Type of consultation — e.g., "follow_up"
 
     // ---- Clinical content ----
