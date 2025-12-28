@@ -6,6 +6,7 @@
   import type { Row } from '@tanstack/table-core'
 
   const UButton = resolveComponent('UButton')
+  const router = useRouter()
   const UBadge = resolveComponent('UBadge')
   const UDropdownMenu = resolveComponent('UDropdownMenu')
   const UAvatar = resolveComponent('UAvatar')
@@ -84,9 +85,9 @@
         onSelect: () => toast.add({ title: 'Navigation', description: `Membres de ${org.name}`, color: 'info' })
       },
       {
-        label: 'Paramètres',
-        icon: 'i-lucide-settings',
-        onSelect: () => toast.add({ title: 'Navigation', description: `Paramètres de ${org.name}`, color: 'info' })
+        label: 'Profil organisation',
+        icon: 'i-lucide-building-2',
+        to: `/organizations/${org.id}`
       },
       { type: 'separator' },
       {
