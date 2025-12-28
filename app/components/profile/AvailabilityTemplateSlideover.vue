@@ -5,19 +5,20 @@
   const props = defineProps<{ template?: WeeklyAvailabilityTemplate }>()
   const emit = defineEmits<{ close: [] }>()
 
-  // Use availability templates composable for API operations
-  const { createTemplateMutation, updateTemplateMutation } = useAvailabilityTemplates()
+  // Use availability templates composables for API operations
+  const createTemplate = useCreateAvailabilityTemplate()
+  const updateTemplate = useUpdateAvailabilityTemplate()
 
   const formRef = ref<HTMLFormElement>()
 
   // Loading state for form submission
   const isSubmitting = computed(() => {
-    return updateTemplateMutation.isLoading.value || createTemplateMutation.isLoading.value
+    return updateTemplate.isLoading.value || createTemplate.isLoading.value
   })
 
   // Form state
   const formState = reactive<WeeklyAvailabilityTemplateCreate>({
-    dayOfWeek: props.template?.dayOfWeek || 'Mon',
+    dayOfWeek: props.template?.dayOfWeek || 'mon',
     startTime: props.template?.startTime || WORKING_HOURS.start,
     endTime: props.template?.endTime || WORKING_HOURS.end,
     location: props.template?.location || 'clinic',
@@ -37,14 +38,12 @@
   async function handleSubmit(event: FormSubmitEvent<WeeklyAvailabilityTemplateCreate>) {
     try {
       if (props.template) {
-        // Update existing template
-        updateTemplateMutation.mutate({
+        updateTemplate.mutate({
           id: props.template.id,
           data: event.data
         })
       } else {
-        // Create new template
-        createTemplateMutation.mutate(event.data)
+        createTemplate.mutate(event.data)
       }
 
       emit('close')

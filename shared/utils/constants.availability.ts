@@ -5,7 +5,7 @@
 import type { Reason } from '../types/base.types'
 
 // Valid days of the week for scheduling
-export const VALID_SCHEDULE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+export const VALID_SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
 // Valid exception types for practitioner schedules
 export const VALID_SCHEDULE_EXCEPTION_TYPES = [

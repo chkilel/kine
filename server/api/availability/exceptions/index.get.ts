@@ -1,7 +1,7 @@
 import { eq, and, asc } from 'drizzle-orm'
-import { availabilityExceptions } from '~~/server/database/schema'
+import { availabilityExceptions, members } from '~~/server/database/schema'
 
-// GET /api/availability/exceptions - Get availability exceptions for current user
+// GET /api/availability/exceptions - Get availability exceptions for a specific therapist
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
@@ -10,12 +10,26 @@ export default defineEventHandler(async (event) => {
     const validatedQuery = await getValidatedQuery(event, availabilityExceptionQuerySchema.parse)
 
     // 2. Require current user and organization from session
-    const { userId, organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuth(event)
 
-    // 3. Build filters
+    // 3. Validate therapist exists and belongs to the same organization
+    const [therapistMember] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.userId, validatedQuery.therapistId), eq(members.organizationId, organizationId)))
+      .limit(1)
+
+    if (!therapistMember) {
+      throw createError({
+        statusCode: 404,
+        message: 'Therapist not found or not in your organization'
+      })
+    }
+
+    // 4. Build filters
     const filters = [
       eq(availabilityExceptions.organizationId, organizationId),
-      eq(availabilityExceptions.userId, userId)
+      eq(availabilityExceptions.userId, validatedQuery.therapistId)
     ]
 
     // Add availability status filter
@@ -28,7 +42,7 @@ export default defineEventHandler(async (event) => {
       filters.push(eq(availabilityExceptions.reason, validatedQuery.reason))
     }
 
-    // 4. Execute paginated query - order by date first, then start time
+    // 5. Execute paginated query - order by date first, then start time
     const exceptionsList = await db
       .select()
       .from(availabilityExceptions)
@@ -37,6 +51,6 @@ export default defineEventHandler(async (event) => {
 
     return exceptionsList
   } catch (error: unknown) {
-    handleApiError
+    handleApiError(error)
   }
 })

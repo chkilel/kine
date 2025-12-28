@@ -1,23 +1,24 @@
-import { createError } from 'h3'
+import { createSharedComposable } from '@vueuse/core'
 
 export type UploadResult = {
   key: string
 }
 
-export function useUploads() {
-  // ------------------ Helpers ------------------ //
+/**
+ * Upload composable for handling file uploads to R2/S3
+ * @returns Upload methods for file operations
+ */
+const _useUploads = () => {
+  const toast = useToast()
 
   async function getPresignUrl(key: string, expiresIn?: number): Promise<string> {
     try {
-      console.log('getPresignUrl - Requesting URL for key:', key)
       const { urls, errors } = await $fetch<{ urls: Record<string, string | null>; errors?: Record<string, string> }>(
         '/api/r2/signed-url',
         { params: { keys: key, expiresIn } }
       )
-      console.log('getPresignUrl - API response:', { urls, errors })
 
       if (errors && errors[key]) {
-        console.error('getPresignUrl - API returned error for key:', key, errors[key])
         throw createError({
           statusCode: 500,
           statusMessage: 'Failed to get presigned GET URL',
@@ -27,7 +28,6 @@ export function useUploads() {
 
       const url = urls[key]
       if (!url) {
-        console.error('getPresignUrl - No URL returned for key:', key)
         throw createError({
           statusCode: 500,
           statusMessage: 'Failed to get presigned GET URL',
@@ -35,10 +35,8 @@ export function useUploads() {
         })
       }
 
-      console.log('getPresignUrl - Returning URL:', url)
       return url
     } catch (err: any) {
-      console.error('getPresignUrl - Error:', err)
       throw createError({
         statusCode: 500,
         statusMessage: 'Failed to get presigned GET URL',
@@ -63,8 +61,6 @@ export function useUploads() {
     }
   }
 
-  // ------------------ Main Upload ------------------ //
-
   async function uploadFile(options: {
     file: File
     folder?: string
@@ -75,10 +71,8 @@ export function useUploads() {
     const key = generateKey({ folder, name, file })
 
     try {
-      // 1- Get presigned PUT URL
       const putUrl = await putPresignUrl(key, file.type, expiresIn)
 
-      // 2- Upload file to S3/R2
       const res = await fetch(putUrl, {
         method: 'PUT',
         headers: { 'Content-Type': file.type },
@@ -93,9 +87,19 @@ export function useUploads() {
         })
       }
 
+      toast.add({
+        title: 'Succès',
+        description: 'Fichier téléchargé avec succès',
+        color: 'success'
+      })
+
       return { key }
     } catch (err: any) {
-      // Rethrow to let the caller handle UI (toast, modal, etc)
+      toast.add({
+        title: 'Erreur',
+        description: parseError(err, 'Impossible de télécharger le fichier').message,
+        color: 'error'
+      })
       throw err
     }
   }
@@ -103,10 +107,11 @@ export function useUploads() {
   return { getPresignUrl, putPresignUrl, uploadFile }
 }
 
-// ----------------- Utils ---------------- //
 function generateKey(options: { folder?: string; name?: string; file: File }) {
   const { folder, name, file } = options
   const baseName = slugify(name ?? file.name)
-  const prefix = folder ? folder.replace(/\/$/, '') + '/' : ''
+  const prefix = folder ? `${folder.replace(/\/$/, '')}/` : ''
   return `${prefix}${Date.now()}-${baseName}`
 }
+
+export const useUploads = createSharedComposable(_useUploads)

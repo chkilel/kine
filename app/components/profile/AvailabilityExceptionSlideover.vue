@@ -5,8 +5,12 @@
   const props = defineProps<{ availabilityException?: AvailabilityException }>()
   const emit = defineEmits<{ close: [] }>()
 
-  // Use availability exceptions composable for API operations
-  const { createException, updateException, isCreating, isUpdating } = useAvailabilityExceptions()
+  // Use availability exceptions composables for API operations
+  const createException = useCreateAvailabilityException()
+  const updateException = useUpdateAvailabilityException()
+
+  const isCreating = createException.isLoading
+  const isUpdating = updateException.isLoading
 
   const formRef = ref<HTMLFormElement>()
   const isOtherReason = computed(() => formState.reason === 'other')
@@ -57,10 +61,13 @@
     try {
       if (props.availabilityException) {
         // Update existing exception
-        updateException(props.availabilityException.id, formState)
+        updateException.mutate({
+          id: props.availabilityException.id,
+          data: formState
+        })
       } else {
         // Create new exception
-        createException(formState)
+        createException.mutate(formState)
       }
 
       emit('close')

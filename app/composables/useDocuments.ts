@@ -1,5 +1,8 @@
 /**
  * Query for fetching documents for a patient
+ * @param patientId - Patient ID to fetch documents for
+ * @param treatmentPlanId - Optional treatment plan ID to filter documents
+ * @returns Query result with documents data and loading state
  */
 const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
@@ -35,6 +38,8 @@ const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId
 
 /**
  * Mutation for updating a document
+ * @param patientId - Patient ID whose document is being updated
+ * @returns Mutation with update functionality and error handling
  */
 const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
   const toast = useToast()
@@ -59,13 +64,10 @@ const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
         color: 'success'
       })
     },
-    onError: (error: unknown) => {
-      console.error('Error updating document:', error)
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description:
-          (error as Error & { data?: { statusMessage?: string } })?.data?.statusMessage ||
-          'Impossible de mettre à jour le document',
+        description: parseError(error, 'Impossible de mettre à jour le document').message,
         color: 'error'
       })
     }
@@ -74,6 +76,8 @@ const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
 
 /**
  * Mutation for deleting a document
+ * @param patientId - Patient ID whose document is being deleted
+ * @returns Mutation with delete functionality and error handling
  */
 const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
   const toast = useToast()
@@ -95,13 +99,10 @@ const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
         color: 'success'
       })
     },
-    onError: (error: unknown) => {
-      console.error('Error deleting document:', error)
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description:
-          (error as Error & { data?: { statusMessage?: string } })?.data?.statusMessage ||
-          'Impossible de supprimer le document',
+        description: parseError(error, 'Impossible de supprimer le document').message,
         color: 'error'
       })
     }

@@ -1,8 +1,19 @@
 <script setup lang="ts">
   import { LazyProfileAvailabilityExceptionSlideover } from '#components'
 
+  // Get current user from auth
+  const { user: therapist } = await useAuth()
+
   // Composables
-  const { exceptions, loading, error, fetchExceptions, deleteException } = useAvailabilityExceptions()
+  const {
+    data: exceptions,
+    isLoading,
+    error,
+    refetch: fetchExceptions
+  } = useAvailabilityExceptionsList(() => therapist.value?.id)
+  const deleteException = useDeleteAvailabilityException()
+
+  const loading = isLoading
 
   // Create overlay instance
   const overlay = useOverlay()
@@ -12,7 +23,7 @@
   const handleDeleteException = async (exception: any) => {
     const date = exception.date instanceof Date ? exception.date : new Date(exception.date)
     const confirmed = confirm(`Êtes-vous sûr de vouloir supprimer cette exception du ${date.toLocaleDateString()}?`)
-    if (confirmed) deleteException(exception.id)
+    if (confirmed) deleteException.mutate(exception.id)
   }
 </script>
 
@@ -43,7 +54,7 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="exceptions.length === 0" class="p-5 text-center">
+      <div v-else-if="exceptions?.length === 0" class="p-5 text-center">
         <UIcon name="i-lucide-calendar-off" class="text-muted mb-3 text-4xl" />
         <p class="text-muted">Aucune exception de disponibilité</p>
         <UButton @click="exceptionOverlay.open()" class="mt-3" size="sm">Ajouter une exception</UButton>
@@ -75,7 +86,7 @@
                   {{ removeSecondsFromTime(exception.endTime) }}
                 </template>
                 <div v-else class="flex items-baseline gap-6">
-                  {{ formatFrenchDate (exception.date) }}
+                  {{ formatFrenchDate(exception.date) }}
                   <span class="text-toned text-sm font-normal">Journée complète</span>
                 </div>
               </div>

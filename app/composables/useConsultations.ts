@@ -1,108 +1,136 @@
-export function useConsultations() {
-  const toast = useToast()
+import { createSharedComposable } from '@vueuse/core'
 
-  const fetchConsultations = async (patientId: string, query?: ConsultationQuery) => {
-    try {
-      const data = await $fetch(`/api/patients/${patientId}/consultations`, {
-        query
+/**
+ * Query for fetching consultations for a patient
+ * @param patientId - Patient ID to fetch consultations for
+ * @param queryParams - Optional query parameters for filtering and pagination
+ * @returns Query result with consultations data and loading state
+ */
+const _useConsultationsList = (patientId: MaybeRefOrGetter<string>, queryParams?: Ref<ConsultationQuery>) => {
+  const requestFetch = useRequestFetch()
+  return useQuery({
+    enabled: () => !!toValue(patientId),
+    key: () => {
+      const query = queryParams?.value
+      return query ? ['consultations', toValue(patientId), query] : ['consultations', toValue(patientId)]
+    },
+    query: async () => {
+      const id = toValue(patientId)
+      const resp = await requestFetch(`/api/patients/${id}/consultations`, {
+        query: queryParams?.value
       })
-
-      return { consultations: data?.data || [], error: null }
-    } catch (error: any) {
-      const errorMessage = error?.data?.statusMessage || error?.message || 'Impossible de charger les consultations'
-      toast.add({
-        title: 'Erreur',
-        description: errorMessage,
-        color: 'error'
-      })
-      return { consultations: [], error }
+      return resp?.data || []
     }
-  }
+  })
+}
 
-  const createConsultation = async (patientId: string, consultationData: ConsultationCreate) => {
-    try {
-      const { data: createdConsulation } = await $fetch(`/api/patients/${patientId}/consultations`, {
+/**
+ * Mutation for creating a new consultation
+ * @returns Mutation with create functionality and error handling
+ */
+const _useCreateConsultation = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ patientId, consultationData }: { patientId: string; consultationData: ConsultationCreate }) =>
+      requestFetch(`/api/patients/${patientId}/consultations`, {
         method: 'POST',
         body: consultationData
-      })
-
-      const selectedDate = createdConsulation?.date
-      const selectedTime = createdConsulation?.startTime
-
+      }),
+    onSuccess: (_, { patientId }) => {
       toast.add({
         title: 'Succès',
-        description: `La consultation du ${selectedDate ? new Date(selectedDate).toLocaleDateString('fr-FR') : 'date non spécifiée'} à ${selectedTime} a été créée.`,
+        description: 'Consultation créée avec succès',
         color: 'success'
       })
-      return { consultation: createdConsulation, error: null }
-    } catch (error: any) {
-      const errorMessage = error?.data?.statusMessage || error?.message || 'Impossible de créer la consultation'
+      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error, 'Impossible de créer la consultation').message,
         color: 'error'
       })
-      return { consultation: null, error }
     }
-  }
+  })
+}
 
-  const updateConsultation = async (
-    patientId: string,
-    consultationId: string,
-    consultationData: ConsultationUpdate
-  ) => {
-    try {
-      const data = await $fetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+/**
+ * Mutation for updating an existing consultation
+ * @returns Mutation with update functionality and error handling
+ */
+const _useUpdateConsultation = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({
+      patientId,
+      consultationId,
+      consultationData
+    }: {
+      patientId: string
+      consultationId: string
+      consultationData: ConsultationUpdate
+    }) =>
+      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
         method: 'PUT',
         body: consultationData
-      })
-
+      }),
+    onSuccess: (_, { patientId }) => {
       toast.add({
         title: 'Succès',
         description: 'Consultation mise à jour avec succès',
         color: 'success'
       })
-
-      return { consultation: data?.data, error: null }
-    } catch (error: any) {
-      const errorMessage = error?.data?.statusMessage || error?.message || 'Impossible de mettre à jour la consultation'
+      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error, 'Impossible de mettre à jour la consultation').message,
         color: 'error'
       })
-      return { consultation: null, error }
     }
-  }
+  })
+}
 
-  const deleteConsultation = async (patientId: string, consultationId: string) => {
-    try {
-      await $fetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+/**
+ * Mutation for deleting a consultation
+ * @returns Mutation with delete functionality and error handling
+ */
+const _useDeleteConsultation = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({ patientId, consultationId }: { patientId: string; consultationId: string }) =>
+      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
         method: 'DELETE'
-      })
-
+      }),
+    onSuccess: (_, { patientId }) => {
       toast.add({
         title: 'Succès',
         description: 'Consultation supprimée avec succès',
         color: 'success'
       })
-
-      return true
-    } catch (error: any) {
-      const errorMessage = error?.data?.statusMessage || error?.message || 'Impossible de supprimer la consultation'
+      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+    },
+    onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: errorMessage,
+        description: parseError(error, 'Impossible de supprimer la consultation').message,
         color: 'error'
       })
-      return false
     }
-  }
-
-  return {
-    fetchConsultations,
-    createConsultation,
-    updateConsultation,
-    deleteConsultation
-  }
+  })
 }
+
+export const useConsultationsList = createSharedComposable(_useConsultationsList)
+export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
+export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
+export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)

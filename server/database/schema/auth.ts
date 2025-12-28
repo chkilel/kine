@@ -22,6 +22,7 @@ export const users = sqliteTable('users', {
   licenseNumber: text(),
   defaultConsultationDuration: integer().default(30),
   consultationGapMinutes: integer().default(5),
+  slotIncrementMinutes: integer().default(15),
   specialization: text({ mode: 'json' }).$type<string[]>().default([]),
   phoneNumbers: text({ mode: 'json' }).$type<{ number: string; category: string; id: string }[]>().default([]),
   ...softDeleteTimestamps
