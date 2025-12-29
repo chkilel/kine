@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { LazyOrganizationRoomSlideover } from '#components'
+
   interface Room {
     id: string
     name: string
@@ -10,6 +12,9 @@
     icon: string
     color: string
   }
+
+  const overlay = useOverlay()
+  const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
 
   const rooms = ref<Room[]>([
     {
@@ -66,12 +71,8 @@
 
   const toast = useToast()
 
-  function handleAddRoom() {
-    toast.add({
-      title: 'Ajouter une salle',
-      description: 'Cette fonctionnalité sera bientôt disponible',
-      color: 'primary'
-    })
+  async function handleAddRoom() {
+    await roomAddOverlay.open({})
   }
 
   function handleEditRoom(room: Room) {
