@@ -1,9 +1,16 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
 
+  const props = defineProps<{
+    room?: Room
+  }>()
+
   const emit = defineEmits<{ close: [value?: any] }>()
 
-  const { mutate: createRoom, isLoading } = useCreateRoom()
+  const { mutate: createRoom, isLoading: isCreating } = useCreateRoom()
+  const { mutate: updateRoom, isLoading: isUpdating } = useUpdateRoom()
+
+  const isLoading = computed(() => isCreating.value || isUpdating.value)
 
   const searchEquipment = ref('')
 
@@ -24,6 +31,12 @@
     return equipmentList.filter((e) => e.toLowerCase().includes(searchEquipment.value.toLowerCase()))
   })
 
+  const isEditMode = computed(() => !!props.room)
+
+  const modalTitle = computed(() => (isEditMode.value ? 'Modifier la salle' : 'Ajouter une nouvelle salle'))
+
+  const submitButtonText = computed(() => (isEditMode.value ? 'Enregistrer les modifications' : 'Ajouter la salle'))
+
   const formState = reactive({
     name: '',
     description: '',
@@ -35,21 +48,51 @@
 
   const formRef = useTemplateRef<HTMLFormElement>('roomFormRef')
 
-  async function handleSubmit(event: FormSubmitEvent<typeof formState>) {
-    createRoom({
-      roomData: {
-        name: event.data.name,
-        description: event.data.description,
-        capacity: event.data.capacity,
-        area: event.data.surface ? Number(event.data.surface) : undefined,
-        prm: event.data.isAccessible,
-        equipment: event.data.equipment
-      },
-      onSuccess() {
-        emit('close')
+  watch(
+    () => props.room,
+    (room) => {
+      if (room) {
+        formState.name = room.name
+        formState.description = room.description || ''
+        formState.capacity = room.capacity
+        formState.surface = room.area ? String(room.area) : ''
+        formState.isAccessible = room.prm === 1
+        formState.equipment = (room.equipment || []) as (typeof equipmentList)[number][]
+      } else {
         resetForm()
       }
-    })
+    },
+    { immediate: true }
+  )
+
+  async function handleSubmit(event: FormSubmitEvent<typeof formState>) {
+    const roomData = {
+      name: event.data.name,
+      description: event.data.description,
+      capacity: event.data.capacity,
+      area: event.data.surface ? Number(event.data.surface) : undefined,
+      prm: event.data.isAccessible,
+      equipment: event.data.equipment
+    }
+
+    if (isEditMode.value && props.room) {
+      updateRoom({
+        roomId: props.room.id,
+        roomData,
+        onSuccess() {
+          emit('close')
+          resetForm()
+        }
+      })
+    } else {
+      createRoom({
+        roomData,
+        onSuccess() {
+          emit('close')
+          resetForm()
+        }
+      })
+    }
   }
 
   function resetForm() {
@@ -65,6 +108,7 @@
   }
 
   function handleCancel() {
+    resetForm()
     emit('close')
   }
 
@@ -76,8 +120,12 @@
 <template>
   <USlideover
     :dismissible="false"
-    title="Ajouter une nouvelle salle"
-    description="Configurez les détails et les équipements de votre nouvelle salle de soin."
+    :title="modalTitle"
+    :description="
+      isEditMode
+        ? 'Modifiez les détails et les équipements de la salle de soin.'
+        : 'Configurez les détails et les équipements de votre nouvelle salle de soin.'
+    "
     :ui="{
       content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated'
     }"
@@ -193,7 +241,7 @@
           :loading="isLoading"
           :disabled="isLoading"
         >
-          Ajouter la salle
+          {{ submitButtonText }}
         </UButton>
       </div>
     </template>

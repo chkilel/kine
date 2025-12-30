@@ -1,8 +1,9 @@
 <script setup lang="ts">
-  import { LazyOrganizationRoomSlideover } from '#components'
+  import { LazyOrganizationRoomSlideover, LazyModalConfirm } from '#components'
 
   const overlay = useOverlay()
   const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
+  const confirmModal = overlay.create(LazyModalConfirm)
 
   const queryParams = ref<RoomQuery>({ search: undefined })
   const { data: rooms, isLoading, error } = useRoomsList(queryParams)
@@ -17,21 +18,16 @@
     return { roomCount, accessibleRooms, totalCapacity, equipmentCount }
   })
 
-  const toast = useToast()
-
   async function handleAddRoom() {
     await roomAddOverlay.open({})
   }
 
-  function handleEditRoom(room: Room) {
-    toast.add({
-      title: 'Modifier la salle',
-      description: `Modification de "${room.name}"`,
-      color: 'primary'
-    })
+  async function handleEditRoom(room: Room) {
+    await roomAddOverlay.open({ room })
   }
 
   function handleDuplicateRoom(room: Room) {
+    const toast = useToast()
     toast.add({
       title: 'Dupliquer la salle',
       description: `Duplication de "${room.name}"`,
@@ -40,7 +36,18 @@
   }
 
   async function handleDeleteRoom(room: Room) {
-    deleteRoom(room.id)
+    const confirmed = await confirmModal.open({
+      title: 'Supprimer la salle',
+      message: `Êtes-vous sûr de vouloir supprimer "${room.name}" ? Cette action est irréversible.`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      confirmColor: 'error',
+      icon: 'i-lucide-triangle-alert'
+    })
+
+    if (confirmed) {
+      deleteRoom(room.id)
+    }
   }
 </script>
 
@@ -135,7 +142,7 @@
       </UCard>
 
       <UCard
-        class="h-full min-h-25 cursor-pointer opacity-60 transition-opacity hover:opacity-100"
+        class="h-full min-h-48 cursor-pointer opacity-60 transition-opacity hover:opacity-100"
         :ui="{ body: 'h-full flex flex-col items-center justify-center gap-4 text-center' }"
         @click="handleAddRoom"
       >
