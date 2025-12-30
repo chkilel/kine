@@ -3,9 +3,8 @@
 
   const emit = defineEmits<{ close: [value?: any] }>()
 
-  const toast = useToast()
+  const { mutate: createRoom, isLoading } = useCreateRoom()
 
-  const loading = ref(false)
   const searchEquipment = ref('')
 
   const equipmentList = [
@@ -37,29 +36,20 @@
   const formRef = useTemplateRef<HTMLFormElement>('roomFormRef')
 
   async function handleSubmit(event: FormSubmitEvent<typeof formState>) {
-    loading.value = true
-
-    try {
-      console.log('Creating room:', event.data)
-
-      emit('close')
-      toast.add({
-        title: 'Salle ajoutée',
-        description: `La salle "${event.data.name}" a été ajoutée avec succès`,
-        color: 'success'
-      })
-
-      resetForm()
-    } catch (error: any) {
-      console.error('Error creating room:', error)
-      toast.add({
-        title: 'Erreur',
-        description: "Une erreur s'est produite lors de la création de la salle",
-        color: 'error'
-      })
-    } finally {
-      loading.value = false
-    }
+    createRoom({
+      roomData: {
+        name: event.data.name,
+        description: event.data.description,
+        capacity: event.data.capacity,
+        area: event.data.surface ? Number(event.data.surface) : undefined,
+        prm: event.data.isAccessible,
+        equipment: event.data.equipment
+      },
+      onSuccess() {
+        emit('close')
+        resetForm()
+      }
+    })
   }
 
   function resetForm() {
@@ -102,7 +92,7 @@
                 <UInput
                   v-model="formState.name"
                   placeholder="Ex: Salle de traitement 1"
-                  :disabled="loading"
+                  :disabled="isLoading"
                   class="w-full"
                 />
               </UFormField>
@@ -112,7 +102,7 @@
                   v-model="formState.description"
                   placeholder="Brève description de l'usage principal de la salle..."
                   :rows="3"
-                  :disabled="loading"
+                  :disabled="isLoading"
                   class="w-full"
                 />
               </UFormField>
@@ -123,7 +113,7 @@
                   type="number"
                   min="1"
                   icon="i-lucide-users"
-                  :disabled="loading"
+                  :disabled="isLoading"
                   class="w-full"
                 />
               </UFormField>
@@ -134,7 +124,7 @@
                   type="number"
                   placeholder="20"
                   icon="i-lucide-ruler-dimension-line"
-                  :disabled="loading"
+                  :disabled="isLoading"
                   class="w-full"
                 />
               </UFormField>
@@ -142,7 +132,7 @@
               <div class="bg-info-50 border-info-200 rounded-md border p-4 md:col-span-2">
                 <USwitch
                   v-model="formState.isAccessible"
-                  :disabled="loading"
+                  :disabled="isLoading"
                   :ui="{
                     root: 'flex-row-reverse justify-between w-full items-center',
                     wrapper: ' flex-1'
@@ -172,7 +162,7 @@
                 v-model="searchEquipment"
                 placeholder="Rechercher un équipement..."
                 icon="i-lucide-search"
-                :disabled="loading"
+                :disabled="isLoading"
                 class="w-full"
               />
 
@@ -181,7 +171,7 @@
                 :items="[...filteredEquipment]"
                 variant="card"
                 color="primary"
-                :disabled="loading"
+                :disabled="isLoading"
                 :ui="{ fieldset: 'grid grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2' }"
               />
             </div>
@@ -192,8 +182,17 @@
 
     <template #footer>
       <div class="flex w-full justify-end gap-3">
-        <UButton variant="outline" color="neutral" size="lg" :disabled="loading" @click="handleCancel">Annuler</UButton>
-        <UButton type="submit" @click="submitButton" color="primary" size="lg" :loading="loading" :disabled="loading">
+        <UButton variant="outline" color="neutral" size="lg" :disabled="isLoading" @click="handleCancel">
+          Annuler
+        </UButton>
+        <UButton
+          type="submit"
+          @click="submitButton"
+          color="primary"
+          size="lg"
+          :loading="isLoading"
+          :disabled="isLoading"
+        >
           Ajouter la salle
         </UButton>
       </div>

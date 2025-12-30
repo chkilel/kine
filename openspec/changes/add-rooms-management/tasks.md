@@ -16,6 +16,8 @@ Create `server/database/schema/rooms.ts` with the rooms table definition includi
 **Dependencies**: None
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 2: Create Zod validation schemas for rooms
@@ -35,6 +37,8 @@ Create `shared/types/room.types.ts` with RoomCreate, RoomUpdate, Room, and RoomQ
 **Dependencies**: Task 1 (schema must exist first)
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 3: Generate and run database migration
@@ -52,6 +56,8 @@ Create migration file for rooms table using Drizzle, generate the SQL, and apply
 
 **Dependencies**: Task 1
 **Priority**: High
+
+- [x] Completed
 
 ---
 
@@ -72,6 +78,8 @@ Create `server/api/rooms/index.get.ts` to list all rooms with optional search fu
 
 **Dependencies**: Task 1, Task 2
 **Priority**: High
+
+- [x] Completed
 
 ---
 
@@ -94,6 +102,8 @@ Create `server/api/rooms/index.post.ts` to create new rooms, following the patte
 **Dependencies**: Task 1, Task 2, Task 3
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 6: Implement PUT /api/rooms/[id] endpoint
@@ -115,6 +125,8 @@ Create `server/api/rooms/[id]/index.put.ts` to update existing rooms, following 
 **Dependencies**: Task 1, Task 2, Task 4
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 7: Implement DELETE /api/rooms/[id] endpoint
@@ -135,6 +147,8 @@ Create `server/api/rooms/[id]/index.delete.ts` to soft-delete rooms, following t
 
 **Dependencies**: Task 1, Task 4
 **Priority**: High
+
+- [x] Completed
 
 ---
 
@@ -158,6 +172,8 @@ Create `app/composables/useRooms.ts` with reactive state and methods for room CR
 **Dependencies**: Task 2, Task 4, Task 5, Task 6, Task 7
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 9: Update OrganizationRoomSlideover to use real API
@@ -178,6 +194,8 @@ Modify `app/components/organization/OrganizationRoomSlideover.vue` to connect fo
 
 **Dependencies**: Task 5, Task 8
 **Priority**: High
+
+- [x] Completed
 
 ---
 
@@ -202,6 +220,8 @@ Modify `app/components/organization/OrganizationProfileRoomsTab.vue` to fetch re
 **Dependencies**: Task 4, Task 7, Task 8
 **Priority**: High
 
+- [x] Completed
+
 ---
 
 ## Task 11: Add rooms export to schema index
@@ -216,6 +236,8 @@ Update `server/database/schema/index.ts` to export the rooms table for use in AP
 
 **Dependencies**: Task 1
 **Priority**: Medium
+
+- [x] Completed
 
 ---
 
@@ -278,6 +300,8 @@ Run TypeScript type checking and linting tools to ensure code quality and consis
 
 **Dependencies**: All previous tasks
 **Priority**: Medium
+
+- [x] Completed
 
 ---
 
