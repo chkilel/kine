@@ -7,6 +7,7 @@ import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
+import { rooms } from './rooms'
 import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../../../shared/utils/constants.consultation'
 import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.location'
 
@@ -29,6 +30,7 @@ export const consultations = sqliteTable(
       .references(() => patients.id, { onDelete: 'cascade' }),
     treatmentPlanId: text().references(() => treatmentPlans.id, { onDelete: 'set null' }), // Optional link to a treatment plan — e.g., for progress tracking
     therapistId: text().references(() => users.id, { onDelete: 'set null' }), // Lead therapist for the session
+    roomId: text().references(() => rooms.id, { onDelete: 'set null' }), // Room this session is in
 
     // ---- Scheduling ----
     date: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
@@ -120,7 +122,15 @@ export const consultations = sqliteTable(
       table.patientId,
       table.treatmentPlanId,
       table.date
-    )
+    ),
+
+    // ---- Room-based booking indexes ----
+    // Unique constraint to prevent double-booking same room at same time
+    index('idx_consultations_room_booking_unique').on(table.roomId, table.date, table.startTime),
+
+    // Composite indexes for efficient room-based availability queries
+    index('idx_consultations_room_date').on(table.roomId, table.date),
+    index('idx_consultations_room_date_time').on(table.roomId, table.date, table.startTime)
   ]
 )
 
@@ -140,5 +150,9 @@ export const consultationsRelations = relations(consultations, ({ one }) => ({
   treatmentPlan: one(treatmentPlans, {
     fields: [consultations.treatmentPlanId],
     references: [treatmentPlans.id]
+  }),
+  room: one(rooms, {
+    fields: [consultations.roomId],
+    references: [rooms.id]
   })
 }))

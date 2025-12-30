@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { eq, and, ne } from 'drizzle-orm'
-import { consultations, patients, users } from '~~/server/database/schema'
+import { consultations, patients, users, rooms } from '~~/server/database/schema'
+import { consultationCreateSchema } from '~~/shared/types/consultation.type'
 
-// POST /api/patients/[id]/consultations - Create new consultation
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const patientId = getRouterParam(event, 'id')
@@ -14,11 +14,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get current user and organization from session
   const { organizationId } = await requireAuth(event)
 
   try {
-    // Verify patient exists and belongs to organization
+    const body = await readValidatedBody(event, consultationCreateSchema.parse)
+
+    if (!body.roomId) {
+      throw createError({
+        statusCode: 400,
+        message: 'Room is required for new consultations'
+      })
+    }
+
     const [patient] = await db
       .select()
       .from(patients)
@@ -32,69 +39,36 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get request body
-    const body = await readBody(event)
+    const [room] = await db
+      .select()
+      .from(rooms)
+      .where(and(eq(rooms.id, body.roomId), eq(rooms.organizationId, organizationId)))
+      .limit(1)
 
-    // Handle therapistId - if provided, validate it's a valid user ID
-    let therapistId = body.therapistId
-    if (therapistId) {
-      // Check if therapistId is a valid user ID
-      const [therapist] = await db.select().from(users).where(eq(users.id, therapistId)).limit(1)
+    if (!room) {
+      throw createError({
+        statusCode: 404,
+        message: 'Room not found'
+      })
+    }
+
+    if (body.therapistId) {
+      const [therapist] = await db.select().from(users).where(eq(users.id, body.therapistId)).limit(1)
 
       if (!therapist) {
-        // If not a valid user ID, set to null
-        throw createError({ message: 'Therapeute introuvable', statusCode: 500 })
-      }
-
-      // Fetch therapist's gap configuration
-      const [therapistWithGap] = await db
-        .select({ consultationGapMinutes: users.consultationGapMinutes })
-        .from(users)
-        .where(eq(users.id, therapistId))
-        .limit(1)
-
-      const gapMinutes = therapistWithGap?.consultationGapMinutes || 15
-
-      // Fetch existing consultations for conflict check
-      const existingConsultations = await db
-        .select({
-          startTime: consultations.startTime,
-          endTime: consultations.endTime
-        })
-        .from(consultations)
-        .where(
-          and(
-            eq(consultations.therapistId, therapistId),
-            eq(consultations.date, body.date),
-            ne(consultations.status, 'cancelled')
-          )
-        )
-
-      // Calculate end time for new consultation
-      const endTime = calculateEndTime(body.startTime!, body.duration!)
-
-      // Check for conflicts using therapist's configured gap
-      const hasConflict = existingConsultations.some((existing) =>
-        hasTimeConflict(existing.startTime!, existing.endTime!, body.startTime!, endTime, gapMinutes)
-      )
-
-      if (hasConflict) {
         throw createError({
-          statusCode: 409,
-          message: 'Ce créneau est déjà réservé. Veuillez sélectionner un autre horaire.'
+          statusCode: 400,
+          message: 'Therapeute introuvable'
         })
       }
     }
 
-    // Convert date to timestamp for database
     const consultationData = {
       ...body,
       organizationId: organizationId,
-      date: body.date,
-      therapistId // Use the processed therapistId (can be null or undefined)
+      date: body.date
     }
 
-    // Create consultation
     const [newConsultation] = await db.insert(consultations).values(consultationData).returning()
 
     return {
@@ -109,6 +83,13 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         message: 'Invalid consultation data',
         data: error.issues
+      })
+    }
+
+    if (error.code === 'SQLITE_CONSTRAINT' || error.message?.includes('UNIQUE constraint')) {
+      throw createError({
+        statusCode: 409,
+        message: 'Ce créneau est déjà réservé. Veuillez sélectionner une autre heure.'
       })
     }
 

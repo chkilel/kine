@@ -14,7 +14,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 
 ### Database Schema Changes
 
-#### Task 1.1: Add roomId to consultations table
+#### Task 1.1: Add roomId to consultations table ✅
 
 - **File:** `server/database/schema/consultation.ts`
 - **Description:** Add nullable `roomId` field as foreign key reference to rooms table
@@ -25,7 +25,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 - **Verification:** TypeScript compilation succeeds, schema file updated
 - **Dependencies:** None
 
-#### Task 1.2: Create unique constraint for room booking
+#### Task 1.2: Create unique constraint for room booking ✅
 
 - **File:** `server/database/schema/consultation.ts`
 - **Description:** Add unique index on `(roomId, date, startTime)` to prevent double-booking
@@ -35,9 +35,9 @@ This tasks document outlines the ordered implementation of the room-centric book
 - **Verification:** Schema file updated with unique constraint
 - **Dependencies:** Task 1.1
 
-#### Task 1.3: Create database migration
+#### Task 1.3: Create database migration ✅
 
-- **File:** `server/database/migrations/XXXX_add_room_booking.sql` (auto-generated)
+- **File:** `server/database/migrations/0001_sloppy_tomas.sql` (auto-generated)
 - **Description:** Generate and apply migration for schema changes
 - **Steps:**
   1. Run `npx drizzle-kit generate` to generate migration file
@@ -46,7 +46,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 - **Verification:** Migration applied successfully, `roomId` column exists in consultations table, unique constraint created
 - **Dependencies:** Tasks 1.1, 1.2
 
-#### Task 1.4: Add database index for room queries
+#### Task 1.4: Add database index for room queries ✅
 
 - **File:** `server/database/schema/consultation.ts`
 - **Description:** Add composite index for efficient room-based availability queries
@@ -58,7 +58,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 
 ### Type Definitions and Validation
 
-#### Task 1.5: Update ConsultationCreate type
+#### Task 1.5: Update ConsultationCreate type ✅
 
 - **File:** `shared/types/consultation.type.ts`
 - **Description:** Add `roomId` field to consultation creation type
@@ -69,7 +69,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 - **Verification:** TypeScript compilation succeeds, types updated
 - **Dependencies:** Task 1.1
 
-#### Task 1.6: Create room availability request type
+#### Task 1.6: Create room availability request type ✅
 
 - **File:** `shared/types/availability.types.ts` (or new file)
 - **Description:** Define TypeScript types and Zod schemas for room slot requests
@@ -82,7 +82,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 
 ### API Endpoints
 
-#### Task 1.7: Create room-based availability endpoint
+#### Task 1.7: Create room-based availability endpoint ✅
 
 - **File:** `server/api/availability/[roomId]/slots.post.ts`
 - **Description:** Implement slot calculation per room based on therapist availability and existing bookings
@@ -101,7 +101,7 @@ This tasks document outlines the ordered implementation of the room-centric book
 - **Verification:** Endpoint returns available slots correctly for test cases (single date, multiple dates, full-day exception, partial-day exception)
 - **Dependencies:** Tasks 1.5, 1.6
 
-#### Task 1.8: Update consultation creation API
+#### Task 1.8: Update consultation creation API ✅
 
 - **File:** `server/api/consultations/[...].ts` (or similar)
 - **Description:** Modify consultation creation to accept and store `roomId`, handle unique constraint violations

@@ -107,6 +107,7 @@ CREATE TABLE `consultations` (
 	`patientId` text NOT NULL,
 	`treatmentPlanId` text,
 	`therapistId` text,
+	`roomId` text,
 	`date` text NOT NULL,
 	`startTime` text NOT NULL,
 	`endTime` text NOT NULL,
@@ -130,7 +131,8 @@ CREATE TABLE `consultations` (
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`roomId`) REFERENCES `rooms`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `idx_consultations_org_patient_date` ON `consultations` (`organizationId`,`patientId`,`date`);--> statement-breakpoint
@@ -147,6 +149,9 @@ CREATE INDEX `idx_consultations_org_date_patient` ON `consultations` (`organizat
 CREATE INDEX `idx_consultations_org_plan_date` ON `consultations` (`organizationId`,`treatmentPlanId`,`date`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_therapist_date_status` ON `consultations` (`organizationId`,`therapistId`,`date`,`status`);--> statement-breakpoint
 CREATE INDEX `idx_consultations_org_patient_plan_date` ON `consultations` (`organizationId`,`patientId`,`treatmentPlanId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_room_booking_unique` ON `consultations` (`roomId`,`date`,`startTime`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_room_date` ON `consultations` (`roomId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_room_date_time` ON `consultations` (`roomId`,`date`,`startTime`);--> statement-breakpoint
 CREATE TABLE `patient_documents` (
 	`id` text PRIMARY KEY NOT NULL,
 	`patientId` text NOT NULL,

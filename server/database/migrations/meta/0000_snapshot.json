@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8cfdd701-78c0-412a-81fb-4ed4b934e889",
+  "id": "f7aa2749-131c-4c19-97dd-eec802841f3d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -778,6 +778,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "roomId": {
+          "name": "roomId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "date": {
           "name": "date",
           "type": "text",
@@ -1047,6 +1054,32 @@
             "date"
           ],
           "isUnique": false
+        },
+        "idx_consultations_room_booking_unique": {
+          "name": "idx_consultations_room_booking_unique",
+          "columns": [
+            "roomId",
+            "date",
+            "startTime"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_room_date": {
+          "name": "idx_consultations_room_date",
+          "columns": [
+            "roomId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_consultations_room_date_time": {
+          "name": "idx_consultations_room_date_time",
+          "columns": [
+            "roomId",
+            "date",
+            "startTime"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -1095,6 +1128,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "therapistId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "consultations_roomId_rooms_id_fk": {
+          "name": "consultations_roomId_rooms_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "roomId"
           ],
           "columnsTo": [
             "id"
