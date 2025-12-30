@@ -267,6 +267,24 @@ CREATE INDEX `idx_patients_org_active_created_at` ON `patients` (`organizationId
 CREATE INDEX `idx_patients_org_active_name_search` ON `patients` (`organizationId`,`deletedAt`,`lastName`,`firstName`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_status_created` ON `patients` (`organizationId`,`deletedAt`,`status`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_deleted_only` ON `patients` (`organizationId`,`deletedAt`);--> statement-breakpoint
+CREATE TABLE `rooms` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organizationId` text NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`equipment` text DEFAULT '[]',
+	`capacity` integer DEFAULT 1 NOT NULL,
+	`area` integer,
+	`prm` integer DEFAULT 0 NOT NULL,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	`deletedAt` integer,
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_rooms_org_name` ON `rooms` (`organizationId`,`deletedAt`,`name`);--> statement-breakpoint
+CREATE INDEX `idx_rooms_org_created` ON `rooms` (`organizationId`,`deletedAt`,`createdAt`);--> statement-breakpoint
+CREATE INDEX `idx_rooms_org_deleted` ON `rooms` (`organizationId`,`deletedAt`);--> statement-breakpoint
 CREATE TABLE `treatment_plans` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
