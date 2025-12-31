@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { TabsItem } from '@nuxt/ui'
+  import { formatFullName } from '~~/shared/utils'
 
   const props = defineProps<{
     patient: Patient
@@ -13,7 +14,7 @@
   // Get active organization and session
   const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
-  if (!user || !activeOrganization.value.data?.id) {
+  if (!user.value || !activeOrganization.value.data?.id) {
     await navigateTo('/login')
   }
 
