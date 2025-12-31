@@ -1,0 +1,56 @@
+## Implementation
+
+- [x] 1.1 Create reusable ModalConfirm component
+  - [x] 1.1.1 Create `app/components/ModalConfirm.vue` with UModal wrapper
+  - [x] 1.1.2 Add props: title, message, confirmText, cancelText, confirmColor, icon, loading
+  - [x] 1.1.3 Implement Promise-based confirm method with useOverlay
+  - [x] 1.1.4 Add loading state support for async confirm actions
+  - [x] 1.1.5 Test modal open/close behavior and z-index stacking
+- [x] 1.2 Update room delete action with confirmation
+  - [x] 1.2.1 Modify `app/components/organization/OrganizationProfileRoomsTab.vue` to use ModalConfirm
+  - [x] 1.2.2 Implement handleDeleteRoom to show confirmation modal before calling API
+  - [x] 1.2.3 Add loading state during delete operation
+  - [x] 1.2.4 Test delete flow: confirm deletion, cancel deletion, error handling
+- [x] 1.3 Modify OrganizationRoomSlideover to support edit mode
+  - [x] 1.3.1 Add optional `room?: Room` prop to OrganizationRoomSlideover.vue
+  - [x] 1.3.2 Add computed properties for mode detection (isEditMode), dynamic title, and button text
+  - [x] 1.3.3 Add watch effect to populate form when room prop changes
+  - [x] 1.3.4 Import useUpdateRoom composable alongside useCreateRoom
+  - [x] 1.3.5 Modify handleSubmit to call createRoom or updateRoom based on mode
+  - [x] 1.3.6 Update resetForm to reset to create mode when slideover closes
+  - [x] 1.3.7 Add success/error toast notifications for both modes
+- [x] 1.4 Connect edit action to UI
+  - [x] 1.4.1 Update `app/components/organization/OrganizationProfileRoomsTab.vue` handleEditRoom
+  - [x] 1.4.2 Use useOverlay() to open OrganizationRoomSlideover with room data
+  - [x] 1.4.3 Test edit flow: open edit, make changes, save, cancel
+  - [x] 1.4.4 Verify create mode still works correctly (no room prop)
+
+## Testing
+
+- [x] 2.1 Manual testing - ModalConfirm component
+  - [x] 2.1.1 Verify modal displays with correct title and message
+  - [x] 2.1.2 Test confirm button triggers promise resolution
+  - [x] 2.1.3 Test cancel button triggers promise rejection
+  - [x] 2.1.4 Test loading state displays during async operations
+  - [x] 2.1.5 Verify close on backdrop click works as expected
+- [x] 2.2 Manual testing - Room delete with confirmation
+  - [x] 2.2.1 Click delete button shows confirmation modal
+  - [x] 2.2.2 Confirming delete removes room from list
+  - [x] 2.2.3 Canceling delete keeps room in list
+  - [x] 2.2.4 Error during delete shows error toast and keeps modal open
+  - [x] 2.2.5 Loading state appears during delete operation
+- [x] 2.3 Manual testing - Room edit functionality
+  - [x] 2.3.1 Click edit button opens slideover with pre-populated data
+  - [x] 2.3.2 Slideover title displays "Modifier la salle" in edit mode, "Ajouter une nouvelle salle" in create mode
+  - [x] 2.3.3 Submit button displays "Enregistrer les modifications" in edit mode, "Ajouter la salle" in create mode
+  - [x] 2.3.4 Modify room fields and save successfully updates room
+  - [x] 2.3.5 Cancel edit closes slideover without changes
+  - [x] 2.3.6 Validation errors display in form
+  - [x] 2.3.7 Error during update shows error toast
+  - [x] 2.3.8 Success update closes slideover and refreshes list
+  - [x] 2.3.9 Create mode still works correctly (opening without room prop)
+- [x] 2.4 Integration testing
+  - [x] 2.4.1 Test complete flow: edit room, then delete room
+  - [x] 2.4.2 Verify toast notifications are French and informative
+  - [x] 2.4.3 Check form state resets correctly after operations
+  - [x] 2.4.4 Test concurrent actions (multiple tabs/windows)

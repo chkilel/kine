@@ -94,3 +94,25 @@ export const slotsRequestSchema = z.object({
 })
 
 export type SlotsRequest = z.infer<typeof slotsRequestSchema>
+
+// =============================================================================
+// Room Slots Request Schema and Type (Room-Centric Booking)
+// =============================================================================
+
+export const roomSlotsRequestSchema = z.object({
+  dates: z.array(calendarDateSchema).min(1, 'Au moins une date est requise'),
+  duration: z.number().min(15, 'La durée minimale est de 15 minutes').max(180, 'La durée maximale est de 3 heures'),
+  therapistId: z.uuidv7().optional()
+})
+
+export type RoomSlotsRequest = z.infer<typeof roomSlotsRequestSchema>
+
+export const roomSlotsResponseSchema = z.record(
+  z.string(),
+  z.object({
+    availableSlots: z.array(timeFormatSchema),
+    unavailable: z.boolean().default(false)
+  })
+)
+
+export type RoomSlotsResponse = z.infer<typeof roomSlotsResponseSchema>
