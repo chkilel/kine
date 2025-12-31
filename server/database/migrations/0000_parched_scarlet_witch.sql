@@ -90,7 +90,6 @@ CREATE TABLE `weekly_availability_templates` (
 	`startTime` text NOT NULL,
 	`endTime` text NOT NULL,
 	`location` text NOT NULL,
-	`maxSessions` integer DEFAULT 1 NOT NULL,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,

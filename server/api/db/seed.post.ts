@@ -546,8 +546,7 @@ function generateWeeklyTemplates(userId: string, organizationId: string): any[] 
       dayOfWeek: day,
       startTime: timeRange.startTime,
       endTime: timeRange.endTime,
-      location: randomItem(locations),
-      maxSessions: 1
+      location: randomItem(locations)
     }
 
     if (validateTemplateConflict(templates, template)) {

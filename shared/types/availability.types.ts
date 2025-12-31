@@ -14,8 +14,7 @@ export const weeklyAvailabilityTemplateCreateSchema = createInsertSchema(weeklyA
   dayOfWeek: dayOfWeekSchema.refine((val) => val, { message: 'Le jour est requis' }),
   startTime: timeFormatSchema,
   endTime: timeFormatSchema,
-  location: locationSchema.refine((val) => val, { message: 'Le lieu est requis' }),
-  maxSessions: z.number().min(1, 'Minimum 1 session').max(10, 'Maximum 10 sessions')
+  location: locationSchema.refine((val) => val, { message: 'Le lieu est requis' })
 })
   .omit({
     id: true,
