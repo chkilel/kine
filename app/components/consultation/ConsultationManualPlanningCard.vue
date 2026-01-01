@@ -16,6 +16,7 @@
   const isLoadingSlots = ref(false)
   const slotsError = ref<string | null>(null)
   const selectedRoomId = ref<string | null>(null)
+  const showRoomOnlyAvailability = ref(false)
 
   const { data: roomsData } = useRoomsList(ref({}))
 
@@ -92,7 +93,7 @@
     const duration = consultationDetails.value.duration
     const location = consultationDetails.value.location
 
-    if (!therapistId || !date) {
+    if (!date) {
       availableSlots.value = []
       return
     }
@@ -101,18 +102,43 @@
     slotsError.value = null
 
     try {
-      const response = await $fetch(`/api/availability/${therapistId}/slots`, {
-        method: 'POST',
-        body: {
-          dates: [date],
-          duration,
-          location
+      let response: any
+
+      if (location === 'clinic') {
+        if (!selectedRoomId.value) {
+          availableSlots.value = []
+          isLoadingSlots.value = false
+          return
         }
-      })
+
+        const therapistIdParam = showRoomOnlyAvailability.value ? undefined : therapistId
+
+        response = await $fetch(`/api/availability/${selectedRoomId.value}/slots`, {
+          method: 'POST',
+          body: {
+            dates: [date],
+            duration,
+            therapistId: therapistIdParam
+          }
+        })
+      } else {
+        if (!therapistId) {
+          availableSlots.value = []
+          isLoadingSlots.value = false
+          return
+        }
+
+        response = await $fetch(`/api/availability/${therapistId}/slots`, {
+          method: 'POST',
+          body: {
+            dates: [date],
+            duration,
+            location
+          }
+        })
+      }
 
       const dateSlots = response.slots[date]
-
-      console.log('🚀 >>> ', 'dateSlots', ': ', dateSlots)
 
       if (dateSlots) {
         availableSlots.value = dateSlots.availableSlots
@@ -133,11 +159,22 @@
       consultationDetails.value.therapistId,
       consultationDetails.value.date,
       consultationDetails.value.duration,
-      consultationDetails.value.location
+      consultationDetails.value.location,
+      selectedRoomId.value,
+      showRoomOnlyAvailability.value
     ],
     () => {
       consultationDetails.value.startTime = ''
-      fetchAvailableSlots()
+
+      if (consultationDetails.value.location === 'clinic') {
+        if (selectedRoomId.value) {
+          fetchAvailableSlots()
+        } else {
+          availableSlots.value = []
+        }
+      } else {
+        fetchAvailableSlots()
+      }
     },
     { deep: true }
   )
@@ -162,7 +199,7 @@
   })
 
   const addConsultation = async () => {
-    if (!selectedRoomId.value) {
+    if (consultationDetails.value.location === 'clinic' && !selectedRoomId.value) {
       toast.add({
         title: 'Erreur',
         description: 'Veuillez sélectionner une salle de consultation',
@@ -179,12 +216,14 @@
         patientId: props.treatmentPlan.patientId,
         consultationData: {
           ...consultationDetails.value,
-          roomId: selectedRoomId.value
+          roomId: consultationDetails.value.location === 'clinic' ? selectedRoomId.value || undefined : undefined
         }
       })
       await fetchAvailableSlots()
       consultationDetails.value.startTime = ''
-      selectedRoomId.value = null
+      if (consultationDetails.value.location === 'clinic') {
+        selectedRoomId.value = null
+      }
     } catch (error) {
       toast.add({
         title: 'Erreur',
@@ -234,6 +273,10 @@
 
   const selectRoom = (roomId: string) => {
     selectedRoomId.value = roomId
+    consultationDetails.value.startTime = ''
+    if (consultationDetails.value.date && consultationDetails.value.location === 'clinic') {
+      fetchAvailableSlots()
+    }
   }
 </script>
 
@@ -249,7 +292,6 @@
               :min-value="minDate"
               :is-date-unavailable="isDateDisabled"
             />
-            {{ selectedDate }}
           </AppCard>
 
           <div class="space-y-5">
@@ -328,20 +370,48 @@
                 <UIcon name="i-lucide-door-open" class="text-primary text-lg" />
                 Salle de consultation
               </h3>
-              <div v-if="roomsData && roomsData.length > 0" class="mt-4 grid grid-cols-4 gap-2">
-                <UButton
-                  v-for="room in roomsData"
-                  :key="room.id"
-                  :variant="selectedRoomId === room.id ? 'solid' : 'subtle'"
-                  class="flex flex-col items-center justify-center"
-                  @click="selectRoom(room.id)"
-                  :icon="getRoomIcon(room.name)"
-                >
-                  <span class="text-center text-[10px] leading-tight font-bold tracking-tight uppercase">
-                    {{ room.name }}
-                  </span>
-                </UButton>
+
+              <div v-if="roomsData && roomsData.length > 0 && consultationDetails.location === 'clinic'" class="mt-4">
+                <div class="grid grid-cols-4 gap-2">
+                  <UButton
+                    v-for="room in roomsData"
+                    :key="room.id"
+                    :variant="selectedRoomId === room.id ? 'solid' : 'subtle'"
+                    class="flex flex-col items-center justify-center"
+                    @click="selectRoom(room.id)"
+                    :icon="getRoomIcon(room.name)"
+                  >
+                    <span class="text-center text-[10px] leading-tight font-bold tracking-tight uppercase">
+                      {{ room.name }}
+                    </span>
+                  </UButton>
+                </div>
+
+                <div v-if="selectedRoomId" class="mt-4">
+                  <UCheckbox
+                    v-model="showRoomOnlyAvailability"
+                    label="Afficher tous les créneaux disponibles (ignorer la disponibilité du thérapeute)"
+                    size="sm"
+                    class="text-xs"
+                  />
+                  <p class="text-muted mt-1 text-[10px]">
+                    Cochez cette case pour voir tous les créneaux disponibles dans cette salle, même si le thérapeute
+                    n'est pas disponible.
+                  </p>
+                </div>
               </div>
+
+              <div v-else-if="consultationDetails.location !== 'clinic'">
+                <UAlert color="neutral" variant="subtle" icon="i-lucide-info">
+                  <template #title>
+                    {{ consultationDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
+                  </template>
+                  <p class="text-muted-foreground text-sm">
+                    Les créneaux affichés sont basés sur la disponibilité du thérapeute uniquement.
+                  </p>
+                </UAlert>
+              </div>
+
               <UAlert v-else color="neutral" variant="subtle" icon="i-lucide-door-open">Aucune salle disponible</UAlert>
             </div>
             <div
@@ -357,7 +427,6 @@
                 <template v-for="template in dayTemplatesForDate" :key="template.id">
                   {{ getPreferredDayLabel(template.dayOfWeek) }} : {{ template.startTime.slice(0, 5) }} -
                   {{ template.endTime.slice(0, 5) }} ({{ getLocationLabel(template.location) }})
-                  <template v-if="template.maxSessions > 1">(max {{ template.maxSessions }} séances)</template>
                   <br />
                 </template>
               </p>
@@ -378,15 +447,34 @@
                   <UIcon name="i-lucide-clock" class="text-primary text-lg" />
                   Heure de la séance
                 </h3>
-                <span
-                  v-if="availableSlots.length > 0"
-                  class="text-success bg-success/10 border-success/20 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase"
-                >
-                  Disponible
-                </span>
+                <div class="flex items-center gap-2">
+                  <span
+                    v-if="availableSlots.length > 0"
+                    class="text-success bg-success/10 border-success/20 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase"
+                  >
+                    Disponible
+                  </span>
+                  <UBadge
+                    v-if="consultationDetails.location === 'clinic' && selectedRoomId"
+                    :color="showRoomOnlyAvailability ? 'info' : 'primary'"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ showRoomOnlyAvailability ? 'Salle uniquement' : 'Salle + Thérapeute' }}
+                  </UBadge>
+                </div>
               </div>
 
               <div class="flex-1 space-y-4 overflow-y-auto pb-2">
+                <UAlert
+                  v-if="consultationDetails.location === 'clinic' && !selectedRoomId"
+                  color="neutral"
+                  variant="subtle"
+                  icon="i-lucide-door-closed"
+                >
+                  Veuillez d'abord sélectionner une salle de consultation
+                </UAlert>
+
                 <UAlert v-if="isLoadingSlots" color="neutral" variant="subtle">
                   <USkeleton class="h-4 w-full" />
                 </UAlert>
@@ -436,7 +524,7 @@
                 size="lg"
                 block
                 :loading="isCreating"
-                :disabled="isCreating || !selectedRoomId"
+                :disabled="isCreating || (consultationDetails.location === 'clinic' && !selectedRoomId)"
                 @click="addConsultation"
               >
                 Ajouter cette séance au plan

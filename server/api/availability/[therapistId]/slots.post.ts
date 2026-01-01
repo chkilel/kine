@@ -1,15 +1,8 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { availabilityExceptions, consultations, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
-import { slotsRequestSchema } from '~~/shared/types/availability.types'
 
 interface SlotsResponse {
-  slots: Record<
-    string,
-    {
-      availableSlots: string[]
-      unavailable: boolean
-    }
-  >
+  slots: Record<string, { availableSlots: string[]; unavailable: boolean }>
 }
 
 export default defineEventHandler(async (event) => {
@@ -22,11 +15,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Parse and validate request body using schema
   const body = await readValidatedBody(event, slotsRequestSchema.parse)
-  // console.log('🚀 >>> ', 'body', ': ', { therapistId, body })
 
-  // Get database connection for this request
   const db = useDrizzle(event)
 
   // Fetch therapist's consultation gap and slot increment settings
@@ -73,8 +63,7 @@ export default defineEventHandler(async (event) => {
     )
 
   console.log(
-    '🚀 >>> ',
-    '=========================================================================================================\n',
+    '🚀 >>> =========================================================================================================\n',
     ': ',
     {
       templates,
@@ -106,17 +95,13 @@ export default defineEventHandler(async (event) => {
     const availability = getEffectiveAvailability(date, templates, exceptions)
 
     // Skip if no availability for this date
-    if (!availability) {
+    if (availability.length === 0) {
       slotsResponse.slots[date] = {
         availableSlots: [],
         unavailable: true
       }
       continue
     }
-
-    // Get max concurrent sessions from template (default to 1)
-    const template = templates.find((t: WeeklyAvailabilityTemplate) => t.dayOfWeek === dayOfWeek)
-    const maxSessions = template?.maxSessions || 1
 
     // Filter consultations for this specific date
     const dayConsultations = existingConsultations.filter((c: any) => c.date === date)
@@ -128,22 +113,19 @@ export default defineEventHandler(async (event) => {
       sessionId: c.id
     }))
 
-    // Start with the calculated availability as the initial available range
-    let availableRanges: TimeRange[] = [availability]
+    // Start with calculated availability as initial available ranges
+    let availableRanges: TimeRange[] = availability
 
-    // Subtract booked periods from available ranges with gap buffer (only when maxSessions == 1)
-    if (maxSessions === 1) {
-      availableRanges = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
-    }
+    // Subtract booked periods from available ranges with gap buffer
+    availableRanges = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
-    // Generate time slots from the remaining available ranges
+    // Generate time slots from remaining available ranges
     const availableSlots = generateTimeSlots(
       availableRanges,
       bookedPeriods,
       body.duration,
       gapMinutes,
-      slotIncrementMinutes,
-      maxSessions
+      slotIncrementMinutes
     )
 
     // Store slots for this date
