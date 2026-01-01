@@ -53,8 +53,8 @@
 
   const formattedDate = computed(() => {
     if (!consultationDetails.value.date) return ''
-    const { day, month } = extractDayAndMonth(consultationDetails.value.date)
-    return `${day} ${month}`
+    const { dayName, day, month } = extractDayAndMonth(consultationDetails.value.date)
+    return `${dayName} ${day} ${month}`
   })
 
   watch(
@@ -268,7 +268,7 @@
     if (name.includes('1') || name.includes('cabinet')) return 'i-lucide-door-open'
     if (name.includes('rééduc') || name.includes('ree') || name.includes('fitness')) return 'i-lucide-dumbbell'
     if (name.includes('balnéo') || name.includes('piscine') || name.includes('bain')) return 'i-lucide-waves'
-    return 'i-lucide-presentation'
+    return 'i-lucide-door-open'
   }
 
   const selectRoom = (roomId: string) => {
@@ -281,10 +281,10 @@
 </script>
 
 <template>
-  <AppCard title="Planification manuelle des séances">
+  <AppCard>
     <UForm>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div class="grid gap-6">
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-x-6 lg:gap-y-0">
+        <div class="flex flex-col gap-6">
           <AppCard variant="subtle">
             <UCalendar
               v-model="selectedDate"
@@ -295,10 +295,22 @@
           </AppCard>
 
           <div class="space-y-5">
+            <UFormField label="Type de séance">
+              <USelect
+                v-model="consultationDetails.type"
+                :items="CONSULTATION_TYPES_OPTIONS"
+                option-attribute="label"
+                value-attribute="value"
+                placeholder="Sélectionner un type"
+                class="w-full"
+                icon="i-lucide-tag"
+              />
+            </UFormField>
+
             <div>
-              <div class="mb-3 flex items-end justify-between">
+              <div class="flex items-center justify-between">
                 <label class="text-muted text-xs font-bold uppercase">Durée</label>
-                <span class="text-primary text-lg font-bold">{{ consultationDetails.duration }} min</span>
+                <span class="text-primary font-bold">{{ consultationDetails.duration }} min</span>
               </div>
               <div class="relative py-2">
                 <USlider
@@ -308,75 +320,60 @@
                   :step="15"
                   size="lg"
                 />
-                <div class="text-muted mt-2 flex justify-between px-1 text-[10px] font-medium">
-                  <span v-for="val in CONSULTATION_DURATIONS" :key="val">{{ val }}</span>
+                <div class="text-muted mt-2 flex justify-between text-xs font-medium">
+                  <span
+                    v-for="val in CONSULTATION_DURATIONS"
+                    :key="val"
+                    class="inline-flex w-[3ch] justify-center tabular-nums"
+                  >
+                    {{ val.toFixed(0).padStart(3, ' ') }}
+                  </span>
                 </div>
               </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Kinésithérapeute">
-                <USelectMenu
-                  v-model="consultationDetails.therapistId"
-                  value-key="id"
-                  label-key="name"
-                  :items="therapists"
-                  placeholder="Sélectionner un thérapeute"
-                  class="w-full"
-                  icon="i-lucide-user"
-                />
-              </UFormField>
-
-              <UFormField label="Type">
-                <USelect
-                  v-model="consultationDetails.type"
-                  :items="CONSULTATION_TYPES_OPTIONS"
-                  option-attribute="label"
-                  value-attribute="value"
-                  placeholder="Sélectionner un type"
-                  class="w-full"
-                  icon="i-lucide-tag"
-                />
-              </UFormField>
-            </div>
-
-            <UFormField label="Lieu">
-              <UFieldGroup class="w-full">
-                <UButton
-                  v-for="loc in CONSULTATION_LOCATION_OPTIONS"
-                  :key="loc.value"
-                  :variant="consultationDetails.location === loc.value ? 'solid' : 'subtle'"
-                  :color="consultationDetails.location === loc.value ? 'primary' : 'neutral'"
-                  :icon="loc.icon"
-                  size="lg"
-                  square
-                  block
-                  class="flex-col"
-                  @click="consultationDetails.location = loc.value"
-                >
-                  {{ loc.label }}
-                </UButton>
-              </UFieldGroup>
-            </UFormField>
           </div>
         </div>
 
-        <div class="flex h-full flex-col">
-          <AppCard variant="subtle">
-            <div class="mb-8">
-              <h3
-                class="text-default mb-4 flex items-center gap-2 text-sm font-bold tracking-wide uppercase opacity-80"
-              >
-                <UIcon name="i-lucide-door-open" class="text-primary text-lg" />
-                Salle de consultation
-              </h3>
+        <div class="flex flex-col gap-6">
+          <UFormField>
+            <USelectMenu
+              v-model="consultationDetails.therapistId"
+              value-key="id"
+              label-key="name"
+              :items="therapists"
+              placeholder="Sélectionner un thérapeute"
+              class="w-full"
+              icon="i-lucide-user"
+            />
+          </UFormField>
 
-              <div v-if="roomsData && roomsData.length > 0 && consultationDetails.location === 'clinic'" class="mt-4">
+          <UFormField label="Lieu">
+            <UFieldGroup class="w-full">
+              <UButton
+                v-for="loc in CONSULTATION_LOCATION_OPTIONS"
+                :key="loc.value"
+                :variant="consultationDetails.location === loc.value ? 'subtle' : 'outline'"
+                :color="consultationDetails.location === loc.value ? 'primary' : 'neutral'"
+                :icon="loc.icon"
+                square
+                block
+                class="flex-col"
+                @click="consultationDetails.location = loc.value"
+              >
+                {{ loc.label }}
+              </UButton>
+            </UFieldGroup>
+          </UFormField>
+
+          <div>
+            <div v-if="roomsData && roomsData.length > 0 && consultationDetails.location === 'clinic'">
+              <UFormField label="Salle de consultation">
                 <div class="grid grid-cols-4 gap-2">
                   <UButton
                     v-for="room in roomsData"
                     :key="room.id"
-                    :variant="selectedRoomId === room.id ? 'solid' : 'subtle'"
+                    :color="selectedRoomId === room.id ? 'primary' : 'neutral'"
+                    :variant="selectedRoomId === room.id ? 'subtle' : 'outline'"
                     class="flex flex-col items-center justify-center"
                     @click="selectRoom(room.id)"
                     :icon="getRoomIcon(room.name)"
@@ -386,153 +383,178 @@
                     </span>
                   </UButton>
                 </div>
+              </UFormField>
 
-                <div v-if="selectedRoomId" class="mt-4">
-                  <UCheckbox
-                    v-model="showRoomOnlyAvailability"
-                    label="Afficher tous les créneaux disponibles (ignorer la disponibilité du thérapeute)"
-                    size="sm"
-                    class="text-xs"
-                  />
-                  <p class="text-muted mt-1 text-[10px]">
-                    Cochez cette case pour voir tous les créneaux disponibles dans cette salle, même si le thérapeute
-                    n'est pas disponible.
-                  </p>
-                </div>
+              <div v-if="selectedRoomId" class="mt-4">
+                <UCheckbox
+                  v-model="showRoomOnlyAvailability"
+                  label="Afficher seulement la dispo salle"
+                  size="sm"
+                  class="text-xs"
+                />
+                <p class="text-muted mt-1 text-[10px]">
+                  Cochez cette case pour voir tous les créneaux disponibles dans cette salle, même si le thérapeute
+                  n'est pas disponible.
+                </p>
               </div>
-
-              <div v-else-if="consultationDetails.location !== 'clinic'">
-                <UAlert color="neutral" variant="subtle" icon="i-lucide-info">
-                  <template #title>
-                    {{ consultationDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
-                  </template>
-                  <p class="text-muted-foreground text-sm">
-                    Les créneaux affichés sont basés sur la disponibilité du thérapeute uniquement.
-                  </p>
-                </UAlert>
-              </div>
-
-              <UAlert v-else color="neutral" variant="subtle" icon="i-lucide-door-open">Aucune salle disponible</UAlert>
             </div>
-            <div
-              v-if="dayTemplatesForDate.length > 0 || exceptionsForDate.length > 0"
-              class="bg-default mb-6 rounded-xl border p-4"
-            >
-              <h4 class="text-default mb-1 flex items-center gap-2 text-sm font-bold">
-                <span class="bg-primary h-1.5 w-1.5 rounded-full" />
-                Disponibilité du thérapeute
-                <span class="text-muted ml-auto text-xs font-normal">{{ formattedDate }}</span>
-              </h4>
-              <p v-if="dayTemplatesForDate.length > 0" class="text-muted mb-3 pl-3.5 text-xs">
-                <template v-for="template in dayTemplatesForDate" :key="template.id">
-                  {{ getPreferredDayLabel(template.dayOfWeek) }} : {{ template.startTime.slice(0, 5) }} -
-                  {{ template.endTime.slice(0, 5) }} ({{ getLocationLabel(template.location) }})
-                  <br />
+
+            <div v-else-if="consultationDetails.location !== 'clinic'">
+              <UAlert color="neutral" variant="subtle" icon="i-lucide-info">
+                <template #title>
+                  {{ consultationDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
                 </template>
-              </p>
-              <div
+                <p class="text-muted-foreground text-sm">
+                  Les créneaux affichés sont basés sur la disponibilité du thérapeute uniquement.
+                </p>
+              </UAlert>
+            </div>
+
+            <UAlert v-else color="neutral" variant="subtle" icon="i-lucide-door-open">Aucune salle disponible</UAlert>
+          </div>
+
+          <div class="bg-muted space-y-4 rounded-lg p-3">
+            <h4 class="flex items-center gap-2 text-sm font-semibold">
+              <span class="bg-success size-1.5 rounded-full" />
+              Disponibilité du thérapeute pour le
+              <span class="text-info">{{ formattedDate }}</span>
+            </h4>
+            <div v-if="dayTemplatesForDate.length > 0 || exceptionsForDate.length > 0" class="space-y-2">
+              <UBadge
+                v-for="template in dayTemplatesForDate"
+                :key="template.id"
+                icon="i-lucide-calendar"
+                variant="soft"
+                size="lg"
+                color="primary"
+                class="flex"
+              >
+                {{ template.startTime.slice(0, 5) }} - {{ template.endTime.slice(0, 5) }} ({{
+                  getLocationLabel(template.location)
+                }})
+              </UBadge>
+              <UAlert
                 v-for="exception in partialDayExceptions"
                 :key="exception.id"
-                class="bg-error/5 text-error border-error/10 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium"
+                :color="exception.isAvailable ? 'success' : 'error'"
+                :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
+                variant="soft"
+                class="px-2 py-1"
               >
-                <UIcon name="i-lucide-calendar-x" class="text-sm" />
-                {{ exception.startTime?.slice(0, 5) }} - {{ exception.endTime?.slice(0, 5) }} Indisponible ({{
-                  getExceptionTypeLabel(exception.reason ? exception.reason : 'other')
-                }})
-              </div>
-            </div>
-            <div class="flex min-h-0 flex-1 flex-col">
-              <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-default flex items-center gap-2 text-sm font-bold tracking-wide uppercase opacity-80">
-                  <UIcon name="i-lucide-clock" class="text-primary text-lg" />
-                  Heure de la séance
-                </h3>
-                <div class="flex items-center gap-2">
-                  <span
-                    v-if="availableSlots.length > 0"
-                    class="text-success bg-success/10 border-success/20 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase"
-                  >
-                    Disponible
-                  </span>
-                  <UBadge
-                    v-if="consultationDetails.location === 'clinic' && selectedRoomId"
-                    :color="showRoomOnlyAvailability ? 'info' : 'primary'"
-                    variant="subtle"
-                    size="xs"
-                  >
-                    {{ showRoomOnlyAvailability ? 'Salle uniquement' : 'Salle + Thérapeute' }}
-                  </UBadge>
-                </div>
-              </div>
-
-              <div class="flex-1 space-y-4 overflow-y-auto pb-2">
-                <UAlert
-                  v-if="consultationDetails.location === 'clinic' && !selectedRoomId"
-                  color="neutral"
-                  variant="subtle"
-                  icon="i-lucide-door-closed"
-                >
-                  Veuillez d'abord sélectionner une salle de consultation
-                </UAlert>
-
-                <UAlert v-if="isLoadingSlots" color="neutral" variant="subtle">
-                  <USkeleton class="h-4 w-full" />
-                </UAlert>
-
-                <UAlert v-else-if="slotsError" color="error" variant="subtle">
-                  {{ slotsError }}
-                </UAlert>
-
-                <UAlert
-                  v-else-if="availableSlots.length === 0"
-                  color="neutral"
-                  variant="subtle"
-                  icon="i-lucide-calendar-x"
-                >
-                  Aucun créneau disponible pour cette date
-                </UAlert>
-
-                <template v-else>
-                  <div v-for="(slots, period) in groupSlotsByPeriod()" :key="period" class="relative">
-                    <div class="bg-muted/95 sticky top-0 z-10 mb-2 border border-b py-1 backdrop-blur-sm">
-                      <p class="text-muted text-xs font-bold">{{ period }}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <UButton
-                        v-for="time in slots"
-                        :key="time"
-                        :variant="consultationDetails.startTime === time ? 'solid' : 'outline'"
-                        :color="consultationDetails.startTime === time ? 'primary' : 'neutral'"
-                        size="md"
-                        @click="selectTime(time)"
-                      >
-                        {{ time }}
-                        <UIcon
-                          v-if="consultationDetails.startTime === time"
-                          name="i-lucide-check"
-                          class="ml-1 text-xs"
-                        />
-                      </UButton>
-                    </div>
+                <template #title>
+                  <div class="flex justify-between">
+                    <span>{{ exception.startTime?.slice(0, 5) }} - {{ exception.endTime?.slice(0, 5) }}</span>
+                    <span>
+                      {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
+                    </span>
                   </div>
                 </template>
-              </div>
-
-              <UButton
-                icon="i-lucide-plus-circle"
-                color="primary"
-                size="lg"
-                block
-                :loading="isCreating"
-                :disabled="isCreating || (consultationDetails.location === 'clinic' && !selectedRoomId)"
-                @click="addConsultation"
-              >
-                Ajouter cette séance au plan
-              </UButton>
+                <template #description>
+                  <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
+                </template>
+              </UAlert>
             </div>
-          </AppCard>
+            <UAlert
+              v-else
+              color="warning"
+              variant="subtle"
+              icon="i-lucide-info"
+              title="Aucune disponibilité définie pour cette date"
+            />
+          </div>
         </div>
+
+        <div class="col-span-1 lg:col-span-2"></div>
       </div>
     </UForm>
+  </AppCard>
+  <AppCard>
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <h3 class="flex items-center gap-2 font-bold">
+        <UIcon name="i-lucide-clock" class="text-primary" />
+        Créneaux disponibles pour le
+        <span class="text-info">{{ formattedDate }}</span>
+      </h3>
+      <div class="flex flex-wrap gap-3">
+        <UChip position="top-left" color="success">
+          <UBadge color="success" variant="subtle" label="Disponible" />
+        </UChip>
+
+        <UChip position="top-left" color="error">
+          <UBadge color="error" variant="subtle" label="Occupé" />
+        </UChip>
+
+        <UChip position="top-left" color="neutral">
+          <UBadge color="neutral" variant="subtle" label="Indisponible" />
+        </UChip>
+      </div>
+    </div>
+
+    <div class="flex-1 space-y-4 overflow-y-auto pb-2">
+      <UAlert
+        v-if="consultationDetails.location === 'clinic' && !selectedRoomId"
+        color="neutral"
+        variant="subtle"
+        icon="i-lucide-door-closed"
+        title="Veuillez d'abord sélectionner une salle de consultation"
+      />
+
+      <UAlert v-if="isLoadingSlots" color="neutral" variant="subtle">
+        <template #title>
+          <USkeleton class="h-4 w-full" />
+        </template>
+      </UAlert>
+
+      <UAlert v-else-if="slotsError" color="error" variant="subtle" :title="slotsError" />
+
+      <UAlert
+        v-else-if="availableSlots.length === 0"
+        color="neutral"
+        variant="subtle"
+        icon="i-lucide-calendar-x"
+        title="Aucun créneau disponible pour cette date"
+      />
+
+      <template v-else>
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div
+            v-for="(slots, period) in groupSlotsByPeriod()"
+            :key="period"
+            class="bg-muted border-default rounded-lg border p-4"
+          >
+            <p class="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide uppercase">
+              {{ period }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                v-for="time in slots"
+                :key="time"
+                :variant="consultationDetails.startTime === time ? 'solid' : 'subtle'"
+                :color="consultationDetails.startTime === time ? 'primary' : 'success'"
+                size="md"
+                :label="time"
+                @click="selectTime(time)"
+              />
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="border-default mt-4 border-t pt-4">
+      <UButton
+        icon="i-lucide-plus-circle"
+        color="primary"
+        size="lg"
+        block
+        :loading="isCreating"
+        :disabled="
+          isCreating || (consultationDetails.location === 'clinic' && !selectedRoomId) || !consultationDetails.startTime
+        "
+        @click="addConsultation"
+      >
+        Ajouter cette séance au plan
+      </UButton>
+    </div>
   </AppCard>
 </template>

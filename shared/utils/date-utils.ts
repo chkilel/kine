@@ -96,6 +96,7 @@ export function extractDayAndMonth(dateString: string) {
   const date = parseISO(dateString)
 
   return {
+    dayName: format(date, 'EEEE', { locale: fr }), // ex: "lundi"
     day: format(date, 'd', { locale: fr }),
     month: format(date, 'MMM', { locale: fr })
   }
