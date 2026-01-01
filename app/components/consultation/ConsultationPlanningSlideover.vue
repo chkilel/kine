@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import type { TabsItem } from '@nuxt/ui'
   import { formatFullName } from '~~/shared/utils'
 
   const props = defineProps<{
@@ -7,16 +6,23 @@
     treatmentPlan: TreatmentPlanWithProgress
   }>()
 
-  const emit = defineEmits<{
-    close: [data?: any]
-  }>()
+  const emit = defineEmits<{ close: [data?: any] }>()
 
-  // Get active organization and session
-  const { user } = await useAuth()
-  const { activeOrganization } = useOrganization()
-  if (!user.value || !activeOrganization.value.data?.id) {
-    await navigateTo('/login')
-  }
+  // Tab configuration
+  //  const planningTabs = [
+  //    {
+  //      label: 'Planification manuelle',
+  //      icon: 'i-lucide-calendar-plus',
+  //      slot: 'manual',
+  //      value: 'manual'
+  //    },
+  //    {
+  //      label: 'Planification automatique',
+  //      icon: 'i-lucide-zap',
+  //      slot: 'auto',
+  //      value: 'auto'
+  //    }
+  //  ] satisfies TabsItem[]
 
   const { therapists } = useOrganizationMembers()
 
@@ -30,22 +36,6 @@
     cancelled: number
     progressPercentage: number
   } | null>(null)
-
-  // Tab configuration
-  const planningTabs = [
-    {
-      label: 'Planification manuelle',
-      icon: 'i-lucide-calendar-plus',
-      slot: 'manual',
-      value: 'manual'
-    },
-    {
-      label: 'Planification automatique',
-      icon: 'i-lucide-zap',
-      slot: 'auto',
-      value: 'auto'
-    }
-  ] satisfies TabsItem[]
 
   const communicationSettings = ref({
     sendConfirmations: false,
@@ -65,7 +55,7 @@
   >
     <template #body>
       <!-- Main Content -->
-      <div class="flex flex-col">
+      <div class="flex flex-col gap-4">
         <!-- Treatment Plan Overview -->
         <UCard>
           <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
@@ -97,32 +87,35 @@
         </UCard>
 
         <!-- Planning Tabs -->
-        <UCard class="mt-6">
-          <UTabs
-            v-model="activePlanningTab"
-            :items="planningTabs"
-            variant="pill"
-            size="xl"
-            color="primary"
-            class="w-full"
-          >
-            <!-- Manual Planning Tab -->
-            <template #manual>
-              <ConsultationManualPlanningCard :treatment-plan="props.treatmentPlan" :therapists="therapists" />
-            </template>
+        <ConsultationManualPlanningCard :treatment-plan="props.treatmentPlan" :therapists="therapists" />
 
-            <!-- Auto Planning Tab -->
-            <template #auto>
-              <ConsultationAutomaticPlanningCard :therapists="therapists" :treatment-plan="treatmentPlan" />
-            </template>
-          </UTabs>
-        </UCard>
+        <!-- -----------------------------Hiding the tabs witht automatique planning---------------------------------------- -->
+        <!-- <UCard class="mt-6"> -->
+        <!-- <UTabs -->
+        <!-- v-model="activePlanningTab" -->
+        <!-- :items="planningTabs" -->
+        <!-- variant="pill" -->
+        <!-- size="xl" -->
+        <!-- color="primary" -->
+        <!-- class="w-full" -->
+        <!-- > -->
+        <!-- Manual Planning Tab -->
+        <!-- <template #manual> -->
+        <!-- <ConsultationManualPlanningCard :treatment-plan="props.treatmentPlan" :therapists="therapists" /> -->
+        <!-- </template> -->
+
+        <!-- Auto Planning Tab -->
+        <!-- <template #auto> -->
+        <!-- <ConsultationAutomaticPlanningCard :therapists="therapists" :treatment-plan="treatmentPlan" /> -->
+        <!-- </template> -->
+        <!-- </UTabs> -->
+        <!-- </UCard> -->
 
         <!-- Session Management FIXME -->
-        <ConsultationManagement class="mt-6" :active-planning-tab="activePlanningTab" />
+        <ConsultationManagement :active-planning-tab="activePlanningTab" />
 
         <!-- Communication Settings -->
-        <UCard class="mt-6">
+        <UCard>
           <h3 class="text-foreground mb-4 text-lg font-bold">Communication Patient</h3>
           <div class="space-y-4">
             <div class="flex items-center justify-between">
