@@ -1,6 +1,28 @@
-# Nuxt Minimal Starter
+# Kine - Physical Therapy Clinic Management
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A comprehensive physical therapy clinic management web application designed to streamline patient care, treatment planning, and clinic operations. Built as a multi-tenant SaaS solution for physical therapy clinics.
+
+## Features
+
+- **Multi-tenant SaaS**: Organization-based data isolation for multiple clinics
+- **Patient Management**: Comprehensive medical records, treatment history, and consultations
+- **Treatment Planning**: Custom treatment plans with goals and progress tracking
+- **Scheduling**: Availability management, booking, and conflict detection
+- **Document Management**: Categorized medical documents (referrals, imaging, lab results, notes, prescriptions)
+- **Billing & Insurance**: Insurance tracking and billing workflows
+- **Analytics**: Dashboard with charts and performance metrics
+- **Role-based Access**: Clinic administrators, therapists, and staff roles
+
+## Tech Stack
+
+- **Frontend**: Nuxt 4, Vue 3, TypeScript, Tailwind CSS, Nuxt UI
+- **Backend**: Nitro (Nuxt's server engine) on Cloudflare Workers
+- **Database**: Cloudflare D1 (SQLite) with Drizzle ORM
+- **Authentication**: Better Auth with organization support
+- **File Storage**: Cloudflare R2 (S3-compatible)
+- **Testing**: Vitest for unit testing
+- **Package Manager**: pnpm
+- **Deployment**: Cloudflare Workers with Wrangler
 
 ## Setup
 
@@ -35,8 +57,25 @@ pnpm dev
 yarn dev
 
 # bun
-bun run dev
+  bun run dev
 ```
+
+## Testing
+
+Run unit tests for shared utilities and business logic:
+
+```bash
+# Run all tests once
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage report
+pnpm test:coverage
+```
+
+Tests are located in `shared/utils/*.spec.ts` and aim for >90% coverage on critical business logic.
 
 ## Production
 
@@ -69,10 +108,25 @@ pnpm preview
 yarn preview
 
 # bun
-bun run preview
+  bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Deployment
+
+This project is designed for Cloudflare Workers deployment:
+
+```bash
+# Build and deploy to Cloudflare Workers
+pnpm deploy
+```
+
+The application uses:
+
+- **Cloudflare Workers** for serverless compute
+- **Cloudflare D1** for SQLite database
+- **Cloudflare R2** for file storage
+
+Configure Wrangler settings in `wrangler.jsonc` for your environment.
 
 ## Database Seeding (Development Only)
 
