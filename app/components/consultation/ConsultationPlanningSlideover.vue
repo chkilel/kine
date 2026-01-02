@@ -112,7 +112,7 @@
         <!-- </UCard> -->
 
         <!-- Session Management FIXME -->
-        <ConsultationManagement :active-planning-tab="activePlanningTab" />
+        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="props.treatmentPlan.patientId" />
 
         <!-- Communication Settings -->
         <UCard>

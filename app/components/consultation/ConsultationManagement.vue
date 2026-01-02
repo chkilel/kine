@@ -1,7 +1,15 @@
 <script setup lang="ts">
-  const props = defineProps<{ activePlanningTab: string }>()
+  const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
-  const consultations = ref<Consultation[]>([])
+  const deleteConsultationMutation = useDeleteConsultation()
+  const { data: consultationsData } = useConsultationsList(() => props.patientId)
+
+  const deleteConsultation = async (consultationId: string) => {
+    await deleteConsultationMutation.mutateAsync({
+      patientId: props.patientId,
+      consultationId
+    })
+  }
   const selectedConsultations = ref<string[]>([])
 
   const toggleConsultationSelection = (consultationId: string) => {
@@ -19,71 +27,71 @@
 </script>
 
 <template>
-  <AppCard title="Gestion des Séances" description="Prévisualisez, générez et ajustez les séances ci-dessous.">
-    <div class="mt-4 overflow-x-auto">
-      <UTable
-        :data="consultations"
-        :columns="[
-          { accessorKey: 'selected', header: '' },
-          { accessorKey: 'date', header: 'Date & Heure' },
-          { accessorKey: 'details', header: 'Détails Séance' },
-          { accessorKey: 'status', header: 'Statut' },
-          { id: 'actions', header: '' }
-        ]"
-      >
-        <template #selected-cell="{ row }">
-          <UCheckbox
-            :model-value="selectedConsultations.includes(row.original.id)"
-            @update:model-value="toggleConsultationSelection(row.original.id)"
-          />
-        </template>
-
-        <template #date-cell="{ row }">
-          <div>
-            <div class="font-medium">
-              {{
-                new Date(row.original.date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
-                })
-              }}
+  <AppCard title="Gestion des Séances" icon="i-lucide-list" iconColor="info">
+    <div v-if="consultationsData && consultationsData.length > 0" class="space-y-3">
+      <ul class="space-y-2">
+        <li
+          v-for="consultation in consultationsData"
+          :key="consultation.id"
+          class="bg-muted hover:bg-elevated flex items-center justify-between rounded-lg p-2.5 py-2"
+        >
+          <div class="flex flex-1 items-center justify-between">
+            <div class="flex items-center gap-4">
+              <UBadge color="neutral" variant="subtle" class="bg-default flex-col justify-center gap-0">
+                <p class="text-sm font-bold">{{ extractDayAndMonth(consultation.date).day }}</p>
+                <p class="text-xs capitalize opacity-80">{{ extractDayAndMonth(consultation.date).month }}</p>
+              </UBadge>
+              <div>
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    v-if="consultation.location"
+                    :name="getLocationIcon(consultation.location)"
+                    class="text-muted"
+                    :class="getLocationColor(consultation.location)"
+                  />
+                  <p class="font-semibold">
+                    {{ removeSecondsFromTime(consultation.startTime) }} -
+                    {{ removeSecondsFromTime(addMinutesToTime(consultation.startTime, consultation.duration)) }}
+                  </p>
+                </div>
+                <div class="text-muted text-xs">
+                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} · {{ consultation.duration }} min
+                </div>
+              </div>
             </div>
-            <div class="text-muted-foreground">{{ removeSecondsFromTime(row.original.startTime) || '' }}</div>
-          </div>
-        </template>
-
-        <template #details-cell="{ row }">
-          <div>
-            <div class="font-medium" v-if="row.original.type">
-              {{ getConsultationTypeLabel(row.original.type) }}
+            <div class="flex items-center gap-2">
+              <UBadge
+                :color="getConsultationStatusColor(consultation.status)"
+                variant="soft"
+                size="md"
+                class="rounded-full"
+              >
+                {{ getConsultationStatusLabel(consultation.status) }}
+              </UBadge>
             </div>
-            <div class="text-muted-foreground">{{ row.original.chiefComplaint || '' }}</div>
           </div>
-        </template>
 
-        <template #status-cell="{ row }">
-          <UBadge :color="getConsultationStatusColor(row.original.status)" variant="soft" size="xs">
-            {{ getConsultationStatusLabel(row.original.status) }}
-          </UBadge>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center justify-end gap-2">
-            <UButton icon="i-lucide-edit" variant="ghost" color="neutral" size="sm" square />
+          <div class="flex items-center gap-2">
+            <USeparator orientation="vertical" class="h-8 pl-4" />
             <UButton
-              icon="i-lucide-trash"
+              icon="i-lucide-trash-2"
               variant="ghost"
               color="error"
               size="sm"
               square
-              @click="handleDeleteConsultation"
+              @click="deleteConsultation(consultation.id)"
             />
           </div>
-        </template>
-      </UTable>
+        </li>
+      </ul>
     </div>
 
+    <UEmpty
+      v-else
+      icon="i-lucide-calendar-x"
+      title="Aucune séance planifiée"
+      description="Aucune consultation n'a été planifiée pour ce patient."
+    />
     <div class="border-border bg-muted/50 mt-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
       <div class="text-muted-foreground text-sm font-medium">
         <span class="text-foreground font-bold">{{ selectedConsultations.length }}</span>

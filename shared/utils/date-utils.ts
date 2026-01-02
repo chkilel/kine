@@ -31,6 +31,12 @@ export const minutesToTime = (minutes: number): string => {
   return new Time(hours, mins).toString()
 }
 
+export const addMinutesToTime = (time: string, minutes: number): string => {
+  const totalMinutes = timeToMinutes(time)
+  const newMinutes = totalMinutes + minutes
+  return minutesToTime(newMinutes)
+}
+
 // ============================================================================
 // DATE PARSING & VALIDATION
 // ============================================================================
