@@ -26,8 +26,6 @@ The rooms management system SHALL provide room availability information for cons
 - **THEN** the system returns availability status for each date
 - **AND** each date shows whether the room is available or not
 
-## MODIFIED Requirements
-
 ### Requirement: Consultation-Room Relationship
 
 The system SHALL enforce a one-to-one relationship between consultations and rooms at a given time slot, ensuring that a room can only host one consultation at a time.
