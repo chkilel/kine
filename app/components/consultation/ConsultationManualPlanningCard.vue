@@ -576,7 +576,7 @@
                 :variant="consultationDetails.startTime === time ? 'solid' : 'subtle'"
                 :color="consultationDetails.startTime === time ? 'primary' : 'success'"
                 size="md"
-                :label="time"
+                :label="removeSecondsFromTime(time)"
                 @click="selectTime(time)"
               />
             </div>
