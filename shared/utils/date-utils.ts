@@ -1,6 +1,5 @@
 import { format, differenceInYears, parseISO, formatDistanceToNow, differenceInDays } from 'date-fns'
 import { CalendarDate, parseTime, Time } from '@internationalized/date'
-import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
 import { fr } from 'date-fns/locale'
 
 // ============================================================================
@@ -27,31 +26,6 @@ export const minutesToTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60) % 24
   const mins = minutes % 60
   return new Time(hours, mins).toString().slice(0, 5)
-}
-
-export const hasTimeConflict = (
-  existingStart: string,
-  existingEnd: string,
-  newStart: string,
-  newEnd: string,
-  minGap: number = MINIMUM_CONSULTATION_GAP_MINUTES
-): boolean => {
-  const existingStartMin = timeToMinutes(existingStart)
-  const existingEndMin = timeToMinutes(existingEnd)
-  const newStartMin = timeToMinutes(newStart)
-  const newEndMin = timeToMinutes(newEnd)
-
-  console.log('🚀 Time conflict check:', {
-    existing: { start: existingStart, end: existingEnd, startMin: existingStartMin, endMin: existingEndMin },
-    new: { start: newStart, end: newEnd, startMin: newStartMin, endMin: newEndMin },
-    minGap
-  })
-
-  const newEndsBeforeExisting = newEndMin + minGap <= existingStartMin
-  const newStartsAfterExisting = newStartMin >= existingEndMin + minGap
-  const noConflict = newEndsBeforeExisting || newStartsAfterExisting
-
-  return !noConflict
 }
 
 // ============================================================================

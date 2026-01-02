@@ -10,7 +10,8 @@ import {
   availabilityExceptions
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
-import { hasTimeConflict, minutesToTime } from '~~/shared/utils/date-utils'
+import { hasTimeConflict } from '~~/shared/utils/availability-utils'
+import { minutesToTime } from '~~/shared/utils/date-utils'
 import { MINIMUM_CONSULTATION_GAP_MINUTES, CONSULTATION_DURATIONS } from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
