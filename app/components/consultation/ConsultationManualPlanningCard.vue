@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import { LazyOrganizationRoomSlideover } from '#components'
   import { CalendarDate, getLocalTimeZone, parseDate, parseTime, today } from '@internationalized/date'
 
   const props = defineProps<{
@@ -8,6 +9,8 @@
 
   const createConsultationMutation = useCreateConsultation()
   const toast = useToast()
+  const overlay = useOverlay()
+  const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
 
   const isCreating = ref(false)
   const minDate = computed(() => convertToCalendarDate(new Date()))
@@ -277,6 +280,10 @@
       fetchAvailableSlots()
     }
   }
+
+  async function handleAddRoom() {
+    await roomAddOverlay.open({})
+  }
 </script>
 
 <template>
@@ -409,7 +416,19 @@
               </UAlert>
             </div>
 
-            <UAlert v-else color="neutral" variant="subtle" icon="i-lucide-door-open">Aucune salle disponible</UAlert>
+            <div v-else class="space-y-3">
+              <UAlert color="neutral" variant="subtle" icon="i-lucide-door-open">
+                <template #title>Vous n'avez pas encore configuré de salle de consultation</template>
+                <template #description>
+                  <p class="text-muted-foreground text-sm">
+                    Ajoutez au moins une salle pour planifier des séances au cabinet.
+                  </p>
+                </template>
+              </UAlert>
+              <UButton icon="i-lucide-plus" color="primary" variant="soft" block @click="handleAddRoom">
+                Ajouter une salle
+              </UButton>
+            </div>
           </div>
 
           <div class="bg-muted space-y-4 rounded-lg p-3">
