@@ -200,6 +200,10 @@
     return exceptionsForDate.value.filter((e) => e.startTime && e.endTime)
   })
 
+  const fullDayExceptions = computed(() => {
+    return exceptionsForDate.value.filter((e) => !e.startTime && !e.endTime)
+  })
+
   const addConsultation = async () => {
     if (consultationDetails.value.location === 'clinic' && !selectedRoomId.value) {
       toast.add({
@@ -464,6 +468,26 @@
                     <span v-if="exception.startTime && exception.endTime">
                       {{ removeSecondsFromTime(exception.startTime) }} - {{ removeSecondsFromTime(exception.endTime) }}
                     </span>
+                    <span>
+                      {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
+                    </span>
+                  </div>
+                </template>
+                <template #description>
+                  <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
+                </template>
+              </UAlert>
+              <UAlert
+                v-for="exception in fullDayExceptions"
+                :key="exception.id"
+                :color="exception.isAvailable ? 'success' : 'error'"
+                :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
+                variant="soft"
+                class="px-2 py-1"
+              >
+                <template #title>
+                  <div class="flex justify-between">
+                    <span>Journée entière (09:00 - 17:00)</span>
                     <span>
                       {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
                     </span>

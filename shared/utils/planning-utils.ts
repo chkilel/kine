@@ -1,4 +1,5 @@
 import type { AvailabilityException, WeeklyAvailabilityTemplate } from '../types/availability.types'
+import { WORKING_HOURS } from './constants.availability'
 import { getDayOfWeek, minutesToTime, timeToMinutes } from './date-utils'
 
 export interface TimeRange {
@@ -35,8 +36,12 @@ export function getEffectiveAvailability(
 
   // Check if there's a full-day unavailability exception (block the entire day)
   const fullDayUnavailable = dateExceptions.find((e) => !e.isAvailable && !e.startTime && !e.endTime)
+
+  // Check if there's a full-day availability exception (add working hours as availability)
+  const fullDayAvailable = dateExceptions.find((e) => e.isAvailable && !e.startTime && !e.endTime)
+
   // If fully unavailable day with no extra availability added, return empty array
-  if (fullDayUnavailable && availableExceptions.length === 0) {
+  if (fullDayUnavailable && availableExceptions.length === 0 && !fullDayAvailable) {
     return []
   }
 
@@ -49,6 +54,14 @@ export function getEffectiveAvailability(
     availableRanges.push({
       start: template.startTime,
       end: template.endTime
+    })
+  }
+
+  // Add full-day availability exception as working hours
+  if (fullDayAvailable) {
+    availableRanges.push({
+      start: WORKING_HOURS.start,
+      end: WORKING_HOURS.end
     })
   }
 

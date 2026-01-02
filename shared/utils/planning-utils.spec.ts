@@ -224,6 +224,69 @@ describe('planning-utils', () => {
 
       expect(result).toEqual([])
     })
+
+    it('2.2.7 should use working hours for full-day available exception without templates', () => {
+      const templates: WeeklyAvailabilityTemplate[] = []
+      const exceptions: AvailabilityException[] = [
+        {
+          id: '1',
+          date: '2026-01-12',
+          isAvailable: true,
+          startTime: null,
+          endTime: null,
+          reason: null,
+          notes: null,
+          userId: 'user1',
+          organizationId: 'org1',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]
+      const date = '2026-01-12'
+
+      const result = getEffectiveAvailability(date, templates, exceptions)
+
+      expect(result).toEqual([{ start: '09:00:00', end: '17:00:00' }])
+    })
+
+    it('2.2.8 should override templates with full-day available exception', () => {
+      const templates: WeeklyAvailabilityTemplate[] = [
+        {
+          id: '1',
+          dayOfWeek: 'mon',
+          startTime: '10:00:00',
+          endTime: '14:00:00',
+          location: 'clinic',
+          userId: 'user1',
+          organizationId: 'org1',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]
+      const exceptions: AvailabilityException[] = [
+        {
+          id: '1',
+          date: '2026-01-12',
+          isAvailable: true,
+          startTime: null,
+          endTime: null,
+          reason: null,
+          notes: null,
+          userId: 'user1',
+          organizationId: 'org1',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]
+      const date = '2026-01-12'
+
+      const result = getEffectiveAvailability(date, templates, exceptions)
+
+      expect(result).toEqual([
+        { start: '10:00:00', end: '14:00:00' },
+        { start: '09:00:00', end: '17:00:00' }
+      ])
+    })
   })
 
   describe('generateTimeSlots', () => {
