@@ -70,16 +70,6 @@ export function getEffectiveAvailability(
     .filter((e) => !e.isAvailable && e.startTime && e.endTime)
     .map((e) => ({ start: e.startTime!, end: e.endTime!, sessionId: '' }))
 
-  console.log(
-    '🚀 >>> ',
-    '=========================================================================================================\n',
-    ': ',
-    {
-      availableRanges,
-      unavailablePeriods
-    }
-  )
-
   // Start with all available ranges
   let remainingRanges = availableRanges
   // Subtract unavailable periods from available ranges (carve out blocked time)
@@ -118,14 +108,14 @@ export function generateTimeSlots(
   // Initialize array to hold all available slot start times
   const slots: string[] = []
 
-  // Log input parameters for debugging
-  console.log('🎰 generateTimeSlots', {
-    availableRanges,
-    bookedPeriods,
-    duration,
-    gapMinutes,
-    slotIncrementMinutes
-  })
+  // // Log input parameters for debugging
+  // console.log('🎰 generateTimeSlots', {
+  //   availableRanges,
+  //   bookedPeriods,
+  //   duration,
+  //   gapMinutes,
+  //   slotIncrementMinutes
+  // })
 
   // Iterate through each available time range
   for (const range of availableRanges) {
@@ -304,7 +294,7 @@ function checkTimeSlotConflicts(
 
     // If neither condition is true, there's a conflict
     if (!newEndsBeforeBooked && !newStartsAfterBooked) {
-      console.log(`    ❌ Gap conflict: ${startTime}-${endTime} vs ${booked.start}-${booked.end} (gap: ${gapMinutes})`)
+      // console.log(`    ❌ Gap conflict: ${startTime}-${endTime} vs ${booked.start}-${booked.end} (gap: ${gapMinutes})`)
       return true
     }
   }

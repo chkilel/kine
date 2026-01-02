@@ -25,7 +25,7 @@ export const timeToMinutes = (time: string): number => {
 export const minutesToTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60) % 24
   const mins = minutes % 60
-  return new Time(hours, mins).toString().slice(0, 5)
+  return new Time(hours, mins).toString()
 }
 
 // ============================================================================

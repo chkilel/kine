@@ -39,7 +39,7 @@ describe('planning-utils', () => {
         }
       ]
       const exceptions: AvailabilityException[] = []
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
@@ -66,7 +66,7 @@ describe('planning-utils', () => {
       const exceptions: AvailabilityException[] = [
         {
           id: '1',
-          date: '2026-01-15',
+          date: '2026-01-12',
           isAvailable: true,
           startTime: '13:00:00',
           endTime: '15:00:00',
@@ -78,7 +78,7 @@ describe('planning-utils', () => {
           updatedAt: new Date()
         }
       ]
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
@@ -105,7 +105,7 @@ describe('planning-utils', () => {
       const exceptions: AvailabilityException[] = [
         {
           id: '1',
-          date: '2026-01-15',
+          date: '2026-01-12',
           isAvailable: false,
           startTime: null,
           endTime: null,
@@ -117,7 +117,7 @@ describe('planning-utils', () => {
           updatedAt: new Date()
         }
       ]
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
@@ -141,7 +141,7 @@ describe('planning-utils', () => {
       const exceptions: AvailabilityException[] = [
         {
           id: '1',
-          date: '2026-01-15',
+          date: '2026-01-12',
           isAvailable: false,
           startTime: '12:00:00',
           endTime: '13:00:00',
@@ -153,13 +153,13 @@ describe('planning-utils', () => {
           updatedAt: new Date()
         }
       ]
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
       expect(result).toEqual([
-        { start: '09:00:00', end: '12:00' },
-        { start: '13:00', end: '17:00:00' }
+        { start: '09:00:00', end: '12:00:00' },
+        { start: '13:00:00', end: '17:00:00' }
       ])
     })
 
@@ -180,7 +180,7 @@ describe('planning-utils', () => {
       const exceptions: AvailabilityException[] = [
         {
           id: '1',
-          date: '2026-01-15',
+          date: '2026-01-12',
           isAvailable: true,
           startTime: '13:00:00',
           endTime: '15:00:00',
@@ -193,7 +193,7 @@ describe('planning-utils', () => {
         },
         {
           id: '2',
-          date: '2026-01-15',
+          date: '2026-01-12',
           isAvailable: false,
           startTime: '14:00:00',
           endTime: '15:00:00',
@@ -205,7 +205,7 @@ describe('planning-utils', () => {
           updatedAt: new Date()
         }
       ]
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
@@ -218,7 +218,7 @@ describe('planning-utils', () => {
     it('2.2.6 should return empty when no availability exists', () => {
       const templates: WeeklyAvailabilityTemplate[] = []
       const exceptions: AvailabilityException[] = []
-      const date = '2026-01-15'
+      const date = '2026-01-12'
 
       const result = getEffectiveAvailability(date, templates, exceptions)
 
@@ -236,7 +236,7 @@ describe('planning-utils', () => {
 
       const result = generateTimeSlots(availableRanges, bookedPeriods, duration, gapMinutes, slotIncrementMinutes)
 
-      expect(result).toEqual(['09:00', '09:30'])
+      expect(result).toEqual(['09:00:00', '09:30:00'])
     })
 
     it('2.3.2 should skip slots that conflict with booked periods', () => {
@@ -248,7 +248,7 @@ describe('planning-utils', () => {
 
       const result = generateTimeSlots(availableRanges, bookedPeriods, duration, gapMinutes, slotIncrementMinutes)
 
-      expect(result).toEqual(['09:00', '10:00', '10:30'])
+      expect(result).toEqual(['09:00:00', '10:00:00', '10:30:00'])
     })
 
     it('2.3.3 should respect gap minutes requirement', () => {
@@ -272,7 +272,7 @@ describe('planning-utils', () => {
 
       const result = generateTimeSlots(availableRanges, bookedPeriods, duration, gapMinutes, slotIncrementMinutes)
 
-      expect(result).toEqual(['09:00', '09:15', '09:30'])
+      expect(result).toEqual(['09:00:00', '09:15:00', '09:30:00'])
     })
 
     it('2.3.5 should handle edge cases - zero duration range', () => {
@@ -299,7 +299,7 @@ describe('planning-utils', () => {
 
       const result = generateTimeSlots(availableRanges, bookedPeriods, duration, gapMinutes, slotIncrementMinutes)
 
-      expect(result).toEqual(['09:00', '09:30', '14:00', '14:30'])
+      expect(result).toEqual(['09:00:00', '09:30:00', '14:00:00', '14:30:00'])
     })
   })
 
@@ -331,7 +331,7 @@ describe('planning-utils', () => {
 
       const result = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
-      expect(result).toEqual([{ start: '10:00', end: '12:00' }])
+      expect(result).toEqual([{ start: '10:00:00', end: '12:00' }])
     })
 
     it('2.4.4 should handle partial overlap - booked at end', () => {
@@ -341,7 +341,7 @@ describe('planning-utils', () => {
 
       const result = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
-      expect(result).toEqual([{ start: '09:00', end: '11:00' }])
+      expect(result).toEqual([{ start: '09:00', end: '11:00:00' }])
     })
 
     it('2.4.5 should handle full containment - range completely covers booked period', () => {
@@ -352,8 +352,8 @@ describe('planning-utils', () => {
       const result = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
       expect(result).toEqual([
-        { start: '09:00', end: '12:00' },
-        { start: '13:00', end: '17:00' }
+        { start: '09:00', end: '12:00:00' },
+        { start: '13:00:00', end: '17:00' }
       ])
     })
 
@@ -378,9 +378,9 @@ describe('planning-utils', () => {
       const result = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
       expect(result).toEqual([
-        { start: '09:00', end: '10:00' },
-        { start: '11:00', end: '14:00' },
-        { start: '15:00', end: '17:00' }
+        { start: '09:00', end: '10:00:00' },
+        { start: '11:00:00', end: '14:00:00' },
+        { start: '15:00:00', end: '17:00' }
       ])
     })
 
@@ -392,8 +392,8 @@ describe('planning-utils', () => {
       const result = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
       expect(result).toEqual([
-        { start: '09:00', end: '09:45' },
-        { start: '11:15', end: '12:00' }
+        { start: '09:00', end: '09:45:00' },
+        { start: '11:15:00', end: '12:00' }
       ])
     })
   })
@@ -463,17 +463,17 @@ describe('planning-utils', () => {
   describe('calculateEndTime', () => {
     it('3.2.1 should calculate simple duration addition', () => {
       const result = calculateEndTime('09:00', 30)
-      expect(result).toBe('09:30')
+      expect(result).toBe('09:30:00')
     })
 
     it('3.2.2 should handle crossing hour boundaries', () => {
       const result = calculateEndTime('09:45', 30)
-      expect(result).toBe('10:15')
+      expect(result).toBe('10:15:00')
     })
 
     it('3.2.3 should handle crossing day boundaries (24+ hours)', () => {
       const result = calculateEndTime('23:00', 120)
-      expect(result).toBe('01:00')
+      expect(result).toBe('01:00:00')
     })
   })
 
