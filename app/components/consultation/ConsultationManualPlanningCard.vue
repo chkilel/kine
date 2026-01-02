@@ -441,7 +441,29 @@
               Disponibilité du thérapeute pour le
               <span class="text-info">{{ formattedDate }}</span>
             </h4>
-            <div v-if="dayTemplatesForDate.length > 0 || exceptionsForDate.length > 0" class="space-y-2">
+            <template v-if="fullDayExceptions.length">
+              <UAlert
+                v-for="exception in fullDayExceptions"
+                :key="exception.id"
+                :color="exception.isAvailable ? 'success' : 'error'"
+                :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
+                variant="soft"
+                class="px-2 py-1"
+              >
+                <template #title>
+                  <div class="flex justify-between">
+                    <span>Journée entière</span>
+                    <span>
+                      {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
+                    </span>
+                  </div>
+                </template>
+                <template #description>
+                  <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
+                </template>
+              </UAlert>
+            </template>
+            <div v-else-if="dayTemplatesForDate.length > 0 || exceptionsForDate.length > 0" class="space-y-2">
               <UBadge
                 v-for="template in dayTemplatesForDate"
                 :key="template.id"
@@ -468,26 +490,6 @@
                     <span v-if="exception.startTime && exception.endTime">
                       {{ removeSecondsFromTime(exception.startTime) }} - {{ removeSecondsFromTime(exception.endTime) }}
                     </span>
-                    <span>
-                      {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
-                    </span>
-                  </div>
-                </template>
-                <template #description>
-                  <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
-                </template>
-              </UAlert>
-              <UAlert
-                v-for="exception in fullDayExceptions"
-                :key="exception.id"
-                :color="exception.isAvailable ? 'success' : 'error'"
-                :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
-                variant="soft"
-                class="px-2 py-1"
-              >
-                <template #title>
-                  <div class="flex justify-between">
-                    <span>Journée entière (09:00 - 17:00)</span>
                     <span>
                       {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
                     </span>
@@ -534,7 +536,7 @@
       </div>
     </div>
 
-    <div class="flex-1 space-y-4 overflow-y-auto pb-2">
+    <div class="flex-1 space-y-4 overflow-y-auto">
       <UAlert
         v-if="consultationDetails.location === 'clinic' && !selectedRoomId"
         color="neutral"
@@ -564,12 +566,16 @@
           <div
             v-for="(slots, period) in groupSlotsByPeriod()"
             :key="period"
-            class="bg-muted border-default rounded-lg border p-4"
+            class="bg-muted border-default rounded-lg border p-3"
           >
-            <p class="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide uppercase">
+            <p class="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
+              <UIcon
+                :name="period === 'Matin' ? 'i-lucide-sunrise' : period === 'Midi' ? 'i-lucide-sun' : 'i-lucide-sunset'"
+                class="size-4"
+              />
               {{ period }}
             </p>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 tabular-nums">
               <UButton
                 v-for="time in slots"
                 :key="time"
@@ -589,7 +595,7 @@
       <UButton
         icon="i-lucide-plus-circle"
         color="primary"
-        size="lg"
+        size="xl"
         block
         :loading="isCreating"
         :disabled="
