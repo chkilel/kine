@@ -96,7 +96,7 @@
                 })
               }}
             </div>
-            <div class="text-muted-foreground text-sm">{{ row.original.startTime || '' }}</div>
+            <div class="text-muted-foreground text-sm">{{ removeSecondsFromTime(row.original.startTime) || '' }}</div>
           </div>
         </template>
 

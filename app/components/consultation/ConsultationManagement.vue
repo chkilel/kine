@@ -49,13 +49,13 @@
                 })
               }}
             </div>
-            <div class="text-muted-foreground">{{ row.original.startTime || '' }}</div>
+            <div class="text-muted-foreground">{{ removeSecondsFromTime(row.original.startTime) || '' }}</div>
           </div>
         </template>
 
         <template #details-cell="{ row }">
           <div>
-            <div class="font-medium">
+            <div class="font-medium" v-if="row.original.type">
               {{ getConsultationTypeLabel(row.original.type) }}
             </div>
             <div class="text-muted-foreground">{{ row.original.chiefComplaint || '' }}</div>

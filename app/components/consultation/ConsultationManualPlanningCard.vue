@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { CalendarDate, getLocalTimeZone, parseDate, parseTime, today } from '@internationalized/date'
-  import { computed } from 'vue'
 
   const props = defineProps<{
     therapists: User[]
@@ -429,7 +428,7 @@
                 color="primary"
                 class="flex"
               >
-                {{ template.startTime.slice(0, 5) }} - {{ template.endTime.slice(0, 5) }} ({{
+                {{ removeSecondsFromTime(template.startTime) }} - {{ removeSecondsFromTime(template.endTime) }} ({{
                   getLocationLabel(template.location)
                 }})
               </UBadge>
@@ -443,7 +442,9 @@
               >
                 <template #title>
                   <div class="flex justify-between">
-                    <span>{{ exception.startTime?.slice(0, 5) }} - {{ exception.endTime?.slice(0, 5) }}</span>
+                    <span v-if="exception.startTime && exception.endTime">
+                      {{ removeSecondsFromTime(exception.startTime) }} - {{ removeSecondsFromTime(exception.endTime) }}
+                    </span>
                     <span>
                       {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
                     </span>
