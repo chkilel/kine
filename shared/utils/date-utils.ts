@@ -23,6 +23,9 @@ export const timeToMinutes = (time: string): number => {
 }
 
 export const minutesToTime = (minutes: number): string => {
+  if (typeof minutes !== 'number' || isNaN(minutes)) {
+    throw new Error(`Invalid minutes value: ${minutes}`)
+  }
   const hours = Math.floor(minutes / 60) % 24
   const mins = minutes % 60
   return new Time(hours, mins).toString()
