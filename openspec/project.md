@@ -29,6 +29,7 @@ Kine is a comprehensive physical therapy clinic management web application desig
 - **API calls**: UseFetch and useAsyncData whenever is possible
 
 ### Nuxt Directory Structure
+
 Kine Project Structure:
 
 ```
@@ -70,9 +71,15 @@ Kine Project Structure:
 
 ### Testing Strategy
 
-- No explicit testing framework currently configured
-- Manual testing through development workflow
-- Type safety provides compile-time error checking
+- **Unit Testing**: Vitest for pure function testing in shared/utils
+- **Test Coverage**: Aim for high coverage (>90%) on critical business logic
+- **Type Safety**: TypeScript strict mode provides compile-time error checking
+- **Integration Testing**: Manual testing through development workflow
+- **Test Files**: Located alongside source files with `.spec.ts` extension
+- **Test Commands**:
+  - `pnpm test` - Run all tests once
+  - `pnpm test:watch` - Run tests in watch mode
+  - `pnpm test:coverage` - Run tests with coverage report
 
 ### Git Workflow
 
@@ -136,3 +143,4 @@ Kine Project Structure:
 - **Error Handling**: Consistent error responses with proper HTTP status codes
 - **Authentication**: JWT-based with organization context
 - **File Operations**: Signed URLs for secure uploads/downloads
+```
