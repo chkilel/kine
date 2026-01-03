@@ -1,6 +1,6 @@
 <script setup lang="ts">
   // Constants
-  const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-lucide-home', to: '/' }, { label: 'Patients' }]
+  const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' }, { label: 'Patients' }]
 
   const route = useRoute()
   const router = useRouter()
@@ -14,7 +14,7 @@
   })
 
   // Fetch data
-  const { data, isPending, error } = usePatientsList(queryParams)
+  const { data: patients, isPending, error } = usePatientsList(queryParams)
 
   // Debounced search
   const debouncedSearch = useDebounceFn((searchValue: string) => {
@@ -60,12 +60,12 @@
   const emptyStateConfig = computed(() => {
     if (hasActiveFilters.value) {
       return {
-        icon: 'i-lucide-search-x',
+        icon: 'i-hugeicons-user-search-01',
         title: 'Aucun patient trouvé',
         description: 'Essayez de modifier votre recherche ou vos filtres pour trouver des résultats',
         actions: [
           {
-            icon: 'i-lucide-refresh-ccw',
+            icon: 'i-hugeicons-refresh-01',
             label: 'Effacer les filtres',
             variant: 'subtle' as const,
             onClick: clearFilters
@@ -75,12 +75,12 @@
     }
 
     return {
-      icon: 'i-lucide-users',
+      icon: 'i-hugeicons-user-group-01',
       title: 'Aucun patient',
       description: 'Commencez par ajouter votre premier patient',
       actions: [
         {
-          icon: 'i-lucide-plus',
+          icon: 'i-hugeicons-plus-sign',
           label: 'Ajouter un patient',
           variant: 'subtle' as const,
           onClick: () => navigateTo('/patients/new')
@@ -93,6 +93,8 @@
   const clearFilters = () => {
     queryParams.value.search = ''
     queryParams.value.status = undefined
+
+    updateURL()
   }
 
   const handlePatientClick = (patient: Patient) => {
@@ -130,7 +132,7 @@
         <template #right>
           <UChip inset size="xl">
             <UButton
-              icon="i-lucide-bell"
+              icon="i-hugeicons-notification-01"
               color="neutral"
               variant="soft"
               class="rounded-full"
@@ -151,7 +153,7 @@
               <div class="flex-1">
                 <UInput
                   v-model="queryParams.search"
-                  icon="i-lucide-search"
+                  icon="i-hugeicons-search-01"
                   placeholder="Rechercher par nom ou prénom"
                   size="lg"
                   class="w-full"
@@ -162,7 +164,7 @@
                       color="neutral"
                       variant="link"
                       size="sm"
-                      icon="i-lucide-x"
+                      icon="i-hugeicons-cancel-01"
                       aria-label="Effacer la recherche"
                       @click="queryParams.search = ''"
                     />
@@ -182,14 +184,14 @@
                 />
 
                 <UButton
-                  icon="i-lucide-plus"
+                  icon="i-hugeicons-plus-sign"
                   label="Ajouter un patient"
                   size="lg"
                   @click="navigateTo('/patients/new')"
                   class="hidden sm:flex"
                 />
                 <UButton
-                  icon="i-lucide-plus"
+                  icon="i-hugeicons-plus-sign"
                   block
                   label="Patient"
                   @click="navigateTo('/patients/new')"
@@ -207,7 +209,7 @@
           <!-- Error State -->
           <UAlert
             v-else-if="error"
-            icon="i-lucide-alert-circle"
+            icon="i-hugeicons-warning-01"
             color="error"
             variant="solid"
             title="Erreur de chargement"
@@ -217,88 +219,113 @@
           <!-- Patient List -->
           <template v-else>
             <!-- Empty State -->
-            <UCard v-if="!data?.data?.length" variant="outline" class="overflow-hidden">
+            <UCard v-if="!patients?.data?.length" variant="outline" class="overflow-hidden">
               <UEmpty
                 :icon="emptyStateConfig.icon"
                 :title="emptyStateConfig.title"
                 :description="emptyStateConfig.description"
                 :actions="emptyStateConfig.actions"
+                size="xl"
                 class="py-12"
               />
             </UCard>
 
             <!-- Patient Cards -->
-            <div v-else class="space-y-2">
+            <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <UCard
-                v-for="patient in data.data"
+                v-for="patient in patients.data"
                 :key="patient.id"
                 variant="outline"
-                class="group hover:border-primary/20 focus-visible:border-primary cursor-pointer border border-transparent transition-all duration-200 hover:shadow-md focus-visible:shadow focus-visible:outline-none"
-                :ui="{
-                  body: 'p-4 sm:p-5'
-                }"
+                class="group hover:ring-accented flex flex-col justify-between ring transition-all duration-200 hover:shadow-md focus-visible:shadow focus-visible:outline-none"
+                :ui="{ body: 'p-5' }"
                 tabindex="0"
                 role="button"
                 aria-label="Voir les détails du patient"
                 @click="handlePatientClick(patient)"
                 @keydown="handlePatientKeydown($event, patient)"
               >
-                <div class="grid gap-4 sm:grid-cols-5">
-                  <!-- Patient Info -->
-                  <div class="col-span-2 flex min-w-0 gap-4">
-                    <!-- Avatar -->
-                    <div
-                      class="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-bold"
-                      :class="[
-                        getAvatarBgColor(patient.firstName, patient.lastName),
-                        getAvatarTextColor(patient.firstName, patient.lastName)
-                      ]"
-                    >
-                      {{ patient.firstName[0] }}{{ patient.lastName[0] }}
+                <div>
+                  <!-- Top Section: Avatar, Name, Status -->
+                  <div class="mb-4 flex cursor-pointer items-start justify-between">
+                    <!-- LEFT SIDE -->
+                    <div class="group/link flex min-w-0 items-center gap-3">
+                      <!-- Avatar -->
+                      <div
+                        class="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-bold"
+                        :class="[
+                          getAvatarBgColor(patient.firstName, patient.lastName),
+                          getAvatarTextColor(patient.firstName, patient.lastName)
+                        ]"
+                      >
+                        {{ patient.firstName[0] }}{{ patient.lastName[0] }}
+                      </div>
+
+                      <!-- Name -->
+                      <div class="min-w-0">
+                        <h3 class="text-foreground group-hover/link:text-primary truncate font-bold transition-colors">
+                          {{ patient.lastName }}
+                          <span class="text-muted-foreground font-normal">
+                            {{ patient.firstName }}
+                          </span>
+                        </h3>
+                        <p class="text-muted-foreground truncate text-xs">Dossier #{{ patient.id }}</p>
+                      </div>
                     </div>
 
-                    <!-- Name -->
-                    <div class="min-w-0 flex-1">
-                      <h3 class="text-foreground group-hover:text-primary truncate font-semibold transition-colors">
-                        {{ patient.firstName }}
-                        <br />
-                        {{ patient.lastName }}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <!-- Contact Info -->
-                  <div class="min-w-0 space-y-2 self-center">
-                    <div v-if="patient.phone" class="text-foreground flex items-center gap-2 text-sm font-medium">
-                      <UIcon name="i-lucide-phone" class="text-muted size-4" />
-                      {{ patient.phone }}
-                    </div>
-                    <span v-else class="text-muted text-sm">-</span>
-
-                    <div v-if="patient.email" class="text-muted flex items-center gap-1 text-sm">
-                      <UIcon name="i-lucide-mail" class="size-4" />
-                      <span class="truncate">{{ patient.email }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Date of Birth -->
-                  <div class="hidden min-w-0 self-center md:block">
-                    <p class="text-foreground font-medium">
-                      {{ formatFrenchDate (patient.dateOfBirth) }}
-                    </p>
-                    <p class="text-muted text-xs">({{ calculateAge(patient.dateOfBirth) }} ans)</p>
-                  </div>
-
-                  <!-- Status -->
-                  <div class="self-center sm:justify-self-end">
+                    <!-- RIGHT SIDE -->
                     <UBadge
                       variant="subtle"
                       size="lg"
                       :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
-                      class="rounded-full px-4 font-semibold capitalize"
+                      class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
                     >
                       {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
                     </UBadge>
+                  </div>
+
+                  <!-- Section: Contact Info -->
+                  <div class="flex flex-col gap-3">
+                    <!-- Phone -->
+                    <div v-if="patient.phone" class="flex items-center gap-3 text-sm">
+                      <div class="bg-muted text-muted-foreground flex place-content-center rounded-md p-1.5">
+                        <UIcon name="i-hugeicons-call-02" class="size-4.5" />
+                      </div>
+                      <a
+                        class="text-foreground hover:text-primary font-medium hover:underline"
+                        :href="`tel:${patient.phone}`"
+                        @click.stop
+                      >
+                        {{ patient.phone }}
+                      </a>
+                    </div>
+
+                    <!-- Email -->
+                    <div v-if="patient.email" class="flex items-center gap-3 text-sm">
+                      <div class="bg-muted text-muted-foreground flex place-content-center rounded-md p-1.5">
+                        <UIcon name="i-hugeicons-mail-01" class="size-4.5" />
+                      </div>
+                      <a
+                        class="text-muted-foreground hover:text-primary truncate hover:underline"
+                        :href="`mailto:${patient.email}`"
+                        @click.stop
+                      >
+                        {{ patient.email }}
+                      </a>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="flex items-center gap-2 text-sm">
+                      <div class="bg-muted text-muted-foreground flex place-content-center rounded-md p-1.5">
+                        <UIcon name="i-hugeicons-birthday-cake" class="size-4.5" />
+                      </div>
+                      <span class="text-foreground">
+                        {{ formatFrenchDate(patient.dateOfBirth) }}
+                      </span>
+                      &middot
+                      <UBadge color="neutral" variant="soft" class="font-medium">
+                        {{ calculateAge(patient.dateOfBirth) }} ans
+                      </UBadge>
+                    </div>
                   </div>
                 </div>
               </UCard>
@@ -306,25 +333,25 @@
 
             <!-- Pagination -->
             <div
-              v-if="data?.pagination && data?.pagination?.total > 0"
+              v-if="patients?.pagination && patients?.pagination?.total > 0"
               class="border-default flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
             >
               <div class="text-muted text-sm">
                 Affichage de
                 <span class="text-foreground font-medium">
-                  {{ (data.pagination.page - 1) * data.pagination.limit + 1 }}-{{
-                    Math.min(data.pagination.page * data.pagination.limit, data.pagination.total)
+                  {{ (patients.pagination.page - 1) * patients.pagination.limit + 1 }}-{{
+                    Math.min(patients.pagination.page * patients.pagination.limit, patients.pagination.total)
                   }}
                 </span>
                 sur
-                <span class="text-foreground font-medium">{{ data.pagination.total }}</span>
+                <span class="text-foreground font-medium">{{ patients.pagination.total }}</span>
                 résultats
               </div>
 
               <UPagination
-                :page="data.pagination.page"
-                :items-per-page="data.pagination.limit"
-                :total="data.pagination.total"
+                :page="patients.pagination.page"
+                :items-per-page="patients.pagination.limit"
+                :total="patients.pagination.total"
                 @update:page="handlePageChange"
               />
             </div>
