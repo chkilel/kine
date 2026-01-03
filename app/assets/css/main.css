@@ -31,5 +31,5 @@ h2 {
 }
 
 h3 {
-  @apply font-title mb-0.5;
+  @apply font-title;
 }
