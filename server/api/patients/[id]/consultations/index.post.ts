@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq, and, ne } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { consultations, patients, users, rooms } from '~~/server/database/schema'
 import { consultationCreateSchema } from '~~/shared/types/consultation.type'
 
@@ -19,10 +19,17 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readValidatedBody(event, consultationCreateSchema.parse)
 
-    if (!body.roomId) {
+    if (body.location === 'clinic' && !body.roomId) {
       throw createError({
         statusCode: 400,
-        message: 'Room is required for new consultations'
+        message: 'Room is required for clinic consultations'
+      })
+    }
+
+    if ((body.location === 'home' || body.location === 'telehealth') && body.roomId) {
+      throw createError({
+        statusCode: 400,
+        message: `Room must not be provided for ${body.location} consultations`
       })
     }
 
@@ -39,17 +46,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const [room] = await db
-      .select()
-      .from(rooms)
-      .where(and(eq(rooms.id, body.roomId), eq(rooms.organizationId, organizationId)))
-      .limit(1)
+    if (body.roomId) {
+      const [room] = await db
+        .select()
+        .from(rooms)
+        .where(and(eq(rooms.id, body.roomId), eq(rooms.organizationId, organizationId)))
+        .limit(1)
 
-    if (!room) {
-      throw createError({
-        statusCode: 404,
-        message: 'Room not found'
-      })
+      if (!room) {
+        throw createError({
+          statusCode: 404,
+          message: 'Room not found'
+        })
+      }
     }
 
     if (body.therapistId) {

@@ -20,12 +20,12 @@ export const consultationCreateSchema = createInsertSchema(consultations, {
   patientId: z.string(),
   organizationId: z.string().min(1),
   therapistId: z.string(),
-  roomId: z.uuidv7(),
+  roomId: z.uuidv7().optional(),
   date: calendarDateSchema,
   location: locationSchema.default('clinic'),
   status: consultationStatusSchema.default('scheduled'),
   type: consultationTypeSchema.optional(),
-  duration: z.int().optional()
+  duration: z.int()
 })
 
 export const consultationUpdateSchema = consultationCreateSchema.partial()

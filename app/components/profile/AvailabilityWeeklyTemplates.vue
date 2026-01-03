@@ -84,23 +84,15 @@
               <div class="text-highlighted text-md font-semibold">
                 {{ removeSecondsFromTime(template.startTime) }} - {{ removeSecondsFromTime(template.endTime) }}
               </div>
-              <div class="flex gap-5">
-                <UBadge
-                  :icon="getLocationIcon(template.location)"
-                  :color="getLocationColor(template.location)"
-                  size="sm"
-                  variant="subtle"
-                  class="rounded-full font-semibold uppercase"
-                >
-                  {{ getLocationLabel(template.location) }}
-                </UBadge>
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-users" class="size-4" />
-                  <span class="text-toned text-sm">
-                    {{ template.maxSessions }} {{ template.maxSessions === 1 ? 'patient max' : 'patients simultanés' }}
-                  </span>
-                </div>
-              </div>
+              <UBadge
+                :icon="getLocationIcon(template.location)"
+                :color="getLocationColor(template.location)"
+                size="sm"
+                variant="subtle"
+                class="rounded-full font-semibold uppercase"
+              >
+                {{ getLocationLabel(template.location) }}
+              </UBadge>
             </div>
           </div>
         </div>

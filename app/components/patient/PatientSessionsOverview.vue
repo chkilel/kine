@@ -26,30 +26,28 @@
 
 <template>
   <AppCard variant="outline" title="Aperçu des prochaines/dernières séances">
-    <div class="flow-root">
-      <ul class="space-y-2">
-        <li
-          v-for="session in upcomingSessions"
-          :key="session.date"
-          class="bg-muted hover:bg-elevated flex items-center justify-between rounded-lg p-3 py-4"
-        >
-          <div class="flex items-center gap-4">
-            <div class="border-default bg-default w-12 rounded-lg border py-1 text-center">
-              <p class="text-sm font-bold">{{ session.date }}</p>
-              <p class="text-muted text-xs">{{ session.month }}</p>
-            </div>
-            <div>
-              <p class="font-semibold">{{ session.type }}</p>
-              <p class="text-muted text-sm">{{ session.time }}</p>
-            </div>
+    <ul class="space-y-2">
+      <li
+        v-for="session in upcomingSessions"
+        :key="session.date"
+        class="bg-muted hover:bg-elevated flex items-center justify-between rounded-lg p-3 py-4"
+      >
+        <div class="flex items-center gap-4">
+          <div class="border-default bg-default w-12 rounded-lg border py-1 text-center">
+            <p class="text-sm font-bold">{{ session.date }}</p>
+            <p class="text-muted text-xs">{{ session.month }}</p>
           </div>
-          <div class="flex items-center gap-2">
-            <UBadge :color="getConsultationStatusColor(session.status)" variant="soft" size="md" class="rounded-full">
-              {{ getConsultationStatusLabel(session.status) }}
-            </UBadge>
+          <div>
+            <p class="font-semibold">{{ session.type }}</p>
+            <p class="text-muted text-sm">{{ session.time }}</p>
           </div>
-        </li>
-      </ul>
-    </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <UBadge :color="getConsultationStatusColor(session.status)" variant="soft" size="md" class="rounded-full">
+            {{ getConsultationStatusLabel(session.status) }}
+          </UBadge>
+        </div>
+      </li>
+    </ul>
   </AppCard>
 </template>

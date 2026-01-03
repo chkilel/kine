@@ -21,8 +21,7 @@
     dayOfWeek: props.template?.dayOfWeek || 'mon',
     startTime: props.template?.startTime || WORKING_HOURS.start,
     endTime: props.template?.endTime || WORKING_HOURS.end,
-    location: props.template?.location || 'clinic',
-    maxSessions: props.template?.maxSessions || 4
+    location: props.template?.location || 'clinic'
   })
 
   // Time values for UI components
@@ -102,11 +101,11 @@
           </div>
         </AppCard>
 
-        <!-- Location & Capacity Section -->
+        <!-- Location Section -->
         <AppCard variant="outline">
           <div class="border-default mb-6 flex items-center gap-3 border-b pb-2">
             <UIcon name="i-lucide-map-pin" class="text-primary" />
-            <h3 class="text-foreground text-base font-bold">Lieu et Capacité</h3>
+            <h3 class="text-foreground text-base font-bold">Lieu</h3>
           </div>
           <div class="space-y-5">
             <UFormField label="Lieu de consultation" name="location">
@@ -121,22 +120,6 @@
                 Sélectionnez l'endroit physique ou virtuel de la consultation.
               </p>
             </UFormField>
-            <div class="grid gap-4">
-              <UFormField label="Max. séances simultanées" name="maxSessions">
-                <UFieldGroup class="w-full">
-                  <UInputNumber v-model="formState.maxSessions" :min="1" :max="10" placeholder="1" class="w-full" />
-                  <UBadge color="neutral" variant="outline" label="pers." />
-                </UFieldGroup>
-
-                <p class="text-muted-foreground mt-1.5 text-xs">Nombre de patients en même temps.</p>
-              </UFormField>
-              <UAlert
-                color="primary"
-                variant="subtle"
-                title="Pour autoriser plusieurs patients simultanément."
-                icon="i-lucide-info"
-              />
-            </div>
           </div>
         </AppCard>
 

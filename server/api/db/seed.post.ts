@@ -10,7 +10,8 @@ import {
   availabilityExceptions
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
-import { hasTimeConflict, minutesToTime } from '~~/shared/utils/date-utils'
+import { hasTimeConflict } from '~~/shared/utils/availability-utils'
+import { minutesToTime } from '~~/shared/utils/date-utils'
 import { MINIMUM_CONSULTATION_GAP_MINUTES, CONSULTATION_DURATIONS } from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
@@ -385,18 +386,45 @@ function randomItem<T>(array: readonly T[]): T {
 function generateTime(startHour: number, endHour: number): string {
   const startMinutes = startHour * 60
   const endMinutes = endHour * 60
-  const slotStart = randomInt(startMinutes, endMinutes - 30)
-  return `${minutesToTime(slotStart)}:00`
+
+  const availableSlots: number[] = []
+  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
+    availableSlots.push(mins)
+  }
+
+  if (availableSlots.length === 0) {
+    return '00:00:00'
+  }
+
+  const slotStart = randomItem(availableSlots)
+  return minutesToTime(slotStart)
 }
 
 function generateTimeRange(startHour: number, endHour: number): { startTime: string; endTime: string } {
   const startMinutes = startHour * 60
   const endMinutes = endHour * 60
-  const slotStart = randomInt(startMinutes, endMinutes - 60)
-  const slotEnd = randomInt(slotStart + 60, endMinutes)
+
+  const availableSlots: number[] = []
+  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
+    availableSlots.push(mins)
+  }
+
+  if (availableSlots.length < 2) {
+    return {
+      startTime: '09:00:00',
+      endTime: '10:00:00'
+    }
+  }
+
+  const startSlotIndex = randomInt(0, availableSlots.length - 2)
+  const slotStart = availableSlots[startSlotIndex]
+
+  const endSlotIndex = randomInt(startSlotIndex + 2, availableSlots.length - 1)
+  const slotEnd = availableSlots[endSlotIndex]
+
   return {
-    startTime: `${minutesToTime(slotStart)}:00`,
-    endTime: `${minutesToTime(slotEnd)}:00`
+    startTime: minutesToTime(slotStart),
+    endTime: minutesToTime(slotEnd)
   }
 }
 
@@ -546,8 +574,7 @@ function generateWeeklyTemplates(userId: string, organizationId: string): any[] 
       dayOfWeek: day,
       startTime: timeRange.startTime,
       endTime: timeRange.endTime,
-      location: randomItem(locations),
-      maxSessions: 1
+      location: randomItem(locations)
     }
 
     if (validateTemplateConflict(templates, template)) {
@@ -598,12 +625,13 @@ function generateAvailabilityExceptions(userId: string, organizationId: string):
     usedDates.add(date)
 
     const isFullDay = Math.random() > 0.6
+    const timeRange = generateTimeRange(9, 17)
     const exception: any = {
       userId,
       organizationId,
       date,
-      startTime: isFullDay ? null : generateTime(9, 16),
-      endTime: isFullDay ? null : generateTime(17, 18),
+      startTime: isFullDay ? null : timeRange.startTime,
+      endTime: isFullDay ? null : timeRange.endTime,
       isAvailable: Math.random() > 0.4,
       reason: randomItem(exceptionReasons),
       notes: Math.random() > 0.7 ? 'Auto-generated exception' : null

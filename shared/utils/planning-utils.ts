@@ -1,4 +1,5 @@
 import type { AvailabilityException, WeeklyAvailabilityTemplate } from '../types/availability.types'
+import { WORKING_HOURS } from './constants.availability'
 import { getDayOfWeek, minutesToTime, timeToMinutes } from './date-utils'
 
 export interface TimeRange {
@@ -18,13 +19,13 @@ export interface BookedPeriod {
  * 2. Date-specific availability exceptions (extra availability)
  * 3. Date-specific unavailability exceptions (blocking time)
  *
- * Returns the single merged time range or null if no availability
+ * Returns array of available time ranges after subtracting unavailable periods
  */
 export function getEffectiveAvailability(
   date: string,
   templates: WeeklyAvailabilityTemplate[],
   exceptions: AvailabilityException[]
-): TimeRange | null {
+): TimeRange[] {
   // Get day of week for the date
   const dayOfWeek = getDayOfWeek(date)
   // Filter exceptions that apply to this specific date
@@ -35,9 +36,13 @@ export function getEffectiveAvailability(
 
   // Check if there's a full-day unavailability exception (block the entire day)
   const fullDayUnavailable = dateExceptions.find((e) => !e.isAvailable && !e.startTime && !e.endTime)
-  // If fully unavailable day with no extra availability added, return null
-  if (fullDayUnavailable && availableExceptions.length === 0) {
-    return null
+
+  // Check if there's a full-day availability exception (add working hours as availability)
+  const fullDayAvailable = dateExceptions.find((e) => e.isAvailable && !e.startTime && !e.endTime)
+
+  // If fully unavailable day with no extra availability added, return empty array
+  if (fullDayUnavailable && availableExceptions.length === 0 && !fullDayAvailable) {
+    return []
   }
 
   // Collect all available time ranges
@@ -52,6 +57,14 @@ export function getEffectiveAvailability(
     })
   }
 
+  // Add full-day availability exception as working hours
+  if (fullDayAvailable) {
+    availableRanges.push({
+      start: WORKING_HOURS.start,
+      end: WORKING_HOURS.end
+    })
+  }
+
   // Add exception ranges for extra availability
   for (const exception of availableExceptions) {
     availableRanges.push({
@@ -60,25 +73,15 @@ export function getEffectiveAvailability(
     })
   }
 
-  // If no available ranges exist, return null
+  // If no available ranges exist, return empty array
   if (availableRanges.length === 0) {
-    return null
+    return []
   }
 
   // Filter for unavailability exceptions (blocking time ranges)
   const unavailablePeriods = dateExceptions
     .filter((e) => !e.isAvailable && e.startTime && e.endTime)
     .map((e) => ({ start: e.startTime!, end: e.endTime!, sessionId: '' }))
-
-  console.log(
-    '🚀 >>> ',
-    '=========================================================================================================\n',
-    ': ',
-    {
-      availableRanges,
-      unavailablePeriods
-    }
-  )
 
   // Start with all available ranges
   let remainingRanges = availableRanges
@@ -87,13 +90,13 @@ export function getEffectiveAvailability(
     remainingRanges = subtractBookedPeriods(availableRanges, unavailablePeriods, 0)
   }
 
-  // If all ranges were subtracted, return null
+  // If all ranges were subtracted, return empty array
   if (remainingRanges.length === 0) {
-    return null
+    return []
   }
 
-  // Return the first remaining range (or null if empty)
-  return remainingRanges[0] ?? null
+  // Return all remaining ranges
+  return remainingRanges
 }
 
 /**
@@ -106,7 +109,6 @@ export function getEffectiveAvailability(
  * @param duration - Length of each time slot in minutes
  * @param gapMinutes - Minimum gap between appointments in minutes
  * @param slotIncrementMinutes - Increment between possible slot start times in minutes
- * @param maxSessions - Maximum number of concurrent sessions allowed
  * @returns Array of start times for available slots
  */
 export function generateTimeSlots(
@@ -114,21 +116,19 @@ export function generateTimeSlots(
   bookedPeriods: BookedPeriod[],
   duration: number,
   gapMinutes: number,
-  slotIncrementMinutes: number,
-  maxSessions: number
+  slotIncrementMinutes: number
 ): string[] {
   // Initialize array to hold all available slot start times
   const slots: string[] = []
 
-  // Log input parameters for debugging
-  console.log('🎰 generateTimeSlots', {
-    availableRanges,
-    bookedPeriods,
-    duration,
-    gapMinutes,
-    slotIncrementMinutes,
-    maxSessions
-  })
+  // // Log input parameters for debugging
+  // console.log('🎰 generateTimeSlots', {
+  //   availableRanges,
+  //   bookedPeriods,
+  //   duration,
+  //   gapMinutes,
+  //   slotIncrementMinutes
+  // })
 
   // Iterate through each available time range
   for (const range of availableRanges) {
@@ -142,11 +142,11 @@ export function generateTimeSlots(
       const startTime = minutesToTime(time)
       const endTime = minutesToTime(time + duration)
 
-      // Count how many existing bookings overlap with this potential slot
-      const concurrentBookings = countConcurrentBookings(startTime, endTime, bookedPeriods)
+      // Check if this time slot conflicts with any existing booking
+      const hasConflictWithBookings = checkTimeSlotConflicts(startTime, endTime, bookedPeriods, gapMinutes)
 
-      // Add slot if we haven't exceeded max concurrent sessions
-      if (concurrentBookings < maxSessions) {
+      // Add slot only if there's no conflict
+      if (!hasConflictWithBookings) {
         slots.push(startTime)
       }
     }
@@ -268,10 +268,9 @@ export function hasConflict(
   startTime: string,
   endTime: string,
   bookedPeriods: BookedPeriod[],
-  gapMinutes: number,
-  maxSessions: number = 1
+  gapMinutes: number
 ): boolean {
-  return checkTimeSlotConflicts(startTime, endTime, bookedPeriods, gapMinutes, maxSessions)
+  return checkTimeSlotConflicts(startTime, endTime, bookedPeriods, gapMinutes)
 }
 
 /**
@@ -289,8 +288,7 @@ function checkTimeSlotConflicts(
   startTime: string,
   endTime: string,
   bookedPeriods: BookedPeriod[],
-  gapMinutes: number,
-  maxSessions: number
+  gapMinutes: number
 ): boolean {
   // Convert slot times to minutes
   const newStart = timeToMinutes(startTime)
@@ -302,15 +300,6 @@ function checkTimeSlotConflicts(
     const bookedStart = timeToMinutes(booked.start)
     const bookedEnd = timeToMinutes(booked.end)
 
-    // Check if this is an exact overlap with existing booking
-    const isExactOverlap = newStart === bookedStart && newEnd === bookedEnd
-
-    // If maxSessions > 1, allow exact overlaps (multiple concurrent sessions at same time)
-    if (maxSessions > 1 && isExactOverlap) {
-      console.log(`    ✅ Skip exact overlap: ${startTime}-${endTime} vs ${booked.start}-${booked.end}`)
-      continue
-    }
-
     // Check if new slot ends before booked period starts (with gap buffer)
     const newEndsBeforeBooked = newEnd + gapMinutes <= bookedStart
     // Check if new slot starts after booked period ends (with gap buffer)
@@ -318,47 +307,13 @@ function checkTimeSlotConflicts(
 
     // If neither condition is true, there's a conflict
     if (!newEndsBeforeBooked && !newStartsAfterBooked) {
-      console.log(`    ❌ Gap conflict: ${startTime}-${endTime} vs ${booked.start}-${booked.end} (gap: ${gapMinutes})`)
+      // console.log(`    ❌ Gap conflict: ${startTime}-${endTime} vs ${booked.start}-${booked.end} (gap: ${gapMinutes})`)
       return true
     }
   }
 
   // No conflicts found
   return false
-}
-
-/**
- * Counts how many bookings overlap with a given time period.
- * Used to enforce concurrent session limits (maxSessions).
- *
- * @param startTime - Start time of the period to check
- * @param endTime - End time of the period to check
- * @param bookedPeriods - Existing bookings
- * @returns Number of overlapping bookings
- */
-export function countConcurrentBookings(startTime: string, endTime: string, bookedPeriods: BookedPeriod[]): number {
-  // Convert slot times to minutes
-  const newStart = timeToMinutes(startTime)
-  const newEnd = timeToMinutes(endTime)
-
-  // Initialize counter for overlapping bookings
-  let count = 0
-
-  // Check each booked period for overlap
-  for (const booked of bookedPeriods) {
-    // Convert booked period times to minutes
-    const bookedStart = timeToMinutes(booked.start)
-    const bookedEnd = timeToMinutes(booked.end)
-
-    // Check if time periods overlap (using strict overlap condition)
-    // Overlap exists when new slot ends after booked starts AND new slot starts before booked ends
-    if (newEnd > bookedStart && newStart < bookedEnd) {
-      count++
-    }
-  }
-
-  // Return total count of overlapping bookings
-  return count
 }
 
 /**

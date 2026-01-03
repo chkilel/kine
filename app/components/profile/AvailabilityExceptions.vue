@@ -71,10 +71,15 @@
           <!-- Exception Info -->
           <div class="flex flex-1 items-center gap-4">
             <div
-              class="bg-muted border-accented flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border"
+              class="bg-muted border-accented flex size-14 shrink-0 flex-col items-center justify-center rounded-xl border p-1"
             >
-              <span class="text-highlighted text-[14px] font-bold">{{ extractDayAndMonth(exception.date).day }}</span>
-              <span class="text-toned text-[10px] font-bold capitalize">
+              <span class="text-toned text-[9px] uppercase">
+                {{ extractDayAndMonth(exception.date).dayNameShort }}
+              </span>
+              <span class="text-highlighted text-[14px] leading-tight font-semibold">
+                {{ extractDayAndMonth(exception.date).day }}
+              </span>
+              <span class="text-toned text-[10px] uppercase">
                 {{ extractDayAndMonth(exception.date).month }}
               </span>
             </div>

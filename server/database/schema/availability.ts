@@ -32,7 +32,6 @@ export const weeklyAvailabilityTemplates = sqliteTable(
     startTime: text().notNull(), // HH:MM:SS format — e.g., '09:00:00'
     endTime: text().notNull(), // HH:MM:SS format — e.g., '12:00:00'
     location: text({ enum: VALID_CONSULTATION_LOCATIONS }).notNull(), // Consultation location — e.g., 'clinic'
-    maxSessions: integer().notNull().default(1), // Maximum simultaneous sessions — e.g., 4
 
     // Created and Updated timestamp
     ...creationAndUpdateTimestamps

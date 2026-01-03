@@ -1,16 +1,6 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { rooms } from '~~/server/database/schema/rooms'
 import { availabilityExceptions, consultations, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
-import { roomSlotsRequestSchema } from '~~/shared/types/availability.types'
-import {
-  getEffectiveAvailability,
-  subtractBookedPeriods,
-  generateTimeSlots,
-  type TimeRange,
-  type BookedPeriod
-} from '~~/shared/utils/planning-utils'
-import { getDayOfWeek } from '~~/shared/utils/date-utils'
-import { requireAuth } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const roomId = getRouterParam(event, 'roomId')
@@ -27,13 +17,11 @@ export default defineEventHandler(async (event) => {
 
   const { organizationId } = await requireAuth(event)
 
-  const roomData = await db
+  const [room] = await db
     .select()
     .from(rooms)
-    .where(and(eq(rooms.id, roomId), eq(rooms.organizationId, organizationId)))
+    .where(and(eq(rooms.organizationId, organizationId), eq(rooms.id, roomId)))
     .limit(1)
-
-  const room = roomData[0]
 
   if (!room) {
     throw createError({
@@ -42,23 +30,52 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const therapistData = await db
-    .select({ consultationGapMinutes: users.consultationGapMinutes, slotIncrementMinutes: users.slotIncrementMinutes })
-    .from(users)
-    .limit(1)
+  let gapMinutes = 15
+  let slotIncrementMinutes = 15
+  let templates: any[] = []
+  let exceptions: any[] = []
 
-  const gapMinutes = therapistData[0]?.consultationGapMinutes || 15
-  const slotIncrementMinutes = therapistData[0]?.slotIncrementMinutes || 15
+  if (body.therapistId) {
+    const therapistData = await db
+      .select({
+        consultationGapMinutes: users.consultationGapMinutes,
+        slotIncrementMinutes: users.slotIncrementMinutes
+      })
+      .from(users)
+      .where(eq(users.id, body.therapistId))
+      .limit(1)
 
-  const templates = await db
-    .select()
-    .from(weeklyAvailabilityTemplates)
-    .where(eq(weeklyAvailabilityTemplates.location, 'clinic'))
+    gapMinutes = therapistData[0]?.consultationGapMinutes || 15
+    slotIncrementMinutes = therapistData[0]?.slotIncrementMinutes || 15
 
-  const exceptions = await db
-    .select()
-    .from(availabilityExceptions)
-    .where(inArray(availabilityExceptions.date, body.dates))
+    templates = await db
+      .select()
+      .from(weeklyAvailabilityTemplates)
+      .where(
+        and(
+          eq(weeklyAvailabilityTemplates.userId, body.therapistId),
+          eq(weeklyAvailabilityTemplates.location, 'clinic')
+        )
+      )
+
+    exceptions = await db
+      .select()
+      .from(availabilityExceptions)
+      .where(and(eq(availabilityExceptions.userId, body.therapistId), inArray(availabilityExceptions.date, body.dates)))
+  }
+
+  const consultationQuery = body.therapistId
+    ? and(
+        eq(consultations.roomId, roomId),
+        eq(consultations.therapistId, body.therapistId),
+        inArray(consultations.date, body.dates),
+        ne(consultations.status, 'cancelled')
+      )
+    : and(
+        eq(consultations.roomId, roomId),
+        inArray(consultations.date, body.dates),
+        ne(consultations.status, 'cancelled')
+      )
 
   const existingConsultations = await db
     .select({
@@ -68,13 +85,7 @@ export default defineEventHandler(async (event) => {
       endTime: consultations.endTime
     })
     .from(consultations)
-    .where(
-      and(
-        eq(consultations.roomId, roomId),
-        inArray(consultations.date, body.dates),
-        ne(consultations.status, 'cancelled')
-      )
-    )
+    .where(consultationQuery)
 
   const slotsResponse = {
     slots: {} as Record<string, { availableSlots: string[]; unavailable: boolean }>
@@ -91,9 +102,21 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    const availability = getEffectiveAvailability(date, templates, exceptions)
+    let availability: TimeRange[]
 
-    if (!availability) {
+    if (body.therapistId) {
+      availability = getEffectiveAvailability(date, templates, exceptions)
+    } else {
+      // FIXME get the working hours form the organization profile
+      availability = [
+        {
+          start: WORKING_HOURS.start.slice(0, 5),
+          end: WORKING_HOURS.end.slice(0, 5)
+        }
+      ]
+    }
+
+    if (availability.length === 0) {
       slotsResponse.slots[date] = {
         availableSlots: [],
         unavailable: true
@@ -101,7 +124,7 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    const dayConsultations = existingConsultations.filter((c: any) => c.date === date)
+    const dayConsultations = existingConsultations.filter((c) => c.date === date)
 
     const bookedPeriods: BookedPeriod[] = dayConsultations.map((c: any) => ({
       start: c.startTime || '',
@@ -109,7 +132,7 @@ export default defineEventHandler(async (event) => {
       sessionId: c.id
     }))
 
-    let availableRanges: TimeRange[] = [availability]
+    let availableRanges: TimeRange[] = availability
 
     availableRanges = subtractBookedPeriods(availableRanges, bookedPeriods, gapMinutes)
 
@@ -118,8 +141,7 @@ export default defineEventHandler(async (event) => {
       bookedPeriods,
       body.duration,
       gapMinutes,
-      slotIncrementMinutes,
-      1
+      slotIncrementMinutes
     )
 
     slotsResponse.slots[date] = {

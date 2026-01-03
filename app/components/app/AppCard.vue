@@ -5,6 +5,8 @@
   const props = defineProps<{
     title?: string
     description?: string
+    icon?: string
+    iconColor?: UIColor
   }>()
 
   const attrs = useAttrs()
@@ -30,11 +32,14 @@
 
 <template>
   <UCard v-bind="forwardedAttrs" :ui="mergedUi">
-    <template v-if="props.title || props.description" #header>
+    <template v-if="title || description" #header>
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 v-if="props.title" class="text-lg font-bold">{{ props.title }}</h3>
-          <p v-if="props.description" class="text-muted mt-1 text-sm">{{ description }}</p>
+          <div v-if="icon || title" class="flex items-center gap-2">
+            <UIcon v-if="icon" :name="icon" class="size-5" :class="`text-${iconColor}`" />
+            <h3 v-if="title" class="text-lg font-bold">{{ title }}</h3>
+          </div>
+          <p v-if="description" class="text-muted ml-7 text-xs">{{ description }}</p>
         </div>
         <slot name="actions" />
       </div>
