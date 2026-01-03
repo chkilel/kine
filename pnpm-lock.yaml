@@ -66,6 +66,9 @@ importers:
         specifier: ^4.2.1
         version: 4.3.4
     devDependencies:
+      '@iconify-json/hugeicons':
+        specifier: ^1.2.22
+        version: 1.2.22
       '@iconify-json/lucide':
         specifier: ^1.2.82
         version: 1.2.82
@@ -1168,6 +1171,9 @@ packages:
 
   '@floating-ui/vue@1.1.9':
     resolution: {integrity: sha512-BfNqNW6KA83Nexspgb9DZuz578R7HT8MZw1CfK9I6Ah4QReNWEJsXWHN+SdmOVLNGmTPDi+fDT535Df5PzMLbQ==}
+
+  '@iconify-json/hugeicons@1.2.22':
+    resolution: {integrity: sha512-8Dx8oC0BJH2sXVKvcQuCMHEN7AlwmO0eByt2CL3E68hsh8xGms1oZ/XoIUqGVJQLjMhr4rRie6J63BrLOVkKJw==}
 
   '@iconify-json/lucide@1.2.82':
     resolution: {integrity: sha512-fHZWegspOZonl5GNTvOkHsjnTMdSslFh3EzpzUtRyLxO8bOonqk2OTU3hCl0k4VXzViMjqpRK3X1sotnuBXkFA==}
@@ -7423,6 +7429,10 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+
+  '@iconify-json/hugeicons@1.2.22':
+    dependencies:
+      '@iconify/types': 2.0.0
 
   '@iconify-json/lucide@1.2.82':
     dependencies:
