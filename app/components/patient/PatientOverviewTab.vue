@@ -3,21 +3,15 @@
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-2">
-    <!-- Left Column -->
-    <PatientOverviewSidebar :patient="patient" />
-
-    <!-- Right Column -->
+  <div class="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
     <div class="flex flex-col gap-6">
-      <!-- Plan de traitement actif -->
+      <PatientInformationCard :patient="patient" />
+      <PatientMedicalOverviewCard :patient="patient" />
+      <PatientPractitionerNotesCard :patient="patient" />
+    </div>
+
+    <div class="flex flex-col gap-6">
       <PatientActiveTreatmentPlan :patient="patient" />
-
-      <!-- Aperçu des séances -->
-      <PatientSessionsOverview />
-
-      <!-- Documents récents -->
-      <PatientRecentDocuments />
-
       <!-- Historique des plans -->
       <PatientTreatmentPlanHistory :patient="patient" />
     </div>
