@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, asc } from 'drizzle-orm'
 import { consultations } from '~~/server/database/schema'
 import type { Session } from '~~/shared/types/auth.types'
 
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
       .select()
       .from(consultations)
       .where(whereConditions)
-      .orderBy(desc(consultations.date))
+      .orderBy(asc(consultations.date))
       .limit(validatedQuery.limit)
       .offset((validatedQuery.page - 1) * validatedQuery.limit)
 
