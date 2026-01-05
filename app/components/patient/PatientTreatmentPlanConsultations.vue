@@ -69,110 +69,95 @@
         </UButton>
       </div>
     </template>
-    <div class="overflow-x-auto">
-      <UTable
-        :data="consultations"
-        :loading="isLoading"
-        :columns="[
-          { accessorKey: 'date', header: 'Date & Heure' },
-          { accessorKey: 'type', header: 'Type' },
-          { accessorKey: 'duration', header: 'Durée' },
-          { accessorKey: 'location', header: 'Lieu' },
-          { accessorKey: 'status', header: 'Statut' },
-          { id: 'actions', header: 'Actions' }
-        ]"
-        :ui="{
-          td: 'bg-muted'
-        }"
+    <ul v-if="consultations.length > 0" class="space-y-2.5">
+      <li
+        v-for="consultation in consultations"
+        :key="consultation.id"
+        class="group bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-3 transition-colors"
       >
-        <template #date-cell="{ row }">
-          <div>
-            <div class="font-medium">
-              {{
-                new Date(row.original.date).toLocaleDateString('fr-FR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'short'
-                })
-              }}
-            </div>
-            <div class="text-muted-foreground text-sm">{{ removeSecondsFromTime(row.original.startTime) || '' }}</div>
-          </div>
-        </template>
-
-        <template #type-cell="{ row }">
-          <div>
-            <div class="font-medium">
-              {{ row.original.type ? getConsultationTypeLabel(row.original.type) : '' }}
-            </div>
-            <div class="text-muted-foreground text-sm">{{ row.original.chiefComplaint || '' }}</div>
-          </div>
-        </template>
-
-        <template #duration-cell="{ row }">
-          <div class="text-sm">
-            {{ row.original.duration ? `${row.original.duration} min` : '-' }}
-          </div>
-        </template>
-
-        <template #location-cell="{ row }">
-          <div class="text-sm">
-            {{ row.original.location ? getLocationLabel(row.original.location) : '' }}
-          </div>
-        </template>
-
-        <template #status-cell="{ row }">
-          <UBadge :color="getConsultationStatusColor(row.original.status)" variant="soft" size="xs">
-            {{ getConsultationStatusLabel(row.original.status) }}
-          </UBadge>
-        </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex items-center justify-end gap-2">
-            <UButton
-              icon="i-lucide-edit"
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              square
-              @click="editConsultation(row.original.id)"
-            />
-            <UButton
-              icon="i-lucide-trash"
-              variant="ghost"
-              color="error"
-              size="sm"
-              square
-              @click="deleteConsultation(row.original.id)"
-            />
-          </div>
-        </template>
-
-        <template #empty>
-          <UEmpty
-            variant="naked"
-            icon="i-lucide-calendar-x"
-            title="Aucune séance planifiée pour ce plan de traitement."
-            description="Commencez à planifier les séances pour ce patient afin de débuter le suivi."
-            :ui="{ body: 'max-w-none' }"
-            :actions="[
-              {
-                icon: 'i-lucide-plus-circle',
-                label: 'Planifier les séances du plan',
-                size: 'md',
-                onClick: openSessionPlanning
-              },
-              {
-                icon: 'i-lucide-plus',
-                label: 'Créer une consultation indépendante',
-                color: 'neutral',
-                size: 'md',
-                variant: 'outline'
-              }
-            ]"
+        <div class="flex">
+          <AppDateBadge :date="consultation.date" variant="solid" color="info" class="rounded-r-none" />
+          <AppTimeBadge
+            :date="consultation.date"
+            :time="consultation.startTime"
+            color="info"
+            variant="soft"
+            class="rounded-l-none"
           />
-        </template>
-      </UTable>
-    </div>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-default truncate font-semibold">
+            {{ getConsultationTypeLabel(consultation.type || 'follow_up') }}
+          </p>
+
+          <div class="text-muted sm:divide-default flex flex-col items-center text-xs sm:flex-row sm:divide-x">
+            <div class="flex items-center gap-1 pr-3">
+              <UIcon :name="getLocationIcon(consultation.location || 'clinic')" />
+            </div>
+
+            <div class="flex items-center gap-1 px-3">
+              <UIcon name="i-hugeicons-clock-01" />
+              <p>{{ consultation.duration }} min</p>
+            </div>
+
+            <div class="flex items-center gap-1 px-3">
+              <UIcon name="i-hugeicons-location-05" />
+              <p>Salle 1</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex pl-4">
+          <div class="flex items-center gap-2">
+            <UBadge :color="getConsultationStatusColor(consultation.status)" variant="subtle">
+              {{ getConsultationStatusLabel(consultation.status) }}
+            </UBadge>
+          </div>
+          <div class="border-muted ml-2 flex items-center gap-1 border-l pl-2">
+            <div class="flex items-center justify-end gap-2">
+              <UButton
+                icon="i-lucide-edit"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                square
+                @click="editConsultation(consultation.id)"
+              />
+              <UButton
+                icon="i-lucide-trash"
+                variant="ghost"
+                color="error"
+                size="sm"
+                square
+                @click="deleteConsultation(consultation.id)"
+              />
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+    <UEmpty
+      v-else
+      variant="naked"
+      icon="i-lucide-calendar-x"
+      title="Aucune séance planifiée pour ce plan de traitement."
+      description="Commencez à planifier les séances pour ce patient afin de débuter le suivi."
+      :ui="{ body: 'max-w-none' }"
+      :actions="[
+        {
+          icon: 'i-lucide-plus-circle',
+          label: 'Planifier les séances du plan',
+          size: 'md',
+          onClick: openSessionPlanning
+        },
+        {
+          icon: 'i-lucide-plus',
+          label: 'Créer une consultation indépendante',
+          color: 'neutral',
+          size: 'md',
+          variant: 'outline'
+        }
+      ]"
+    />
   </AppCard>
 </template>
