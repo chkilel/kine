@@ -101,9 +101,9 @@
               <p>{{ consultation.duration }} min</p>
             </div>
 
-            <div class="flex items-center gap-1 px-3">
-              <UIcon name="i-hugeicons-location-05" />
-              <p>Salle 1</p>
+            <div v-if="consultation.roomName" class="flex items-center gap-1 px-3">
+              <UIcon name="i-hugeicons-hospital-bed-02" />
+              <p>{{ consultation.roomName }}</p>
             </div>
           </div>
         </div>
