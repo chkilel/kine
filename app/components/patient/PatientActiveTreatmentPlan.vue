@@ -74,11 +74,11 @@
 
       <div class="flex-1">
         <h4 class="text-muted mb-3 text-xs font-bold tracking-wider uppercase">Prochaines séances</h4>
-        <ul v-if="upcomingConsultations.length > 0" class="space-y-0.5">
+        <ul v-if="upcomingConsultations.length > 0" class="space-y-2.5">
           <li
             v-for="consultation in upcomingConsultations"
             :key="consultation.id"
-            class="group hover:bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-3 transition-colors"
+            class="group bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-3 transition-colors"
           >
             <AppDateBadge :date="consultation.date" color="info" variant="soft" />
 
