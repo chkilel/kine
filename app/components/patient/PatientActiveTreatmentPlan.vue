@@ -97,8 +97,8 @@
             </p>
           </div>
           <UIcon
-            name="i-hugeicons-arrow-right-01"
-            class="group-hover:text-primary text-muted size-8 transition-all group-hover:-mr-2"
+            name="i-lucide-chevron-right"
+            class="group-hover:text-primary text-muted size-5 transition-all group-hover:-mr-2"
           />
         </li>
       </ul>

@@ -110,7 +110,7 @@
           variant="ghost"
           class="group p-4 sm:px-6 sm:py-4"
           :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-          trailing-icon="i-hugeicons-arrow-down-01"
+          trailing-icon="i-lucide-chevron-down"
           block
         >
           <h3 class="text-base font-bold">Détails du plan</h3>
