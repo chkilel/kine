@@ -52,10 +52,12 @@
             :key="index"
             class="bg-muted ring-default flex flex-col rounded-md px-3 py-2 ring"
           >
-            <span class="text-sm font-bold capitalize">{{ contact.name || 'Sans nom' }}</span>
-            <span v-if="contact.relationship" class="text-muted text-xs">
-              {{ getRelationshipLabel(contact.relationship) }}
-            </span>
+            <div class="flex justify-between">
+              <span class="text-sm font-bold capitalize">{{ contact.name || 'Sans nom' }}</span>
+              <span v-if="contact.relationship" class="text-muted text-xs">
+                {{ getRelationshipLabel(contact.relationship) }}
+              </span>
+            </div>
             <a
               v-if="contact.number"
               class="text-primary mt-0.5 text-sm tabular-nums hover:underline"

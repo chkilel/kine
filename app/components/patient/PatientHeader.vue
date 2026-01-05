@@ -42,8 +42,8 @@
 <template>
   <div class="group bg-default relative mb-6 overflow-hidden rounded-2xl p-6 shadow-sm">
     <div
-      class="from-primary-50 dark:from-primary-900/20 pointer-events-none absolute top-0 right-0 -mt-16 -mr-16 h-64 w-64 rounded-bl-full bg-linear-to-bl to-transparent"
-    ></div>
+      class="from-primary-50 pointer-events-none absolute top-0 right-0 -mt-16 -mr-16 size-64 rounded-bl-full bg-linear-to-bl to-transparent"
+    />
     <div class="relative z-10 flex flex-col gap-6 md:flex-row">
       <div class="flex shrink-0 flex-col items-center gap-3 md:items-start">
         <UAvatar
