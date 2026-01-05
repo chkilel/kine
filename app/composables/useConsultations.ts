@@ -1,4 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
+import { parseISO } from 'date-fns'
 
 /**
  * Query for fetching consultations for a patient
@@ -19,7 +20,12 @@ const _useConsultationsList = (patientId: MaybeRefOrGetter<string>, queryParams?
       const resp = await requestFetch(`/api/patients/${id}/consultations`, {
         query: queryParams?.value
       })
-      return resp?.data || []
+      // return resp?.data || []
+      return resp?.data.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt)
+      }))
     }
   })
 }
