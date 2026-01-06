@@ -44,6 +44,7 @@
     "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.63",
     "@nuxt/ui": "^4.3.0",
+    "@pinia/colada-devtools": "^0.4.0",
     "@types/node": "^25.0.3",
     "@vitest/coverage-v8": "^4.0.16",
     "drizzle-kit": "^0.31.8",

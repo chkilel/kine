@@ -78,6 +78,9 @@ importers:
       '@nuxt/ui':
         specifier: ^4.3.0
         version: 4.3.0(fef4a98901d54e53de854d8eb67df97d)
+      '@pinia/colada-devtools':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
@@ -1861,6 +1864,9 @@ packages:
   '@parcel/watcher@2.5.1':
     resolution: {integrity: sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg==}
     engines: {node: '>= 10.0.0'}
+
+  '@pinia/colada-devtools@0.4.0':
+    resolution: {integrity: sha512-1AffG0DGXDpMB2m7pA7Bh7gWObaK95us9u4EPwjpVixZRK55K6KaULQm+51i6ysTVhniDK13LiRrogaR3dH37Q==}
 
   '@pinia/colada-nuxt@0.3.0':
     resolution: {integrity: sha512-vf6m8ffclFcgX1sK9w4iPh04RaQnno7qXHToiKDSEn2agnKId05lfotW6z6Dat9Pb0uwY7vCAXqrYhIxUdxrLw==}
@@ -8337,6 +8343,8 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.1
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
+
+  '@pinia/colada-devtools@0.4.0': {}
 
   '@pinia/colada-nuxt@0.3.0(@pinia/colada@0.20.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.26(typescript@5.9.3)))(vue@3.5.26(typescript@5.9.3)))(magicast@0.5.1)':
     dependencies:

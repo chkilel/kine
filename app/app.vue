@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { fr } from '@nuxt/ui/locale'
   const colorMode = useColorMode()
+  import { PiniaColadaDevtools } from '@pinia/colada-devtools'
 
   const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
 
@@ -39,4 +40,5 @@
       <NuxtPage />
     </NuxtLayout>
   </UApp>
+  <PiniaColadaDevtools />
 </template>
