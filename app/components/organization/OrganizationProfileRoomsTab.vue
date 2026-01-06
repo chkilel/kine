@@ -1,9 +1,9 @@
 <script setup lang="ts">
-  import { LazyOrganizationRoomSlideover, LazyModalConfirm } from '#components'
+  import { LazyOrganizationRoomSlideover, LazyAppModalConfirm } from '#components'
 
   const overlay = useOverlay()
   const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
-  const confirmModal = overlay.create(LazyModalConfirm)
+  const confirmModal = overlay.create(LazyAppModalConfirm)
 
   const queryParams = ref<RoomQuery>({ search: undefined })
   const { data: rooms, isLoading, error } = useRoomsList(queryParams)

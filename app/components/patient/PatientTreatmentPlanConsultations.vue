@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyConsultationPlanningSlideover, LazyModalConfirm } from '#components'
+  import { LazyConsultationPlanningSlideover, LazyAppModalConfirm } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -9,7 +9,7 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
-  const confirmModal = overlay.create(LazyModalConfirm)
+  const confirmModal = overlay.create(LazyAppModalConfirm)
   const { data: consultations, isLoading, refetch } = useConsultationsList(() => props.treatmentPlan.id)
   const { mutate: deleteConsultation, isLoading: isDeleting } = useDeleteConsultation()
 
