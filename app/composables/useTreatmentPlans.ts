@@ -158,33 +158,7 @@ const _useDeleteTreatmentPlan = () => {
   })
 }
 
-const _useTreatmentPlanConsultations = (
-  treatmentPlanId: MaybeRefOrGetter<string>,
-  queryParams?: Ref<ConsultationQuery>
-) => {
-  const requestFetch = useRequestFetch()
-
-  return useQuery({
-    enabled: () => !!toValue(treatmentPlanId),
-    key: () => {
-      const query = queryParams?.value
-      return query
-        ? ['treatment-plan-consultations', toValue(treatmentPlanId), query]
-        : ['treatment-plan-consultations', toValue(treatmentPlanId)]
-    },
-    query: async () => {
-      const id = toValue(treatmentPlanId)
-      if (!id) return null
-      const data = await requestFetch(`/api/treatment-plans/${id}/consultations`, {
-        query: queryParams?.value
-      })
-      return data
-    }
-  })
-}
-
 export const usePatientTreatmentPlans = createSharedComposable(_usePatientTreatmentPlans)
 export const useCreateTreatmentPlan = createSharedComposable(_useCreateTreatmentPlan)
 export const useUpdateTreatmentPlan = createSharedComposable(_useUpdateTreatmentPlan)
 export const useDeleteTreatmentPlan = createSharedComposable(_useDeleteTreatmentPlan)
-export const useTreatmentPlanConsultations = createSharedComposable(_useTreatmentPlanConsultations)

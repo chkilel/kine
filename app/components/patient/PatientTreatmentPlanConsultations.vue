@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyConsultationPlanningSlideover } from '#components'
+  import { LazyConsultationPlanningSlideover, LazyModalConfirm } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -9,10 +9,9 @@
   const toast = useToast()
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
-  const { data, isLoading, refetch } = useTreatmentPlanConsultations(() => props.treatmentPlan.id)
-
-  // Consultations data
-  const consultations = computed(() => data.value?.data || [])
+  const confirmModal = overlay.create(LazyModalConfirm)
+  const { data: consultations, isLoading, refetch } = useConsultationsList(() => props.treatmentPlan.id)
+  const { mutate: deleteConsultation, isLoading: isDeleting } = useDeleteConsultation()
 
   // Refresh consultations data
   const refreshConsultations = async () => {
@@ -25,14 +24,22 @@
   }
 
   // Delete consultation function
-  const deleteConsultation = async (consultationId: string) => {
-    if (!props.patient) return
-
-    const deleteConsultationFromComposable = useDeleteConsultation()
-    await deleteConsultationFromComposable.mutateAsync({
-      patientId: props.patient.id,
-      consultationId
+  async function handleDeleteConsultation(consultation: Consultation) {
+    const confirmed = await confirmModal.open({
+      title: 'Supprimer la consultation',
+      message: `Êtes-vous sûr de vouloir supprimer cette consultation du ${formatFrenchDate(consultation.date)} ? Cette action est irréversible.`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      confirmColor: 'error',
+      icon: 'i-hugeicons-alert-02'
     })
+
+    if (confirmed) {
+      deleteConsultation({
+        patientId: props.patient.id,
+        consultationId: consultation.id
+      })
+    }
   }
 
   // Edit consultation function - opens planning slideover with consultation data
@@ -42,7 +49,7 @@
   }
 
   // Function to open session planning with event handlers
-  function openSessionPlanning() {
+  function openConsultationPlanning() {
     sessionPlanningOverlay.open({
       patient: props.patient,
       treatmentPlan: props.treatmentPlan
@@ -64,12 +71,12 @@
         >
           Actualiser
         </UButton>
-        <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openSessionPlanning">
+        <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openConsultationPlanning">
           Planifier les séances
         </UButton>
       </div>
     </template>
-    <ul v-if="consultations.length > 0" class="space-y-2.5">
+    <ul v-if="consultations?.length && consultations?.length > 0" class="space-y-2.5">
       <li
         v-for="consultation in consultations"
         :key="consultation.id"
@@ -132,7 +139,8 @@
                 color="error"
                 size="sm"
                 square
-                @click="deleteConsultation(consultation.id)"
+                :loading="isDeleting"
+                @click="handleDeleteConsultation(consultation)"
               />
             </div>
           </div>
@@ -151,7 +159,7 @@
           icon: 'i-lucide-plus-circle',
           label: 'Planifier les séances du plan',
           size: 'md',
-          onClick: openSessionPlanning
+          onClick: openConsultationPlanning
         },
         {
           icon: 'i-lucide-plus',
