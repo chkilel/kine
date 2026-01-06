@@ -4,6 +4,9 @@ export default defineAppConfig({
       primary: 'blue',
       neutral: 'zinc'
     },
+    container: {
+      base: 'px-0'
+    },
     input: {
       defaultVariants: {
         variant: 'subtle'
