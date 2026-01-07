@@ -43,9 +43,12 @@
   }
 
   // Edit consultation function - opens planning slideover with consultation data
-  const editConsultation = (consultationId: string) => {
-    // TODO: Implement edit consultation logic
-    console.log('Edit consultation:', consultationId)
+  const editConsultation = (consultation: Consultation) => {
+    sessionPlanningOverlay.open({
+      patient: props.patient,
+      treatmentPlan: props.treatmentPlan,
+      consultation: consultation
+    })
   }
 
   // Function to open session planning with event handlers
@@ -128,10 +131,10 @@
               <UButton
                 icon="i-lucide-edit"
                 variant="ghost"
-                color="neutral"
+                color="info"
                 size="sm"
                 square
-                @click="editConsultation(consultation.id)"
+                @click="editConsultation(consultation)"
               />
               <UButton
                 icon="i-lucide-trash"

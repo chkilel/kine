@@ -1,9 +1,8 @@
 <script setup lang="ts">
-  import { formatFullName } from '~~/shared/utils'
-
   const props = defineProps<{
     patient: Patient
     treatmentPlan: TreatmentPlanWithProgress
+    consultation?: Consultation
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
@@ -29,6 +28,15 @@
   // Tab state
   const activePlanningTab = ref('manual')
 
+  const slideoverTitle = computed(() => (props.consultation ? 'Modifier la séance' : 'Planification des séances'))
+
+  const slideoverDescription = computed(() => {
+    if (!props.consultation) {
+      return `Patient: ${formatFullName(props.patient)}`
+    }
+    return `Modifier la séance du ${formatFrenchDate(props.consultation.date)} pour ${formatFullName(props.patient)}`
+  })
+
   const treatmentPlanStats = ref<{
     total: number
     completed: number
@@ -45,8 +53,8 @@
 
 <template>
   <USlideover
-    title="Planification des séances"
-    :description="`Patient: ${formatFullName(props.patient)}`"
+    :title="slideoverTitle"
+    :description="slideoverDescription"
     :ui="{
       content: 'w-full md:w-3/4 max-w-5xl bg-elevated',
       header: 'hidden'
@@ -61,24 +69,24 @@
           <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Total de séances</p>
-              <p class="font-title text-xl font-bold">{{ props.treatmentPlan?.numberOfSessions || 0 }}</p>
+              <p class="font-title text-xl font-bold">{{ treatmentPlan.numberOfSessions || 0 }}</p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Séances restantes</p>
               <p class="font-title text-xl font-bold">
-                {{ Math.max(0, (props.treatmentPlan?.numberOfSessions || 0) - (treatmentPlanStats?.completed || 0)) }}
+                {{ Math.max(0, (treatmentPlan.numberOfSessions || 0) - (treatmentPlanStats?.completed || 0)) }}
               </p>
             </div>
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4 sm:col-span-2">
               <p class="text-sm font-medium">Plan de traitement</p>
-              <p class="font-title text-lg font-bold">{{ props.treatmentPlan?.title }}</p>
+              <p class="font-title text-lg font-bold">{{ treatmentPlan.title }}</p>
             </div>
 
             <div class="col-span-full space-y-2">
               <div class="flex justify-between text-sm font-medium">
                 <span>Progression du plan</span>
                 <span>
-                  {{ treatmentPlanStats?.completed || 0 }} / {{ props.treatmentPlan?.numberOfSessions || 0 }} séances
+                  {{ treatmentPlanStats?.completed || 0 }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
                 </span>
               </div>
               <UProgress :model-value="treatmentPlanStats?.progressPercentage || 0" :max="100" size="lg" />
@@ -87,7 +95,11 @@
         </UCard>
 
         <!-- Planning Tabs -->
-        <ConsultationManualPlanningCard :treatment-plan="props.treatmentPlan" :therapists="therapists" />
+        <ConsultationManualPlanningCard
+          :treatment-plan="treatmentPlan"
+          :therapists="therapists"
+          :consultation="consultation"
+        />
 
         <!-- -----------------------------Hiding the tabs witht automatique planning---------------------------------------- -->
         <!-- <UCard class="mt-6"> -->
@@ -101,7 +113,7 @@
         <!-- > -->
         <!-- Manual Planning Tab -->
         <!-- <template #manual> -->
-        <!-- <ConsultationManualPlanningCard :treatment-plan="props.treatmentPlan" :therapists="therapists" /> -->
+        <!-- <ConsultationManualPlanningCard :treatment-plan="treatmentPlan" :therapists="therapists" /> -->
         <!-- </template> -->
 
         <!-- Auto Planning Tab -->
@@ -112,7 +124,7 @@
         <!-- </UCard> -->
 
         <!-- Session Management FIXME -->
-        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="props.treatmentPlan.patientId" />
+        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="treatmentPlan.patientId" />
 
         <!-- Communication Settings -->
         <UCard>
@@ -139,7 +151,7 @@
     <template #footer="{ close }">
       <div class="flex w-full justify-end gap-3">
         <UButton variant="outline" color="neutral" size="lg" @click="close">Annuler</UButton>
-        <UButton color="primary" size="lg">Mettre à jour la séance</UButton>
+        <UButton color="primary" size="lg">{{ consultation ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
       </div>
     </template>
   </USlideover>
