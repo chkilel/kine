@@ -105,6 +105,36 @@ const _useUpdateConsultation = () => {
 }
 
 /**
+ * Query for fetching a single consultation
+ * @param patientId - Patient ID
+ * @param consultationId - Consultation ID to fetch
+ * @returns Query result with consultation data and loading state
+ */
+const _useConsultation = (
+  patientId: MaybeRefOrGetter<string>,
+  consultationId: MaybeRefOrGetter<string | undefined>
+) => {
+  const requestFetch = useRequestFetch()
+  const pId = toValue(patientId)
+  const cId = toValue(consultationId)
+
+  return useQuery({
+    enabled: () => !!pId && !!cId,
+    key: () => (pId && cId ? ['consultation', pId, cId] : ['consultation']),
+    query: async () => {
+      const data = await requestFetch(`/api/patients/${pId}/consultations/${cId}`)
+      if (!data) return null
+
+      return {
+        ...data,
+        createdAt: parseISO(data.createdAt),
+        updatedAt: parseISO(data.updatedAt)
+      }
+    }
+  })
+}
+
+/**
  * Mutation for deleting a consultation
  * @returns Mutation with delete functionality and error handling
  */
@@ -137,6 +167,7 @@ const _useDeleteConsultation = () => {
 }
 
 export const useConsultationsList = createSharedComposable(_useConsultationsList)
+export const useConsultation = createSharedComposable(_useConsultation)
 export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
 export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
 export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)
