@@ -5,15 +5,15 @@
 <template>
   <div class="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
     <div class="flex flex-col gap-6">
-      <PatientInformationCard :patient="patient" />
-      <PatientMedicalOverviewCard :patient="patient" />
-      <PatientPractitionerNotesCard :patient="patient" />
+      <PatientOverviewTabInformation :patient="patient" />
+      <PatientOverviewTabMedicalOverview :patient="patient" />
+      <PatientOverviewTabNotes :patient="patient" />
     </div>
 
     <div class="flex flex-col gap-6">
-      <PatientActiveTreatmentPlan :patient="patient" />
+      <PatientOverviewTabActivePlan :patient="patient" />
       <!-- Historique des plans -->
-      <PatientTreatmentPlanHistory :patient="patient" />
+      <PatientOverviewTabPlanHistory :patient="patient" />
     </div>
   </div>
 </template>
