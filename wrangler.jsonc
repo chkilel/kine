@@ -20,7 +20,7 @@
       "database_name": "kine",
       "database_id": "dce23fa8-bf5c-4a5a-9922-0a47703754b7",
       "preview_database_id": "0d131a18-c453-4ce7-967f-5b5ee30ccab6",
-      "remote": true,
+      // "remote": true,
       "migrations_dir": "server/database/migrations"
     }
   ]
