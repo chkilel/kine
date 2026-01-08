@@ -10,7 +10,9 @@
   }>()
 
   const toast = useToast()
+  const { user } = await useAuth()
   const { getTherapistName } = useOrganizationMembers()
+  const { mutate: updateTreatmentPlan, isLoading: isSubmittingNote } = useUpdateTreatmentPlan()
 
   // Close treatment plan function
   const closeTreatmentPlan = () => {
@@ -20,6 +22,61 @@
       title: 'Plan clôturé',
       description: 'Le plan de traitement a été clôturé.',
       color: 'success'
+    })
+  }
+
+  // Note management
+  const newNote = ref('')
+
+  const sortedNotes = computed(() => {
+    const notes = (props.treatmentPlan.notes as any[]) || []
+    return [...notes]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .map((note, index) => ({
+        date: formatRelativeDate(note.date),
+        description: note.content,
+        author: note.author || 'Auteur inconnu',
+        icon: index === 0 ? 'i-hugeicons-checkmark-circle-02' : 'i-hugeicons-circle'
+      }))
+  })
+
+  const addNote = async () => {
+    if (!user.value) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Utilisateur non connecté.',
+        color: 'error'
+      })
+      return
+    }
+
+    const content = newNote.value.trim()
+    if (!content) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Veuillez entrer une note.',
+        color: 'error'
+      })
+      return
+    }
+
+    const newNoteEntry = {
+      date: new Date().toISOString(),
+      author: getTherapistName(user.value.id),
+      content
+    }
+
+    const currentNotes = props.treatmentPlan.notes || []
+
+    updateTreatmentPlan({
+      patientId: props.patient.id,
+      planId: props.treatmentPlan.id,
+      data: {
+        notes: [...currentNotes, newNoteEntry]
+      },
+      onSuccess: () => {
+        newNote.value = ''
+      }
     })
   }
 </script>
@@ -58,7 +115,7 @@
         </div>
         <div>
           <div class="mb-2 flex items-end justify-between">
-            <span class="text-xs font-bold tracking-wide text-gray-700 uppercase dark:text-gray-300">Progression</span>
+            <span class="text-muted text-xs font-bold tracking-wide">Progression</span>
             <span class="text-primary text-sm font-bold">{{ treatmentPlan.progress || 0 }}%</span>
           </div>
           <UProgress :model-value="treatmentPlan.progress || 0" size="lg" />
@@ -99,11 +156,7 @@
     </AppCard>
 
     <!-- Treatment Plan Details -->
-    <UCard
-      :ui="{
-        body: 'p-0 sm:p-0'
-      }"
-    >
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
       <UCollapsible :default-open="false">
         <UButton
           color="neutral"
@@ -194,18 +247,43 @@
     <UCard>
       <h3 class="mb-4! text-base font-bold">Notes &amp; Suivi</h3>
       <div class="space-y-4">
-        <div class="border-default space-y-3 border-t pt-4">
-          <div v-if="!(treatmentPlan.notes as any[])?.length" class="py-4 text-center">
+        <!-- New Note Input -->
+        <UFieldGroup class="w-full">
+          <UTextarea
+            v-model="newNote"
+            variant="soft"
+            placeholder="Ajouter une note clinique..."
+            :rows="3"
+            class="min-h-20 w-full resize-none"
+          />
+          <UButton
+            icon="i-hugeicons-telegram"
+            size="sm"
+            variant="subtle"
+            color="primary"
+            class="absolute right-2 bottom-2 rounded-md!"
+            :loading="isSubmittingNote"
+            :disabled="!newNote.trim() || isSubmittingNote"
+            @click="addNote"
+          />
+        </UFieldGroup>
+
+        <!-- Notes Timeline -->
+        <div class="border-default border-t pt-4">
+          <div v-if="sortedNotes.length === 0" class="text-center">
             <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
           </div>
-          <div v-else v-for="(note, index) in (treatmentPlan.notes as any[]) || []" :key="index" class="text-sm">
-            <p>
-              <strong class="font-semibold">
-                {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
-              </strong>
-              {{ note.content || '' }}
-            </p>
-            <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
+          <div v-else class="overflow-y-auto">
+            <UTimeline :items="sortedNotes" :default-value="99" size="2xs" :ui="{ wrapper: 'pb-1' }">
+              <template #date="{ item }">
+                <div class="text-dimmed text-xs/5">{{ item.date }} • {{ item.author }}</div>
+              </template>
+              <template #description="{ item }">
+                <div class="text-toned text-sm">
+                  {{ item.description }}
+                </div>
+              </template>
+            </UTimeline>
           </div>
         </div>
       </div>
