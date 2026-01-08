@@ -7,12 +7,19 @@ import {
   users,
   treatmentPlans,
   weeklyAvailabilityTemplates,
-  availabilityExceptions
+  availabilityExceptions,
+  consultations,
+  rooms
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
-import { minutesToTime } from '~~/shared/utils/date-utils'
-import { MINIMUM_CONSULTATION_GAP_MINUTES, CONSULTATION_DURATIONS } from '~~/shared/utils/constants.consultation'
+import { minutesToTime, timeToMinutes } from '~~/shared/utils/date-utils'
+import {
+  MINIMUM_CONSULTATION_GAP_MINUTES,
+  CONSULTATION_DURATIONS,
+  VALID_CONSULTATION_TYPES,
+  VALID_CONSULTATION_STATUSES
+} from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
 import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES, VALID_RELATIONSHIP_TYPES } from '~~/shared/utils/constants.patient'
@@ -32,6 +39,8 @@ type SeedResults = {
     treatmentPlans: number
     weeklyTemplates: number
     availabilityExceptions: number
+    rooms: number
+    consultations: number
   }
   errors: Array<{ type: string; message: string; details?: any }>
 }
@@ -63,6 +72,15 @@ const SEED_CONFIG = {
   treatmentPlans: {
     minPerPatient: 3,
     statuses: VALID_TREATMENT_PLAN_STATUSES
+  },
+  rooms: {
+    countPerOrg: 5
+  },
+  consultations: {
+    minPerPatient: 2,
+    maxPerPatient: 5,
+    dateRangeDays: 90,
+    pastPercentage: 0.6
   }
 } as const
 
@@ -366,6 +384,33 @@ const medications = ['Metformin', 'Ibuprofen', 'Lisinopril', 'Atorvastatin', 'Om
 const locations = VALID_CONSULTATION_LOCATIONS
 const exceptionReasons = VALID_SCHEDULE_EXCEPTION_TYPES
 
+const roomEquipment = [
+  'Table électrique',
+  'Tapis de course',
+  'Haltères',
+  'Ballon de rééducation',
+  'Banc incliné',
+  'Élastiques de résistance',
+  'Barres parallèles',
+  "Table d'étirement"
+]
+
+const roomNames = [
+  'Salle de traitement 1',
+  'Salle de traitement 2',
+  'Salle de kinésithérapie',
+  'Salle de rééducation',
+  'Salle de musculation'
+]
+
+const roomDescriptions = [
+  'Pour les soins manuels et thérapie physique',
+  'Équipement de rééducation fonctionnelle',
+  'Espace dédié aux exercices de mobilisation',
+  'Salle équipée pour le renforcement musculaire',
+  'Zone de rééducation cardiovasculaire'
+]
+
 function shuffleArray<T>(array: T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
@@ -416,10 +461,10 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
     }
   }
 
-  const startSlotIndex = randomInt(0, availableSlots.length - 2)
+  const startSlotIndex = randomInt(0, Math.max(0, availableSlots.length - 2))
   const slotStart = availableSlots[startSlotIndex]
 
-  const endSlotIndex = randomInt(startSlotIndex + 2, availableSlots.length - 1)
+  const endSlotIndex = randomInt(Math.min(startSlotIndex + 1, availableSlots.length - 1), availableSlots.length - 1)
   const slotEnd = availableSlots[endSlotIndex]
 
   return {
@@ -429,6 +474,8 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
 }
 
 async function resetDatabase(db: DrizzleDB): Promise<void> {
+  await db.delete(consultations)
+  await db.delete(rooms)
   await db.delete(treatmentPlans)
   await db.delete(patients)
   await db.delete(availabilityExceptions)
@@ -683,6 +730,133 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
   })
 }
 
+function generateRooms(organizationId: string): any[] {
+  const roomsData: any[] = []
+
+  for (let i = 0; i < SEED_CONFIG.rooms.countPerOrg; i++) {
+    const equipmentCount = randomInt(0, 3)
+    const selectedEquipment = shuffleArray(roomEquipment).slice(0, equipmentCount)
+
+    roomsData.push({
+      organizationId,
+      name: roomNames[i] || `Salle ${i + 1}`,
+      description: roomDescriptions[i] || `Salle de traitement`,
+      equipment: selectedEquipment,
+      capacity: randomInt(1, 3),
+      area: randomInt(15, 50),
+      prm: Math.random() > 0.5 ? 1 : 0
+    })
+  }
+
+  return roomsData
+}
+
+function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
+  if (isToday) {
+    return Math.random() > 0.7 ? 'in_progress' : 'scheduled'
+  }
+
+  if (isPastDate) {
+    const rand = Math.random()
+    if (rand < 0.7) return 'completed'
+    if (rand < 0.85) return 'cancelled'
+    if (rand < 0.95) return 'no_show'
+    return 'completed'
+  }
+
+  return Math.random() > 0.3 ? 'confirmed' : 'scheduled'
+}
+
+function generateConsultations(
+  patientId: string,
+  organizationId: string,
+  therapistId: string,
+  treatmentPlanId: string | null,
+  availableRoomIds: string[],
+  roomBookings: Map<string, string>
+): any[] {
+  const count = randomInt(SEED_CONFIG.consultations.minPerPatient, SEED_CONFIG.consultations.maxPerPatient)
+  const consultationsData: any[] = []
+
+  for (let i = 0; i < count; i++) {
+    const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
+    const date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+    const isPast = daysOffset < 0
+    const isToday = daysOffset === 0
+    const status = getConsultationStatus(isPast, isToday)
+
+    const timeRange = generateTimeRange(9, 16)
+    const duration = randomItem(CONSULTATION_DURATIONS)
+    const location = randomItem(VALID_CONSULTATION_LOCATIONS)
+
+    let roomId: string | null = null
+    if (location === 'clinic' && availableRoomIds.length > 0 && Math.random() > 0.3) {
+      const shuffledRooms = shuffleArray(availableRoomIds)
+      for (const rId of shuffledRooms) {
+        const bookingKey = `${rId}_${date}_${timeRange.startTime}`
+        if (!roomBookings.has(bookingKey)) {
+          roomId = rId
+          roomBookings.set(bookingKey, patientId)
+          break
+        }
+      }
+    }
+
+    const startTime = timeRange.startTime
+    const endTime = minutesToTime(timeToMinutes(startTime) + duration)
+
+    const consultation: any = {
+      organizationId,
+      patientId,
+      therapistId,
+      treatmentPlanId,
+      roomId,
+      date,
+      startTime,
+      endTime,
+      duration,
+      type: randomItem(VALID_CONSULTATION_TYPES),
+      status,
+      location,
+      billed: isPast && status === 'completed' ? date : null,
+      insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
+      cost: duration * 50,
+      chiefComplaint: randomItem(medicalConditions),
+      notes: status === 'completed' ? 'Session terminée avec succès' : null,
+      treatmentSummary:
+        status === 'completed'
+          ? randomItem([
+              'Thérapie manuelle et étirements',
+              'Exercices de renforcement',
+              'Mobilisation articulaire',
+              'Rééducation fonctionnelle'
+            ])
+          : null
+    }
+
+    if (status === 'completed') {
+      const painBefore = randomInt(3, 8)
+      consultation.painLevelBefore = painBefore
+      consultation.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
+      consultation.observations = randomItem([
+        'Bonne réponse au traitement',
+        'Amélioration de la mobilité',
+        'Patient motivé',
+        'Progrès significatifs'
+      ])
+    }
+
+    consultationsData.push(consultation)
+  }
+
+  consultationsData.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date)
+    return a.startTime.localeCompare(b.startTime)
+  })
+
+  return consultationsData
+}
+
 export default defineEventHandler(async (event: H3Event) => {
   const config = useRuntimeConfig()
   const isDevelopment = config.env === 'development' || process.env.NODE_ENV === 'development'
@@ -702,7 +876,9 @@ export default defineEventHandler(async (event: H3Event) => {
       patients: 0,
       treatmentPlans: 0,
       weeklyTemplates: 0,
-      availabilityExceptions: 0
+      availabilityExceptions: 0,
+      rooms: 0,
+      consultations: 0
     },
     errors: []
   }
@@ -789,6 +965,24 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const db = useDrizzle(event)
+
+  const orgRoomIds: Record<string, string[]> = {}
+  for (const orgId of organizationIds) {
+    try {
+      const roomsData = generateRooms(orgId)
+      if (roomsData.length > 0) {
+        await db.insert(rooms).values(roomsData)
+        orgRoomIds[orgId] = roomsData.map((r) => r.id)
+        results.success.rooms += roomsData.length
+      }
+    } catch (error) {
+      results.errors.push({
+        type: 'room',
+        message: `Failed to create rooms for org ${orgId}`,
+        details: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
 
   for (const userId of userIds) {
     const userOrgMemberships = await db
@@ -886,6 +1080,67 @@ export default defineEventHandler(async (event: H3Event) => {
           details: error instanceof Error ? error.message : String(error)
         })
       }
+    }
+  }
+
+  const roomBookings = new Map<string, string>()
+  for (const patient of patientData) {
+    const patientRecords = await db.select().from(patients).where(eq(patients.email, patient.email)).limit(1)
+    if (patientRecords.length === 0) continue
+
+    const patientRecord = patientRecords[0]
+    const patientOrgId = patientRecord.organizationId
+    const therapistsInOrg = await db
+      .select({ userId: members.userId })
+      .from(members)
+      .where(eq(members.organizationId, patientOrgId))
+
+    if (therapistsInOrg.length === 0) continue
+
+    const therapistId = randomItem(therapistsInOrg).userId
+    const availableRoomIds = orgRoomIds[patientOrgId] || []
+
+    try {
+      const consultationsData = generateConsultations(
+        patientRecord.id,
+        patientOrgId,
+        therapistId,
+        null,
+        availableRoomIds,
+        roomBookings
+      )
+      if (consultationsData.length > 0) {
+        for (const consultation of consultationsData) {
+          try {
+            await db.insert(consultations).values(consultation)
+            results.success.consultations++
+          } catch (err) {
+            results.errors.push({
+              type: 'consultation',
+              message: `Failed to create consultation for patient ${patient.firstName} ${patient.lastName}`,
+              details: {
+                error: err instanceof Error ? err.message : String(err),
+                consultation: {
+                  id: consultation.id,
+                  date: consultation.date,
+                  startTime: consultation.startTime,
+                  endTime: consultation.endTime,
+                  duration: consultation.duration,
+                  status: consultation.status,
+                  location: consultation.location,
+                  roomId: consultation.roomId
+                }
+              }
+            })
+          }
+        }
+      }
+    } catch (error) {
+      results.errors.push({
+        type: 'consultation',
+        message: `Failed to generate consultations for patient ${patient.firstName} ${patient.lastName}`,
+        details: error instanceof Error ? error.message : String(error)
+      })
     }
   }
 

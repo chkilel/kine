@@ -14,6 +14,7 @@
     "db:mig": "wrangler d1 migrations apply kine",
     "db:mig-remote": "wrangler d1 migrations apply kine --remote",
     "db:mig-prev": "wrangler d1 migrations apply kine --remote --preview",
+    "db:seed": "curl -X POST http://localhost:3000/api/db/seed",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
