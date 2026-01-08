@@ -86,7 +86,7 @@
   <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="lg:col-span-1">
-      <PatientTreatmentPlanSidebar
+      <PatientTreatmentPlanTabSidebar
         :patient="patient"
         :treatment-plan="getActiveTreatmentPlan"
         @edit-plan="openEditSlideover"
@@ -97,10 +97,10 @@
     <!-- Right Column -->
     <div class="flex flex-col gap-6 lg:col-span-2">
       <!-- Consultations Overview -->
-      <PatientTreatmentPlanConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
 
       <!-- Documents -->
-      <PatientTreatmentPlanDocuments :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabDocuments :treatment-plan="getActiveTreatmentPlan" />
     </div>
   </div>
 </template>
