@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c7ffe3e4-8d45-4ddf-946c-1b31a7052b73",
+  "id": "7cdb4d08-9cab-41e9-a23f-bf8f1cce6c6d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -767,7 +767,7 @@
           "name": "therapistId",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "roomId": {
@@ -1124,7 +1124,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "consultations_roomId_rooms_id_fk": {

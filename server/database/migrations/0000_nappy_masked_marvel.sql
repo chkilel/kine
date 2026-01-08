@@ -105,7 +105,7 @@ CREATE TABLE `consultations` (
 	`organizationId` text NOT NULL,
 	`patientId` text NOT NULL,
 	`treatmentPlanId` text,
-	`therapistId` text,
+	`therapistId` text NOT NULL,
 	`roomId` text,
 	`date` text NOT NULL,
 	`startTime` text NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE `consultations` (
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`roomId`) REFERENCES `rooms`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
