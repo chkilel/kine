@@ -47,7 +47,7 @@ export const consultationQuerySchema = z.object({
 })
 
 // Type inference
-export type Consultation = z.infer<typeof consultationSchema>
+export type Consultation = z.infer<typeof consultationSchema> & { roomName?: string | null }
 export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
 export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>
 export type ConsultationQuery = z.infer<typeof consultationQuerySchema>

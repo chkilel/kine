@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { computed, useAttrs } from 'vue'
-  import { UCard } from '#components'
 
   const props = defineProps<{
     title?: string

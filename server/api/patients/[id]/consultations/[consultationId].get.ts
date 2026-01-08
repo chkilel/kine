@@ -1,17 +1,17 @@
-import { z } from 'zod'
-import { eq, and, desc, asc } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { consultations, rooms } from '~~/server/database/schema'
 import type { Session } from '~~/shared/types/auth.types'
 
-// GET /api/patients/[id]/consultations - List patient consultations
+// GET /api/patients/[id]/consultations/[consultationId] - Get single consultation
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const patientId = getRouterParam(event, 'id')
+  const consultationId = getRouterParam(event, 'consultationId')
 
-  if (!patientId) {
+  if (!patientId || !consultationId) {
     throw createError({
       statusCode: 400,
-      message: 'Patient ID is required'
+      message: 'Patient ID and Consultation ID are required'
     })
   }
 
@@ -37,32 +37,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get query parameters
-  const query = getQuery(event)
-
   try {
-    // Parse and validate query parameters
-    const validatedQuery = consultationQuerySchema.parse(query)
-
-    // Build base query conditions
-    const baseConditions = and(
-      eq(consultations.organizationId, activeOrganizationId),
-      eq(consultations.patientId, patientId)
-    )
-
-    // Apply additional filters
-    let whereConditions = baseConditions
-
-    if (validatedQuery.status) {
-      whereConditions = and(whereConditions, eq(consultations.status, validatedQuery.status))
-    }
-
-    if (validatedQuery.type) {
-      whereConditions = and(whereConditions, eq(consultations.type, validatedQuery.type))
-    }
-
-    // Execute query with room join
-    const consultationsList = await db
+    // Fetch consultation with room name
+    const [consultationData] = await db
       .select({
         id: consultations.id,
         organizationId: consultations.organizationId,
@@ -94,37 +71,24 @@ export default defineEventHandler(async (event) => {
       })
       .from(consultations)
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))
-      .where(whereConditions)
-      .orderBy(asc(consultations.date))
-      .limit(validatedQuery.limit)
-      .offset((validatedQuery.page - 1) * validatedQuery.limit)
+      .where(
+        and(
+          eq(consultations.organizationId, activeOrganizationId),
+          eq(consultations.id, consultationId),
+          eq(consultations.patientId, patientId)
+        )
+      )
+      .limit(1)
 
-    return {
-      data: consultationsList,
-      pagination: {
-        page: validatedQuery.page,
-        limit: validatedQuery.limit,
-        total: consultationsList.length
-      }
-    }
-  } catch (error: any) {
-    console.error('Error fetching consultations:', error)
-
-    if (error instanceof z.ZodError) {
+    if (!consultationData) {
       throw createError({
-        statusCode: 400,
-        message: 'Invalid query parameters',
-        data: error.issues
+        statusCode: 404,
+        message: 'Consultation not found'
       })
     }
 
-    if (error.statusCode) {
-      throw error
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch consultations'
-    })
+    return consultationData
+  } catch (error) {
+    handleApiError(error)
   }
 })

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { eq, and, desc } from 'drizzle-orm'
-import { consultations, treatmentPlans } from '~~/server/database/schema'
+import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
 import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
@@ -75,10 +75,39 @@ export default defineEventHandler(async (event) => {
       whereConditions = and(whereConditions, eq(consultations.type, validatedQuery.type))
     }
 
-    // Execute query
+    // Execute query with room join
     const consultationsList = await db
-      .select()
+      .select({
+        id: consultations.id,
+        organizationId: consultations.organizationId,
+        patientId: consultations.patientId,
+        treatmentPlanId: consultations.treatmentPlanId,
+        therapistId: consultations.therapistId,
+        roomId: consultations.roomId,
+        date: consultations.date,
+        startTime: consultations.startTime,
+        endTime: consultations.endTime,
+        duration: consultations.duration,
+        type: consultations.type,
+        chiefComplaint: consultations.chiefComplaint,
+        notes: consultations.notes,
+        treatmentSummary: consultations.treatmentSummary,
+        observations: consultations.observations,
+        nextSteps: consultations.nextSteps,
+        painLevelBefore: consultations.painLevelBefore,
+        painLevelAfter: consultations.painLevelAfter,
+        progressNotes: consultations.progressNotes,
+        status: consultations.status,
+        location: consultations.location,
+        billed: consultations.billed,
+        insuranceClaimed: consultations.insuranceClaimed,
+        cost: consultations.cost,
+        createdAt: consultations.createdAt,
+        updatedAt: consultations.updatedAt,
+        roomName: rooms.name
+      })
       .from(consultations)
+      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
       .where(whereConditions)
       .orderBy(desc(consultations.date))
       .limit(validatedQuery.limit)

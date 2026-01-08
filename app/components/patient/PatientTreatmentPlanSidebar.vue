@@ -10,7 +10,9 @@
   }>()
 
   const toast = useToast()
+  const { user } = await useAuth()
   const { getTherapistName } = useOrganizationMembers()
+  const { mutate: updateTreatmentPlan, isLoading: isSubmittingNote } = useUpdateTreatmentPlan()
 
   // Close treatment plan function
   const closeTreatmentPlan = () => {
@@ -22,87 +24,144 @@
       color: 'success'
     })
   }
+
+  // Note management
+  const newNote = ref('')
+
+  const sortedNotes = computed(() => {
+    const notes = (props.treatmentPlan.notes as any[]) || []
+    return [...notes]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .map((note, index) => ({
+        date: formatRelativeDate(note.date),
+        description: note.content,
+        author: note.author || 'Auteur inconnu',
+        icon: index === 0 ? 'i-hugeicons-checkmark-circle-02' : 'i-hugeicons-circle'
+      }))
+  })
+
+  const addNote = async () => {
+    if (!user.value) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Utilisateur non connecté.',
+        color: 'error'
+      })
+      return
+    }
+
+    const content = newNote.value.trim()
+    if (!content) {
+      toast.add({
+        title: 'Erreur',
+        description: 'Veuillez entrer une note.',
+        color: 'error'
+      })
+      return
+    }
+
+    const newNoteEntry = {
+      date: new Date().toISOString(),
+      author: getTherapistName(user.value.id),
+      content
+    }
+
+    const currentNotes = props.treatmentPlan.notes || []
+
+    updateTreatmentPlan({
+      patientId: props.patient.id,
+      planId: props.treatmentPlan.id,
+      data: {
+        notes: [...currentNotes, newNoteEntry]
+      },
+      onSuccess: () => {
+        newNote.value = ''
+      }
+    })
+  }
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
     <!-- Treatment Plan Card -->
-    <UCard>
-      <div class="mb-4 flex items-start justify-between">
-        <h2 class="text-lg font-bold">{{ props.treatmentPlan.title }}</h2>
-        <UBadge :color="getTreatmentPlanStatusColor(props.treatmentPlan.status)" variant="soft" class="rounded-full">
-          {{ getTreatmentPlanStatusLabel(props.treatmentPlan.status) }}
+
+    <AppCard :title="treatmentPlan.title">
+      <template #actions>
+        <UBadge :color="getTreatmentPlanStatusColor(treatmentPlan.status)" variant="soft" class="rounded-full">
+          {{ getTreatmentPlanStatusLabel(treatmentPlan.status) }}
         </UBadge>
-      </div>
-      <div class="text-muted space-y-3 text-sm">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-calendar" class="text-toned" />
-          <span>
-            Début: {{ formatFrenchDate(props.treatmentPlan.startDate) }} - Fin:
-            {{ props.treatmentPlan.endDate ? formatFrenchDate(props.treatmentPlan.endDate) : 'Non définie' }}
-          </span>
+      </template>
+      <div class="flex flex-col gap-5">
+        <div class="space-y-1">
+          <p class="text-primary text-sm font-medium">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</p>
+          <p class="text-muted mt-1 text-xs">Objectif principal : {{ treatmentPlan.objective || 'Non spécifié' }}</p>
         </div>
-        <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-user" class="text-toned" />
-          <span>Thérapeute: {{ getTherapistName(props.treatmentPlan.therapistId) }}</span>
+        <div class="border-default text-muted flex flex-col gap-2 border-t border-b py-3 text-xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <UIcon name="i-hugeicons-calendar-02" class="text-[16px]" />
+              <span>
+                {{ formatFrenchDate(treatmentPlan.startDate) }}
+                {{ treatmentPlan.endDate ? ` - ${formatFrenchDate(treatmentPlan.endDate)}` : '' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <UIcon name="i-hugeicons-user" class="size-4" />
+              <span class="text-toned font-medium">
+                {{ getTherapistName(treatmentPlan.therapistId) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mb-2 flex items-end justify-between">
+            <span class="text-muted text-xs font-bold tracking-wide">Progression</span>
+            <span class="text-primary text-sm font-bold">{{ treatmentPlan.progress || 0 }}%</span>
+          </div>
+          <UProgress :model-value="treatmentPlan.progress || 0" size="lg" />
+          <div class="mt-1.5 flex justify-between text-[11px] font-medium text-gray-400">
+            <span>
+              {{ treatmentPlan.completedConsultations || 0 }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
+            </span>
+            <span>
+              Reste:
+              {{ (treatmentPlan.numberOfSessions || 0) - (treatmentPlan.completedConsultations || 0) }}
+            </span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <button
+            class="hover:text-primary bg-muted hover:bg-elevated flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors"
+            @click="$emit('edit-plan')"
+          >
+            <UIcon name="i-hugeicons-pencil-edit-02" class="text-[20px]" />
+            <span class="text-[10px] font-bold">Modifier</span>
+          </button>
+          <button
+            class="bg-muted hover:bg-elevated hover:text-error flex flex-col items-center justify-center gap-1 rounded-lg transition-colors"
+            @click="closeTreatmentPlan"
+          >
+            <UIcon name="i-hugeicons-archive" class="text-[20px]" />
+            <span class="text-[10px] font-bold">Clôturer</span>
+          </button>
+          <button
+            class="bg-primary-50 hover:bg-primary-100 text-primary flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors"
+            @click="$emit('create-new')"
+          >
+            <UIcon name="i-hugeicons-plus-sign-square" class="text-[20px]" />
+            <span class="text-[10px] font-bold">Nouveau</span>
+          </button>
         </div>
       </div>
-      <div class="mt-5">
-        <div class="text-muted mb-1 flex items-center justify-between text-sm">
-          <span>
-            Progression ({{ props.treatmentPlan.completedConsultations || 0 }}/{{
-              props.treatmentPlan.numberOfSessions || 0
-            }}
-            séances)
-          </span>
-          <span>{{ props.treatmentPlan.progress || 0 }}%</span>
-        </div>
-        <UProgress :model-value="props.treatmentPlan.progress || 0" size="lg" />
-      </div>
-      <div class="mt-6 flex flex-wrap gap-2">
-        <UButton
-          icon="i-lucide-edit"
-          variant="outline"
-          color="neutral"
-          size="md"
-          class="flex-1"
-          @click="$emit('edit-plan')"
-        >
-          Modifier
-        </UButton>
-        <UButton
-          icon="i-lucide-archive"
-          variant="outline"
-          color="neutral"
-          size="md"
-          class="flex-1"
-          @click="closeTreatmentPlan"
-        >
-          Clôturer
-        </UButton>
-        <UButton
-          icon="i-lucide-plus"
-          color="primary"
-          size="md"
-          class="flex-1 justify-center sm:justify-start"
-          @click="$emit('create-new')"
-        >
-          Nouveau
-        </UButton>
-      </div>
-    </UCard>
+    </AppCard>
 
     <!-- Treatment Plan Details -->
-    <UCard
-      :ui="{
-        body: 'p-0 sm:p-0'
-      }"
-    >
-      <UCollapsible default-open>
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+      <UCollapsible :default-open="false">
         <UButton
           color="neutral"
           variant="ghost"
-          class="group p-4 sm:p-6"
+          class="group p-4 sm:px-6 sm:py-4"
           :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
           trailing-icon="i-lucide-chevron-down"
           block
@@ -112,33 +171,71 @@
 
         <template #content>
           <div class="border-default space-y-5 border-t p-4 sm:p-6">
-            <div>
-              <h4 class="mb-2 text-sm font-semibold">Objectifs thérapeutiques</h4>
-              <p class="text-muted text-sm">{{ props.treatmentPlan.objective || 'Non spécifié' }}</p>
+            <div class="space-y-1">
+              <h4 class="text-muted text-xs font-semibold uppercase">Objectifs thérapeutiques</h4>
+              <p class="bg-muted border-default rounded-bl-lg border-l-6 px-2 py-1 text-sm leading-relaxed">
+                {{ treatmentPlan.objective || 'Non spécifié' }}
+              </p>
             </div>
-            <div>
-              <h4 class="mb-2 text-sm font-semibold">Diagnostic</h4>
-              <p class="text-muted text-sm">{{ props.treatmentPlan.diagnosis || 'Non spécifié' }}</p>
+
+            <div class="space-y-1">
+              <h4 class="text-muted text-xs font-semibold uppercase">Contexte pathologique</h4>
+              <p class="bg-muted border-default rounded-bl-lg border-l-6 px-2 py-1 text-sm leading-relaxed">
+                {{ treatmentPlan.diagnosis || 'Non spécifié' }}
+              </p>
             </div>
-            <div v-if="props.treatmentPlan.painLevel">
-              <h4 class="mb-2 text-sm font-semibold">Niveau de douleur (actuel)</h4>
+
+            <div v-if="treatmentPlan.painLevel">
+              <div class="mb-2 flex items-center justify-between">
+                <h4 class="text-sm font-semibold">Niveau de douleur (actuel)</h4>
+                <UBadge color="error" variant="subtle" class="font-semibold">{{ treatmentPlan.painLevel }}/10</UBadge>
+              </div>
               <div class="flex items-center gap-3">
-                <USlider :model-value="props.treatmentPlan.painLevel" :max="10" :min="0" disabled />
-                <span class="font-semibold">{{ props.treatmentPlan.painLevel }}/10</span>
+                <USlider
+                  :model-value="treatmentPlan.painLevel"
+                  :max="10"
+                  :min="0"
+                  color="error"
+                  disabled
+                  :ui="{
+                    range: 'bg-transparent',
+                    thumb: 'inset-ring-2 inset-ring-error'
+                  }"
+                />
               </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-              <div>
-                <h4 class="font-semibold">Fréquence</h4>
-                <p class="text-muted">{{ props.treatmentPlan.sessionFrequency || 0 }}x / semaine</p>
+
+            <div class="border-default grid grid-cols-1 gap-4 border-t pt-2">
+              <div class="flex items-center gap-3">
+                <AppIconBox color="info" name="i-hugeicons-transaction-history" />
+                <div class="flex-1">
+                  <h4 class="text-muted text-[10px] font-bold tracking-wide">Fréquence</h4>
+                  <p class="text-muted flex w-full items-center justify-between text-sm font-medium">
+                    <span>{{ treatmentPlan.sessionFrequency || 0 }}x / semaine</span>
+                    <span class="text-xs">({{ treatmentPlan.numberOfSessions }} séances)</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 class="font-semibold">Médecin prescripteur</h4>
-                <p class="text-muted">{{ props.treatmentPlan.prescribingDoctor || 'Non spécifié' }}</p>
+
+              <div class="flex items-center gap-3">
+                <AppIconBox color="info" name="i-hugeicons:chat-user" />
+                <div class="flex-1">
+                  <h4 class="text-muted text-[10px] font-bold tracking-wide">Prescripteur</h4>
+                  <p class="text-muted flex w-full items-center justify-between text-sm font-medium">
+                    <span>{{ treatmentPlan.prescribingDoctor || 'Non spécifié' }}</span>
+                    <span class="text-xs">({{ treatmentPlan.prescriptionDate }})</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 class="font-semibold">Assurance</h4>
-                <p class="text-muted">{{ props.treatmentPlan.insuranceInfo || 'Non spécifié' }}</p>
+
+              <div class="flex items-center gap-3">
+                <AppIconBox color="success" name="i-hugeicons-security-check" />
+                <div class="flex-1">
+                  <h4 class="text-muted text-[10px] font-bold tracking-wide">Assurance</h4>
+                  <p class="text-muted flex w-full items-center text-sm font-medium">
+                    <span>{{ treatmentPlan.insuranceInfo || 'Non spécifié' }}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -150,18 +247,43 @@
     <UCard>
       <h3 class="mb-4! text-base font-bold">Notes &amp; Suivi</h3>
       <div class="space-y-4">
-        <div class="border-default space-y-3 border-t pt-4">
-          <div v-if="!(props.treatmentPlan.notes as any[])?.length" class="py-4 text-center">
+        <!-- New Note Input -->
+        <UFieldGroup class="w-full">
+          <UTextarea
+            v-model="newNote"
+            variant="soft"
+            placeholder="Ajouter une note clinique..."
+            :rows="3"
+            class="min-h-20 w-full resize-none"
+          />
+          <UButton
+            icon="i-hugeicons-telegram"
+            size="sm"
+            variant="subtle"
+            color="primary"
+            class="absolute right-2 bottom-2 rounded-md!"
+            :loading="isSubmittingNote"
+            :disabled="!newNote.trim() || isSubmittingNote"
+            @click="addNote"
+          />
+        </UFieldGroup>
+
+        <!-- Notes Timeline -->
+        <div class="border-default border-t pt-4">
+          <div v-if="sortedNotes.length === 0" class="text-center">
             <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
           </div>
-          <div v-else v-for="(note, index) in (props.treatmentPlan.notes as any[]) || []" :key="index" class="text-sm">
-            <p>
-              <strong class="font-semibold">
-                {{ note.date ? new Date(note.date).toLocaleDateString('fr-FR') : 'Date non spécifiée' }}:
-              </strong>
-              {{ note.content || '' }}
-            </p>
-            <p class="text-muted text-xs">{{ note.author || 'Auteur inconnu' }}</p>
+          <div v-else class="overflow-y-auto">
+            <UTimeline :items="sortedNotes" :default-value="99" size="2xs" :ui="{ wrapper: 'pb-1' }">
+              <template #date="{ item }">
+                <div class="text-dimmed text-xs/5">{{ item.date }} • {{ item.author }}</div>
+              </template>
+              <template #description="{ item }">
+                <div class="text-toned text-sm">
+                  {{ item.description }}
+                </div>
+              </template>
+            </UTimeline>
           </div>
         </div>
       </div>

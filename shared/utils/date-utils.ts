@@ -82,7 +82,7 @@ export function extractDayAndMonth(dateString: string) {
     dayName: format(date, 'EEEE', { locale: fr }), // ex: "lundi"
     dayNameShort: format(date, 'EEE', { locale: fr }).replace('.', ''), // "Lun", "Mar", etc.
     day: format(date, 'd', { locale: fr }),
-    month: format(date, 'MMM', { locale: fr }).replace('.', '') // remove the dot
+    month: format(date, 'MMM', { locale: fr }).slice(0, 3).replace('.', '') // remove the dot
   }
 }
 

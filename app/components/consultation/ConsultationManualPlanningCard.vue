@@ -1,23 +1,30 @@
 <script setup lang="ts">
   import { LazyOrganizationRoomSlideover } from '#components'
+  import { nextTick } from 'vue'
   import { CalendarDate, getLocalTimeZone, parseDate, parseTime, today } from '@internationalized/date'
 
   const props = defineProps<{
     therapists: User[]
     treatmentPlan: TreatmentPlan
+    consultation?: Consultation
   }>()
 
-  const createConsultationMutation = useCreateConsultation()
   const toast = useToast()
+
+  const createConsultationMutation = useCreateConsultation()
+  const updateConsultationMutation = useUpdateConsultation()
+
   const overlay = useOverlay()
   const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
 
   const isCreating = ref(false)
+  const isEditMode = computed(() => !!props.consultation)
+  const isInitialLoad = ref(true)
+  const originalConsultationDetails = ref<ConsultationCreate | null>(null)
   const minDate = computed(() => convertToCalendarDate(new Date()))
   const availableSlots = ref<string[]>([])
   const isLoadingSlots = ref(false)
   const slotsError = ref<string | null>(null)
-  const selectedRoomId = ref<string | null>(null)
   const showRoomOnlyAvailability = ref(false)
 
   const { data: roomsData } = useRoomsList(ref({}))
@@ -36,7 +43,7 @@
     organizationId: props.treatmentPlan.organizationId,
     treatmentPlanId: props.treatmentPlan?.id,
     therapistId: props.treatmentPlan.therapistId,
-    roomId: selectedRoomId.value || '',
+    roomId: '',
     date: today(getLocalTimeZone()).toString(),
     startTime: '',
     endTime: '',
@@ -49,6 +56,39 @@
     billed: null,
     insuranceClaimed: false
   })
+
+  watch(
+    () => props.consultation,
+    (consultation) => {
+      if (consultation) {
+        const details = {
+          patientId: consultation.patientId,
+          organizationId: consultation.organizationId,
+          treatmentPlanId: consultation.treatmentPlanId || props.treatmentPlan.id,
+          therapistId: consultation.therapistId,
+          roomId: consultation.roomId || '',
+          date: consultation.date,
+          startTime: consultation.startTime,
+          endTime: consultation.endTime,
+          duration: consultation.duration,
+          type: consultation.type || 'follow_up',
+          location: consultation.location || 'clinic',
+          status: consultation.status,
+          chiefComplaint: consultation.chiefComplaint || '',
+          notes: consultation.notes || '',
+          billed: consultation.billed,
+          insuranceClaimed: consultation.insuranceClaimed
+        }
+        consultationDetails.value = details
+        originalConsultationDetails.value = { ...details }
+        isInitialLoad.value = false
+        nextTick(() => {
+          fetchAvailableSlots()
+        })
+      }
+    },
+    { immediate: true }
+  )
 
   const { data: templatesData } = useAvailabilityTemplatesList(() => consultationDetails.value.therapistId)
   const { data: exceptionsData } = useAvailabilityExceptionsList(() => consultationDetails.value.therapistId)
@@ -85,10 +125,6 @@
     { immediate: true }
   )
 
-  watch(selectedRoomId, (newRoomId) => {
-    consultationDetails.value.roomId = newRoomId || ''
-  })
-
   const fetchAvailableSlots = async () => {
     const therapistId = consultationDetails.value.therapistId
     const date = consultationDetails.value.date
@@ -107,7 +143,7 @@
       let response: any
 
       if (location === 'clinic') {
-        if (!selectedRoomId.value) {
+        if (!consultationDetails.value.roomId) {
           availableSlots.value = []
           isLoadingSlots.value = false
           return
@@ -115,7 +151,7 @@
 
         const therapistIdParam = showRoomOnlyAvailability.value ? undefined : therapistId
 
-        response = await $fetch(`/api/availability/${selectedRoomId.value}/slots`, {
+        response = await $fetch(`/api/availability/${consultationDetails.value.roomId}/slots`, {
           method: 'POST',
           body: {
             dates: [date],
@@ -144,6 +180,12 @@
 
       if (dateSlots) {
         availableSlots.value = dateSlots.availableSlots
+        if (isEditMode.value && props.consultation && props.consultation.startTime) {
+          const currentStartTime = props.consultation.startTime
+          if (!availableSlots.value.includes(currentStartTime)) {
+            availableSlots.value = [...availableSlots.value, currentStartTime].sort()
+          }
+        }
       } else {
         availableSlots.value = []
       }
@@ -162,14 +204,27 @@
       consultationDetails.value.date,
       consultationDetails.value.duration,
       consultationDetails.value.location,
-      selectedRoomId.value,
+      consultationDetails.value.roomId,
       showRoomOnlyAvailability.value
     ],
     () => {
-      consultationDetails.value.startTime = ''
+      if (!isInitialLoad.value && originalConsultationDetails.value) {
+        const hasChanged =
+          consultationDetails.value.therapistId !== originalConsultationDetails.value.therapistId ||
+          consultationDetails.value.date !== originalConsultationDetails.value.date ||
+          consultationDetails.value.duration !== originalConsultationDetails.value.duration ||
+          consultationDetails.value.location !== originalConsultationDetails.value.location ||
+          consultationDetails.value.roomId !== originalConsultationDetails.value.roomId
+
+        if (hasChanged) {
+          consultationDetails.value.startTime = ''
+        } else {
+          consultationDetails.value.startTime = originalConsultationDetails.value.startTime
+        }
+      }
 
       if (consultationDetails.value.location === 'clinic') {
-        if (selectedRoomId.value) {
+        if (consultationDetails.value.roomId) {
           fetchAvailableSlots()
         } else {
           availableSlots.value = []
@@ -205,7 +260,7 @@
   })
 
   const addConsultation = async () => {
-    if (consultationDetails.value.location === 'clinic' && !selectedRoomId.value) {
+    if (consultationDetails.value.location === 'clinic' && !consultationDetails.value.roomId) {
       toast.add({
         title: 'Erreur',
         description: 'Veuillez sélectionner une salle de consultation',
@@ -218,22 +273,42 @@
     isCreating.value = true
 
     try {
-      await createConsultationMutation.mutateAsync({
-        patientId: props.treatmentPlan.patientId,
-        consultationData: {
-          ...consultationDetails.value,
-          roomId: consultationDetails.value.location === 'clinic' ? selectedRoomId.value || undefined : undefined
+      if (isEditMode.value && props.consultation) {
+        await updateConsultationMutation.mutateAsync({
+          patientId: props.treatmentPlan.patientId,
+          consultationId: props.consultation.id,
+          consultationData: {
+            ...consultationDetails.value,
+            roomId:
+              consultationDetails.value.location === 'clinic'
+                ? consultationDetails.value.roomId || undefined
+                : undefined
+          }
+        })
+      } else {
+        await createConsultationMutation.mutateAsync({
+          patientId: props.treatmentPlan.patientId,
+          consultationData: {
+            ...consultationDetails.value,
+            roomId:
+              consultationDetails.value.location === 'clinic'
+                ? consultationDetails.value.roomId || undefined
+                : undefined
+          }
+        })
+        await fetchAvailableSlots()
+        consultationDetails.value.startTime = ''
+        if (consultationDetails.value.location === 'clinic') {
+          consultationDetails.value.roomId = ''
         }
-      })
-      await fetchAvailableSlots()
-      consultationDetails.value.startTime = ''
-      if (consultationDetails.value.location === 'clinic') {
-        selectedRoomId.value = null
       }
     } catch (error) {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de créer la consultation').message,
+        description: parseError(
+          error,
+          isEditMode.value ? 'Impossible de mettre à jour la consultation' : 'Impossible de créer la consultation'
+        ).message,
         icon: 'i-lucide-alert-circle',
         color: 'error'
       })
@@ -278,7 +353,7 @@
   }
 
   const selectRoom = (roomId: string) => {
-    selectedRoomId.value = roomId
+    consultationDetails.value.roomId = roomId
     consultationDetails.value.startTime = ''
     if (consultationDetails.value.date && consultationDetails.value.location === 'clinic') {
       fetchAvailableSlots()
@@ -382,8 +457,8 @@
                   <UButton
                     v-for="room in roomsData"
                     :key="room.id"
-                    :color="selectedRoomId === room.id ? 'primary' : 'neutral'"
-                    :variant="selectedRoomId === room.id ? 'subtle' : 'outline'"
+                    :color="consultationDetails.roomId === room.id ? 'primary' : 'neutral'"
+                    :variant="consultationDetails.roomId === room.id ? 'subtle' : 'outline'"
                     class="flex flex-col items-center justify-center"
                     @click="selectRoom(room.id)"
                     :icon="getRoomIcon(room.name)"
@@ -395,7 +470,7 @@
                 </div>
               </UFormField>
 
-              <div v-if="selectedRoomId" class="mt-4">
+              <div v-if="consultationDetails.roomId" class="mt-4">
                 <UCheckbox
                   v-model="showRoomOnlyAvailability"
                   label="Afficher seulement la dispo salle"
@@ -538,7 +613,7 @@
 
     <div class="flex-1 space-y-4 overflow-y-auto">
       <UAlert
-        v-if="consultationDetails.location === 'clinic' && !selectedRoomId"
+        v-if="consultationDetails.location === 'clinic' && !consultationDetails.roomId"
         color="neutral"
         variant="subtle"
         icon="i-lucide-door-closed"
@@ -593,17 +668,19 @@
 
     <div class="border-default mt-4 border-t pt-4">
       <UButton
-        icon="i-lucide-plus-circle"
+        :icon="isEditMode ? 'i-lucide-check-circle' : 'i-lucide-plus-circle'"
         color="primary"
         size="xl"
         block
         :loading="isCreating"
         :disabled="
-          isCreating || (consultationDetails.location === 'clinic' && !selectedRoomId) || !consultationDetails.startTime
+          isCreating ||
+          (consultationDetails.location === 'clinic' && !consultationDetails.roomId) ||
+          !consultationDetails.startTime
         "
         @click="addConsultation"
       >
-        Ajouter cette séance au plan
+        {{ isEditMode ? 'Mettre à jour cette séance' : 'Ajouter cette séance au plan' }}
       </UButton>
     </div>
   </AppCard>

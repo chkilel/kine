@@ -29,7 +29,9 @@ export const consultations = sqliteTable(
       .notNull()
       .references(() => patients.id, { onDelete: 'cascade' }),
     treatmentPlanId: text().references(() => treatmentPlans.id, { onDelete: 'set null' }), // Optional link to a treatment plan — e.g., for progress tracking
-    therapistId: text().references(() => users.id, { onDelete: 'set null' }), // Lead therapist for the session
+    therapistId: text()
+      .notNull()
+      .references(() => users.id), // Lead therapist for the session
     roomId: text().references(() => rooms.id, { onDelete: 'set null' }), // Room this session is in
 
     // ---- Scheduling ----

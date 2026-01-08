@@ -37,10 +37,7 @@
         >
           <div class="flex flex-1 items-center justify-between">
             <div class="flex items-center gap-4">
-              <UBadge color="neutral" variant="subtle" class="bg-default flex-col justify-center gap-0">
-                <p class="text-sm font-bold">{{ extractDayAndMonth(consultation.date).day }}</p>
-                <p class="text-xs capitalize opacity-80">{{ extractDayAndMonth(consultation.date).month }}</p>
-              </UBadge>
+              <AppDateBadge :date="consultation.date" color="neutral" variant="subtle" class="bg-default" />
               <div>
                 <div class="flex items-center gap-2">
                   <UIcon
