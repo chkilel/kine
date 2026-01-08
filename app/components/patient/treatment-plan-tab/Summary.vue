@@ -4,13 +4,19 @@
     treatmentPlan: TreatmentPlanWithProgress
   }>()
 
-  const emit = defineEmits<{
-    'edit-plan': []
-    'close-plan': []
-    'create-new': []
-  }>()
+  const { openCreateSlideover, openEditSlideover } = useTreatmentPlanSlideover()
 
+  const toast = useToast()
   const { getTherapistName } = useOrganizationMembers()
+
+  const closeTreatmentPlan = () => {
+    console.log('Close treatment plan')
+    toast.add({
+      title: 'Plan clôturé',
+      description: 'Le plan de traitement a été clôturé.',
+      color: 'success'
+    })
+  }
 </script>
 
 <template>
@@ -61,21 +67,21 @@
       <div class="grid grid-cols-3 gap-3">
         <button
           class="hover:text-primary bg-muted hover:bg-elevated flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors"
-          @click="$emit('edit-plan')"
+          @click="openEditSlideover"
         >
           <UIcon name="i-hugeicons-pencil-edit-02" class="text-[20px]" />
           <span class="text-[10px] font-bold">Modifier</span>
         </button>
         <button
           class="bg-muted hover:bg-elevated hover:text-error flex flex-col items-center justify-center gap-1 rounded-lg transition-colors"
-          @click="$emit('close-plan')"
+          @click="closeTreatmentPlan"
         >
           <UIcon name="i-hugeicons-archive" class="text-[20px]" />
           <span class="text-[10px] font-bold">Clôturer</span>
         </button>
         <button
           class="bg-primary-50 hover:bg-primary-100 text-primary flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors"
-          @click="$emit('create-new')"
+          @click="openCreateSlideover(patient)"
         >
           <UIcon name="i-hugeicons-plus-sign-square" class="text-[20px]" />
           <span class="text-[10px] font-bold">Nouveau</span>
