@@ -95,7 +95,7 @@
 
             <!-- Séances Tab -->
             <template #seances>
-              <LazyPatientSessionsTab />
+              <LazyPatientSessionsTab v-if="patient" :patient="patient" />
             </template>
 
             <!-- Plan de traitement Tab -->
