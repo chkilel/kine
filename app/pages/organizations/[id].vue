@@ -128,15 +128,15 @@
             class="w-full"
           >
             <template #administrative>
-              <OrganizationProfileAdministrativeTab />
+              <OrganizationAdministrativeTab />
             </template>
 
             <template #rooms>
-              <OrganizationProfileRoomsTab />
+              <OrganizationRoomsTab />
             </template>
 
             <template #advanced>
-              <OrganizationProfileAdvancedTab />
+              <OrganizationAdvancedTab />
             </template>
           </UTabs>
         </div>
