@@ -80,7 +80,14 @@
           <PatientHeader v-if="patient" :patient="patient" :consultations="consultations" />
 
           <!-- Tabs -->
-          <UTabs v-model="activeTab" variant="link" :items="tabs" default-value="overview" class="w-full">
+          <UTabs
+            v-model="activeTab"
+            variant="link"
+            :items="tabs"
+            default-value="overview"
+            :ui="{ content: 'pt-4' }"
+            class="w-full"
+          >
             <!-- Vue d'Ensemble Tab -->
             <template #overview>
               <LazyPatientOverviewTab v-if="patient" :patient="patient" />

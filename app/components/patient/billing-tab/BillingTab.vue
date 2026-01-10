@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <div class="flex flex-col gap-6 lg:col-span-2">
       <!-- Recent Invoices -->
       <AppCard title="Factures récentes" class="overflow-hidden">

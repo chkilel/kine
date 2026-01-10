@@ -8,7 +8,7 @@
 </script>
 
 <template>
-  <div class="mt-6">
+  <div>
     <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
       <div class="flex flex-1 flex-col gap-4 lg:flex-row">
         <div class="lg:w-md">
