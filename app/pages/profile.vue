@@ -100,17 +100,17 @@
           <UTabs :items="tabs" default-value="profile" variant="link" class="w-full">
             <!-- Profile Tab -->
             <template #profile>
-              <ProfileTab />
+              <TherapistProfileTab />
             </template>
 
             <!-- Availability Tab -->
             <template #availability>
-              <ProfileAvailabilityTab />
+              <TherapistAvailabilityTab />
             </template>
 
             <!-- Statistics Tab -->
             <template #statistics>
-              <ProfileStatisticsTab />
+              <TherapistStatisticsTab />
             </template>
           </UTabs>
         </div>

@@ -2,8 +2,8 @@
 
 <template>
   <div class="mt-5 space-y-6">
-    <ProfileAvailabilityWeeklyTemplates />
+    <TherapistAvailabilityTabWeeklyTemplates />
 
-    <ProfileAvailabilityExceptions />
+    <TherapistAvailabilityTabExceptions />
   </div>
 </template>

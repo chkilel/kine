@@ -211,7 +211,7 @@
 
           <USeparator />
 
-          <ProfilePhoneNumbers v-model="profile.phoneNumbers" :error="phoneError" />
+          <TherapistPhoneNumbers v-model="profile.phoneNumbers" :error="phoneError" />
 
           <div class="flex justify-end">
             <UButton type="submit" color="primary">Enregistrer les modifications</UButton>
