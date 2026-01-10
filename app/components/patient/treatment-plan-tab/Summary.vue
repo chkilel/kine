@@ -67,7 +67,7 @@
       <div class="grid grid-cols-3 gap-3">
         <button
           class="hover:text-primary bg-muted hover:bg-elevated flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors"
-          @click="openEditSlideover"
+          @click="openEditSlideover(patient, treatmentPlan)"
         >
           <UIcon name="i-hugeicons-pencil-edit-02" class="text-[20px]" />
           <span class="text-[10px] font-bold">Modifier</span>
