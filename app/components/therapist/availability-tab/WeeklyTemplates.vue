@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyProfileAvailabilityTemplateSlideover } from '#components'
+  import { LazyTherapistAvailabilityTabTemplateSlideover } from '#components'
 
   // Get current user from auth
   const { user: therapist } = await useAuth()
@@ -18,7 +18,7 @@
   const overlay = useOverlay()
 
   // Create overlay instance
-  const templateOverlay = overlay.create(LazyProfileAvailabilityTemplateSlideover)
+  const templateOverlay = overlay.create(LazyTherapistAvailabilityTabTemplateSlideover)
 
   // Handle delete with confirmation
   const handleDeleteTemplate = async (template: any) => {

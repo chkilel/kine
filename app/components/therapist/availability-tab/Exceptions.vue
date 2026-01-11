@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyProfileAvailabilityExceptionSlideover } from '#components'
+  import { LazyTherapistAvailabilityTabExceptionSlideover } from '#components'
 
   // Get current user from auth
   const { user: therapist } = await useAuth()
@@ -17,7 +17,7 @@
 
   // Create overlay instance
   const overlay = useOverlay()
-  const exceptionOverlay = overlay.create(LazyProfileAvailabilityExceptionSlideover)
+  const exceptionOverlay = overlay.create(LazyTherapistAvailabilityTabExceptionSlideover)
 
   // Handle delete with confirmation
   const handleDeleteException = async (exception: any) => {

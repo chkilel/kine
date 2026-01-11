@@ -25,9 +25,11 @@
 
   const formatNextAppointment = computed(() => {
     if (!nextAppointment.value) return null
-    const { day, month } = extractDayAndMonth(nextAppointment.value.date)
-    const startTime = removeSecondsFromTime(nextAppointment.value.startTime)
-    return { day, month, startTime }
+    const { day, month, dayName } = extractDayAndMonth(nextAppointment.value.date)
+    const time = removeSecondsFromTime(nextAppointment.value.startTime)
+    const h = time.split(':')[0]
+    const min = time.split(':')[1]
+    return { day, month, dayName, time, h, min }
   })
 
   function openEditSlideover() {
@@ -51,10 +53,10 @@
           class="ring-muted aspect-square size-28 rounded-2xl bg-cover bg-center bg-no-repeat text-4xl shadow-inner ring-4"
         />
       </div>
-      <div class="flex flex-1 flex-col justify-between py-1">
-        <div class="flex flex-col items-start justify-between gap-4 md:flex-row">
-          <div>
-            <div class="mb-1 flex items-center gap-3">
+      <div class="flex flex-1 flex-col justify-between">
+        <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
               <h1 class="text-3xl tracking-tight">
                 {{ patient.firstName }}
                 <span class="font-bold">{{ patient.lastName }}</span>
@@ -90,29 +92,48 @@
               </div>
             </div>
           </div>
-          <UAlert
-            v-if="nextAppointment"
-            title="PROCHAIN RENDEZ-VOUS"
+
+          <UCard
             variant="subtle"
-            color="info"
-            icon="i-hugeicons-calendar-03"
-            :ui="{
-              icon: 'size-14 text-info-800',
-              root: 'w-auto rounded-2xl'
-            }"
+            :ui="{ root: 'relative max-md:hidden shrink-0 rounded-2xl shadow-md', body: 'sm:p-4 p-3' }"
           >
-            <template #description>
-              <div class="text-info-800 flex items-center gap-2">
-                <div class="text-xl font-semibold">
-                  {{ formatNextAppointment?.day }}
-                  <span class="capitalize">{{ formatNextAppointment?.month }}.</span>
-                  à {{ formatNextAppointment?.startTime }}
+            <!-- Decorative circles -->
+            <div class="bg-primary/50 absolute top-4 right-4 size-12 rounded-full blur-2xl" />
+            <div class="bg-success/30 absolute bottom-2 left-2 size-14 rounded-full blur-xl" />
+
+            <div class="flex gap-3">
+              <div class="relative flex flex-col items-center justify-between">
+                <!-- Day name -->
+                <div class="text-primary text-[10px] font-medium tracking-widest uppercase">
+                  {{ formatNextAppointment?.dayName }}
+                </div>
+
+                <!-- Day number -->
+                <div class="text-primary text-xl font-bold">{{ formatNextAppointment?.day }}</div>
+
+                <!-- Month and year -->
+                <div class="text-highlighted text-xs font-semibold tracking-widest uppercase">
+                  {{ formatNextAppointment?.month }}
                 </div>
               </div>
-            </template>
-          </UAlert>
+              <div>
+                <USeparator orientation="vertical" class="h-full" />
+              </div>
+              <!-- Time -->
+              <div class="flex flex-col justify-between font-mono text-2xl font-bold tabular-nums">
+                <span class="relative leading-none">
+                  {{ formatNextAppointment?.h }}
+                  <span class="absolute -top-2 right-0.5 text-[10px]">h</span>
+                </span>
+                <span class="relative leading-none">
+                  {{ formatNextAppointment?.min }}
+                  <span class="absolute -top-2 right-0.5 text-[10px]">min</span>
+                </span>
+              </div>
+            </div>
+          </UCard>
         </div>
-        <div class="border-default mt-6 flex items-center gap-2 border-t pt-4">
+        <div class="border-default mt-2 flex items-center gap-2 border-t pt-4">
           <UButton
             variant="ghost"
             color="neutral"

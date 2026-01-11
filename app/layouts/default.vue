@@ -120,7 +120,7 @@
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <OrganizationMenu :collapsed />
+        <OrganizationSwitchMenu :collapsed />
       </template>
 
       <template #default="{ collapsed }">

@@ -21,7 +21,7 @@ const _useConsultationsList = (patientId: MaybeRefOrGetter<string>, queryParams?
         query: queryParams?.value
       })
       // return resp?.data || []
-      return resp?.data.map((item) => ({
+      return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),
         updatedAt: parseISO(item.updatedAt)

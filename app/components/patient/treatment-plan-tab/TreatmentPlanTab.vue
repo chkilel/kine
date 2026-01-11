@@ -1,11 +1,9 @@
 <script setup lang="ts">
-  import { LazyTreatmentPlanCreateSlideover, PatientTreatmentPlanConsultations } from '#components'
-
   const props = defineProps<{ patient: Patient }>()
 
   const toast = useToast()
-  const overlay = useOverlay()
-  const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
+
+  const { openCreateSlideover } = useTreatmentPlanSlideover()
 
   // Use treatment plans composable
   const {
@@ -31,25 +29,6 @@
         color: 'error'
       })
     }
-  }
-
-  // Open create slideover with user feedback
-  async function openCreateSlideover() {
-    treatmentPlanCreateOverlay.open({
-      patient: props.patient
-    })
-  }
-
-  // Open edit slideover with treatment plan data
-  async function openEditSlideover() {
-    const activePlan = getActiveTreatmentPlan.value
-
-    if (!activePlan) return
-
-    treatmentPlanCreateOverlay.open({
-      patient: props.patient,
-      treatmentPlan: activePlan
-    })
   }
 </script>
 
@@ -78,29 +57,30 @@
       icon="i-lucide-clipboard-plus"
       title="Aucun plan de traitement"
       description="Ce patient n'a pas encore de plan de traitement. Créez-en un pour commencer le suivi."
-      :actions="[{ label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary', onClick: openCreateSlideover }]"
+      :actions="[
+        { label: 'Créer un plan', icon: 'i-lucide-plus', color: 'primary', onClick: () => openCreateSlideover(patient) }
+      ]"
     />
   </div>
 
   <!-- Treatment Plan Content -->
   <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column -->
-    <div class="lg:col-span-1">
-      <PatientTreatmentPlanSidebar
-        :patient="patient"
-        :treatment-plan="getActiveTreatmentPlan"
-        @edit-plan="openEditSlideover"
-        @create-new="openCreateSlideover"
-      />
+    <div class="flex flex-col gap-6 lg:col-span-1">
+      <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+
+      <PatientTreatmentPlanTabDetails :treatment-plan="getActiveTreatmentPlan" />
+
+      <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
     </div>
 
     <!-- Right Column -->
     <div class="flex flex-col gap-6 lg:col-span-2">
-      <!-- Consultations Overview -->
-      <PatientTreatmentPlanConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <!-- Consultations -->
+      <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
 
       <!-- Documents -->
-      <PatientTreatmentPlanDocuments :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabDocuments :treatment-plan="getActiveTreatmentPlan" />
     </div>
   </div>
 </template>
