@@ -53,7 +53,7 @@ export const patients = sqliteTable(
 
     // ---- Record management ----
     status: text({ enum: VALID_PATIENT_STATUSES }).notNull().default('active'),
-    notes: text({ mode: 'json' }).$type<{ author: string; date: string; content: string }[]>().default([]), // General patient notes, preferences, observations, additional context (e.g.,"Patient prefers morning appointments",... )
+    notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General patient notes, preferences, observations, additional context (e.g.,"Patient prefers morning appointments",... )
 
     // Created, Updated and Soft-delete timestamp (null if active)
     ...softDeleteTimestamps

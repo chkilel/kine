@@ -29,7 +29,7 @@ export const rooms = sqliteTable(
     // Room properties
     capacity: integer().notNull().default(1),
     area: integer(),
-    prm: integer().notNull().default(0),
+    prm: integer().notNull().default(0), // Person with reduced mobility
 
     // Created, Updated and Soft-delete timestamp (null if active)
     ...softDeleteTimestamps

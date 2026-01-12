@@ -1,6 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
-import { type } from 'os'
 
 /**
  * Query for fetching availability exceptions

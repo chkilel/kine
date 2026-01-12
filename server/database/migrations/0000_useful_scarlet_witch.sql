@@ -214,7 +214,7 @@ CREATE TABLE `organizations` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `organizations_slug_unique` ON `organizations` (`slug`);--> statement-breakpoint
-CREATE TABLE `teamMembers` (
+CREATE TABLE `team_members` (
 	`id` text PRIMARY KEY NOT NULL,
 	`teamId` text NOT NULL,
 	`userId` text NOT NULL,

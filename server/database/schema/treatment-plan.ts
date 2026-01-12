@@ -53,7 +53,7 @@ export const treatmentPlans = sqliteTable(
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
     insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
 
-    notes: text({ mode: 'json' }).$type<{ author: string; date: string; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
+    notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
 
     // CreatedAt, UpdatedAt
     ...creationAndUpdateTimestamps
