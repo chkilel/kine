@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { getLocalTimeZone, today } from '@internationalized/date'
-
   const notes = defineModel<Note[] | null>()
 
   const { user } = await useAuth()
@@ -14,7 +12,7 @@
 
     notes.value.push({
       content: newNote.value.trim(),
-      date: today(getLocalTimeZone()).toString(),
+      date: new Date(),
       author: user.value ? `Dr. ${user.value.lastName}` : 'Unknown'
     })
 

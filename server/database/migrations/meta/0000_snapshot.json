@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7cdb4d08-9cab-41e9-a23f-bf8f1cce6c6d",
+  "id": "34a2f97f-56cc-43b8-9c2d-50b52d96f3f2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -1603,8 +1603,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "teamMembers": {
-      "name": "teamMembers",
+    "team_members": {
+      "name": "team_members",
       "columns": {
         "id": {
           "name": "id",
@@ -1644,9 +1644,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "teamMembers_teamId_teams_id_fk": {
-          "name": "teamMembers_teamId_teams_id_fk",
-          "tableFrom": "teamMembers",
+        "team_members_teamId_teams_id_fk": {
+          "name": "team_members_teamId_teams_id_fk",
+          "tableFrom": "team_members",
           "tableTo": "teams",
           "columnsFrom": [
             "teamId"
@@ -1657,9 +1657,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "teamMembers_userId_users_id_fk": {
-          "name": "teamMembers_userId_users_id_fk",
-          "tableFrom": "teamMembers",
+        "team_members_userId_users_id_fk": {
+          "name": "team_members_userId_users_id_fk",
+          "tableFrom": "team_members",
           "tableTo": "users",
           "columnsFrom": [
             "userId"
