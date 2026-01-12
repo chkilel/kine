@@ -2,20 +2,19 @@
   import { LazyPatientEditSlideover, LazyTreatmentPlanCreateSlideover } from '#components'
   import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
 
-  const props = defineProps<{
-    patient: Patient
-    consultations?: Consultation[]
-  }>()
+  const props = defineProps<{ patient: Patient }>()
+
+  const { data: consultations } = useConsultationsList(() => props.patient?.id || '')
 
   const overlay = useOverlay()
-  const editSlideover = overlay.create(LazyPatientEditSlideover)
-  const treatmentPlanCreateSlideover = overlay.create(LazyTreatmentPlanCreateSlideover)
+  const patientEditSlideover = overlay.create(LazyPatientEditSlideover)
+  const planCreateSlideover = overlay.create(LazyTreatmentPlanCreateSlideover)
 
   const nextAppointment = computed(() => {
-    if (!props.consultations || props.consultations.length === 0) return null
+    if (!consultations.value || consultations.value.length === 0) return null
     const localDate = today(getLocalTimeZone())
 
-    const upcoming = props.consultations.filter((c) => {
+    const upcoming = consultations.value.filter((c) => {
       const consultDate = parseDate(c.date)
       return consultDate.compare(localDate) >= 0
     })
@@ -33,11 +32,11 @@
   })
 
   function openEditSlideover() {
-    editSlideover.open({ patient: props.patient })
+    patientEditSlideover.open({ patient: props.patient })
   }
 
   function openTreatmentPlanSlideover() {
-    treatmentPlanCreateSlideover.open({ patient: props.patient })
+    planCreateSlideover.open({ patient: props.patient })
   }
 </script>
 
