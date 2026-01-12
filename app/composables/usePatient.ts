@@ -70,18 +70,18 @@ const _useCreatePatient = () => {
 const _usePatientById = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    enabled: () => !!toValue(patientId),
     key: () => ['patient', toValue(patientId)],
     query: async () => {
       const data = await requestFetch(`/api/patients/${toValue(patientId)}`)
       if (!data) return
       return {
         ...data,
-        createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt),
+        createdAt: parseISO(data.createdAt),
+        updatedAt: parseISO(data.updatedAt),
         deletedAt: safeParseISODate(data.deletedAt)
       }
-    }
+    },
+    enabled: () => !!toValue(patientId)
   })
 }
 
@@ -89,20 +89,18 @@ const _usePatientById = (patientId: MaybeRefOrGetter<string>) => {
  * Mutation for updating an existing patient
  * @returns Mutation with update functionality and error handling
  */
+type UpdatePatientParams = {
+  patientId: string
+  patientData: PatientUpdate
+  onSuccess?: () => void
+}
 const _useUpdatePatient = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({
-      patientId,
-      patientData
-    }: {
-      patientId: string
-      patientData: PatientUpdate
-      onSuccess?: () => void
-    }) =>
+    mutation: async ({ patientId, patientData }: UpdatePatientParams) =>
       requestFetch(`/api/patients/${patientId}`, {
         method: 'PUT',
         body: patientData

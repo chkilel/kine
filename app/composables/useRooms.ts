@@ -1,6 +1,11 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+/**
+ * Query for fetching rooms list with optional filters
+ * @param queryParams - Reactive query parameters for pagination and filtering
+ * @returns Query result with data and loading state
+ */
 const _useRoomsList = (queryParams: Ref<RoomQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
@@ -17,13 +22,17 @@ const _useRoomsList = (queryParams: Ref<RoomQuery>) => {
   })
 }
 
+/**
+ * Mutation for creating a new room
+ * @returns Mutation with create functionality and error handling
+ */
 const _useCreateRoom = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ roomData }: { roomData: RoomCreate; onSuccess: () => void }) =>
+    mutation: async ({ roomData }: { roomData: RoomCreate; onSuccess?: () => void }) =>
       requestFetch('/api/rooms', {
         method: 'POST',
         body: roomData
@@ -48,6 +57,10 @@ const _useCreateRoom = () => {
   })
 }
 
+/**
+ * Mutation for updating an existing room
+ * @returns Mutation with update functionality and error handling
+ */
 const _useUpdateRoom = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -81,17 +94,22 @@ const _useUpdateRoom = () => {
   })
 }
 
+/**
+ * Mutation for deleting a room
+ * @returns Mutation with delete functionality and error handling
+ */
 const _useDeleteRoom = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async (roomId: string) =>
+    mutation: async ({ roomId, onSuccess }: { roomId: string; onSuccess?: () => void }) =>
       requestFetch(`/api/rooms/${roomId}`, {
         method: 'DELETE'
       }),
-    onSuccess: (_, roomId) => {
+    onSuccess: (_, { roomId, onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Salle supprimée avec succès',

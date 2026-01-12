@@ -1,6 +1,11 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+/**
+ * Query for fetching treatment plans for a patient
+ * @param patientId - Patient ID to fetch treatment plans for
+ * @returns Query result with treatment plans data and computed properties
+ */
 const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
@@ -19,9 +24,9 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
         createdAt: parseISO(plan.createdAt),
         updatedAt: parseISO(plan.updatedAt),
         notes:
-          plan.notes?.map((note: any) => ({
+          plan.notes?.map((note) => ({
             ...note,
-            date: typeof note.date === 'string' ? new Date(note.date) : note.date
+            date: parseISO(note.date)
           })) || null
       }))
     },
@@ -60,6 +65,10 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   }
 }
 
+/**
+ * Mutation for creating a new treatment plan
+ * @returns Mutation with create functionality and error handling
+ */
 const _useCreateTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -90,22 +99,23 @@ const _useCreateTreatmentPlan = () => {
   })
 }
 
+/**
+ * Mutation for updating an existing treatment plan
+ * @returns Mutation with update functionality and error handling
+ */
+type UpdateTreatmentPlanParams = {
+  patientId: string
+  planId: string
+  data: TreatmentPlanUpdate
+  onSuccess?: () => void
+}
 const _useUpdateTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({
-      patientId,
-      planId,
-      data
-    }: {
-      patientId: string
-      planId: string
-      data: TreatmentPlanUpdate
-      onSuccess?: () => void
-    }) =>
+    mutation: async ({ patientId, planId, data }: UpdateTreatmentPlanParams) =>
       requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
         method: 'PUT',
         body: data
@@ -129,6 +139,10 @@ const _useUpdateTreatmentPlan = () => {
   })
 }
 
+/**
+ * Mutation for deleting a treatment plan
+ * @returns Mutation with delete functionality and error handling
+ */
 const _useDeleteTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()

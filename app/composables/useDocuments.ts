@@ -21,6 +21,9 @@ const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?
 
 /**
  * Query for getting document download URL
+ * @param patientId - Patient ID whose document is being fetched
+ * @param documentId - Document ID to get download URL for
+ * @returns Query result with download URL and loading state
  */
 const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
@@ -41,6 +44,12 @@ const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId
  * @param patientId - Patient ID whose document is being updated
  * @returns Mutation with update functionality and error handling
  */
+
+type UpdateDocumentParams = {
+  documentId: string
+  data: PatientDocumentUpdate
+  onSuccess?: () => void
+}
 const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -48,12 +57,13 @@ const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
   const parsedPatientId = toValue(patientId)
 
   return useMutation({
-    mutation: ({ documentId, data }: { documentId: string; data: PatientDocumentUpdate }) =>
+    mutation: ({ documentId, data, onSuccess }: UpdateDocumentParams) =>
       requestFetch<PatientDocument>(`/api/patients/${parsedPatientId}/documents/${documentId}`, {
         method: 'PUT',
         body: data
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       queryCache.invalidateQueries({
         key: ['documents', parsedPatientId],
         exact: false
@@ -86,9 +96,10 @@ const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
   const parsedPatientId = toValue(patientId)
 
   return useMutation({
-    mutation: (documentId: string) =>
+    mutation: ({ documentId, onSuccess }: { documentId: string; onSuccess?: () => void }) =>
       requestFetch(`/api/patients/${parsedPatientId}/documents/${documentId}`, { method: 'DELETE' }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       queryCache.invalidateQueries({
         key: ['documents', parsedPatientId],
         exact: false

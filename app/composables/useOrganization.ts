@@ -1,6 +1,10 @@
 import { createSharedComposable } from '@vueuse/core'
 import { authClient } from '~/utils/auth-client'
 
+/**
+ * Composable for managing organization data and operations
+ * @returns Organization data, computed properties, and methods
+ */
 const _useOrg = () => {
   // Organization data
   const organizations = authClient.useListOrganizations()

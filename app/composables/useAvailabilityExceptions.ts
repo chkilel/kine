@@ -1,6 +1,12 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
+import { type } from 'os'
 
+/**
+ * Query for fetching availability exceptions
+ * @param therapistId - The therapist's ID to fetch exceptions for
+ * @returns Query result with exceptions data and loading state
+ */
 /**
  * Query for fetching availability exceptions
  * @param therapistId - The therapist's ID to fetch exceptions for
@@ -36,12 +42,13 @@ const _useCreateAvailabilityException = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async (exceptionData: AvailabilityExceptionCreate) =>
+    mutation: async (exceptionData: AvailabilityExceptionCreate & { onSuccess?: () => void }) =>
       requestFetch('/api/availability/exceptions', {
         method: 'POST',
         body: exceptionData
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Exception créée',
@@ -63,18 +70,25 @@ const _useCreateAvailabilityException = () => {
  * Mutation for updating an existing availability exception
  * @returns Mutation with update functionality and error handling
  */
+
+type UpdateAvailabilityExceptionParams = {
+  id: string
+  data: AvailabilityExceptionUpdate
+  onSuccess?: () => void
+}
 const _useUpdateAvailabilityException = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ id, data }: { id: string; data: AvailabilityExceptionUpdate }) =>
+    mutation: async ({ id, data, onSuccess }: UpdateAvailabilityExceptionParams) =>
       requestFetch(`/api/availability/exceptions/${id}`, {
         method: 'PUT',
         body: data
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Exception mise à jour',
@@ -102,11 +116,12 @@ const _useDeleteAvailabilityException = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async (id: string) =>
+    mutation: async ({ id, onSuccess }: { id: string; onSuccess?: () => void }) =>
       requestFetch(`/api/availability/exceptions/${id}`, {
         method: 'DELETE'
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Exception supprimée',
