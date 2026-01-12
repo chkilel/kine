@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   if (!roomId) {
     throw createError({
       statusCode: 400,
-      message: 'Room ID is required'
+      message: 'ID de salle requis'
     })
   }
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!room) {
     throw createError({
       statusCode: 404,
-      message: 'Room not found'
+      message: 'Salle introuvable'
     })
   }
 

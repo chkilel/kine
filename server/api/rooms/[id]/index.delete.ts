@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'Room ID is required'
+        message: 'ID de salle requis'
       })
     }
 
@@ -27,12 +27,12 @@ export default defineEventHandler(async (event) => {
     if (!deletedRoom) {
       throw createError({
         statusCode: 404,
-        message: 'Room not found'
+        message: 'Salle introuvable'
       })
     }
 
-    return { success: true, message: 'Room deleted successfully' }
-  } catch (error) {
-    handleApiError(error)
+    return deletedResponse('Salle supprimée avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la suppression de la salle')
   }
 })

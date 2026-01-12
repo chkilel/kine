@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { consultations } from '~~/server/database/schema'
-import type { Session } from '~~/shared/types/auth.types'
 
 // DELETE /api/patients/[id]/consultations/[consultationId] - Delete consultation
 export default defineEventHandler(async (event) => {
@@ -8,36 +7,16 @@ export default defineEventHandler(async (event) => {
   const patientId = getRouterParam(event, 'id')
   const consultationId = getRouterParam(event, 'consultationId')
 
-  if (!patientId || !consultationId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Patient ID and Consultation ID are required'
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
-
   try {
+    if (!patientId || !consultationId) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de patient et ID de consultation requis'
+      })
+    }
+
+    const { organizationId } = await requireAuth(event)
+
     // Check if consultation exists and belongs to patient/organization
     const [existingConsultation] = await db
       .select()
@@ -46,7 +25,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(consultations.id, consultationId),
           eq(consultations.patientId, patientId),
-          eq(consultations.organizationId, activeOrganizationId)
+          eq(consultations.organizationId, organizationId)
         )
       )
       .limit(1)
@@ -54,26 +33,15 @@ export default defineEventHandler(async (event) => {
     if (!existingConsultation) {
       throw createError({
         statusCode: 404,
-        message: 'Consultation not found'
+        message: 'Consultation introuvable'
       })
     }
 
     // Delete consultation
     await db.delete(consultations).where(eq(consultations.id, consultationId))
 
-    return {
-      message: 'Consultation deleted successfully'
-    }
-  } catch (error: any) {
-    console.error('Error deleting consultation:', error)
-
-    if (error.statusCode) {
-      throw error
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to delete consultation'
-    })
+    return deletedResponse('Consultation supprimée avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la suppression de la consultation')
   }
 })

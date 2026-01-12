@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     if (!existingException) {
       throw createError({
         statusCode: 404,
-        message: 'Exception de disponibilité non trouvée'
+        message: 'Exception de disponibilité introuvable'
       })
     }
 
@@ -48,11 +48,8 @@ export default defineEventHandler(async (event) => {
         )
       )
 
-    return {
-      success: true,
-      message: 'Exception de disponibilité supprimée avec succès'
-    }
+    return deletedResponse('Exception de disponibilité supprimée avec succès')
   } catch (error: unknown) {
-    handleApiError(error)
+    handleApiError(error, 'Échec de la suppression de l’exception de disponibilité.')
   }
 })

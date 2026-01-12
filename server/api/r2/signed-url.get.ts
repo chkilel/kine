@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!result.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid query parameters',
+      message: 'Paramètres de requête invalides',
       data: result.error.issues.flat()
     })
   }
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     console.log('Failed to generate signed URLs in GET /api/r2/signed-url', err)
     throw createError({
       statusCode: 500,
-      message: 'Failed to generate signed URLs',
+      message: 'Échec de la génération des URLs signées',
       data: {
         message: err.message
       }

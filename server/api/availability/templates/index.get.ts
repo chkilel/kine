@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     if (!therapistMember) {
       throw createError({
         statusCode: 404,
-        message: 'Therapist not found or not in your organization'
+        message: "Thérapeute introuvable ou n'appartient pas à votre organisation"
       })
     }
 
@@ -62,6 +62,6 @@ export default defineEventHandler(async (event) => {
 
     return templatesList
   } catch (error: unknown) {
-    handleApiError(error)
+    handleApiError(error, 'Échec de la récupération des modèles de disponibilité hebdomadaires.')
   }
 })

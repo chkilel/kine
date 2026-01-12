@@ -15,6 +15,6 @@ export default defineEventHandler(async (event) => {
 
     return newPatient
   } catch (error) {
-    handleApiError(error)
+    handleApiError(error, 'Erreur lors de la création du patient')
   }
 })

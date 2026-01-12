@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { consultations, rooms } from '~~/server/database/schema'
-import type { Session } from '~~/shared/types/auth.types'
 
 // GET /api/patients/[id]/consultations/[consultationId] - Get single consultation
 export default defineEventHandler(async (event) => {
@@ -8,36 +7,16 @@ export default defineEventHandler(async (event) => {
   const patientId = getRouterParam(event, 'id')
   const consultationId = getRouterParam(event, 'consultationId')
 
-  if (!patientId || !consultationId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Patient ID and Consultation ID are required'
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
-
   try {
+    if (!patientId || !consultationId) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de patient et ID de consultation requis'
+      })
+    }
+
+    const { organizationId } = await requireAuth(event)
+
     // Fetch consultation with room name
     const [consultationData] = await db
       .select({
@@ -73,7 +52,7 @@ export default defineEventHandler(async (event) => {
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))
       .where(
         and(
-          eq(consultations.organizationId, activeOrganizationId),
+          eq(consultations.organizationId, organizationId),
           eq(consultations.id, consultationId),
           eq(consultations.patientId, patientId)
         )
@@ -83,12 +62,12 @@ export default defineEventHandler(async (event) => {
     if (!consultationData) {
       throw createError({
         statusCode: 404,
-        message: 'Consultation not found'
+        message: 'Consultation introuvable'
       })
     }
 
     return consultationData
-  } catch (error) {
-    handleApiError(error)
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la récupération de la consultation')
   }
 })

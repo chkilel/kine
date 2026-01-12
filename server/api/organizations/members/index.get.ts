@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       .innerJoin(users, eq(members.userId, users.id))
 
     return organizationMembers
-  } catch (error: any) {
+  } catch (error: unknown) {
     handleApiError(error)
   }
 })

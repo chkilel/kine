@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       .orderBy(desc(rooms.createdAt))
 
     return roomsList
-  } catch (error: any) {
+  } catch (error: unknown) {
     handleApiError(error)
   }
 })

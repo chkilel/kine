@@ -1,4 +1,4 @@
-import { eq, and, desc, or, isNull, count, sql, like } from 'drizzle-orm'
+import { eq, and, desc, or, isNull, count, like } from 'drizzle-orm'
 import { patients } from '~~/server/database/schema'
 
 // GET /api/patients - List patients with filtering
@@ -36,11 +36,6 @@ export default defineEventHandler(async (event) => {
       filters.push(eq(patients.status, validatedQuery.status))
     }
 
-    // Add insurance provider filter
-    if (validatedQuery.insuranceProvider) {
-      filters.push(like(patients.insuranceProvider, `%${validatedQuery.insuranceProvider}%`))
-    }
-
     // 4. Calculate pagination
     const limit = validatedQuery.limit
     const offset = (validatedQuery.page - 1) * limit
@@ -75,7 +70,7 @@ export default defineEventHandler(async (event) => {
         hasPrev: validatedQuery.page > 1
       }
     }
-  } catch (error: any) {
-    handleApiError(error)
+  } catch (error: unknown) {
+    handleApiError(error, 'Erreur lors de la récupération des patients')
   }
 })

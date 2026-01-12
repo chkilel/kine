@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { availabilityExceptions } from '~~/server/database/schema'
-import { handleApiError } from '~~/server/utils/error'
 
 // POST /api/availability/exceptions - Create new availability exception
 export default defineEventHandler(async (event) => {

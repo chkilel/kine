@@ -1,35 +1,32 @@
-import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { consultations, patients, users, rooms } from '~~/server/database/schema'
-import { consultationCreateSchema } from '~~/shared/types/consultation.type'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const patientId = getRouterParam(event, 'id')
 
-  if (!patientId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Patient ID is required'
-    })
-  }
-
-  const { organizationId } = await requireAuth(event)
-
   try {
+    if (!patientId) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de patient requis'
+      })
+    }
+
+    const { organizationId } = await requireAuth(event)
     const body = await readValidatedBody(event, consultationCreateSchema.parse)
 
     if (body.location === 'clinic' && !body.roomId) {
       throw createError({
         statusCode: 400,
-        message: 'Room is required for clinic consultations'
+        message: 'Une salle est requise pour les consultations en clinique'
       })
     }
 
     if ((body.location === 'home' || body.location === 'telehealth') && body.roomId) {
       throw createError({
         statusCode: 400,
-        message: `Room must not be provided for ${body.location} consultations`
+        message: `Une salle ne doit pas être fournie pour les consultations à ${body.location === 'home' ? 'domicile' : 'téléconsultation'}`
       })
     }
 
@@ -42,7 +39,7 @@ export default defineEventHandler(async (event) => {
     if (!patient) {
       throw createError({
         statusCode: 404,
-        message: 'Patient not found'
+        message: 'Patient introuvable'
       })
     }
 
@@ -56,7 +53,7 @@ export default defineEventHandler(async (event) => {
       if (!room) {
         throw createError({
           statusCode: 404,
-          message: 'Room not found'
+          message: 'Salle introuvable'
         })
       }
     }
@@ -67,48 +64,21 @@ export default defineEventHandler(async (event) => {
       if (!therapist) {
         throw createError({
           statusCode: 400,
-          message: 'Therapeute introuvable'
+          message: 'Thérapeute introuvable'
         })
       }
     }
 
     const consultationData = {
       ...body,
-      organizationId: organizationId,
+      organizationId,
       date: body.date
     }
 
     const [newConsultation] = await db.insert(consultations).values(consultationData).returning()
 
-    return {
-      data: newConsultation,
-      message: 'Consultation created successfully'
-    }
-  } catch (error: any) {
-    console.error('Error creating consultation:', error)
-
-    if (error instanceof z.ZodError) {
-      throw createError({
-        statusCode: 400,
-        message: 'Invalid consultation data',
-        data: error.issues
-      })
-    }
-
-    if (error.code === 'SQLITE_CONSTRAINT' || error.message?.includes('UNIQUE constraint')) {
-      throw createError({
-        statusCode: 409,
-        message: 'Ce créneau est déjà réservé. Veuillez sélectionner une autre heure.'
-      })
-    }
-
-    if (error.statusCode) {
-      throw error
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to create consultation'
-    })
+    return successResponse(newConsultation, 'Consultation créée avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la création de la consultation')
   }
 })

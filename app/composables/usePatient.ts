@@ -12,14 +12,15 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
     key: () => ['patients', queryParams.value],
     query: async () => {
       const resp = await requestFetch('/api/patients', { query: queryParams.value })
+      if (!resp) return
       return {
-        data: resp?.data.map((data) => ({
+        data: resp.data.map((data) => ({
           ...data,
           createdAt: parseISO(data.createdAt),
           updatedAt: parseISO(data.updatedAt),
           deletedAt: safeParseISODate(data.deletedAt)
         })),
-        pagination: resp?.pagination
+        pagination: resp.pagination
       }
     }
   })
