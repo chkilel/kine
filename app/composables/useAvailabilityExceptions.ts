@@ -13,13 +13,15 @@ import { parseISO } from 'date-fns'
  */
 const _useAvailabilityExceptionsList = (therapistId: MaybeRefOrGetter<string | undefined>) => {
   const requestFetch = useRequestFetch()
-  const id = toValue(therapistId)
 
   return useQuery({
-    key: () => (id ? ['availability-exceptions', id] : ['availability-exceptions']),
+    key: () => {
+      const id = toValue(therapistId)
+      return id ? ['availability-exceptions', id] : ['availability-exceptions']
+    },
     query: async () => {
       const resp = await requestFetch('/api/availability/exceptions', {
-        query: { therapistId: id }
+        query: { therapistId: toValue(therapistId) }
       })
       return resp?.map((item) => ({
         ...item,
@@ -27,7 +29,7 @@ const _useAvailabilityExceptionsList = (therapistId: MaybeRefOrGetter<string | u
         updatedAt: parseISO(item.updatedAt)
       }))
     },
-    enabled: () => !!id
+    enabled: () => !!toValue(therapistId)
   })
 }
 
