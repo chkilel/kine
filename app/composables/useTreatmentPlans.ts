@@ -42,16 +42,35 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     )
   })
 
-  const getCompletedTreatmentPlans = computed(() => {
+  const completedTreatmentPlans = computed(() => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value.filter((plan) => plan.status === 'completed')
   })
 
-  const getTreatmentPlanHistory = computed(() => {
+  const archivedTreatmentPlans = computed(() => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value
       .filter((plan) => plan.status === 'completed' || plan.status === 'cancelled')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  })
+
+  const sortedTreatmentPlans = computed(() => {
+    if (!treatmentPlans.value) return []
+    const statusPriority: Record<string, number> = {
+      ongoing: 1,
+      planned: 2,
+      paused: 3,
+      cancelled: 4,
+      completed: 5
+    }
+    return treatmentPlans.value.sort((a, b) => {
+      const priorityA = statusPriority[a.status] ?? 99
+      const priorityB = statusPriority[b.status] ?? 99
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
   })
 
   return {
@@ -60,8 +79,9 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     error: readonly(error),
     refetchTreatmentPlans,
     latestActiveTreatmentPlan,
-    getCompletedTreatmentPlans,
-    getTreatmentPlanHistory
+    completedTreatmentPlans,
+    archivedTreatmentPlans,
+    sortedTreatmentPlans
   }
 }
 
