@@ -33,12 +33,12 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     enabled: () => !!toValue(patientId)
   })
 
-  const getActiveTreatmentPlan = computed(() => {
+  const latestActiveTreatmentPlan = computed(() => {
     if (!treatmentPlans.value) return null
     return (
-      treatmentPlans.value.find(
-        (plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused'
-      ) || null
+      treatmentPlans.value
+        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null
     )
   })
 
@@ -59,7 +59,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     loading: readonly(loading),
     error: readonly(error),
     refetchTreatmentPlans,
-    getActiveTreatmentPlan,
+    latestActiveTreatmentPlan,
     getCompletedTreatmentPlans,
     getTreatmentPlanHistory
   }
