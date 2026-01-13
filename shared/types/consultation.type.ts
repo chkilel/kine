@@ -36,7 +36,6 @@ export const consultationSchema = createSelectSchema(consultations, {
 })
 
 export const consultationQuerySchema = z.object({
-  patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
   status: consultationStatusSchema.optional(),
   type: consultationTypeSchema.optional(),
