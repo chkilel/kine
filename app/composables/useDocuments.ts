@@ -6,16 +6,14 @@
  */
 const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
-  const parsedPatientId = toValue(patientId)
-  const parsedTreatmentPlanId = toValue(treatmentPlanId)
 
   return useQuery({
-    key: () => ['documents', parsedPatientId, parsedTreatmentPlanId || 'all'],
+    key: () => ['documents', toValue(patientId), toValue(treatmentPlanId) || 'all'],
     query: async () => {
-      const params = parsedTreatmentPlanId ? `?treatmentPlanId=${parsedTreatmentPlanId}` : ''
-      return requestFetch<PatientDocument[]>(`/api/patients/${parsedPatientId}/documents${params}`)
+      const params = toValue(treatmentPlanId) ? `?treatmentPlanId=${toValue(treatmentPlanId)}` : ''
+      return requestFetch<PatientDocument[]>(`/api/patients/${toValue(patientId)}/documents${params}`)
     },
-    enabled: () => !!parsedPatientId
+    enabled: () => !!toValue(patientId)
   })
 }
 
@@ -27,15 +25,15 @@ const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?
  */
 const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
-  const parsedPatientId = toValue(patientId)
-  const parsedDocumentId = toValue(documentId)
 
   return useQuery({
-    key: () => ['document-download-url', parsedPatientId, parsedDocumentId],
+    key: () => ['document-download-url', toValue(patientId), toValue(documentId)],
     query: async () => {
-      return requestFetch<{ downloadUrl: string }>(`/api/patients/${parsedPatientId}/documents/${parsedDocumentId}`)
+      return requestFetch<{ downloadUrl: string }>(
+        `/api/patients/${toValue(patientId)}/documents/${toValue(documentId)}`
+      )
     },
-    enabled: () => !!parsedPatientId && !!parsedDocumentId
+    enabled: () => !!toValue(patientId) && !!toValue(documentId)
   })
 }
 
