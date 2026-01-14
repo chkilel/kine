@@ -1,9 +1,3 @@
-/**
- * Query for fetching documents for a patient
- * @param patientId - Patient ID to fetch documents for
- * @param treatmentPlanId - Optional treatment plan ID to filter documents
- * @returns Query result with documents data and loading state
- */
 const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
@@ -17,12 +11,6 @@ const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?
   })
 }
 
-/**
- * Query for getting document download URL
- * @param patientId - Patient ID whose document is being fetched
- * @param documentId - Document ID to get download URL for
- * @returns Query result with download URL and loading state
- */
 const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
@@ -36,12 +24,6 @@ const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId
     enabled: () => !!toValue(patientId) && !!toValue(documentId)
   })
 }
-
-/**
- * Mutation for updating a document
- * @param patientId - Patient ID whose document is being updated
- * @returns Mutation with update functionality and error handling
- */
 
 type UpdateDocumentParams = {
   documentId: string
@@ -82,11 +64,6 @@ const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
   })
 }
 
-/**
- * Mutation for deleting a document
- * @param patientId - Patient ID whose document is being deleted
- * @returns Mutation with delete functionality and error handling
- */
 const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -118,7 +95,7 @@ const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
   })
 }
 
-export const useDocumentsList = createSharedComposable(_useDocumentsList)
-export const useDocumentDownloadUrl = createSharedComposable(_useDocumentDownloadUrl)
-export const useUpdateDocument = createSharedComposable(_useUpdateDocument)
-export const useDeleteDocument = createSharedComposable(_useDeleteDocument)
+export const useDocumentsList = _useDocumentsList
+export const useDocumentDownloadUrl = _useDocumentDownloadUrl
+export const useUpdateDocument = _useUpdateDocument
+export const useDeleteDocument = _useDeleteDocument

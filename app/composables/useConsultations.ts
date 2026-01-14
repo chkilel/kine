@@ -183,8 +183,8 @@ const _useDeleteConsultation = () => {
   })
 }
 
-export const useConsultationsList = createSharedComposable(_useConsultationsList)
-export const useConsultation = createSharedComposable(_useConsultation)
+export const useConsultationsList = _useConsultationsList
+export const useConsultation = _useConsultation
 export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
 export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
 export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)

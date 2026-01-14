@@ -129,7 +129,7 @@ const _useDeleteRoom = () => {
   })
 }
 
-export const useRoomsList = createSharedComposable(_useRoomsList)
+export const useRoomsList = _useRoomsList
 export const useCreateRoom = createSharedComposable(_useCreateRoom)
 export const useUpdateRoom = createSharedComposable(_useUpdateRoom)
 export const useDeleteRoom = createSharedComposable(_useDeleteRoom)

@@ -140,7 +140,7 @@ const _useDeleteAvailabilityException = () => {
   })
 }
 
-export const useAvailabilityExceptionsList = createSharedComposable(_useAvailabilityExceptionsList)
+export const useAvailabilityExceptionsList = _useAvailabilityExceptionsList
 export const useCreateAvailabilityException = createSharedComposable(_useCreateAvailabilityException)
 export const useUpdateAvailabilityException = createSharedComposable(_useUpdateAvailabilityException)
 export const useDeleteAvailabilityException = createSharedComposable(_useDeleteAvailabilityException)

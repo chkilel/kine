@@ -200,7 +200,7 @@ const _useDeleteTreatmentPlan = () => {
   })
 }
 
-export const usePatientTreatmentPlans = createSharedComposable(_usePatientTreatmentPlans)
+export const usePatientTreatmentPlans = _usePatientTreatmentPlans
 export const useCreateTreatmentPlan = createSharedComposable(_useCreateTreatmentPlan)
 export const useUpdateTreatmentPlan = createSharedComposable(_useUpdateTreatmentPlan)
 export const useDeleteTreatmentPlan = createSharedComposable(_useDeleteTreatmentPlan)

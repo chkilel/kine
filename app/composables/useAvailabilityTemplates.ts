@@ -140,7 +140,7 @@ const _useDeleteAvailabilityTemplate = () => {
   })
 }
 
-export const useAvailabilityTemplatesList = createSharedComposable(_useAvailabilityTemplatesList)
+export const useAvailabilityTemplatesList = _useAvailabilityTemplatesList
 export const useCreateAvailabilityTemplate = createSharedComposable(_useCreateAvailabilityTemplate)
 export const useUpdateAvailabilityTemplate = createSharedComposable(_useUpdateAvailabilityTemplate)
 export const useDeleteAvailabilityTemplate = createSharedComposable(_useDeleteAvailabilityTemplate)

@@ -169,8 +169,8 @@ const _useDeletePatient = () => {
   })
 }
 
-export const usePatientsList = createSharedComposable(_usePatientsList)
+export const usePatientsList = _usePatientsList
 export const useCreatePatient = createSharedComposable(_useCreatePatient)
-export const usePatientById = createSharedComposable(_usePatientById)
+export const usePatientById = _usePatientById
 export const useUpdatePatient = createSharedComposable(_useUpdatePatient)
 export const useDeletePatient = createSharedComposable(_useDeletePatient)
