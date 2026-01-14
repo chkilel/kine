@@ -52,7 +52,7 @@ const SEED_CONFIG = {
     adminEmail: 'admin@seed.local'
   },
   organizations: {
-    count: 3,
+    count: 2,
     names: [
       { name: 'Kine Clinic A', slug: 'kine-clinic-a' },
       { name: 'Kine Clinic B', slug: 'kine-clinic-b' },
@@ -61,7 +61,7 @@ const SEED_CONFIG = {
     userDistribution: [4, 4, 3]
   },
   patients: {
-    count: 20,
+    count: 30,
     distribution: [8, 6, 6]
   },
   availability: {
@@ -70,15 +70,15 @@ const SEED_CONFIG = {
     exceptionDaysRange: 90
   },
   treatmentPlans: {
-    minPerPatient: 3,
+    minPerPatient: 6,
     statuses: VALID_TREATMENT_PLAN_STATUSES
   },
   rooms: {
     countPerOrg: 5
   },
   consultations: {
-    minPerPatient: 2,
-    maxPerPatient: 5,
+    minPerPatient: 5,
+    maxPerPatient: 30,
     dateRangeDays: 90,
     pastPercentage: 0.6
   }
@@ -771,12 +771,28 @@ function generateConsultations(
   patientId: string,
   organizationId: string,
   therapistId: string,
-  treatmentPlanId: string | null,
+  treatmentPlanIds: string[],
   availableRoomIds: string[],
   roomBookings: Map<string, string>
 ): any[] {
   const count = randomInt(SEED_CONFIG.consultations.minPerPatient, SEED_CONFIG.consultations.maxPerPatient)
   const consultationsData: any[] = []
+
+  const indices = Array.from({ length: count }, (_, index) => index)
+  const linkedIndices = new Set<number>()
+
+  if (treatmentPlanIds.length > 0) {
+    const desiredLinkedCount = Math.max(1, Math.floor(count * 0.6))
+    const shuffledIndices = shuffleArray(indices)
+
+    for (let i = 0; i < desiredLinkedCount && i < shuffledIndices.length; i++) {
+      linkedIndices.add(shuffledIndices[i])
+    }
+
+    if (count > 1 && linkedIndices.size === count) {
+      linkedIndices.delete(shuffledIndices[0])
+    }
+  }
 
   for (let i = 0; i < count; i++) {
     const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
@@ -804,6 +820,8 @@ function generateConsultations(
 
     const startTime = timeRange.startTime
     const endTime = minutesToTime(timeToMinutes(startTime) + duration)
+
+    const treatmentPlanId = linkedIndices.has(i) && treatmentPlanIds.length > 0 ? randomItem(treatmentPlanIds) : null
 
     const consultation: any = {
       organizationId,
@@ -1100,12 +1118,19 @@ export default defineEventHandler(async (event: H3Event) => {
     const therapistId = randomItem(therapistsInOrg).userId
     const availableRoomIds = orgRoomIds[patientOrgId] || []
 
+    const patientTreatmentPlans = await db
+      .select({ id: treatmentPlans.id })
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.patientId, patientRecord.id))
+
+    const treatmentPlanIds = patientTreatmentPlans.map((plan) => plan.id)
+
     try {
       const consultationsData = generateConsultations(
         patientRecord.id,
         patientOrgId,
         therapistId,
-        null,
+        treatmentPlanIds,
         availableRoomIds,
         roomBookings
       )
