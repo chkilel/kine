@@ -7,26 +7,27 @@ import { parseISO } from 'date-fns'
  * @param queryParams - Optional query parameters for filtering and pagination
  * @returns Query result with consultations data and loading state
  */
-const _useConsultationsList = (patientId: MaybeRefOrGetter<string>, queryParams?: Ref<ConsultationQuery>) => {
+const _useConsultationsList = (
+  patientId: MaybeRefOrGetter<string>,
+  queryParams?: MaybeRefOrGetter<ConsultationQuery>
+) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    enabled: () => !!toValue(patientId),
     key: () => {
-      const query = queryParams?.value
+      const query = toValue(queryParams)
       return query ? ['consultations', toValue(patientId), query] : ['consultations', toValue(patientId)]
     },
     query: async () => {
-      const id = toValue(patientId)
-      const resp = await requestFetch(`/api/patients/${id}/consultations`, {
-        query: queryParams?.value
+      const resp = await requestFetch(`/api/patients/${toValue(patientId)}/consultations`, {
+        query: toValue(queryParams)
       })
-      // return resp?.data || []
       return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),
         updatedAt: parseISO(item.updatedAt)
       }))
-    }
+    },
+    enabled: () => !!toValue(patientId)
   })
 }
 
@@ -34,18 +35,26 @@ const _useConsultationsList = (patientId: MaybeRefOrGetter<string>, queryParams?
  * Mutation for creating a new consultation
  * @returns Mutation with create functionality and error handling
  */
+
+type CreateConsultationParams = {
+  patientId: string
+  consultationData: ConsultationCreate
+  onSuccess?: () => void
+}
+
 const _useCreateConsultation = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, consultationData }: { patientId: string; consultationData: ConsultationCreate }) =>
+    mutation: async ({ patientId, consultationData }: CreateConsultationParams) =>
       requestFetch(`/api/patients/${patientId}/consultations`, {
         method: 'POST',
         body: consultationData
       }),
-    onSuccess: (_, { patientId }) => {
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Consultation créée avec succès',
@@ -67,26 +76,25 @@ const _useCreateConsultation = () => {
  * Mutation for updating an existing consultation
  * @returns Mutation with update functionality and error handling
  */
+type UpdateConsultationParams = {
+  patientId: string
+  consultationId: string
+  consultationData: ConsultationUpdate
+  onSuccess?: () => void
+}
 const _useUpdateConsultation = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({
-      patientId,
-      consultationId,
-      consultationData
-    }: {
-      patientId: string
-      consultationId: string
-      consultationData: ConsultationUpdate
-    }) =>
+    mutation: async ({ patientId, consultationId, consultationData }: UpdateConsultationParams) =>
       requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
         method: 'PUT',
         body: consultationData
       }),
-    onSuccess: (_, { patientId }) => {
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Consultation mise à jour avec succès',
@@ -110,19 +118,18 @@ const _useUpdateConsultation = () => {
  * @param consultationId - Consultation ID to fetch
  * @returns Query result with consultation data and loading state
  */
-const _useConsultation = (
-  patientId: MaybeRefOrGetter<string>,
-  consultationId: MaybeRefOrGetter<string | undefined>
-) => {
+const _useConsultation = (patientId: MaybeRefOrGetter<string>, consultationId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
-  const pId = toValue(patientId)
-  const cId = toValue(consultationId)
 
   return useQuery({
-    enabled: () => !!pId && !!cId,
-    key: () => (pId && cId ? ['consultation', pId, cId] : ['consultation']),
+    key: () => {
+      if (!!toValue(patientId) && !!toValue(consultationId)) {
+        return ['consultations', toValue(patientId), toValue(consultationId)]
+      }
+      return ['consultations']
+    },
     query: async () => {
-      const data = await requestFetch(`/api/patients/${pId}/consultations/${cId}`)
+      const data = await requestFetch(`/api/patients/${toValue(patientId)}/consultations/${toValue(consultationId)}`)
       if (!data) return null
 
       return {
@@ -130,7 +137,8 @@ const _useConsultation = (
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt)
       }
-    }
+    },
+    enabled: () => !!toValue(patientId) && !!toValue(consultationId)
   })
 }
 
@@ -144,11 +152,20 @@ const _useDeleteConsultation = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, consultationId }: { patientId: string; consultationId: string }) =>
+    mutation: async ({
+      patientId,
+      consultationId,
+      onSuccess
+    }: {
+      patientId: string
+      consultationId: string
+      onSuccess?: () => void
+    }) =>
       requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
         method: 'DELETE'
       }),
-    onSuccess: (_, { patientId }) => {
+    onSuccess: (_, { patientId, onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Consultation supprimée avec succès',

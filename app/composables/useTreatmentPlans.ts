@@ -1,6 +1,11 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+/**
+ * Query for fetching treatment plans for a patient
+ * @param patientId - Patient ID to fetch treatment plans for
+ * @returns Query result with treatment plans data and computed properties
+ */
 const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
@@ -12,41 +17,67 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   } = useQuery({
     key: () => ['treatment-plans', toValue(patientId)],
     query: async () => {
-      const id = toValue(patientId)
-      const data = await requestFetch(`/api/patients/${id}/treatment-plans`)
+      const data = await requestFetch(`/api/patients/${toValue(patientId)}/treatment-plans`)
       return data?.map((plan) => ({
         ...plan,
         createdAt: parseISO(plan.createdAt),
         updatedAt: parseISO(plan.updatedAt),
-        notes:
-          plan.notes?.map((note: any) => ({
-            ...note,
-            date: typeof note.date === 'string' ? new Date(note.date) : note.date
-          })) || null
+        notes: (plan.notes || []).map((note) => ({
+          ...note,
+          date: parseISO(note.date)
+        }))
       }))
     },
     enabled: () => !!toValue(patientId)
   })
 
-  const getActiveTreatmentPlan = computed(() => {
+  const activeTreatmentPlans = computed(() => {
     if (!treatmentPlans.value) return null
     return (
-      treatmentPlans.value.find(
-        (plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused'
-      ) || null
+      treatmentPlans.value
+        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || null
     )
   })
 
-  const getCompletedTreatmentPlans = computed(() => {
+  const latestActiveTreatmentPlan = computed(() => {
+    if (!treatmentPlans.value) return null
+    return (
+      treatmentPlans.value
+        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null
+    )
+  })
+
+  const completedTreatmentPlans = computed(() => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value.filter((plan) => plan.status === 'completed')
   })
 
-  const getTreatmentPlanHistory = computed(() => {
+  const archivedTreatmentPlans = computed(() => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value
       .filter((plan) => plan.status === 'completed' || plan.status === 'cancelled')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  })
+
+  const treatmentPlansGroupedByStatus = computed(() => {
+    if (!treatmentPlans.value) return []
+    const statusPriority: Record<string, number> = {
+      ongoing: 1,
+      planned: 2,
+      paused: 3,
+      cancelled: 4,
+      completed: 5
+    }
+    return treatmentPlans.value.sort((a, b) => {
+      const priorityA = statusPriority[a.status] ?? 99
+      const priorityB = statusPriority[b.status] ?? 99
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
   })
 
   return {
@@ -54,12 +85,18 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     loading: readonly(loading),
     error: readonly(error),
     refetchTreatmentPlans,
-    getActiveTreatmentPlan,
-    getCompletedTreatmentPlans,
-    getTreatmentPlanHistory
+    activeTreatmentPlans,
+    latestActiveTreatmentPlan,
+    completedTreatmentPlans,
+    archivedTreatmentPlans,
+    treatmentPlansGroupedByStatus
   }
 }
 
+/**
+ * Mutation for creating a new treatment plan
+ * @returns Mutation with create functionality and error handling
+ */
 const _useCreateTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -90,22 +127,23 @@ const _useCreateTreatmentPlan = () => {
   })
 }
 
+/**
+ * Mutation for updating an existing treatment plan
+ * @returns Mutation with update functionality and error handling
+ */
+type UpdateTreatmentPlanParams = {
+  patientId: string
+  planId: string
+  data: TreatmentPlanUpdate
+  onSuccess?: () => void
+}
 const _useUpdateTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({
-      patientId,
-      planId,
-      data
-    }: {
-      patientId: string
-      planId: string
-      data: TreatmentPlanUpdate
-      onSuccess?: () => void
-    }) =>
+    mutation: async ({ patientId, planId, data }: UpdateTreatmentPlanParams) =>
       requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
         method: 'PUT',
         body: data
@@ -129,6 +167,10 @@ const _useUpdateTreatmentPlan = () => {
   })
 }
 
+/**
+ * Mutation for deleting a treatment plan
+ * @returns Mutation with delete functionality and error handling
+ */
 const _useDeleteTreatmentPlan = () => {
   const toast = useToast()
   const queryCache = useQueryCache()

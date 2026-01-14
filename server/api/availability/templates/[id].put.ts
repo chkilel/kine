@@ -107,8 +107,8 @@ export default defineEventHandler(async (event) => {
       )
       .returning()
 
-    return updatedTemplate
+    return successResponse(updatedTemplate, 'Modèle de disponibilité mis à jour avec succès')
   } catch (error: unknown) {
-    handleApiError(error)
+    handleApiError(error, 'Échec de la mise à jour du modèle de disponibilité.')
   }
 })

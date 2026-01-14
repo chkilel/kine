@@ -1,6 +1,8 @@
-import type { Session } from '~~/shared/types/auth.types'
 import { treatmentPlans, patients } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
+import { requireAuth } from '~~/server/utils/auth'
+import { handleApiError } from '~~/server/utils/error'
+import { successResponse } from '~~/server/utils/response'
 
 // PUT /api/patients/[id]/treatment-plans/[planId] - Update existing treatment plan
 export default defineEventHandler(async (event) => {
@@ -8,66 +10,44 @@ export default defineEventHandler(async (event) => {
   const patientId = getRouterParam(event, 'id')
   const planId = getRouterParam(event, 'planId')
 
-  if (!patientId || !planId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Patient ID and Plan ID are required'
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
-
-  // Verify patient exists and belongs to the organization
-  const [patient] = await db
-    .select()
-    .from(patients)
-    .where(
-      and(eq(patients.id, patientId), eq(patients.organizationId, activeOrganizationId), isNull(patients.deletedAt))
-    )
-    .limit(1)
-
-  if (!patient) {
-    throw createError({
-      statusCode: 404,
-      message: 'Patient not found'
-    })
-  }
-
-  // Verify treatment plan exists and belongs to the patient
-  const [existingPlan] = await db
-    .select()
-    .from(treatmentPlans)
-    .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId)))
-    .limit(1)
-
-  if (!existingPlan) {
-    throw createError({
-      statusCode: 404,
-      message: 'Treatment plan not found'
-    })
-  }
-
   try {
+    if (!patientId || !planId) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de patient et ID de plan de traitement requis'
+      })
+    }
+
+    const { organizationId } = await requireAuth(event)
+
+    // Verify patient exists and belongs to organization
+    const [patient] = await db
+      .select()
+      .from(patients)
+      .where(and(eq(patients.id, patientId), eq(patients.organizationId, organizationId), isNull(patients.deletedAt)))
+      .limit(1)
+
+    if (!patient) {
+      throw createError({
+        statusCode: 404,
+        message: 'Patient introuvable'
+      })
+    }
+
+    // Verify treatment plan exists and belongs to patient
+    const [existingPlan] = await db
+      .select()
+      .from(treatmentPlans)
+      .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId)))
+      .limit(1)
+
+    if (!existingPlan) {
+      throw createError({
+        statusCode: 404,
+        message: 'Plan de traitement introuvable'
+      })
+    }
+
     // Validate input
     const body = await readValidatedBody(event, treatmentPlanUpdateSchema.parse)
 
@@ -81,19 +61,8 @@ export default defineEventHandler(async (event) => {
       .where(eq(treatmentPlans.id, planId))
       .returning()
 
-    return updatedTreatmentPlan
-  } catch (error: any) {
-    console.error('Error updating treatment plan:', error)
-    if (error.name === 'ZodError') {
-      throw createError({
-        statusCode: 400,
-        message: 'Invalid treatment plan data',
-        data: error.errors
-      })
-    }
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to update treatment plan'
-    })
+    return successResponse(updatedTreatmentPlan, 'Plan de traitement mis à jour avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la mise à jour du plan de traitement')
   }
 })

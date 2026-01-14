@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'Patient ID is required'
+        message: 'ID de patient requis'
       })
     }
     const body = await readValidatedBody(event, patientUpdateSchema.parse)
@@ -29,12 +29,12 @@ export default defineEventHandler(async (event) => {
     if (!updatedPatient) {
       throw createError({
         statusCode: 404,
-        message: 'Patient not found'
+        message: 'Patient introuvable'
       })
     }
 
-    return updatedPatient
-  } catch (error: any) {
-    handleApiError(error)
+    return successResponse(updatedPatient, 'Patient mis à jour avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la mise à jour du patient')
   }
 })

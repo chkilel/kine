@@ -44,7 +44,7 @@
     }
 
     const newNoteEntry = {
-      date: new Date().toISOString(),
+      date: new Date(),
       author: getTherapistName(user.value.id),
       content
     }

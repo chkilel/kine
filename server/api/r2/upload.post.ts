@@ -1,6 +1,6 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { defineEventHandler, readBody } from 'h3'
+import { defineEventHandler } from 'h3'
 import z from 'zod'
 import { getR2Client, getR2BucketName } from '~~/server/utils/r2'
 
@@ -11,33 +11,27 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const result = await readValidatedBody(event, schema.safeParse)
-
-  if (!result.success) {
-    throw createError({
-      statusCode: 400,
-      message: 'Invalid request body',
-      data: result.error.issues.flat()
-    })
-  }
-
-  const { key, contentType, expiresIn } = result.data
-
-  const client = getR2Client(event)
-  const bucket = getR2BucketName(event)
-
-  const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType })
   try {
+    const result = await readValidatedBody(event, schema.safeParse)
+
+    if (!result.success) {
+      throw createError({
+        statusCode: 400,
+        message: 'Corps de requête invalide',
+        data: result.error.issues.flat()
+      })
+    }
+
+    const { key, contentType, expiresIn } = result.data
+
+    const client = getR2Client(event)
+    const bucket = getR2BucketName(event)
+
+    const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType })
+
     const signedUrl = await getSignedUrl(client, command, { expiresIn })
     return { url: signedUrl }
-  } catch (err: any) {
-    console.log('Failed to generate signed URL in POST /api/r2/upload', err)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to generate signed URL',
-      data: {
-        message: err.message
-      }
-    })
+  } catch (error: unknown) {
+    handleApiError(error, "Échec de la génération de l'URL signée")
   }
 })

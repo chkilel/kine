@@ -1,6 +1,10 @@
 import { createSharedComposable } from '@vueuse/core'
 import { authClient } from '~/utils/auth-client'
 
+/**
+ * Composable for managing authentication state and operations
+ * @returns Auth session, user data, and authentication methods
+ */
 const _useAuth = async () => {
   const sessionData = await authClient.useSession(useFetch)
 

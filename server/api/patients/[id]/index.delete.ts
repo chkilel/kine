@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'Patient ID is required'
+        message: 'ID de patient requis'
       })
     }
 
@@ -31,12 +31,12 @@ export default defineEventHandler(async (event) => {
     if (!deletedPatient) {
       throw createError({
         statusCode: 404,
-        message: 'Patient not found'
+        message: 'Patient introuvable'
       })
     }
 
-    return { success: true, message: 'Patient deleted successfully' }
-  } catch (error) {
-    handleApiError(error)
+    return deletedResponse('Patient supprimé avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la suppression du patient')
   }
 })

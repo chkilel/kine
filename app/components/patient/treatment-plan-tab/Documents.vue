@@ -177,7 +177,7 @@
     if (!documentToDelete.value) return
 
     try {
-      deleteDocument(documentToDelete.value.id)
+      deleteDocument({ documentId: documentToDelete.value.id })
 
       // Optimistic UI update
       if (documents.value) {

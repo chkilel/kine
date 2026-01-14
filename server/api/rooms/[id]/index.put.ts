@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'Room ID is required'
+        message: 'ID de salle requis'
       })
     }
 
@@ -32,12 +32,12 @@ export default defineEventHandler(async (event) => {
     if (!updatedRoom) {
       throw createError({
         statusCode: 404,
-        message: 'Room not found'
+        message: 'Salle introuvable'
       })
     }
 
-    return updatedRoom
-  } catch (error: any) {
-    handleApiError(error)
+    return successResponse(updatedRoom, 'Salle mise à jour avec succès')
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la mise à jour de la salle')
   }
 })

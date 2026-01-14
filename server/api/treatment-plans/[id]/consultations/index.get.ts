@@ -1,46 +1,26 @@
-import { z } from 'zod'
 import { eq, and, desc } from 'drizzle-orm'
 import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
-import type { Session } from '~~/shared/types/auth.types'
+import { requireAuth } from '~~/server/utils/auth'
+import { handleApiError } from '~~/server/utils/error'
 
 // GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const treatmentPlanId = getRouterParam(event, 'id')
 
-  if (!treatmentPlanId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Treatment Plan ID is required'
-    })
-  }
-
-  // Get current user and organization from session
-  const auth = createAuth(event)
-  const session = await auth.api.getSession({
-    headers: getHeaders(event) as any
-  })
-
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Unauthorized'
-    })
-  }
-
-  // Get active organization ID from session
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
-  if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden'
-    })
-  }
-
-  // Get query parameters
-  const query = getQuery(event)
-
   try {
+    if (!treatmentPlanId) {
+      throw createError({
+        statusCode: 400,
+        message: 'ID de plan de traitement requis'
+      })
+    }
+
+    const { organizationId } = await requireAuth(event)
+
+    // Get query parameters
+    const query = getQuery(event)
+
     // Parse and validate query parameters
     const validatedQuery = consultationQuerySchema.parse(query)
 
@@ -48,19 +28,19 @@ export default defineEventHandler(async (event) => {
     const [existingTreatmentPlan] = await db
       .select()
       .from(treatmentPlans)
-      .where(and(eq(treatmentPlans.id, treatmentPlanId), eq(treatmentPlans.organizationId, activeOrganizationId)))
+      .where(and(eq(treatmentPlans.id, treatmentPlanId), eq(treatmentPlans.organizationId, organizationId)))
       .limit(1)
 
     if (!existingTreatmentPlan) {
       throw createError({
         statusCode: 404,
-        message: 'Treatment plan not found'
+        message: 'Plan de traitement introuvable'
       })
     }
 
     // Build base query conditions
     const baseConditions = and(
-      eq(consultations.organizationId, activeOrganizationId),
+      eq(consultations.organizationId, organizationId),
       eq(consultations.treatmentPlanId, treatmentPlanId)
     )
 
@@ -110,8 +90,6 @@ export default defineEventHandler(async (event) => {
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))
       .where(whereConditions)
       .orderBy(desc(consultations.date))
-      .limit(validatedQuery.limit)
-      .offset((validatedQuery.page - 1) * validatedQuery.limit)
 
     // Calculate progress statistics
     const totalConsultations = consultationsList.length
@@ -128,31 +106,9 @@ export default defineEventHandler(async (event) => {
         scheduled: consultationsList.filter((c) => c.status === 'scheduled').length,
         cancelled: consultationsList.filter((c) => c.status === 'cancelled').length,
         progressPercentage
-      },
-      pagination: {
-        page: validatedQuery.page,
-        limit: validatedQuery.limit,
-        total: totalConsultations
       }
     }
-  } catch (error: any) {
-    console.error('Error fetching treatment plan consultations:', error)
-
-    if (error instanceof z.ZodError) {
-      throw createError({
-        statusCode: 400,
-        message: 'Invalid query parameters',
-        data: error.issues
-      })
-    }
-
-    if (error.statusCode) {
-      throw error
-    }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch treatment plan consultations'
-    })
+  } catch (error: unknown) {
+    handleApiError(error, 'Échec de la récupération des consultations du plan de traitement')
   }
 })

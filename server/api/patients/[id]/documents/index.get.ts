@@ -6,11 +6,11 @@ export default defineEventHandler(async (event) => {
   const patientId = getRouterParam(event, 'id')
 
   try {
-    // 1. Validate patient ID
+    //1. Validate patient ID
     if (!patientId) {
       throw createError({
         statusCode: 400,
-        message: 'Patient ID is required'
+        message: 'ID de patient requis'
       })
     }
 
@@ -44,6 +44,6 @@ export default defineEventHandler(async (event) => {
 
     return documents
   } catch (error) {
-    handleApiError(error)
+    handleApiError(error, 'Erreur lors de la récupération des documents du patient')
   }
 })

@@ -66,6 +66,6 @@ export default defineEventHandler(async (event) => {
 
     return newTemplate
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la création du modèle de disponibilité hebdomadaire')
+    handleApiError(error, 'Échec de la création du modèle de disponibilité hebdomadaire.')
   }
 })

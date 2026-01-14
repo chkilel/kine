@@ -61,7 +61,7 @@ export const teams = sqliteTable('teams', {
 })
 
 // Team members table (optional)
-export const teamMembers = sqliteTable('teamMembers', {
+export const teamMembers = sqliteTable('team_members', {
   id: text().primaryKey().$defaultFn(uuidv7),
   teamId: text()
     .notNull()

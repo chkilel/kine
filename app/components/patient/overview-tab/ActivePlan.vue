@@ -8,7 +8,7 @@
   const router = useRouter()
   const route = useRoute()
 
-  const { getActiveTreatmentPlan, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => patient?.id)
+  const { latestActiveTreatmentPlan, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => patient?.id)
   const { data: consultations } = useConsultationsList(() => patient?.id)
 
   const upcomingConsultations = computed(() => {
@@ -42,12 +42,12 @@
     </div>
   </template>
 
-  <AppCard v-else-if="getActiveTreatmentPlan" title="Plan de Traitement & Prochains RDV">
+  <AppCard v-else-if="latestActiveTreatmentPlan" title="Plan de Traitement & Prochains RDV">
     <div class="bg-muted border-default mb-6 rounded-xl border p-4">
       <div class="mb-3 flex items-start justify-between">
         <div>
           <h4 class="text-default text-base font-bold">
-            {{ getActiveTreatmentPlan.title || 'Plan de traitement' }}
+            {{ latestActiveTreatmentPlan.title || 'Plan de traitement' }}
           </h4>
           <UBadge color="success" variant="soft" class="mt-1">En cours</UBadge>
         </div>
@@ -57,14 +57,14 @@
       <div class="space-y-2">
         <div class="text-muted flex items-center justify-between text-xs">
           <span>
-            Progression ({{ getActiveTreatmentPlan.completedConsultations }}/{{
-              getActiveTreatmentPlan.numberOfSessions || 0
+            Progression ({{ latestActiveTreatmentPlan.completedConsultations }}/{{
+              latestActiveTreatmentPlan.numberOfSessions || 0
             }}
             séances)
           </span>
-          <span>{{ getActiveTreatmentPlan.progress }}%</span>
+          <span>{{ latestActiveTreatmentPlan.progress }}%</span>
         </div>
-        <UProgress :model-value="getActiveTreatmentPlan.progress" :max="100" color="primary" size="md" />
+        <UProgress :model-value="latestActiveTreatmentPlan.progress" :max="100" color="primary" size="md" />
       </div>
     </div>
 

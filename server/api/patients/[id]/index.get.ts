@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'Patient ID is required'
+        message: 'ID de patient requis'
       })
     }
 
@@ -28,12 +28,12 @@ export default defineEventHandler(async (event) => {
     if (!patient) {
       throw createError({
         statusCode: 404,
-        message: 'Patient not found'
+        message: 'Patient introuvable'
       })
     }
 
     return patient
   } catch (error) {
-    handleApiError(error)
+    handleApiError(error, 'Erreur lors de la récupération des détails du patient')
   }
 })

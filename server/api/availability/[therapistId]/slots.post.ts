@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!therapistId) {
     throw createError({
       statusCode: 400,
-      message: 'Therapist ID is required'
+      message: 'ID de thérapeute requis'
     })
   }
 

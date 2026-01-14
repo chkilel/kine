@@ -11,6 +11,12 @@ export type UploadResult = {
 const _useUploads = () => {
   const toast = useToast()
 
+  /**
+   * Get presigned URL for downloading a file
+   * @param key - The file key to get the URL for
+   * @param expiresIn - Optional expiration time in seconds
+   * @returns Presigned download URL
+   */
   async function getPresignUrl(key: string, expiresIn?: number): Promise<string> {
     try {
       const { urls, errors } = await $fetch<{ urls: Record<string, string | null>; errors?: Record<string, string> }>(
@@ -45,6 +51,13 @@ const _useUploads = () => {
     }
   }
 
+  /**
+   * Get presigned URL for uploading a file
+   * @param key - The file key to upload
+   * @param contentType - Optional MIME type of the file
+   * @param expiresIn - Optional expiration time in seconds
+   * @returns Presigned upload URL
+   */
   async function putPresignUrl(key: string, contentType?: string, expiresIn?: number): Promise<string> {
     try {
       const { url } = await $fetch<{ url: string }>('/api/r2/upload', {
@@ -61,6 +74,11 @@ const _useUploads = () => {
     }
   }
 
+  /**
+   * Upload a file to R2/S3
+   * @param options - Upload options including file, folder, name, and expiration
+   * @returns Upload result with file key
+   */
   async function uploadFile(options: {
     file: File
     folder?: string
@@ -107,6 +125,11 @@ const _useUploads = () => {
   return { getPresignUrl, putPresignUrl, uploadFile }
 }
 
+/**
+ * Generate a unique key for file upload
+ * @param options - Options including folder, name, and file
+ * @returns Generated file key
+ */
 function generateKey(options: { folder?: string; name?: string; file: File }) {
   const { folder, name, file } = options
   const baseName = slugify(name ?? file.name)

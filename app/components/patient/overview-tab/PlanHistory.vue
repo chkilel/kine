@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const { patient } = defineProps<{ patient: Patient }>()
 
-  const { getTreatmentPlanHistory, loading } = usePatientTreatmentPlans(() => patient?.id)
+  const { archivedTreatmentPlans, loading } = usePatientTreatmentPlans(() => patient?.id)
 </script>
 
 <template>
@@ -12,10 +12,10 @@
       </div>
     </template>
 
-    <template v-else-if="getTreatmentPlanHistory.length > 0">
+    <template v-else-if="archivedTreatmentPlans.length > 0">
       <div class="space-y-3">
         <div
-          v-for="plan in getTreatmentPlanHistory"
+          v-for="plan in archivedTreatmentPlans"
           :key="plan.id"
           class="bg-muted hover:border-default flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all"
         >
@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <div v-if="getTreatmentPlanHistory.length > 0" class="mt-3 text-center">
+      <div v-if="archivedTreatmentPlans.length > 0" class="mt-3 text-center">
         <UButton variant="ghost" size="sm" class="text-xs">Voir tous les anciens plans</UButton>
       </div>
     </template>

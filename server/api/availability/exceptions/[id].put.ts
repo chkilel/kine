@@ -1,7 +1,6 @@
 import { eq, and, not } from 'drizzle-orm'
 import { DrizzleD1Database } from 'drizzle-orm/d1'
 import { availabilityExceptions } from '~~/server/database/schema'
-import { handleApiError } from '~~/server/utils/error'
 
 // PUT /api/availability/exceptions/[id] - Update availability exception
 export default defineEventHandler(async (event) => {
@@ -66,9 +65,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    return updatedException
+    return successResponse(updatedException, 'Exception de disponibilité mise à jour avec succès')
   } catch (error: unknown) {
-    return handleApiError(error, 'Error updating availability exception')
+    handleApiError(error, 'Échec de la mise à jour de l’exception de disponibilité.')
   }
 })
 

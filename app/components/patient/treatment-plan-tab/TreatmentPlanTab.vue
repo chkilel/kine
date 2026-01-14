@@ -8,7 +8,7 @@
   // Use treatment plans composable
   const {
     refetchTreatmentPlans,
-    getActiveTreatmentPlan,
+    latestActiveTreatmentPlan,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
   } = usePatientTreatmentPlans(() => props.patient?.id)
@@ -52,7 +52,7 @@
   </div>
 
   <!-- Empty State -->
-  <div v-else-if="!getActiveTreatmentPlan" class="mt-6">
+  <div v-else-if="!latestActiveTreatmentPlan" class="mt-6">
     <UEmpty
       icon="i-lucide-clipboard-plus"
       title="Aucun plan de traitement"
@@ -67,20 +67,20 @@
   <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="flex flex-col gap-6 lg:col-span-1">
-      <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
 
-      <PatientTreatmentPlanTabDetails :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabDetails :treatment-plan="latestActiveTreatmentPlan" />
 
-      <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
     </div>
 
     <!-- Right Column -->
     <div class="flex flex-col gap-6 lg:col-span-2">
       <!-- Consultations -->
-      <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
 
       <!-- Documents -->
-      <PatientTreatmentPlanTabDocuments :treatment-plan="getActiveTreatmentPlan" />
+      <PatientTreatmentPlanTabDocuments :treatment-plan="latestActiveTreatmentPlan" />
     </div>
   </div>
 </template>

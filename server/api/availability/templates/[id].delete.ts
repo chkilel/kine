@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     // 2. Require current user and organization from session
     const { userId, organizationId } = await requireAuth(event)
 
-    //3.  Check if template exists and belongs to current user
+    // 3. Check if template exists and belongs to current user
     const [existingTemplate] = await db
       .select()
       .from(weeklyAvailabilityTemplates)
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     if (!existingTemplate) {
       throw createError({
         statusCode: 404,
-        message: 'Modèle de disponibilité non trouvé'
+        message: 'Modèle de disponibilité introuvable'
       })
     }
 
@@ -48,11 +48,8 @@ export default defineEventHandler(async (event) => {
         )
       )
 
-    return {
-      success: true,
-      message: 'Modèle de disponibilité supprimé avec succès'
-    }
+    return deletedResponse('Modèle de disponibilité supprimé avec succès')
   } catch (error: unknown) {
-    handleApiError(error)
+    handleApiError(error, 'Échec de la suppression du modèle de disponibilité.')
   }
 })

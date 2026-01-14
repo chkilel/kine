@@ -51,12 +51,12 @@
     }
     const submitData = {
       ...formState,
-      medicalConditions: formState.medicalConditions?.filter((item) => item !== '') || undefined,
-      surgeries: formState.surgeries?.filter((item) => item !== '') || undefined,
-      allergies: formState.allergies?.filter((item) => item !== '') || undefined,
-      medications: formState.medications?.filter((item) => item !== '') || undefined,
-      emergencyContacts: formState.emergencyContacts?.filter((contact) => contact.number.trim() !== '') || undefined,
-      notes: formState.notes?.filter((note) => note.content.trim() !== '') || undefined
+      medicalConditions: formState.medicalConditions?.filter((item) => item !== '') || [],
+      surgeries: formState.surgeries?.filter((item) => item !== '') || [],
+      allergies: formState.allergies?.filter((item) => item !== '') || [],
+      medications: formState.medications?.filter((item) => item !== '') || [],
+      emergencyContacts: formState.emergencyContacts?.filter((contact) => contact.number.trim() !== '') || [],
+      notes: formState.notes?.filter((note) => note.content.trim() !== '') || []
     }
 
     createPatient(submitData)

@@ -6,15 +6,22 @@ import { parseISO } from 'date-fns'
  * @param therapistId - The therapist's ID to fetch templates for
  * @returns Query result with templates data and loading state
  */
+/**
+ * Query for fetching availability templates
+ * @param therapistId - The therapist's ID to fetch templates for
+ * @returns Query result with templates data and loading state
+ */
 const _useAvailabilityTemplatesList = (therapistId: MaybeRefOrGetter<string | undefined>) => {
   const requestFetch = useRequestFetch()
-  const id = toValue(therapistId)
 
   return useQuery({
-    key: () => (id ? ['availability-templates', id] : ['availability-templates']),
+    key: () => {
+      const id = toValue(therapistId)
+      return id ? ['availability-templates', id] : ['availability-templates']
+    },
     query: async () => {
       const resp = await requestFetch('/api/availability/templates', {
-        query: { therapistId: id }
+        query: { therapistId: toValue(therapistId) }
       })
       return resp?.map((item) => ({
         ...item,
@@ -22,7 +29,7 @@ const _useAvailabilityTemplatesList = (therapistId: MaybeRefOrGetter<string | un
         updatedAt: parseISO(item.updatedAt)
       }))
     },
-    enabled: () => !!id
+    enabled: () => !!toValue(therapistId)
   })
 }
 
@@ -36,12 +43,13 @@ const _useCreateAvailabilityTemplate = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async (templateData: WeeklyAvailabilityTemplateCreate) =>
+    mutation: async (templateData: WeeklyAvailabilityTemplateCreate & { onSuccess?: () => void }) =>
       requestFetch('/api/availability/templates', {
         method: 'POST',
         body: templateData
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Modèle de disponibilité créé',
@@ -52,7 +60,7 @@ const _useCreateAvailabilityTemplate = () => {
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error).message,
+        description: parseError(error, 'Échec de la création du modèle de disponibilité').message,
         color: 'error'
       })
     }
@@ -63,18 +71,25 @@ const _useCreateAvailabilityTemplate = () => {
  * Mutation for updating an existing availability template
  * @returns Mutation with update functionality and error handling
  */
+
+type UpdateAvailabilityTemplateParams = {
+  id: string
+  data: WeeklyAvailabilityTemplateUpdate
+  onSuccess?: () => void
+}
 const _useUpdateAvailabilityTemplate = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ id, data }: { id: string; data: WeeklyAvailabilityTemplateUpdate }) =>
+    mutation: async ({ id, data }: UpdateAvailabilityTemplateParams) =>
       requestFetch(`/api/availability/templates/${id}`, {
         method: 'PUT',
         body: data
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Modèle mis à jour',
@@ -85,7 +100,7 @@ const _useUpdateAvailabilityTemplate = () => {
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error).message,
+        description: parseError(error, 'Échec de la mise à jour du modèle de disponibilité').message,
         color: 'error'
       })
     }
@@ -102,11 +117,12 @@ const _useDeleteAvailabilityTemplate = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async (id: string) =>
+    mutation: async ({ id, onSuccess }: { id: string; onSuccess?: () => void }) =>
       requestFetch(`/api/availability/templates/${id}`, {
         method: 'DELETE'
       }),
-    onSuccess: () => {
+    onSuccess: (_, { onSuccess }) => {
+      onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Modèle supprimé',
@@ -117,7 +133,7 @@ const _useDeleteAvailabilityTemplate = () => {
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error).message,
+        description: parseError(error, 'Échec de la suppression du modèle de disponibilité').message,
         color: 'error'
       })
     }

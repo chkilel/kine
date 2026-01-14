@@ -20,7 +20,6 @@
   const route = useRoute()
 
   const { data: patient, error, isPending } = usePatientById(() => route.params.id as string)
-  const { data: consultations } = useConsultationsList(() => patient.value?.id || '')
 
   const activeTab = computed({
     get() {
@@ -77,7 +76,7 @@
           <UBreadcrumb :items="breadcrumbItems" />
 
           <!-- Patient Header -->
-          <PatientHeader v-if="patient" :patient="patient" :consultations="consultations" />
+          <PatientHeader v-if="patient" :patient="patient" />
 
           <!-- Tabs -->
           <UTabs
