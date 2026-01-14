@@ -106,13 +106,19 @@ describe('date-utils', () => {
 
   describe('isDateDisabled', () => {
     it('1.5.1 should disable Sundays', () => {
-      const sunday = new Date('2026-01-04') // Sunday
+      const sunday = new Date()
+      const day = sunday.getDay()
+      const daysUntilSunday = (7 - day) % 7
+      sunday.setDate(sunday.getDate() + daysUntilSunday)
       expect(isDateDisabled(sunday)).toBe(true)
     })
 
     it('1.5.2 should not disable weekdays', () => {
-      const monday = new Date('2026-01-05') // Monday
-      expect(isDateDisabled(monday)).toBe(false)
+      const weekday = new Date()
+      while (weekday.getDay() === 0) {
+        weekday.setDate(weekday.getDate() + 1)
+      }
+      expect(isDateDisabled(weekday)).toBe(false)
     })
 
     it('1.5.3 should disable past dates', () => {
@@ -133,7 +139,11 @@ describe('date-utils', () => {
     })
 
     it('1.5.6 should handle string date input', () => {
-      const dateStr = new Date('2026-01-05').toString() // Monday
+      const weekday = new Date()
+      while (weekday.getDay() === 0) {
+        weekday.setDate(weekday.getDate() + 1)
+      }
+      const dateStr = weekday.toString()
       expect(isDateDisabled(dateStr)).toBe(false)
     })
   })
@@ -167,8 +177,9 @@ describe('date-utils', () => {
       const result = extractDayAndMonth('2026-01-15')
       expect(result).toEqual({
         dayName: 'jeudi',
+        dayNameShort: 'jeu',
         day: '15',
-        month: 'janv.'
+        month: 'jan'
       })
     })
 
@@ -176,8 +187,9 @@ describe('date-utils', () => {
       const result = extractDayAndMonth('2026-12-25')
       expect(result).toEqual({
         dayName: 'vendredi',
+        dayNameShort: 'ven',
         day: '25',
-        month: 'déc.'
+        month: 'déc'
       })
     })
   })
