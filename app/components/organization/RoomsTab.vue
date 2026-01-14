@@ -46,7 +46,7 @@
     })
 
     if (confirmed) {
-      deleteRoom(room.id)
+      deleteRoom({ roomId: room.id })
     }
   }
 </script>
