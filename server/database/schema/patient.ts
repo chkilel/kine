@@ -40,11 +40,12 @@ export const patients = sqliteTable(
     // ---- Medical information ----
     emergencyContacts: text({ mode: 'json' })
       .$type<{ name?: string; number: string; relationship?: (typeof VALID_RELATIONSHIP_TYPES)[number] }[]>()
+      .notNull()
       .default([]), // [{ "name": "Jane Doe", "phone": "+212612345678", "relationship": "wife" }]
-    medicalConditions: text({ mode: 'json' }).$type<string[]>().default([]), // ["Hypertension", "Diabetes"]
-    surgeries: text({ mode: 'json' }).$type<string[]>().default([]), // ["Knee surgery - 2018", "Appendectomy - 2010"]
-    allergies: text({ mode: 'json' }).$type<string[]>().default([]), // ["Penicillin", "Pollen"]
-    medications: text({ mode: 'json' }).$type<string[]>().default([]), // ["Metformin", "Ibuprofen"]
+    medicalConditions: text({ mode: 'json' }).$type<string[]>().notNull(), // ["Hypertension", "Diabetes"]
+    surgeries: text({ mode: 'json' }).$type<string[]>().notNull(), // ["Knee surgery - 2018", "Appendectomy - 2010"]
+    allergies: text({ mode: 'json' }).$type<string[]>().notNull(), // ["Penicillin", "Pollen"]
+    medications: text({ mode: 'json' }).$type<string[]>().notNull(), // ["Metformin", "Ibuprofen"]
 
     // ---- Insurance and referral ----
     insuranceProvider: text(), // Optional insurance company name — e.g., "AXA Assurance"
@@ -53,7 +54,7 @@ export const patients = sqliteTable(
 
     // ---- Record management ----
     status: text({ enum: VALID_PATIENT_STATUSES }).notNull().default('active'),
-    notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General patient notes, preferences, observations, additional context (e.g.,"Patient prefers morning appointments",... )
+    notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().notNull(), // General patient notes, preferences, observations, additional context (e.g.,"Patient prefers morning appointments",... )
 
     // Created, Updated and Soft-delete timestamp (null if active)
     ...softDeleteTimestamps
