@@ -16,6 +16,10 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
       return {
         data: resp.data.map((data) => ({
           ...data,
+          notes: data.notes.map((n) => ({
+            ...n,
+            date: parseISO(n.date)
+          })),
           createdAt: parseISO(data.createdAt),
           updatedAt: parseISO(data.updatedAt),
           deletedAt: safeParseISODate(data.deletedAt)
@@ -76,6 +80,10 @@ const _usePatientById = (patientId: MaybeRefOrGetter<string>) => {
       if (!data) return
       return {
         ...data,
+        notes: data.notes.map((n) => ({
+          ...n,
+          date: parseISO(n.date)
+        })),
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt),
         deletedAt: safeParseISODate(data.deletedAt)
