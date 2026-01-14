@@ -26,7 +26,7 @@
     }
 
     isDeleting.value = document.id
-    deleteDoc(document.id)
+    deleteDoc({ documentId: document.id })
     emit('deleted', document.id)
   }
 
@@ -35,6 +35,9 @@
 
     try {
       const response = await $fetch(`/api/patients/${props.patientId}/documents/${doc.id}`)
+      if (!response?.downloadUrl) {
+        throw new Error('URL de téléchargement manquante')
+      }
 
       const link = document.createElement('a')
       link.href = response.downloadUrl
