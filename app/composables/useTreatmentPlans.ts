@@ -17,20 +17,27 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   } = useQuery({
     key: () => ['treatment-plans', toValue(patientId)],
     query: async () => {
-      const id = toValue(patientId)
-      const data = await requestFetch(`/api/patients/${id}/treatment-plans`)
+      const data = await requestFetch(`/api/patients/${toValue(patientId)}/treatment-plans`)
       return data?.map((plan) => ({
         ...plan,
         createdAt: parseISO(plan.createdAt),
         updatedAt: parseISO(plan.updatedAt),
-        notes:
-          plan.notes?.map((note) => ({
-            ...note,
-            date: parseISO(note.date)
-          })) || null
+        notes: (plan.notes || []).map((note) => ({
+          ...note,
+          date: parseISO(note.date)
+        }))
       }))
     },
     enabled: () => !!toValue(patientId)
+  })
+
+  const activeTreatmentPlans = computed(() => {
+    if (!treatmentPlans.value) return null
+    return (
+      treatmentPlans.value
+        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || null
+    )
   })
 
   const latestActiveTreatmentPlan = computed(() => {
@@ -54,7 +61,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   })
 
-  const sortedTreatmentPlans = computed(() => {
+  const treatmentPlansGroupedByStatus = computed(() => {
     if (!treatmentPlans.value) return []
     const statusPriority: Record<string, number> = {
       ongoing: 1,
@@ -78,10 +85,11 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     loading: readonly(loading),
     error: readonly(error),
     refetchTreatmentPlans,
+    activeTreatmentPlans,
     latestActiveTreatmentPlan,
     completedTreatmentPlans,
     archivedTreatmentPlans,
-    sortedTreatmentPlans
+    treatmentPlansGroupedByStatus
   }
 }
 
