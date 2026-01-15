@@ -1,4 +1,4 @@
-import { eq, and, asc, isNull } from 'drizzle-orm'
+import { eq, and, asc, isNull, gte, lte } from 'drizzle-orm'
 import { consultations, rooms } from '~~/server/database/schema'
 
 // GET /api/patients/[id]/consultations - List patient consultations
@@ -26,12 +26,17 @@ export default defineEventHandler(async (event) => {
     // Apply additional filters
     let whereConditions = baseConditions
 
+    // Filter by treatment plan if specified
     if (validatedQuery.treatmentPlanId) {
       whereConditions = and(whereConditions, eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
-    } else {
-      // Independent consultations
+    }
+    // Otherwise, filter by onlyIndependent flag
+    else if (validatedQuery.onlyIndependent === true) {
+      console.log('validatedQuery.onlyIndependent', validatedQuery.onlyIndependent)
+      // Show only independent consultations (not linked to any treatment plan)
       whereConditions = and(whereConditions, isNull(consultations.treatmentPlanId))
     }
+    // If neither treatmentPlanId nor onlyIndependent is provided, show ALL consultations
 
     if (validatedQuery.status) {
       whereConditions = and(whereConditions, eq(consultations.status, validatedQuery.status))
@@ -39,6 +44,14 @@ export default defineEventHandler(async (event) => {
 
     if (validatedQuery.type) {
       whereConditions = and(whereConditions, eq(consultations.type, validatedQuery.type))
+    }
+
+    if (validatedQuery.dateFrom) {
+      whereConditions = and(whereConditions, gte(consultations.date, validatedQuery.dateFrom))
+    }
+
+    if (validatedQuery.dateTo) {
+      whereConditions = and(whereConditions, lte(consultations.date, validatedQuery.dateTo))
     }
 
     // Execute query with room join
