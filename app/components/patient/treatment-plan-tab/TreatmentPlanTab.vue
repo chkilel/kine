@@ -34,7 +34,7 @@
 
 <template>
   <!-- Loading State -->
-  <div v-if="treatmentPlansLoading" class="mt-6 flex items-center justify-center py-12">
+  <div v-if="treatmentPlansLoading" class="flex items-center justify-center py-12">
     <div class="flex items-center gap-3">
       <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
       <span class="text-muted">Chargement des plans de traitement...</span>
@@ -64,7 +64,7 @@
   </div>
 
   <!-- Treatment Plan Content -->
-  <div v-else class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column -->
     <div class="flex flex-col gap-6 lg:col-span-1">
       <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />

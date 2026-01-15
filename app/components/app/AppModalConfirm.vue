@@ -41,7 +41,7 @@
           </div>
           <div class="flex-1">
             <h3 class="text-base font-bold">{{ title }}</h3>
-            <p class="text-muted mt-1 text-sm">{{ message }}</p>
+            <p class="text-muted mt-1 text-sm text-pretty">{{ message }}</p>
           </div>
         </div>
 
