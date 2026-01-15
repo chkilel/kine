@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { computed, useAttrs } from 'vue'
-
   const props = defineProps<{
     title?: string
     description?: string
@@ -9,6 +7,7 @@
   }>()
 
   const attrs = useAttrs()
+  const slots = useSlots()
 
   const defaultUi = {
     root: 'divide-y-0',
@@ -27,18 +26,26 @@
 
     return rest
   })
+
+  // Check if we should show the header
+  const showHeader = computed(() => slots.title || props.title || props.description)
 </script>
 
 <template>
   <UCard v-bind="forwardedAttrs" :ui="mergedUi">
-    <template v-if="title || description" #header>
-      <div class="flex flex-wrap items-center justify-between gap-4">
+    <template v-if="showHeader" #header>
+      <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div v-if="icon || title" class="flex items-center gap-2">
-            <UIcon v-if="icon" :name="icon" class="size-5" :class="`text-${iconColor}`" />
-            <h3 v-if="title" class="text-lg font-bold">{{ title }}</h3>
+          <div v-if="icon || $slots.title || title" class="flex items-center gap-1.5">
+            <UIcon v-if="icon" :name="icon" class="size-5.5" :class="`text-${iconColor}`" />
+            <h3 v-if="$slots.title" class="flex items-center gap-2 text-lg font-bold">
+              <slot name="title" />
+            </h3>
+            <h3 v-else-if="title" class="text-lg font-bold">{{ title }}</h3>
           </div>
-          <p v-if="description" class="text-muted ml-7 text-xs">{{ description }}</p>
+          <p v-if="description" class="text-muted truncate text-xs" :class="{ 'ml-7': !!icon }">
+            {{ description }}
+          </p>
         </div>
         <slot name="actions" />
       </div>
