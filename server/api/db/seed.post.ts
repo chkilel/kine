@@ -714,10 +714,7 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       objective: 'Restore function and reduce pain',
       startDate,
       endDate,
-      numberOfSessions: randomInt(
-        CONSULTATION_DURATIONS[0] / 30,
-        CONSULTATION_DURATIONS[CONSULTATION_DURATIONS.length - 1] / 30
-      ),
+      numberOfSessions: randomInt(5, 20),
       sessionFrequency: 1,
       status,
       prescribingDoctor: 'Dr. Smith',
@@ -771,7 +768,7 @@ function generateConsultations(
   patientId: string,
   organizationId: string,
   therapistId: string,
-  treatmentPlanIds: string[],
+  treatmentPlansMeta: { id: string; startDate: string; endDate: string | null }[],
   availableRoomIds: string[],
   roomBookings: Map<string, string>
 ): any[] {
@@ -780,8 +777,9 @@ function generateConsultations(
 
   const indices = Array.from({ length: count }, (_, index) => index)
   const linkedIndices = new Set<number>()
+  const today = format(new Date(), 'yyyy-MM-dd')
 
-  if (treatmentPlanIds.length > 0) {
+  if (treatmentPlansMeta.length > 0) {
     const desiredLinkedCount = Math.max(1, Math.floor(count * 0.6))
     const shuffledIndices = shuffleArray(indices)
 
@@ -795,10 +793,36 @@ function generateConsultations(
   }
 
   for (let i = 0; i < count; i++) {
-    const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
-    const date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
-    const isPast = daysOffset < 0
-    const isToday = daysOffset === 0
+    let date: string
+    let treatmentPlanId: string | null = null
+
+    if (linkedIndices.has(i) && treatmentPlansMeta.length > 0) {
+      const selectedPlan = randomItem(treatmentPlansMeta)
+      treatmentPlanId = selectedPlan.id
+
+      const planStart = new Date(selectedPlan.startDate)
+      const planEnd = selectedPlan.endDate ? new Date(selectedPlan.endDate) : null
+
+      if (!isNaN(planStart.getTime())) {
+        if (planEnd && !isNaN(planEnd.getTime()) && planEnd.getTime() >= planStart.getTime()) {
+          const totalDays = Math.floor((planEnd.getTime() - planStart.getTime()) / (1000 * 60 * 60 * 24))
+          const offset = totalDays > 0 ? randomInt(0, totalDays) : 0
+          date = format(addDays(planStart, offset), 'yyyy-MM-dd')
+        } else {
+          const offset = randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+          date = format(addDays(planStart, offset), 'yyyy-MM-dd')
+        }
+      } else {
+        const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
+        date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+      }
+    } else {
+      const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
+      date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+    }
+
+    const isPast = date < today
+    const isToday = date === today
     const status = getConsultationStatus(isPast, isToday)
 
     const timeRange = generateTimeRange(9, 16)
@@ -820,8 +844,6 @@ function generateConsultations(
 
     const startTime = timeRange.startTime
     const endTime = minutesToTime(timeToMinutes(startTime) + duration)
-
-    const treatmentPlanId = linkedIndices.has(i) && treatmentPlanIds.length > 0 ? randomItem(treatmentPlanIds) : null
 
     const consultation: any = {
       organizationId,
@@ -1119,18 +1141,16 @@ export default defineEventHandler(async (event: H3Event) => {
     const availableRoomIds = orgRoomIds[patientOrgId] || []
 
     const patientTreatmentPlans = await db
-      .select({ id: treatmentPlans.id })
+      .select({ id: treatmentPlans.id, startDate: treatmentPlans.startDate, endDate: treatmentPlans.endDate })
       .from(treatmentPlans)
       .where(eq(treatmentPlans.patientId, patientRecord.id))
-
-    const treatmentPlanIds = patientTreatmentPlans.map((plan) => plan.id)
 
     try {
       const consultationsData = generateConsultations(
         patientRecord.id,
         patientOrgId,
         therapistId,
-        treatmentPlanIds,
+        patientTreatmentPlans,
         availableRoomIds,
         roomBookings
       )
