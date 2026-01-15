@@ -36,6 +36,27 @@
     return plan ? { ...plan, notes: (plan.notes || []).map((note) => ({ ...note })) } : null
   })
 
+  const isArchivedPlan = computed(() => {
+    const status = selectedPlan.value?.status
+    return status === 'completed' || status === 'cancelled'
+  })
+
+  const addButtonLabel = computed(() => {
+    return onlyIndependentConsultations.value ? 'Nouvelle Consultation' : 'Nouvelle Séance'
+  })
+
+  const emptyDescription = computed(() => {
+    if (searchQuery.value || statusFilter.value !== 'all' || dateFrom.value || dateTo.value) {
+      return 'Aucune séance ne correspond à vos critères de recherche.'
+    }
+
+    if (isArchivedPlan.value) {
+      return 'Ce plan est archivé ou annulé, aucune nouvelle séance ne peut être ajoutée.'
+    }
+
+    return 'Commencez par créer une nouvelle séance.'
+  })
+
   const queryParams = computed(() => {
     const params: ConsultationQuery = {}
     if (!selectedPlanId.value && onlyIndependentConsultations.value) {
@@ -285,9 +306,16 @@
           </UBadge>
         </template>
         <template #actions>
-          <UButton icon="i-lucide-plus" color="primary" size="sm" @click="openCreateSessionSlideover">
-            Nouvelle Séance
-          </UButton>
+          <UTooltip :delayDuration="400" :text="isArchivedPlan ? 'Ce plan est archivé ou annulé' : undefined">
+            <UButton
+              icon="i-lucide-plus"
+              color="primary"
+              size="sm"
+              :disabled="isArchivedPlan"
+              :label="addButtonLabel"
+              @click="openCreateSessionSlideover"
+            />
+          </UTooltip>
         </template>
 
         <!-- Search -->
@@ -360,18 +388,15 @@
           v-else
           icon="i-lucide-calendar-x"
           title="Aucune séance"
-          :description="
-            searchQuery || statusFilter !== 'all' || dateFrom || dateTo
-              ? 'Aucune séance ne correspond à vos critères de recherche.'
-              : 'Commencez par créer une nouvelle séance.'
-          "
+          :description="emptyDescription"
           :ui="{ body: 'max-w-none' }"
           :actions="[
             {
-              label: 'Créer une séance',
+              label: addButtonLabel,
               icon: 'i-lucide-plus',
               color: 'primary',
-              onClick: openCreateSessionSlideover
+              onClick: openCreateSessionSlideover,
+              disabled: isArchivedPlan
             }
           ]"
         />
