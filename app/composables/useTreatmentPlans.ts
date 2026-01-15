@@ -22,10 +22,11 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
         ...plan,
         createdAt: parseISO(plan.createdAt),
         updatedAt: parseISO(plan.updatedAt),
-        notes: (plan.notes || []).map((note) => ({
-          ...note,
-          date: parseISO(note.date)
-        }))
+        notes:
+          (plan.notes || []).map((note) => ({
+            ...note,
+            date: parseISO(note.date)
+          })) || []
       }))
     },
     enabled: () => !!toValue(patientId)
