@@ -4,13 +4,14 @@
   import { CalendarDate, getLocalTimeZone, parseDate, parseTime, today } from '@internationalized/date'
 
   const props = defineProps<{
-    therapists: User[]
-    treatmentPlan: TreatmentPlan
+    treatmentPlan?: TreatmentPlan | null
+    patient: Patient
     consultation?: Consultation
   }>()
 
   const toast = useToast()
 
+  const { therapists } = useOrganizationMembers()
   const createConsultationMutation = useCreateConsultation()
   const updateConsultationMutation = useUpdateConsultation()
 
@@ -39,10 +40,10 @@
   })
 
   const consultationDetails = ref<ConsultationCreate>({
-    patientId: props.treatmentPlan.patientId,
-    organizationId: props.treatmentPlan.organizationId,
-    treatmentPlanId: props.treatmentPlan?.id,
-    therapistId: props.treatmentPlan.therapistId,
+    patientId: props.patient.id,
+    organizationId: props.patient.organizationId,
+    treatmentPlanId: props.treatmentPlan?.id || null,
+    therapistId: props.treatmentPlan?.therapistId || '',
     roomId: '',
     date: today(getLocalTimeZone()).toString(),
     startTime: '',
@@ -64,7 +65,7 @@
         const details = {
           patientId: consultation.patientId,
           organizationId: consultation.organizationId,
-          treatmentPlanId: consultation.treatmentPlanId || props.treatmentPlan.id,
+          treatmentPlanId: consultation.treatmentPlanId || props.treatmentPlan?.id,
           therapistId: consultation.therapistId,
           roomId: consultation.roomId || '',
           date: consultation.date,
@@ -117,7 +118,7 @@
   watch(
     () => props.treatmentPlan?.therapistId,
     (newTherapistId) => {
-      const therapist = props.therapists.find((t) => t.id === newTherapistId)
+      const therapist = therapists.value.find((t) => t.id === newTherapistId)
       if (therapist?.defaultConsultationDuration) {
         consultationDetails.value.duration = therapist.defaultConsultationDuration
       }
@@ -275,7 +276,7 @@
     try {
       if (isEditMode.value && props.consultation) {
         await updateConsultationMutation.mutateAsync({
-          patientId: props.treatmentPlan.patientId,
+          patientId: props.patient.id,
           consultationId: props.consultation.id,
           consultationData: {
             ...consultationDetails.value,
@@ -287,7 +288,7 @@
         })
       } else {
         await createConsultationMutation.mutateAsync({
-          patientId: props.treatmentPlan.patientId,
+          patientId: props.patient.id,
           consultationData: {
             ...consultationDetails.value,
             roomId:

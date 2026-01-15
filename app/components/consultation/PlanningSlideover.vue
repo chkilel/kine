@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const props = defineProps<{
     patient: Patient
-    treatmentPlan: TreatmentPlanWithProgress
+    treatmentPlan?: TreatmentPlanWithProgress | null
     consultation?: Consultation
   }>()
 
@@ -23,8 +23,6 @@
   //    }
   //  ] satisfies TabsItem[]
 
-  const { therapists } = useOrganizationMembers()
-
   // Tab state
   const activePlanningTab = ref('manual')
 
@@ -32,7 +30,8 @@
 
   const slideoverDescription = computed(() => {
     if (!props.consultation) {
-      return `Patient: ${formatFullName(props.patient)}`
+      const planInfo = props.treatmentPlan ? ` - Plan: ${props.treatmentPlan.title}` : ''
+      return `Patient: ${formatFullName(props.patient)}${planInfo}`
     }
     return `Modifier la séance du ${formatFrenchDate(props.consultation.date)} pour ${formatFullName(props.patient)}`
   })
@@ -65,7 +64,7 @@
       <!-- Main Content -->
       <div class="flex flex-col gap-4">
         <!-- Treatment Plan Overview -->
-        <UCard>
+        <UCard v-if="treatmentPlan">
           <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div class="bg-muted flex flex-col gap-1 rounded-lg p-4">
               <p class="text-sm font-medium">Total de séances</p>
@@ -94,10 +93,20 @@
           </div>
         </UCard>
 
+        <!-- Independent Session Banner -->
+        <UAlert
+          v-else
+          color="info"
+          variant="subtle"
+          icon="i-lucide-stethoscope"
+          title="Consultation Indépendante"
+          description="Cette séance n'est pas liée à un plan de traitement."
+        />
+
         <!-- Planning Tabs -->
         <ConsultationManualPlanningCard
           :treatment-plan="treatmentPlan"
-          :therapists="therapists"
+          :patient="patient"
           :consultation="consultation"
         />
 
@@ -124,7 +133,7 @@
         <!-- </UCard> -->
 
         <!-- Session Management FIXME -->
-        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="treatmentPlan.patientId" />
+        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="patient.id" />
 
         <!-- Communication Settings -->
         <UCard>

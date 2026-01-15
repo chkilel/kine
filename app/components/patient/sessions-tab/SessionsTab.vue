@@ -99,7 +99,6 @@
   }
 
   const openCreateSessionSlideover = () => {
-    if (!selectedPlan.value) return
     sessionPlanningOverlay.open({
       patient: props.patient,
       treatmentPlan: selectedPlan.value
@@ -125,7 +124,6 @@
   }
 
   const handleEditSession = (consultation: Consultation) => {
-    if (!selectedPlan.value) return
     sessionPlanningOverlay.open({
       patient: props.patient,
       treatmentPlan: selectedPlan.value,
