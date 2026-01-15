@@ -10,7 +10,16 @@
   const overlay = useOverlay()
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
   const confirmModal = overlay.create(LazyAppModalConfirm)
-  const { data: consultations, isLoading, refetch } = useConsultationsList(() => props.treatmentPlan.id)
+  const {
+    data: consultations,
+    isLoading,
+    refetch
+  } = useConsultationsList(
+    () => props.patient.id,
+    () => ({
+      treatmentPlanId: props.treatmentPlan.id
+    })
+  )
   const { mutate: deleteConsultation, isLoading: isDeleting } = useDeleteConsultation()
 
   // Refresh consultations data
