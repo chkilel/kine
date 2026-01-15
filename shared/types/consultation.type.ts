@@ -37,6 +37,10 @@ export const consultationSchema = createSelectSchema(consultations, {
 
 export const consultationQuerySchema = z.object({
   treatmentPlanId: z.string().optional(),
+  onlyIndependent: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(), // independent are not linked to a treatment plan
   status: consultationStatusSchema.optional(),
   type: consultationTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
