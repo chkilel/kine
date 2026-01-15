@@ -74,92 +74,32 @@
     <template #actions>
       <div class="flex items-center gap-2">
         <UButton
-          icon="i-lucide-refresh-cw"
+          icon="i-hugeicons-reload"
           variant="outline"
           color="neutral"
           size="sm"
           :loading="isLoading"
           @click="refreshConsultations"
-        >
-          Actualiser
-        </UButton>
-        <UButton icon="i-lucide-calendar-plus" color="primary" size="sm" @click="openConsultationPlanning">
-          Planifier les séances
-        </UButton>
+        />
+        <UButton
+          icon="i-hugeicons-calendar-add-01"
+          color="primary"
+          size="sm"
+          label="Planifier les séances"
+          @click="openConsultationPlanning"
+        />
       </div>
     </template>
     <ClientOnly>
-      <ul v-if="consultations?.length && consultations?.length > 0" class="space-y-2.5">
-        <li
+      <div v-if="consultations?.length && consultations?.length > 0" class="space-y-2.5">
+        <ConsultationCard
           v-for="consultation in consultations"
           :key="consultation.id"
-          class="group bg-muted hover:border-default flex cursor-pointer flex-col gap-4 rounded-lg border border-transparent p-3 transition-colors sm:flex-row sm:items-center"
-        >
-          <div class="flex flex-1 items-center gap-4">
-            <div class="flex">
-              <AppDateBadge :date="consultation.date" variant="solid" color="info" class="rounded-r-none" />
-              <AppTimeBadge
-                :date="consultation.date"
-                :time="consultation.startTime"
-                color="info"
-                variant="soft"
-                class="rounded-l-none"
-              />
-            </div>
-
-            <div class="min-w-0 flex-1">
-              <p class="text-default truncate font-semibold">
-                {{ getConsultationTypeLabel(consultation.type || 'follow_up') }}
-              </p>
-
-              <div class="text-muted sm:divide-default flex flex-col items-center text-xs sm:flex-row sm:divide-x">
-                <div class="flex items-center gap-1 pr-3">
-                  <UIcon :name="getLocationIcon(consultation.location || 'clinic')" />
-                </div>
-
-                <div class="flex items-center gap-1 px-3">
-                  <UIcon name="i-hugeicons-clock-01" />
-                  <p>{{ consultation.duration }} min</p>
-                </div>
-
-                <div v-if="consultation.roomName" class="flex items-center gap-1 px-3">
-                  <UIcon name="i-hugeicons-hospital-bed-02" />
-                  <p>{{ consultation.roomName }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex pl-4">
-            <div class="flex items-center gap-2">
-              <UBadge :color="getConsultationStatusColor(consultation.status)" variant="subtle">
-                {{ getConsultationStatusLabel(consultation.status) }}
-              </UBadge>
-            </div>
-            <div class="border-muted ml-2 flex items-center gap-1 border-l pl-2">
-              <div class="flex items-center justify-end gap-2">
-                <UButton
-                  icon="i-lucide-edit"
-                  variant="ghost"
-                  color="info"
-                  size="sm"
-                  square
-                  @click="editConsultation(consultation)"
-                />
-                <UButton
-                  icon="i-lucide-trash"
-                  variant="ghost"
-                  color="error"
-                  size="sm"
-                  square
-                  :loading="isDeleting"
-                  @click="handleDeleteConsultation(consultation)"
-                />
-              </div>
-            </div>
-          </div>
-        </li>
-      </ul>
+          :consultation
+          @edit="editConsultation($event)"
+          @delete="handleDeleteConsultation($event)"
+        />
+      </div>
       <UEmpty
         v-else
         variant="naked"
