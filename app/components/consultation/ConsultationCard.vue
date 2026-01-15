@@ -1,5 +1,13 @@
 <script setup lang="ts">
-  const props = defineProps<{ consultation: Consultation }>()
+  const {
+    consultation,
+    canEdit = true,
+    canDelete = true
+  } = defineProps<{
+    consultation: Consultation
+    canEdit?: boolean
+    canDelete?: boolean
+  }>()
 
   const emit = defineEmits<{
     edit: [consultation: Consultation]
@@ -63,18 +71,20 @@
           <UButton
             icon="i-lucide-edit"
             variant="ghost"
-            color="info"
+            :color="canEdit ? 'info' : 'neutral'"
             size="sm"
             square
-            @click="emit('edit', consultation)"
+            :disabled="!canEdit"
+            @click="canEdit && emit('edit', consultation)"
           />
           <UButton
             icon="i-lucide-trash"
             variant="ghost"
-            color="error"
+            :color="canDelete ? 'error' : 'neutral'"
             size="sm"
             square
-            @click="emit('delete', consultation)"
+            :disabled="!canDelete"
+            @click="canDelete && emit('delete', consultation)"
           />
         </div>
       </div>

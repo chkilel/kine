@@ -41,6 +41,18 @@
     return status === 'completed' || status === 'cancelled'
   })
 
+  const canEditConsultation = (consultation: Consultation) => {
+    if (isArchivedPlan.value) return false
+    const readOnlyStatuses: ConsultationStatus[] = ['completed', 'cancelled', 'no_show']
+    return !readOnlyStatuses.includes(consultation.status)
+  }
+
+  const canDeleteConsultation = (consultation: Consultation) => {
+    if (isArchivedPlan.value) return false
+    const readOnlyStatuses: ConsultationStatus[] = ['completed', 'in_progress']
+    return !readOnlyStatuses.includes(consultation.status)
+  }
+
   const addButtonLabel = computed(() => {
     return onlyIndependentConsultations.value ? 'Nouvelle Consultation' : 'Nouvelle Séance'
   })
@@ -379,6 +391,8 @@
             v-for="consultation in filteredConsultations"
             :key="consultation.id"
             :consultation="consultation"
+            :can-edit="canEditConsultation(consultation)"
+            :can-delete="canDeleteConsultation(consultation)"
             @edit="handleEditSession"
             @delete="handleDeleteSession"
           />
