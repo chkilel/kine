@@ -183,8 +183,51 @@ const _useDeleteConsultation = () => {
   })
 }
 
+/**
+ * Mutation for updating consultation status
+ * @returns Mutation with status update functionality and error handling
+ */
+const _useUpdateConsultationStatus = () => {
+  const toast = useToast()
+  const queryCache = useQueryCache()
+  const requestFetch = useRequestFetch()
+
+  return useMutation({
+    mutation: async ({
+      patientId,
+      consultationId,
+      status
+    }: {
+      patientId: string
+      consultationId: string
+      status: ConsultationStatus
+    }) =>
+      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+        method: 'PUT',
+        body: { status }
+      }),
+    onSuccess: (_, { patientId }) => {
+      toast.add({
+        title: 'Succès',
+        description: 'Statut de la consultation mis à jour',
+        color: 'success'
+      })
+      queryCache.invalidateQueries({ key: ['therapist-consultations'] })
+      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+    },
+    onError: (error: any) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour le statut').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
 export const useConsultationsList = _useConsultationsList
 export const useConsultation = _useConsultation
 export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
 export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
 export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)
+export const useUpdateConsultationStatus = createSharedComposable(_useUpdateConsultationStatus)

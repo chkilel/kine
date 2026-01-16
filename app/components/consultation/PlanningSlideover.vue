@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { LazyAppModalConfirm } from '#components'
+
   const props = defineProps<{
     patient: Patient
     treatmentPlan?: TreatmentPlanWithProgress | null
@@ -6,6 +8,9 @@
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
+  const overlay = useOverlay()
+  const confirmModal = overlay.create(LazyAppModalConfirm)
+  const { mutate: updateStatus } = useUpdateConsultationStatus()
 
   // Tab configuration
   //  const planningTabs = [
@@ -48,6 +53,56 @@
     sendConfirmations: false,
     enableReminders: true
   })
+
+  const canStartSession = computed(() => {
+    return props.consultation && ['scheduled', 'confirmed'].includes(props.consultation.status)
+  })
+
+  const canCompleteSession = computed(() => {
+    return props.consultation && props.consultation.status === 'in_progress'
+  })
+
+  const handleStartSession = async () => {
+    if (!props.consultation) return
+
+    const confirmed = await confirmModal.open({
+      title: 'Démarrer la consultation',
+      message: `Démarrer la consultation avec ${formatFullName(props.patient)} le ${formatFrenchDate(props.consultation.date)} à ${props.consultation.startTime} ?`,
+      confirmText: 'Démarrer',
+      cancelText: 'Annuler',
+      confirmColor: 'primary',
+      icon: 'i-hugeicons-play-circle'
+    })
+
+    if (confirmed) {
+      updateStatus({
+        patientId: props.patient.id,
+        consultationId: props.consultation.id,
+        status: 'in_progress'
+      })
+    }
+  }
+
+  const handleCompleteSession = async () => {
+    if (!props.consultation) return
+
+    const confirmed = await confirmModal.open({
+      title: 'Terminer la consultation',
+      message: `Terminer la consultation avec ${formatFullName(props.patient)} ?`,
+      confirmText: 'Terminer',
+      cancelText: 'Annuler',
+      confirmColor: 'success',
+      icon: 'i-hugeicons-checkmark-circle-01'
+    })
+
+    if (confirmed) {
+      updateStatus({
+        patientId: props.patient.id,
+        consultationId: props.consultation.id,
+        status: 'completed'
+      })
+    }
+  }
 </script>
 
 <template>
@@ -158,9 +213,33 @@
     </template>
     <!-- Footer -->
     <template #footer="{ close }">
-      <div class="flex w-full justify-end gap-3">
-        <UButton variant="outline" color="neutral" size="lg" @click="close">Annuler</UButton>
-        <UButton color="primary" size="lg">{{ consultation ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
+      <div class="flex w-full justify-between gap-3">
+        <div class="flex gap-3">
+          <UButton
+            v-if="canStartSession"
+            icon="i-hugeicons-play-circle"
+            color="primary"
+            size="lg"
+            @click="handleStartSession"
+          >
+            Démarrer
+          </UButton>
+
+          <UButton
+            v-if="canCompleteSession"
+            icon="i-hugeicons-checkmark-circle-01"
+            color="success"
+            size="lg"
+            @click="handleCompleteSession"
+          >
+            Terminer
+          </UButton>
+        </div>
+
+        <div class="flex gap-3">
+          <UButton variant="outline" color="neutral" size="lg" @click="close">Annuler</UButton>
+          <UButton color="primary" size="lg">{{ consultation ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
+        </div>
       </div>
     </template>
   </USlideover>
