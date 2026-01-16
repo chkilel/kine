@@ -481,7 +481,8 @@ async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(availabilityExceptions)
   await db.delete(weeklyAvailabilityTemplates)
   await db.delete(members)
-  await db.delete(users)
+  // Do not delete users here: auth and foreign key constraints expect them to persist,
+  // and seeding reuses existing users by email instead of recreating them
   await db.delete(organizations)
 }
 
