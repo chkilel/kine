@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm } from '#components'
+  import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -10,6 +10,7 @@
   const emit = defineEmits<{ close: [data?: any] }>()
   const overlay = useOverlay()
   const confirmModal = overlay.create(LazyAppModalConfirm)
+  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
   const { mutate: updateStatus } = useUpdateConsultationStatus()
 
   // Tab configuration
@@ -74,13 +75,20 @@
       icon: 'i-hugeicons-play-circle'
     })
 
-    if (confirmed) {
-      updateStatus({
-        patientId: props.patient.id,
-        consultationId: props.consultation.id,
-        status: 'in_progress'
-      })
-    }
+    if (!confirmed) return
+
+    updateStatus({
+      patientId: props.patient.id,
+      consultationId: props.consultation.id,
+      status: 'in_progress'
+    })
+
+    activeConsultationOverlay.open({
+      patientId: props.patient.id,
+      consultationId: props.consultation.id
+    })
+
+    emit('close')
   }
 
   const handleCompleteSession = async () => {

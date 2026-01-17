@@ -1,15 +1,20 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm } from '#components'
+  import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
   import type { BreadcrumbItem } from '@nuxt/ui'
   import { addDays, subDays, format, parseISO } from 'date-fns'
   import { fr as frLocale } from 'date-fns/locale'
 
+  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' },
+    { label: 'Planning quotidien', icon: 'i-hugeicons-calendar-02' }
+  ])
+
   const route = useRoute()
   const router = useRouter()
-  const toast = useToast()
   const overlay = useOverlay()
 
   const confirmModal = overlay.create(LazyAppModalConfirm)
+  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
   const { mutate: updateStatus } = useUpdateConsultationStatus()
 
   const currentDate = computed(() => {
@@ -47,7 +52,7 @@
     return ['scheduled', 'confirmed'].includes(status)
   }
 
-  const canCompleteSession = (status: ConsultationStatus) => {
+  const canViewSession = (status: ConsultationStatus) => {
     return status === 'in_progress'
   }
 
@@ -61,46 +66,26 @@
       icon: 'i-hugeicons-play-circle'
     })
 
-    if (confirmed) {
-      updateStatus({
-        patientId: consultation.patientId,
-        consultationId: consultation.id,
-        status: 'in_progress'
-      })
-    }
-  }
+    if (!confirmed) return
 
-  const handleCompleteSession = async (consultation: TherapistConsultation) => {
-    const confirmed = await confirmModal.open({
-      title: 'Terminer la consultation',
-      message: `Terminer la consultation avec ${consultation.patientName} ?`,
-      confirmText: 'Terminer',
-      cancelText: 'Annuler',
-      confirmColor: 'success',
-      icon: 'i-hugeicons-checkmark-circle-01'
+    updateStatus({
+      patientId: consultation.patientId,
+      consultationId: consultation.id,
+      status: 'in_progress'
     })
 
-    if (confirmed) {
-      updateStatus({
-        patientId: consultation.patientId,
-        consultationId: consultation.id,
-        status: 'completed'
-      })
-    }
+    activeConsultationOverlay.open({
+      patientId: consultation.patientId,
+      consultationId: consultation.id
+    })
   }
 
-  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' },
-    { label: 'Planning quotidien', icon: 'i-hugeicons-calendar-02' }
-  ])
-
-  watch(currentDate, () => {
-    useHead({ title: `Planning quotidien - ${formattedDate.value}` })
-  })
-
-  onMounted(() => {
-    useHead({ title: `Planning quotidien - ${formattedDate.value}` })
-  })
+  const handleViewSession = (consultation: TherapistConsultation) => {
+    activeConsultationOverlay.open({
+      patientId: consultation.patientId,
+      consultationId: consultation.id
+    })
+  }
 </script>
 
 <template>
@@ -206,13 +191,13 @@
                     </UButton>
 
                     <UButton
-                      v-if="canCompleteSession(consultation.status)"
-                      icon="i-hugeicons-checkmark-circle-01"
+                      v-if="canViewSession(consultation.status)"
+                      icon="i-hugeicons-view-01"
                       color="success"
                       size="sm"
-                      @click="handleCompleteSession(consultation)"
+                      @click="handleViewSession(consultation)"
                     >
-                      Terminer
+                      Voir la séance
                     </UButton>
 
                     <UButton
