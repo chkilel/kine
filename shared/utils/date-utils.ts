@@ -1,4 +1,17 @@
-import { format, differenceInYears, parseISO, formatDistanceToNow, differenceInDays } from 'date-fns'
+import {
+  format,
+  differenceInYears,
+  parseISO,
+  formatDistanceToNow,
+  differenceInDays,
+  isToday,
+  isYesterday,
+  isTomorrow,
+  differenceInCalendarDays,
+  differenceInWeeks,
+  differenceInMonths,
+  formatDistance
+} from 'date-fns'
 import { CalendarDate, parseTime, Time } from '@internationalized/date'
 import { fr } from 'date-fns/locale'
 
@@ -87,14 +100,25 @@ export function extractDayAndMonth(dateString: string) {
 }
 
 export function formatRelativeDate(date: Date | string): string {
-  const noteDate = typeof date === 'string' ? parseISO(date) : date
+  const d = typeof date === 'string' ? new Date(date) : date
   const now = new Date()
-  const diffInDays = differenceInDays(now, noteDate)
+  const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
 
-  if (diffInDays === 0) return "Aujourd'hui"
-  if (diffInDays === 1) return 'Hier'
+  const diffDays = differenceInCalendarDays(d, now)
 
-  return formatDistanceToNow(noteDate, { addSuffix: true, locale: fr })
+  // Always use days as minimum unit
+  if (diffDays === 0) return rtf.format(0, 'day') // "aujourd'hui"
+
+  if (Math.abs(diffDays) < 7) return rtf.format(diffDays, 'day')
+
+  const diffWeeks = differenceInWeeks(d, now)
+  if (Math.abs(diffWeeks) < 4) return rtf.format(diffWeeks, 'week')
+
+  const diffMonths = differenceInMonths(d, now)
+  if (Math.abs(diffMonths) < 12) return rtf.format(diffMonths, 'month')
+
+  const diffYears = differenceInYears(d, now)
+  return rtf.format(diffYears, 'year')
 }
 
 export function formatFrenchDate(date: Date | string | null): string {

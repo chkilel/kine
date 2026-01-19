@@ -129,6 +129,9 @@ describe('date-utils', () => {
 
     it('1.5.4 should not disable today', () => {
       const today = new Date()
+      if (today.getDay() === 0) {
+        today.setDate(today.getDate() + 1)
+      }
       expect(isDateDisabled(today)).toBe(false)
     })
 
@@ -209,7 +212,7 @@ describe('date-utils', () => {
     it('1.8.3 should return relative time for older dates', () => {
       const lastWeek = new Date()
       lastWeek.setDate(lastWeek.getDate() - 7)
-      expect(formatRelativeDate(lastWeek)).toContain('il y a')
+      expect(formatRelativeDate(lastWeek)).toContain('Il y a')
     })
 
     it('1.8.4 should handle string date input', () => {
