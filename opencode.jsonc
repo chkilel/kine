@@ -24,6 +24,14 @@
         "ctx7sk-50eb2428-6c15-4203-9ed0-a59eddd6c0c1"
       ],
       "enabled": true
+    },
+    "hugeicons": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@hugeicons/mcp-server"
+      ]
     }
   }
 }
