@@ -179,7 +179,7 @@
                       v-for="consultation in upcomingConsultations"
                       :key="consultation.id"
                       :consultation="consultation"
-                      @start="handleStartSession"
+                      @start-session="handleStartSession"
                     />
                   </div>
 

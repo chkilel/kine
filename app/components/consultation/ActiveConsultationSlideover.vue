@@ -24,7 +24,7 @@
   const { data: allConsultations } = useConsultationsList(() => props.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
 
-  const painLevelBefore = ref<number | null>(null)
+  const painLevelBefore = ref<number>(0)
   const painLevelAfter = ref<number | undefined>(undefined)
   const consultationNotes = ref('')
 
@@ -49,7 +49,7 @@
     consultation,
     (value) => {
       if (!value) return
-      painLevelBefore.value = value.painLevelBefore ?? null
+      painLevelBefore.value = value.painLevelBefore ?? 0
       painLevelAfter.value = value.painLevelAfter ?? undefined
       consultationNotes.value = value.notes || ''
 
@@ -153,9 +153,7 @@
     if (!allConsultations.value || !consultation.value) return 0
     const planId = consultation.value.treatmentPlanId
     if (!planId) return 0
-    return allConsultations.value.filter(
-      (c) => c.treatmentPlanId === planId && c.status === 'completed'
-    ).length
+    return allConsultations.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
   const totalSessionsCount = computed(() => {
@@ -172,7 +170,8 @@
 
   function getEvaColor(value: number) {
     if (value <= 3) return 'success'
-    if (value <= 7) return 'warning'
+    if (value <= 5) return 'warning'
+    if (value <= 7) return 'orange'
     return 'error'
   }
 
@@ -249,7 +248,7 @@
     :title="headerTitle"
     :description="headerDescription"
     :ui="{
-      content: 'w-full max-w-6xl bg-elevated'
+      content: 'w-full max-w-[1500px] bg-elevated'
     }"
     @close="handleClose"
   >
@@ -257,208 +256,283 @@
       <div v-if="consultationLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
-      <div v-else class="grid gap-4 lg:grid-cols-[1.1fr,1.8fr,1.1fr]">
-        <div class="space-y-4">
-          <UCard>
-            <div class="flex items-center gap-3">
-              <UAvatar
-                :alt="patient ? formatFullName(patient) : ''"
-                class="ring-muted size-14 rounded-2xl bg-cover bg-center bg-no-repeat text-xl shadow-inner ring-4"
-              />
-              <div class="flex flex-col gap-1">
-                <div class="flex items-center gap-2">
-                  <h2 class="text-lg font-bold">
-                    {{ patient ? formatFullName(patient) : 'Patient' }}
-                  </h2>
-                  <UBadge v-if="consultation" :color="getConsultationStatusColor(consultation.status)" size="xs">
-                    {{ getConsultationStatusLabel(consultation.status) }}
-                  </UBadge>
-                </div>
-                <p v-if="patient?.dateOfBirth" class="text-muted text-xs">
-                  {{ calculateAge(patient.dateOfBirth) }} ans
+      <div v-else class="grid h-full gap-6 lg:grid-cols-12">
+        <aside class="flex flex-col gap-4 lg:col-span-3">
+          <UCard :ui="{ body: 'p-0 sm:p-0' }">
+            <div class="flex flex-col items-center p-6">
+              <div class="bg-primary-50 mb-4 size-28 rounded-full p-2">
+                <UAvatar :alt="patient ? formatFullName(patient) : ''" class="h-full w-full" size="3xl" />
+              </div>
+              <div class="text-center">
+                <h2 class="text-xl font-extrabold">
+                  {{ patient ? formatFullName(patient) : 'Patient' }}
+                </h2>
+                <p v-if="patient?.dateOfBirth" class="text-muted mt-1 text-sm font-semibold">
+                  {{ calculateAge(patient.dateOfBirth) }} ans • {{ getGenderLabel(patient.gender) }}
                 </p>
               </div>
             </div>
-          </UCard>
-
-          <UCard v-if="relatedTreatmentPlan">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold">Plan de traitement</h3>
-                <UBadge size="xs" variant="subtle">
-                  {{ relatedTreatmentPlan.status === 'ongoing' ? 'En cours' : 'Plan' }}
-                </UBadge>
+            <div class="border-default border-t px-6 pt-6 pb-6">
+              <div v-if="relatedTreatmentPlan" class="mb-5">
+                <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Diagnostic Principal</p>
+                <UAlert
+                  :title="relatedTreatmentPlan.title"
+                  :description="relatedTreatmentPlan.diagnosis"
+                  icon="i-hugeicons-healtcare"
+                  variant="subtle"
+                  :ui="{
+                    title: 'text-sm leading-snug font-bold text-default',
+                    description: 'text-sm opacity-90',
+                    icon: 'size-6'
+                  }"
+                />
               </div>
-              <p class="text-sm font-medium">
-                {{ relatedTreatmentPlan.title }}
-              </p>
-              <div class="space-y-1">
-                <div class="flex justify-between text-xs text-muted">
-                  <span>Séances terminées</span>
-                  <span>{{ completedSessionsCount }} / {{ totalSessionsCount }}</span>
-                </div>
-                <UProgress :model-value="progressPercentage" :max="100" size="sm" />
-              </div>
-            </div>
-          </UCard>
-
-          <UCard v-if="patient?.medicalConditions?.length">
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-hugeicons-healthcare" class="text-primary size-4" />
-                <h3 class="text-sm font-semibold">Pathologies principales</h3>
-              </div>
-              <ul class="space-y-1">
-                <li v-for="condition in patient.medicalConditions" :key="condition" class="text-muted text-xs">
-                  • {{ condition }}
-                </li>
-              </ul>
-            </div>
-          </UCard>
-
-          <UAlert
-            v-if="patient?.allergies?.length"
-            color="error"
-            variant="subtle"
-            icon="i-hugeicons-warning-01"
-            title="Allergies / alertes médicales"
-          >
-            <template #description>
-              <ul class="space-y-1">
-                <li v-for="allergy in patient.allergies" :key="allergy" class="text-xs">
-                  • {{ allergy }}
-                </li>
-              </ul>
-            </template>
-          </UAlert>
-        </div>
-
-        <div class="space-y-4">
-          <UCard>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-semibold">Niveau de douleur (avant séance)</h3>
-                <p class="text-muted text-xs">Échelle EVA de 0 à 10</p>
-              </div>
-              <div v-if="painLevelBefore !== null" class="flex items-center gap-2 text-sm font-semibold">
-                <span>{{ getEvaEmoji(painLevelBefore) }}</span>
-                <span>{{ painLevelBefore }}/10</span>
-              </div>
-            </div>
-            <div class="mt-4 grid grid-cols-4 gap-2">
-              <UButton
-                v-for="value in evaValues"
-                :key="value"
-                :color="getEvaColor(value)"
-                variant="soft"
-                size="sm"
-                :class="[
-                  'flex flex-col items-center justify-center py-2',
-                  painLevelBefore === value ? 'ring-2 ring-offset-1 ring-primary' : ''
-                ]"
-                @click="painLevelBefore = value"
+              <div
+                v-if="
+                  patient?.allergies?.length ||
+                  patient?.medicalConditions?.length ||
+                  patient?.surgeries?.length ||
+                  patient?.medications?.length
+                "
               >
-                <span class="text-lg">
-                  {{ getEvaEmoji(value) }}
-                </span>
-                <span class="text-xs font-semibold">
-                  {{ value }}
-                </span>
-              </UButton>
+                <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Alertes Médicales</p>
+
+                <div class="space-y-3">
+                  <UAlert
+                    v-if="patient?.allergies?.length"
+                    title="Allergie"
+                    :description="patient.allergies.join(', ')"
+                    icon="i-hugeicons-alert-01"
+                    color="error"
+                    variant="subtle"
+                    :ui="{
+                      title: 'text-sm leading-snug font-bold text-error-700',
+                      description: 'text-sm opacity-90',
+                      icon: 'size-6'
+                    }"
+                  />
+
+                  <UAlert
+                    v-if="patient?.medicalConditions?.length"
+                    title="Antécédents médicaux"
+                    :description="patient.medicalConditions.join(', ')"
+                    icon="i-hugeicons-medical-file"
+                    color="warning"
+                    variant="subtle"
+                    :ui="{
+                      title: 'text-sm leading-snug font-bold text-warning-600',
+                      description: 'text-sm opacity-90',
+                      icon: 'size-6'
+                    }"
+                  />
+
+                  <UAlert
+                    v-if="patient?.surgeries?.length"
+                    title="Chirurgies"
+                    :description="patient.surgeries.join(', ')"
+                    icon="i-hugeicons-hospital"
+                    color="info"
+                    variant="subtle"
+                    :ui="{
+                      title: 'text-sm leading-snug font-bold text-info-800',
+                      description: 'text-sm opacity-90',
+                      icon: 'size-6'
+                    }"
+                  />
+
+                  <UAlert
+                    v-if="patient?.medications?.length"
+                    title="Médicaments"
+                    :description="patient.medications.join(', ')"
+                    icon="i-hugeicons-give-pill"
+                    color="neutral"
+                    variant="subtle"
+                    :ui="{
+                      title: 'text-sm leading-snug font-bold text-neutral-700',
+                      description: 'text-sm opacity-90',
+                      icon: 'size-6'
+                    }"
+                  />
+                </div>
+              </div>
             </div>
           </UCard>
 
+          <UCard :ui="{ body: 'flex items-center justify-between p-4' }">
+            <div>
+              <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Progression</p>
+              <p class="text-lg font-bold">{{ progressPercentage }}%</p>
+            </div>
+            <div class="bg-border h-8 w-px"></div>
+            <div>
+              <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Séances</p>
+              <p class="text-lg font-bold">{{ completedSessionsCount }}/{{ totalSessionsCount }}</p>
+            </div>
+            <div class="bg-border h-8 w-px"></div>
+            <div>
+              <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Dernière EVA</p>
+              <p class="text-lg font-bold">
+                {{ painLevelBefore !== null ? `${painLevelBefore}/10` : '-' }}
+              </p>
+            </div>
+          </UCard>
+        </aside>
+
+        <div class="flex flex-col gap-4 lg:col-span-6">
           <UCard>
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-semibold">Notes de consultation</h3>
-              <div class="flex gap-2">
+            <div class="mb-6 flex items-center justify-between">
+              <h3 class="flex items-center gap-2 text-base font-bold">
+                <UIcon name="i-hugeicons-straighten" class="text-primary text-xl" />
+                Niveau de Douleur (EVA)
+              </h3>
+              <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-gray-400 uppercase">
+                  <span class="size-2 rounded-full bg-green-500"></span>
+                  Aucun
+                </span>
+                <span class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-gray-400 uppercase">
+                  <span class="size-2 rounded-full bg-red-600"></span>
+                  Intense
+                </span>
+                <UBadge variant="subtle" size="xs" class="ml-2">Aujourd'hui</UBadge>
+              </div>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span
+                v-for="(item, index) in [...Array(11).keys()]"
+                :key="index"
+                :class="[
+                  'inline-flex w-[2ch] justify-center border-t-3 p-0.5 tabular-nums transition-all',
+                  painLevelBefore === item ? 'text-error border-error font-bold' : 'border-transparent'
+                ]"
+              >
+                {{ item.toFixed(0).padStart(2, ' ') }}
+              </span>
+            </div>
+            <USlider
+              v-model="painLevelBefore"
+              :min="0"
+              :max="10"
+              :step="1"
+              :ui="{
+                root: 'w-full flex-1 mt-2',
+                track: 'bg-gradient-to-r from-green-600 via-yellow-400 to-red-500',
+                range: 'bg-transparent',
+                thumb: 'bg-error ring-error focus-visible:outline-error/50'
+              }"
+              class="w-full flex-1"
+            />
+          </UCard>
+
+          <UCard :ui="{ body: 'p-0 sm:p-0 flex flex-col space-y-2 overflow-hidden' }">
+            <div class="border-default bg-muted-50 flex items-center gap-1 border-b p-2">
+              <UButton icon="i-hugeicons-text-bold" variant="ghost" color="neutral" size="xs" square />
+              <UButton icon="i-hugeicons-text-italic" variant="ghost" color="neutral" size="xs" square />
+              <UButton icon="i-hugeicons-text-underline" variant="ghost" color="neutral" size="xs" square />
+              <div class="bg-border mx-2 h-6 w-px"></div>
+              <UButton icon="i-hugeicons-check-list" variant="ghost" color="neutral" size="xs" square />
+              <UButton icon="i-hugeicons-left-to-right-list-number" variant="ghost" color="neutral" size="xs" square />
+              <div class="flex-1"></div>
+              <div class="text-muted flex items-center gap-1 text-xs">
+                <UIcon name="i-hugeicons-cloud-saving-done-01" class="size-4" />
+                Sauvegardé
+              </div>
+            </div>
+            <UTextarea
+              v-model="consultationNotes"
+              :rows="12"
+              placeholder="Notes de la séance... Décrivez les exercices effectués, les réactions du patient et les progrès observés."
+              class="border-none bg-transparent focus:ring-0"
+              :ui="{ root: 'flex-1 h-full' }"
+            />
+            <div class="border-default bg-muted-50/50 dark:bg-muted-900/30 border-t p-4">
+              <div class="mb-2 flex items-center justify-between">
+                <p class="text-muted text-xs font-bold tracking-wider uppercase">Smart Tags</p>
+                <UButton variant="ghost" color="primary" size="xs">Gérer les tags</UButton>
+              </div>
+              <div class="flex flex-wrap gap-2">
                 <UButton
-                  v-for="tag in ['Douleur', 'Mobilité', 'Force', 'Éducation']"
+                  v-for="tag in [
+                    'Douleur Diminuée',
+                    'Gain Amplitude',
+                    'Proprioception',
+                    'Cryothérapie',
+                    'Renforcement'
+                  ]"
                   :key="tag"
-                  size="xs"
-                  variant="ghost"
+                  icon="i-hugeicons-add-01"
+                  variant="outline"
                   color="neutral"
+                  size="xs"
                   @click="consultationNotes = `${consultationNotes} [${tag}] `"
                 >
-                  #{{ tag }}
+                  {{ tag }}
                 </UButton>
-              </div>
-            </div>
-            <div class="mt-3">
-              <UTextarea
-                v-model="consultationNotes"
-                :rows="8"
-                placeholder="Décrire l'évolution, les exercices réalisés, les réactions du patient..."
-              />
-            </div>
-          </UCard>
-
-          <UCard>
-            <div class="grid gap-4 md:grid-cols-2">
-              <div class="space-y-2">
-                <h3 class="text-sm font-semibold">Niveau de douleur (après séance)</h3>
-                <USlider v-model="painLevelAfter" :min="0" :max="10" :step="1" />
-                <p class="text-muted text-xs">
-                  Valeur actuelle:
-                  <span v-if="painLevelAfter !== undefined" class="font-semibold">
-                    {{ painLevelAfter }}/10
-                  </span>
-                  <span v-else>Non renseigné</span>
-                </p>
-              </div>
-              <div class="space-y-2">
-                <h3 class="text-sm font-semibold">Résumé rapide</h3>
-                <p class="text-muted text-xs">
-                  Utiliser le champ de notes principal pour détailler le déroulement de la séance et les recommandations.
-                </p>
               </div>
             </div>
           </UCard>
         </div>
 
-        <div class="space-y-4">
-          <UCard>
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-semibold">Durée de la séance</h3>
-                <p class="text-muted text-xs">Temps écoulé / temps prévu</p>
-              </div>
-              <UBadge color="success" variant="subtle" size="xs">
-                En cours
-              </UBadge>
-            </div>
-            <div class="mt-4 space-y-3">
-              <div class="text-center">
-                <div class="text-3xl font-bold">
-                  {{ elapsedLabel }}
+        <div class="flex h-full flex-col gap-4 lg:col-span-3">
+          <UButton
+            color="neutral"
+            size="xl"
+            variant="solid"
+            block
+            class="rounded-xl text-lg font-bold shadow-lg"
+            icon="i-hugeicons-checkmark-circle-01"
+            @click="handleComplete"
+          >
+            <span>Terminer la séance</span>
+          </UButton>
+          <div class="bg-primary relative flex flex-col overflow-hidden rounded-xl text-white shadow-lg">
+            <div
+              class="pointer-events-none absolute top-0 right-0 -mt-8 -mr-8 h-40 w-40 rounded-full bg-white/10 blur-3xl"
+            ></div>
+            <div
+              class="pointer-events-none absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-black/10 blur-2xl"
+            ></div>
+            <div class="relative z-10 flex flex-col items-center p-6 pb-28 text-center">
+              <div class="mb-1 flex items-center justify-center gap-3">
+                <UIcon name="i-hugeicons-alarm-clock" class="animate-pulse text-4xl" />
+                <div class="font-display text-[48px] leading-none font-bold tracking-tight">
+                  {{ remainingLabel || '00:00' }}
                 </div>
-                <p v-if="remainingLabel" class="text-muted text-xs">
-                  Reste {{ remainingLabel }}
-                </p>
               </div>
-              <UProgress :model-value="timerProgress" :max="100" size="lg" />
-              <div class="flex justify-center gap-2">
-                <UButton
-                  icon="i-hugeicons-pause-circle"
-                  variant="ghost"
-                  color="neutral"
-                  size="sm"
-                  @click="pauseTimer"
-                >
-                  {{ isPaused ? 'Reprendre' : 'Pause' }}
+              <div class="text-primary-100 mb-5 text-lg font-medium">restant</div>
+              <div
+                class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-1.5 font-mono text-sm text-white/90 shadow-sm backdrop-blur-sm"
+              >
+                <span>Écoulé : {{ elapsedLabel }}</span>
+              </div>
+            </div>
+            <div
+              v-if="showFiveMinuteWarning"
+              class="bg-elevated border-warning absolute right-3 bottom-3 left-3 z-20 rounded-lg border-l-4 p-3 shadow-xl"
+            >
+              <div class="mb-3 flex items-start gap-3">
+                <span class="text-lg select-none">⚠️</span>
+                <div class="flex-1">
+                  <p class="text-sm leading-tight font-bold">5 minutes restantes</p>
+                  <p class="text-muted mt-0.5 text-xs">La séance se termine bientôt</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <UButton color="success" size="xs" class="flex-1 justify-center font-bold" @click="handleComplete">
+                  Terminer maintenant
                 </UButton>
                 <UButton
-                  icon="i-hugeicons-stop-circle"
-                  variant="ghost"
-                  color="error"
-                  size="sm"
-                  @click="stopTimer"
+                  variant="outline"
+                  color="neutral"
+                  size="xs"
+                  class="flex-1 justify-center font-bold"
+                  @click="handleExtendFiveMinutes"
                 >
-                  Stop
+                  Prolonger de 5 min
                 </UButton>
               </div>
             </div>
-          </UCard>
+          </div>
 
           <UCard>
             <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
@@ -469,82 +543,72 @@
                 :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
                 trailing-icon="i-lucide-chevron-down"
               >
-                <span class="text-sm font-semibold">Séances précédentes</span>
+                <span class="flex items-center gap-3 text-sm font-semibold">
+                  <div class="bg-error-5 dark:bg-error-950/20 rounded-lg p-2">
+                    <UIcon name="i-hugeicons-pulse-01" class="text-error animate-pulse" />
+                  </div>
+                  Notes des séances précédentes
+                </span>
               </UButton>
               <template #content>
-                <div v-if="previousConsultations.length" class="space-y-3">
-                  <UCard
-                    v-for="previous in previousConsultations"
-                    :key="previous.id"
-                    variant="subtle"
-                    :ui="{ body: 'p-3 space-y-1' }"
-                  >
-                    <div class="flex items-center justify-between text-xs text-muted">
-                      <span>{{ formatFrenchDate(previous.date) }}</span>
-                      <span v-if="previous.painLevelBefore !== null">
+                <div v-if="previousConsultations.length" class="space-y-5 pt-3">
+                  <div v-for="previous in previousConsultations" :key="previous.id">
+                    <div class="mb-1 flex items-center justify-between">
+                      <span class="text-sm font-bold">{{ formatFrenchDate(previous.date) }}</span>
+                      <span
+                        v-if="previous.painLevelBefore !== null"
+                        class="text-muted bg-muted-100 dark:bg-muted-800 rounded px-2 py-0.5 text-xs"
+                      >
                         EVA {{ previous.painLevelBefore }}/10
                       </span>
                     </div>
-                    <p class="text-xs">
+                    <p class="text-muted line-clamp-3 text-sm leading-relaxed">
                       {{ previous.notes || 'Aucune note enregistrée pour cette séance.' }}
                     </p>
-                  </UCard>
+                  </div>
                 </div>
-                <div v-else class="text-muted text-xs">
-                  Aucune séance précédente enregistrée.
-                </div>
+                <div v-else class="text-muted pt-3 text-xs">Aucune séance précédente enregistrée.</div>
               </template>
             </UCollapsible>
           </UCard>
-
-          <UCard>
-            <div class="space-y-3">
-              <UButton
-                color="success"
-                size="lg"
-                class="w-full justify-center font-semibold"
-                icon="i-hugeicons-checkmark-circle-01"
-                @click="handleComplete"
-              >
-                Terminer la consultation
-              </UButton>
-              <UButton
-                variant="outline"
-                color="neutral"
-                size="sm"
-                class="w-full justify-center"
-                @click="handleClose"
-              >
-                Fermer sans terminer
-              </UButton>
-            </div>
-          </UCard>
         </div>
-      </div>
-      <div v-if="showFiveMinuteWarning" class="mt-4">
-        <UAlert
-          color="warning"
-          variant="soft"
-          icon="i-hugeicons-alarm-01"
-          title="5 minutes restantes"
-        >
-          <template #description>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div class="text-xs sm:text-sm">
-                La séance se termine bientôt. Que souhaitez-vous faire ?
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <UButton color="success" size="sm" @click="handleComplete">
-                  Terminer maintenant
-                </UButton>
-                <UButton variant="outline" color="primary" size="sm" @click="handleExtendFiveMinutes">
-                  Prolonger 5 min
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UAlert>
       </div>
     </template>
   </USlideover>
 </template>
+
+<style scoped>
+  .eva-0 {
+    background-color: rgb(34 197 94);
+  }
+  .eva-1 {
+    background-color: rgb(74 222 128);
+  }
+  .eva-2 {
+    background-color: rgb(132 204 22);
+  }
+  .eva-3 {
+    background-color: rgb(163 230 53);
+  }
+  .eva-4 {
+    background-color: rgb(234 179 8);
+  }
+  .eva-5 {
+    background-color: rgb(250 204 21);
+  }
+  .eva-6 {
+    background-color: rgb(249 115 22);
+  }
+  .eva-7 {
+    background-color: rgb(251 146 60);
+  }
+  .eva-8 {
+    background-color: rgb(239 68 68);
+  }
+  .eva-9 {
+    background-color: rgb(220 38 38);
+  }
+  .eva-10 {
+    background-color: rgb(220 38 38);
+  }
+</style>
