@@ -4,8 +4,9 @@
   }>()
 
   const emit = defineEmits<{
-    start: [consultation: TherapistConsultation]
-    view: [consultation: TherapistConsultation]
+    'start-session': [consultation: TherapistConsultation]
+    'view-patient': [patientId: string]
+    'view-consultation': [consultation: TherapistConsultation]
   }>()
 
   const isInProgress = computed(() => consultation.status === 'in_progress')
@@ -18,7 +19,7 @@
     :class="[
       'ring-default flex items-center gap-4 rounded-xl p-4 shadow-sm ring transition-all',
       isInProgress && 'bg-info/5 ring-primary shadow-primary shadow-lg',
-      !isInProgress && 'bg-default hover:shadow-md',
+      !isInProgress && 'bg-muted hover:shadow-md',
       isCompleted && 'bg-muted opacity-75 grayscale-[0.5]',
       !isCompleted && !isInProgress && 'group'
     ]"
@@ -111,7 +112,7 @@
           base: 'rounded-xl'
         }"
         class="shadow-success/10 font-semibold text-white shadow-lg"
-        @click="emit('start', consultation)"
+        @click="emit('start-session', consultation)"
       />
     </div>
 
@@ -130,12 +131,20 @@
       :items="[
         [
           {
-            label: 'Voir dossier',
-            icon: 'i-hugeicons-view',
-            click: () => emit('view', consultation)
+            label: 'Patient',
+            icon: 'i-hugeicons-profile-02',
+            onSelect: () => emit('view-patient', consultation.patientId),
+            to: `/patients/${consultation.patientId}`
+          },
+          {
+            label: 'RDV',
+            icon: 'i-hugeicons-appointment-02',
+            onSelect: () => emit('view-consultation', consultation)
           }
         ]
       ]"
+      :content="{ align: 'center' }"
+      :ui="{ content: 'min-w-0' }"
     >
       <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" square />
     </UDropdownMenu>

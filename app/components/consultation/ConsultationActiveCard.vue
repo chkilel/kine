@@ -10,9 +10,9 @@
 </script>
 
 <template>
-  <div class="bg-primary group shadow-primary/50 relative overflow-hidden rounded-2xl p-4 text-white shadow-xl">
+  <div class="bg-primary group shadow-primary/40 relative overflow-hidden rounded-2xl p-4 text-white shadow-md">
     <div
-      class="dark:bg-primary-800 absolute -top-8 -left-8 size-32 rounded-full bg-white/40 blur-2xl transition-transform duration-500 group-hover:scale-250"
+      class="dark:bg-primary-500 absolute -top-8 -right-8 size-32 rounded-full bg-white/40 blur-2xl transition-transform duration-500 group-hover:scale-250 dark:right-auto dark:-left-8"
     />
     <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
       <div class="flex gap-4">
@@ -52,18 +52,17 @@
           icon="i-hugeicons-property-view"
           variant="solid"
           color="success"
-          class="hover:text-inverted rounded-xl px-4 font-semibold hover:bg-white"
+          class="rounded-xl py-2 font-semibold"
           @click="emit('view-session', consultation)"
         />
         <UButton
-          icon="i-hugeicons-folder-view"
-          variant="ghost"
+          label="Patient"
+          icon="i-hugeicons-profile-02"
+          variant="solid"
           color="neutral"
-          class="rounded-xl border border-white/40 px-4 py-2.5 text-sm font-medium text-white"
+          class="rounded-xl p-2"
           @click="emit('view-patient', consultation.patientId)"
-        >
-          Patient
-        </UButton>
+        />
       </div>
     </div>
   </div>
