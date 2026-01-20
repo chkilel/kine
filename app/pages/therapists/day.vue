@@ -90,6 +90,10 @@
       consultationId: consultation.id
     })
   }
+
+  function handleViewPatient(patientId: string) {
+    navigateTo(`/patients/${patientId}`)
+  }
 </script>
 
 <template>
@@ -153,8 +157,8 @@
                 v-for="consultation in inProgressConsultations"
                 :key="consultation.id"
                 :consultation
-                @view="handleViewSession"
-                @complete="handleViewSession"
+                @view-session="handleViewSession"
+                @view-patient="handleViewPatient"
               />
             </div>
 
