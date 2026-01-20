@@ -1,12 +1,17 @@
 <script setup lang="ts">
+  import LazyConsultationActiveCard from '~/components/consultation/ConsultationActiveCard.vue'
+  import LazyConsultationListItem from '~/components/consultation/ConsultationListItem.vue'
   import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
-  import type { BreadcrumbItem } from '@nuxt/ui'
-  import { addDays, subDays, format, parseISO } from 'date-fns'
-  import { fr as frLocale } from 'date-fns/locale'
+  import { format, parseISO } from 'date-fns'
+  import { fr } from 'date-fns/locale'
 
-  const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' },
-    { label: 'Planning quotidien', icon: 'i-hugeicons-calendar-02' }
+  const notes = ref('')
+
+  const todoItems = ref([
+    { id: 1, text: 'Relancer factures impayées', done: false },
+    { id: 2, text: 'Préparer bilan J. Dupont', done: true },
+    { id: 3, text: 'Commander matériel', done: false },
+    { id: 4, text: 'Mise à jour logiciel', done: false }
   ])
 
   const route = useRoute()
@@ -23,38 +28,37 @@
   })
 
   const formattedDate = computed(() => {
-    return format(parseISO(currentDate.value), 'EEEE d MMMM yyyy', { locale: frLocale })
+    return format(parseISO(currentDate.value), 'EEEE d MMMM yyyy', { locale: fr })
   })
 
-  const previousDate = () => {
-    const newDate = subDays(parseISO(currentDate.value), 1)
-    router.push({ path: route.path, query: { date: format(newDate, 'yyyy-MM-dd') } })
-  }
+  const relativeDate = computed(() => {
+    const date = parseISO(currentDate.value)
+    const distance = formatRelativeDate(date)
+    return distance
+  })
 
-  const nextDate = () => {
-    const newDate = addDays(parseISO(currentDate.value), 1)
-    router.push({ path: route.path, query: { date: format(newDate, 'yyyy-MM-dd') } })
+  const selectDate = (date: string) => {
+    router.push({ path: route.path, query: { date } })
   }
 
   const { data: consultations, isPending } = useTherapistConsultations(currentDate)
 
   const stats = computed(() => {
     const list = consultations.value || []
+    const completed = list.filter((c) => c.status === 'completed').length
+    const upcoming = list.filter((c) => ['scheduled', 'confirmed'].includes(c.status)).length
+    const cancelled = list.filter((c) => ['cancelled', 'no_show'].includes(c.status)).length
     return {
       total: list.length,
-      completed: list.filter((c) => c.status === 'completed').length,
-      upcoming: list.filter((c) => ['scheduled', 'confirmed'].includes(c.status)).length,
-      cancelled: list.filter((c) => ['cancelled', 'no_show'].includes(c.status)).length
+      completed,
+      completedPercentage: list.length ? Math.round((completed / list.length) * 100) : 0,
+      upcoming,
+      cancelled
     }
   })
 
-  const canStartSession = (status: ConsultationStatus) => {
-    return ['scheduled', 'confirmed'].includes(status)
-  }
-
-  const canViewSession = (status: ConsultationStatus) => {
-    return status === 'in_progress'
-  }
+  const inProgressConsultations = computed(() => consultations.value?.filter((c) => c.status === 'in_progress'))
+  const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
 
   const handleStartSession = async (consultation: TherapistConsultation) => {
     const confirmed = await confirmModal.open({
@@ -91,138 +95,172 @@
 <template>
   <UDashboardPanel id="therapist-day" class="bg-elevated">
     <template #header>
-      <UDashboardNavbar>
+      <UDashboardNavbar class="bg-default/75">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
-        <template #title>Planning quotidien</template>
+        <template #title>Planning</template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <UContainer>
-        <div class="space-y-6">
-          <UBreadcrumb :items="breadcrumbItems" />
+      <div class="space-y-8">
+        <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h1 class="text-default text-3xl font-bold capitalize">{{ relativeDate }}</h1>
+            <p class="text-muted mt-1 flex items-center gap-2 capitalize">
+              <UIcon name="i-hugeicons-calendar-03" class="size-4" />
+              {{ formattedDate }}
+            </p>
+          </div>
+          <AppMiniCalendar :current-date="currentDate" disablePreviousWeek @select-date="selectDate" />
+        </div>
 
-          <UCard :ui="{ body: 'p-6' }">
-            <div class="flex items-center justify-between">
-              <UButton icon="i-hugeicons-arrow-left-01" variant="ghost" @click="previousDate" />
+        <div v-if="isPending" class="flex justify-center py-8">
+          <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
+        </div>
 
-              <div class="text-center">
-                <h2 class="text-2xl font-bold capitalize">{{ formattedDate }}</h2>
+        <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
+          <div class="space-y-6 xl:col-span-4">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+              <AppStatCard label="Consultations" :value="stats.total" unit="rdvs" icon="i-hugeicons-calendar-02" />
+              <AppStatCard
+                label="Terminées"
+                color="success"
+                :value="stats.completed"
+                :unit="`/ ${stats.completedPercentage}%`"
+                icon="i-hugeicons-checkmark-circle-02"
+              />
+              <AppStatCard
+                label="À venir"
+                color="primary"
+                :value="stats.upcoming"
+                unit="restant"
+                icon="i-hugeicons-clock-01"
+              />
+              <AppStatCard
+                label="Annulées"
+                color="error"
+                :value="stats.cancelled"
+                unit="rdvs"
+                icon="i-hugeicons-cancel-circle-half-dot"
+              />
+            </div>
+
+            <div class="space-y-4">
+              <LazyConsultationActiveCard
+                v-for="consultation in inProgressConsultations"
+                :key="consultation.id"
+                :consultation
+                @view="handleViewSession"
+                @complete="handleViewSession"
+              />
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between px-2">
+                <h3 class="text-default flex items-center gap-2 text-lg font-bold">
+                  <UIcon name="i-hugeicons-task-daily-01" class="text-primary" />
+                  Planning de la journée
+                </h3>
+                <div class="flex gap-2">
+                  <UButton icon="i-hugeicons-list-view" variant="soft" color="primary" square size="sm" />
+                  <UButton icon="i-hugeicons-calendar-02" variant="ghost" color="neutral" square size="sm" />
+                </div>
               </div>
 
-              <UButton icon="i-hugeicons-arrow-right-01" variant="ghost" @click="nextDate" />
-            </div>
-          </UCard>
+              <div v-if="upcomingConsultations && upcomingConsultations.length > 0" class="space-y-3">
+                <LazyConsultationListItem
+                  v-for="consultation in upcomingConsultations"
+                  :key="consultation.id"
+                  :consultation="consultation"
+                  @start="handleStartSession"
+                  @view="handleViewSession"
+                />
+              </div>
 
-          <div v-if="isPending" class="flex justify-center py-8">
-            <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
+              <UEmpty
+                v-else
+                icon="i-hugeicons-calendar-remove-01"
+                title="Aucune consultation"
+                description="Aucune consultation programmée pour cette journée"
+              />
+            </div>
           </div>
 
-          <div v-else class="space-y-6">
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <UCard>
-                <div class="text-center">
-                  <p class="text-muted text-sm">Total</p>
-                  <p class="text-3xl font-bold">{{ stats.total }}</p>
+          <div class="space-y-8 xl:col-span-2">
+            <UCard :ui="{ body: 'p-5', root: 'shadow-sm overflow-hidden flex flex-col' }">
+              <template #header>
+                <div class="border-default bg-warning/10 flex items-center justify-between border-b p-5">
+                  <h3 class="text-default flex items-center gap-2 font-bold">
+                    <UIcon name="i-hugeicons-sticky-note-01" class="text-warning" />
+                    Notes du jour
+                  </h3>
+                  <UButton icon="i-hugeicons-edit-01" variant="ghost" color="neutral" square size="sm" />
                 </div>
-              </UCard>
+              </template>
+              <div class="p-5">
+                <UTextarea
+                  v-model="notes"
+                  placeholder="Une note pour aujourd'hui ?"
+                  :ui="{
+                    base: 'bg-transparent border-none focus:ring-0 text-sm text-muted resize-none min-h-[120px] scrollbar-hide'
+                  }"
+                />
+              </div>
+            </UCard>
 
-              <UCard>
-                <div class="text-center">
-                  <p class="text-muted text-sm">Terminées</p>
-                  <p class="text-success text-3xl font-bold">{{ stats.completed }}</p>
+            <UCard :ui="{ body: 'p-2', root: 'shadow-sm overflow-hidden flex flex-col' }">
+              <template #header>
+                <div class="border-default flex items-center justify-between border-b p-5">
+                  <h3 class="text-default flex items-center gap-2 font-bold">
+                    <UIcon name="i-hugeicons-checkmark-circle-02" class="text-primary" />
+                    À faire
+                  </h3>
+                  <UButton
+                    icon="i-hugeicons-add-01"
+                    size="xs"
+                    color="primary"
+                    square
+                    class="flex h-8 w-8 items-center justify-center rounded-full"
+                  />
                 </div>
-              </UCard>
-
-              <UCard>
-                <div class="text-center">
-                  <p class="text-muted text-sm">À venir</p>
-                  <p class="text-info text-3xl font-bold">{{ stats.upcoming }}</p>
-                </div>
-              </UCard>
-
-              <UCard>
-                <div class="text-center">
-                  <p class="text-muted text-sm">Annulées</p>
-                  <p class="text-error text-3xl font-bold">{{ stats.cancelled }}</p>
-                </div>
-              </UCard>
-            </div>
-
-            <UCard v-if="consultations && consultations.length > 0">
-              <template #title>Consultations</template>
-
-              <div class="space-y-3">
+              </template>
+              <div class="space-y-1">
                 <div
-                  v-for="consultation in consultations"
-                  :key="consultation.id"
-                  class="bg-muted hover:border-default flex flex-col gap-3 rounded-lg border border-transparent p-4 transition-colors sm:flex-row sm:items-center"
+                  v-for="item in todoItems"
+                  :key="item.id"
+                  class="group hover:bg-muted flex cursor-pointer items-center gap-3 rounded-xl p-3"
                 >
-                  <div class="flex-1">
-                    <div class="mb-2 flex items-center gap-2">
-                      <span class="text-lg font-bold">{{ consultation.startTime }} - {{ consultation.endTime }}</span>
-                      <UBadge :color="getConsultationStatusColor(consultation.status)" variant="subtle" size="sm">
-                        {{ getConsultationStatusLabel(consultation.status) }}
-                      </UBadge>
-                    </div>
-
-                    <h3 class="text-xl font-semibold">{{ consultation.patientName }}</h3>
-
-                    <div class="text-muted mt-1 flex flex-wrap gap-4 text-sm">
-                      <span>{{ getConsultationTypeLabel(consultation.type || 'follow_up') }}</span>
-                      <span v-if="consultation.roomName">{{ consultation.roomName }}</span>
-                      <span>{{ consultation.duration }} min</span>
-                      <span v-if="consultation.chiefComplaint">{{ consultation.chiefComplaint }}</span>
-                    </div>
-                  </div>
-
-                  <div class="flex gap-2">
-                    <UButton
-                      v-if="canStartSession(consultation.status)"
-                      icon="i-hugeicons-play-circle"
-                      color="primary"
-                      size="sm"
-                      @click="handleStartSession(consultation)"
-                    >
-                      Démarrer
-                    </UButton>
-
-                    <UButton
-                      v-if="canViewSession(consultation.status)"
-                      icon="i-hugeicons-view-01"
-                      color="success"
-                      size="sm"
-                      @click="handleViewSession(consultation)"
-                    >
-                      Voir la séance
-                    </UButton>
-
-                    <UButton
-                      icon="i-hugeicons-view-01"
-                      color="neutral"
-                      variant="ghost"
-                      size="sm"
-                      :to="`/patients/${consultation.patientId}`"
-                    >
-                      Patient
-                    </UButton>
-                  </div>
+                  <UCheckbox v-model="item.done" color="primary" size="md" />
+                  <span
+                    :class="[
+                      'text-sm transition-colors',
+                      item.done ? 'text-success line-through' : 'group-hover:text-primary text-muted'
+                    ]"
+                  >
+                    {{ item.text }}
+                  </span>
                 </div>
               </div>
             </UCard>
 
-            <UEmpty
-              v-else
-              icon="i-hugeicons-calendar-x"
-              title="Aucune consultation"
-              description="Aucune consultation programmée pour cette journée"
-            />
+            <div class="border-muted bg-muted rounded-2xl border-2 border-dashed p-6">
+              <div class="mb-4 flex items-center justify-between">
+                <span class="text-toned text-xs font-bold tracking-widest uppercase">Demain</span>
+                <span class="text-primary text-xs font-medium">8 rendez-vous</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex -space-x-2">
+                  <div v-for="i in 3" :key="i" class="border-default bg-elevated h-8 w-8 rounded-full border-2" />
+                </div>
+                <span class="text-toned text-xs font-medium">+5 patients</span>
+              </div>
+            </div>
           </div>
         </div>
-      </UContainer>
+      </div>
     </template>
   </UDashboardPanel>
 </template>
