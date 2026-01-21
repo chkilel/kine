@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "34a2f97f-56cc-43b8-9c2d-50b52d96f3f2",
+  "id": "0c5849f9-74a7-4a5b-94ed-1347e1021a9b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -875,6 +875,41 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'scheduled'"
+        },
+        "actualStartTime": {
+          "name": "actualStartTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "actualDurationSeconds": {
+          "name": "actualDurationSeconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "totalPausedSeconds": {
+          "name": "totalPausedSeconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pauseStartTime": {
+          "name": "pauseStartTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "location": {
           "name": "location",
@@ -1825,7 +1860,7 @@
           "name": "emergencyContacts",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false,
           "default": "'[]'"
         },
@@ -1833,33 +1868,29 @@
           "name": "medicalConditions",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
+          "notNull": true,
+          "autoincrement": false
         },
         "surgeries": {
           "name": "surgeries",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
+          "notNull": true,
+          "autoincrement": false
         },
         "allergies": {
           "name": "allergies",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
+          "notNull": true,
+          "autoincrement": false
         },
         "medications": {
           "name": "medications",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
+          "notNull": true,
+          "autoincrement": false
         },
         "insuranceProvider": {
           "name": "insuranceProvider",
@@ -1894,9 +1925,8 @@
           "name": "notes",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'[]'"
+          "notNull": true,
+          "autoincrement": false
         },
         "createdAt": {
           "name": "createdAt",

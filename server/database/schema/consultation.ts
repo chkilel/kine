@@ -55,6 +55,11 @@ export const consultations = sqliteTable(
 
     // ---- Session management ----
     status: text({ enum: VALID_CONSULTATION_STATUSES }).notNull().default('scheduled'), // Session status — e.g., "completed"
+    actualStartTime: text(), // Actual time when therapy session began (HH:MM:SS format)
+    actualDurationSeconds: integer(), // Actual therapy time in seconds (excluding pauses)
+    totalPausedSeconds: integer(), // Cumulative pause duration in seconds
+    pauseStartTime: text(), // Timestamp when current pause began (null if running) — e.g., "10:15:30"
+    tags: text(), // JSON array of smart tags for session classification — e.g., '["Douleur Diminuée", "Proprioception"]'
 
     // ---- Planning location ----
     location: text({ enum: VALID_CONSULTATION_LOCATIONS }).default('clinic'),
