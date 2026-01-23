@@ -1,31 +1,24 @@
 import { treatmentPlans, patients } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
-// POST /api/patients/[id]/treatment-plans - Create new treatment plan
+// POST /api/treatment-plans - Create new treatment plan
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const patientId = getRouterParam(event, 'id')
 
   try {
-    // 1. Validate patient ID
-    if (!patientId) {
-      throw createError({
-        statusCode: 400,
-        message: 'ID de patient requis'
-      })
-    }
-
-    // 2. Validate input
+    // 1. Validate input
     const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
-    // 3. Require current user and organization from session
+    // 2. Require current user and organization from session
     const { organizationId } = await requireAuth(event)
 
-    // 4. Verify patient exists and belongs to the organization
+    // 3. Verify patient exists and belongs to the organization
     const [patient] = await db
       .select()
       .from(patients)
-      .where(and(eq(patients.id, patientId), eq(patients.organizationId, organizationId), isNull(patients.deletedAt)))
+      .where(
+        and(eq(patients.id, body.patientId), eq(patients.organizationId, organizationId), isNull(patients.deletedAt))
+      )
       .limit(1)
 
     if (!patient) {

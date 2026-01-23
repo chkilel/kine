@@ -4,41 +4,26 @@ import { requireAuth } from '~~/server/utils/auth'
 import { handleApiError } from '~~/server/utils/error'
 import { successResponse } from '~~/server/utils/response'
 
-// PUT /api/patients/[id]/treatment-plans/[planId] - Update existing treatment plan
+// PUT /api/treatment-plans/[id] - Update existing treatment plan
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const patientId = getRouterParam(event, 'id')
-  const planId = getRouterParam(event, 'planId')
+  const planId = getRouterParam(event, 'id')
 
   try {
-    if (!patientId || !planId) {
+    if (!planId) {
       throw createError({
         statusCode: 400,
-        message: 'ID de patient et ID de plan de traitement requis'
+        message: 'ID de plan de traitement requis'
       })
     }
 
     const { organizationId } = await requireAuth(event)
 
-    // Verify patient exists and belongs to organization
-    const [patient] = await db
-      .select()
-      .from(patients)
-      .where(and(eq(patients.id, patientId), eq(patients.organizationId, organizationId), isNull(patients.deletedAt)))
-      .limit(1)
-
-    if (!patient) {
-      throw createError({
-        statusCode: 404,
-        message: 'Patient introuvable'
-      })
-    }
-
-    // Verify treatment plan exists and belongs to patient
+    // Verify treatment plan exists and belongs to organization
     const [existingPlan] = await db
       .select()
       .from(treatmentPlans)
-      .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.patientId, patientId)))
+      .where(and(eq(treatmentPlans.id, planId), eq(treatmentPlans.organizationId, organizationId)))
       .limit(1)
 
     if (!existingPlan) {

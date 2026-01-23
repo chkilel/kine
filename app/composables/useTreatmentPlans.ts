@@ -15,9 +15,9 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     error,
     refetch: refetchTreatmentPlans
   } = useQuery({
-    key: () => ['treatment-plans', toValue(patientId)],
+    key: () => ['treatment-plans', { patientId: toValue(patientId) }],
     query: async () => {
-      const data = await requestFetch(`/api/patients/${toValue(patientId)}/treatment-plans`)
+      const data = await requestFetch(`/api/treatment-plans?patientId=${toValue(patientId)}`)
       return data?.map((plan) => ({
         ...plan,
         createdAt: parseISO(plan.createdAt),
@@ -104,19 +104,19 @@ const _useCreateTreatmentPlan = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, data }: { patientId: string; data: TreatmentPlanCreate; onSuccess?: () => void }) =>
-      requestFetch(`/api/patients/${patientId}/treatment-plans`, {
+    mutation: async ({ data }: { data: TreatmentPlanCreate; onSuccess?: () => void }) =>
+      requestFetch('/api/treatment-plans', {
         method: 'POST',
         body: data
       }),
-    onSuccess: (_, { patientId, onSuccess }) => {
+    onSuccess: (_, { data, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Plan de traitement créé avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+      queryCache.invalidateQueries({ key: ['treatment-plans'] })
     },
     onError: (error: any) => {
       toast.add({
@@ -133,7 +133,6 @@ const _useCreateTreatmentPlan = () => {
  * @returns Mutation with update functionality and error handling
  */
 type UpdateTreatmentPlanParams = {
-  patientId: string
   planId: string
   data: TreatmentPlanUpdate
   onSuccess?: () => void
@@ -144,19 +143,19 @@ const _useUpdateTreatmentPlan = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, planId, data }: UpdateTreatmentPlanParams) =>
-      requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
+    mutation: async ({ planId, data }: UpdateTreatmentPlanParams) =>
+      requestFetch(`/api/treatment-plans/${planId}`, {
         method: 'PUT',
         body: data
       }),
-    onSuccess: (_, { patientId, onSuccess }) => {
+    onSuccess: (_, { onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Plan de traitement mis à jour avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+      queryCache.invalidateQueries({ key: ['treatment-plans'] })
     },
     onError: (error: any) => {
       toast.add({
@@ -178,18 +177,18 @@ const _useDeleteTreatmentPlan = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, planId }: { patientId: string; planId: string; onSuccess?: () => void }) =>
-      requestFetch(`/api/patients/${patientId}/treatment-plans/${planId}`, {
+    mutation: async ({ planId }: { planId: string; onSuccess?: () => void }) =>
+      requestFetch(`/api/treatment-plans/${planId}`, {
         method: 'DELETE'
       }),
-    onSuccess: (_, { patientId, onSuccess }) => {
+    onSuccess: (_, { onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Plan de traitement supprimé avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans', patientId] })
+      queryCache.invalidateQueries({ key: ['treatment-plans'] })
     },
     onError: (error: any) => {
       toast.add({

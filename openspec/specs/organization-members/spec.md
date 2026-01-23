@@ -1,8 +1,11 @@
 # organization-members Specification
 
 ## Purpose
+
 TBD - created by archiving change add-organization-members-loading. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Fetch Organization Members
 
 The system SHALL provide an API endpoint that queries the database directly using Drizzle to retrieve all members belonging to the active organization with complete user data including additional fields.
@@ -56,7 +59,7 @@ The system SHALL NOT load therapist information in the treatment plans GET endpo
 #### Scenario: Fetch treatment plans without therapist data
 
 - **GIVEN** an authenticated user requesting patient treatment plans
-- **WHEN** the GET /api/patients/[id]/treatment-plans endpoint is called
+- **WHEN** the GET /api/treatment-plans?patientId=<id> endpoint is called
 - **THEN** the system returns treatment plans with therapistId only, without fetching full therapist details
 
 #### Scenario: Therapist data loaded separately
@@ -72,4 +75,3 @@ The system SHALL NOT load therapist information in the treatment plans GET endpo
 - **WHEN** displaying the treatment plan in PatientTreatmentPlanSidebar or PatientActiveTreatmentPlan
 - **THEN** the component uses the useOrganizationMembers composable to fetch organization members
 - **AND** displays the therapist's name using the mapped therapist data
-

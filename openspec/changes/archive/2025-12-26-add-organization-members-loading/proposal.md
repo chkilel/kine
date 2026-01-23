@@ -20,13 +20,13 @@ The Better Auth `authClient.organization.listMembers()` API does not return all 
 
 - **Affected specs**: New capability: organization-members
 - **Affected code**:
-  - `server/api/organizations/members/index.get.ts` - create new API endpoint
-  - `app/composables/useOrganizationMembers.ts` - create new composable
-  - `app/components/treatment-plan/TreatmentPlanCreateSlideover.vue:22`
-  - `app/components/consultation/ConsultationPlanningSlideover.vue:21`
-  - `app/components/consultation/ConsultationAutomaticPlanningCard.vue:5`
-  - `app/components/consultation/ConsultationManualPlanningCard.vue:6`
-  - `server/api/patients/[id]/treatment-plans/index.get.ts:75-92` - remove therapist loading
-  - `app/components/patient/PatientTreatmentPlanSidebar.vue:46` - therapist display
-  - `app/components/patient/PatientActiveTreatmentPlan.vue:79` - therapist display
-  - `shared/types/treatment-plan.ts:52-61` - TreatmentPlanWithProgress type
+- `server/api/organizations/members/index.get.ts` - create new API endpoint
+- `app/composables/useOrganizationMembers.ts` - create new composable
+- `app/components/treatment-plan/TreatmentPlanCreateSlideover.vue:22`
+- `app/components/consultation/ConsultationPlanningSlideover.vue:21`
+- `app/components/consultation/ConsultationAutomaticPlanningCard.vue:5`
+- `app/components/consultation/ConsultationManualPlanningCard.vue:6`
+- `server/api/treatment-plans/index.get.ts` - remove therapist loading
+- `app/components/patient/PatientTreatmentPlanSidebar.vue:46` - therapist display
+- `app/components/patient/PatientActiveTreatmentPlan.vue:79` - therapist display
+- `shared/types/treatment-plan.ts:52-61` - TreatmentPlanWithProgress type

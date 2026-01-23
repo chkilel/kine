@@ -2,6 +2,7 @@ import { eq, and, desc } from 'drizzle-orm'
 import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
 import { requireAuth } from '~~/server/utils/auth'
 import { handleApiError } from '~~/server/utils/error'
+import { consultationQuerySchema } from '~~/shared/types/consultation.type'
 
 // GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
 export default defineEventHandler(async (event) => {
@@ -18,11 +19,8 @@ export default defineEventHandler(async (event) => {
 
     const { organizationId } = await requireAuth(event)
 
-    // Get query parameters
-    const query = getQuery(event)
-
-    // Parse and validate query parameters
-    const validatedQuery = consultationQuerySchema.parse(query)
+    // Validate query parameters
+    const validatedQuery = await getValidatedQuery(event, consultationQuerySchema.parse)
 
     // Verify treatment plan exists and belongs to organization
     const [existingTreatmentPlan] = await db
