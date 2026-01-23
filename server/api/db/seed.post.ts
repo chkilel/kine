@@ -784,7 +784,7 @@ function generateRooms(organizationId: string): any[] {
 
 function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
   if (isToday) {
-    return Math.random() > 0.7 ? 'in_progress' : 'scheduled'
+    return 'scheduled'
   }
 
   if (isPastDate) {
