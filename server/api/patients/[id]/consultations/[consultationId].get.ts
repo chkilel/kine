@@ -46,7 +46,12 @@ export default defineEventHandler(async (event) => {
         cost: consultations.cost,
         createdAt: consultations.createdAt,
         updatedAt: consultations.updatedAt,
-        roomName: rooms.name
+        roomName: rooms.name,
+        tags: consultations.tags,
+        actualStartTime: consultations.actualStartTime,
+        actualDurationSeconds: consultations.actualDurationSeconds,
+        totalPausedSeconds: consultations.totalPausedSeconds,
+        pauseStartTime: consultations.pauseStartTime
       })
       .from(consultations)
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))

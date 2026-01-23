@@ -44,7 +44,12 @@ export const consultationQuerySchema = z.object({
   status: consultationStatusSchema.optional(),
   type: consultationTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
-  dateTo: calendarDateSchema.optional()
+  dateTo: calendarDateSchema.optional(),
+  actualStartTime: z.string().optional(),
+  actualDurationSeconds: z.number().optional(),
+  totalPausedSeconds: z.number().optional(),
+  pauseStartTime: z.string().optional(),
+  tags: z.string().optional()
 })
 
 // Type inference
