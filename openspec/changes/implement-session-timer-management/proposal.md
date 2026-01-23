@@ -32,6 +32,10 @@ The current consultation timer in `ActiveConsultationSlideover.vue` is purely cl
   - Implement pause/resume buttons that call API endpoints
   - Display "En pause depuis X" when paused
   - Implement smart tags as selectable buttons with auto-save to database
+  - **Tag options are hardcoded** in component template (not stored in database):
+    - Predefined options: "Douleur Diminuée", "Gain Amplitude", "Proprioception", "Cryothérapie", "Renforcement"
+    - Tag selection state persists to database
+    - Future enhancement: Tag management UI to customize options per organization
   - Add periodic sync (30s) for cross-device state updates
 
 - **Cross-Device Sync**: Enable last-write-wins pattern where multiple devices can control session:
@@ -75,3 +79,27 @@ The current consultation timer in `ActiveConsultationSlideover.vue` is purely cl
   - Actual therapy time is calculated and stored separately
   - Pause duration is accumulated across multiple pause/resume cycles
   - Session state is preserved if browser is closed or refreshed
+
+## Design Decisions
+
+### Hardcoded Smart Tags
+
+Tag options are **hardcoded in the component template** rather than stored in database. This keeps the implementation simple and focused on timer management.
+
+**Predefined tag options:**
+
+- Douleur Diminuée
+- Gain Amplitude
+- Proprioception
+- Cryothérapie
+- Renforcement
+
+**Future Enhancement:**
+A separate change proposal could add:
+
+- Database table for tag management (e.g., `consultation_tags` or organization-level config)
+- UI for adding/removing/customizing tags per organization
+- Support for custom therapist-created tags during sessions
+
+**Current scope:**
+This proposal focuses only on timer management and storing selected tags to the consultations table. Tag option management is intentionally out of scope to keep the change size manageable.
