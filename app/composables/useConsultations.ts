@@ -5,12 +5,35 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
   const requestFetch = useRequestFetch()
   return useQuery({
     key: () => {
-      const query = toValue(queryParams)
-      return query ? ['consultations', query] : ['consultations']
+      const queryParamsValue = toValue(queryParams) || {}
+      const query = {
+        therapistId: toValue(queryParamsValue.therapistId),
+        patientId: toValue(queryParamsValue.patientId),
+        treatmentPlanId: toValue(queryParamsValue.treatmentPlanId),
+        onlyIndependent: toValue(queryParamsValue.onlyIndependent),
+        status: toValue(queryParamsValue.status),
+        type: toValue(queryParamsValue.type),
+        dateFrom: toValue(queryParamsValue.dateFrom),
+        dateTo: toValue(queryParamsValue.dateTo),
+        date: toValue(queryParamsValue.date)
+      }
+      return ['consultations', JSON.stringify(query)]
     },
     query: async () => {
+      const queryParamsValue = toValue(queryParams) || {}
+      const query = {
+        therapistId: toValue(queryParamsValue.therapistId),
+        patientId: toValue(queryParamsValue.patientId),
+        treatmentPlanId: toValue(queryParamsValue.treatmentPlanId),
+        onlyIndependent: toValue(queryParamsValue.onlyIndependent)?.toString(),
+        status: toValue(queryParamsValue.status),
+        type: toValue(queryParamsValue.type),
+        dateFrom: toValue(queryParamsValue.dateFrom),
+        dateTo: toValue(queryParamsValue.dateTo),
+        date: toValue(queryParamsValue.date)
+      }
       const resp = await requestFetch('/api/consultations', {
-        query: toValue(queryParams)
+        query: Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined && v !== null && v !== ''))
       })
       return resp?.map((item) => ({
         ...item,
@@ -184,7 +207,6 @@ const _useUpdateConsultationStatus = () => {
         description: 'Statut de la consultation mis à jour',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['therapist-consultations'] })
       if (patientId) {
         queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
       }

@@ -12,6 +12,10 @@ export default defineEventHandler(async (event) => {
 
     conditions.push(eq(consultations.organizationId, organizationId))
 
+    if (validatedQuery.therapistId) {
+      conditions.push(eq(consultations.therapistId, validatedQuery.therapistId))
+    }
+
     if (validatedQuery.patientId) {
       conditions.push(eq(consultations.patientId, validatedQuery.patientId))
     }
@@ -31,12 +35,16 @@ export default defineEventHandler(async (event) => {
       conditions.push(eq(consultations.type, validatedQuery.type))
     }
 
-    if (validatedQuery.dateFrom) {
-      conditions.push(gte(consultations.date, validatedQuery.dateFrom))
-    }
+    if (validatedQuery.date) {
+      conditions.push(eq(consultations.date, validatedQuery.date))
+    } else {
+      if (validatedQuery.dateFrom) {
+        conditions.push(gte(consultations.date, validatedQuery.dateFrom))
+      }
 
-    if (validatedQuery.dateTo) {
-      conditions.push(lte(consultations.date, validatedQuery.dateTo))
+      if (validatedQuery.dateTo) {
+        conditions.push(lte(consultations.date, validatedQuery.dateTo))
+      }
     }
 
     const consultationsList = await db

@@ -41,7 +41,11 @@
     router.push({ path: route.path, query: { date } })
   }
 
-  const { data: consultations, isPending } = useTherapistConsultations(currentDate)
+  const { user } = await useAuth()
+  const { data: consultations, isPending } = useConsultationsList(() => ({
+    date: currentDate.value,
+    therapistId: user.value?.id
+  }))
 
   const stats = computed(() => {
     const list = consultations.value || []
@@ -60,14 +64,14 @@
   const inProgressConsultations = computed(() => consultations.value?.filter((c) => c.status === 'in_progress'))
   const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
 
-  const handleStartSession = async (consultation: TherapistConsultation) => {
+  const handleStartSession = async (consultation: Consultation) => {
     activeConsultationOverlay.open({
       patientId: consultation.patientId,
       consultationId: consultation.id
     })
   }
 
-  const handleViewSession = (consultation: TherapistConsultation) => {
+  const handleViewSession = (consultation: Consultation) => {
     activeConsultationOverlay.open({
       patientId: consultation.patientId,
       consultationId: consultation.id

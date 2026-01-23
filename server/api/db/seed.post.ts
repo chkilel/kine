@@ -411,11 +411,13 @@ const roomDescriptions = [
   'Zone de rééducation cardiovasculaire'
 ]
 
-function shuffleArray<T>(array: T[]): T[] {
+function shuffleArray<T>(array: readonly T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    const temp = arr[i]!
+    arr[i] = arr[j]!
+    arr[j] = temp
   }
   return arr
 }
@@ -424,7 +426,7 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function randomItem<T>(array: readonly T[]): T {
+function randomItem<T>(array: readonly T[]): T | undefined {
   return array[Math.floor(Math.random() * array.length)]
 }
 
@@ -449,6 +451,7 @@ function generateTime(startHour: number, endHour: number): string {
   }
 
   const slotStart = randomItem(availableSlots)
+  if (!slotStart) return '00:00:00'
   return minutesToTime(slotStart)
 }
 
@@ -470,9 +473,15 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
 
   const startSlotIndex = randomInt(0, Math.max(0, availableSlots.length - 2))
   const slotStart = availableSlots[startSlotIndex]
-
   const endSlotIndex = randomInt(Math.min(startSlotIndex + 1, availableSlots.length - 1), availableSlots.length - 1)
   const slotEnd = availableSlots[endSlotIndex]
+
+  if (!slotStart || !slotEnd) {
+    return {
+      startTime: '09:00:00',
+      endTime: '10:00:00'
+    }
+  }
 
   return {
     startTime: minutesToTime(slotStart),
@@ -503,7 +512,7 @@ async function createOrganization(event: H3Event, name: string, slug: string, us
       .limit(1)
 
     if (existing.length > 0) {
-      const orgId = existing[0].id
+      const orgId = existing[0]!.id
 
       if (userId) {
         await createMembership(event, userId, orgId, 'admin')
@@ -544,7 +553,7 @@ async function createUser(event: H3Event, user: UserData, password: string): Pro
     const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, user.email)).limit(1)
 
     if (existing.length > 0) {
-      return existing[0].id
+      return existing[0]!.id
     }
 
     const auth = createAuth(event)
@@ -629,7 +638,7 @@ function generateWeeklyTemplates(userId: string, organizationId: string): any[] 
   while (templates.length < count && attempts < 20) {
     attempts++
     const day = randomItem(days)
-    if (usedDays.has(day)) continue
+    if (!day || usedDays.has(day)) continue
     usedDays.add(day)
 
     const timeRange = generateTimeRange(9, 17)
@@ -728,7 +737,10 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
   const otherStatuses: string[] = ['completed', 'paused', 'cancelled']
   let otherIndex = 0
   while (remaining > 0) {
-    statuses.push(otherStatuses[otherIndex % otherStatuses.length])
+    const status = otherStatuses[otherIndex % otherStatuses.length]
+    if (status) {
+      statuses.push(status)
+    }
     otherIndex++
     remaining--
   }
@@ -829,11 +841,11 @@ function generateConsultations(
     const shuffledIndices = shuffleArray(indices)
 
     for (let i = 0; i < desiredLinkedCount && i < shuffledIndices.length; i++) {
-      linkedIndices.add(shuffledIndices[i])
+      linkedIndices.add(shuffledIndices[i]!)
     }
 
     if (count > 1 && linkedIndices.size === count) {
-      linkedIndices.delete(shuffledIndices[0])
+      linkedIndices.delete(shuffledIndices[0]!)
     }
   }
 
@@ -846,7 +858,9 @@ function generateConsultations(
 
     if (linkedIndices.has(i) && treatmentPlansMeta.length > 0) {
       const selectedPlan = randomItem(treatmentPlansMeta)
-      treatmentPlanId = selectedPlan.id
+      if (selectedPlan) {
+        treatmentPlanId = selectedPlan.id
+      }
     }
 
     const wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
@@ -871,6 +885,8 @@ function generateConsultations(
       }
 
       const selectedRange = randomItem(availabilityRanges)
+      if (!selectedRange) continue
+
       const rangeStartMinutes = timeToMinutes(selectedRange.start)
       const rangeEndMinutes = timeToMinutes(selectedRange.end)
 
@@ -879,6 +895,8 @@ function generateConsultations(
       }
 
       const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+      if (!candidateDuration) continue
+
       if (rangeEndMinutes - rangeStartMinutes < candidateDuration) {
         continue
       }
@@ -904,7 +922,9 @@ function generateConsultations(
       }
 
       const chosenStart = randomItem(possibleStarts)
-      const chosenEnd = minutesToTime(timeToMinutes(chosenStart) + candidateDuration)
+      if (!chosenStart) continue
+
+      const chosenEnd = minutesToTime(timeToMinutes(chosenStart) + (candidateDuration ?? 60))
 
       date = candidateDate
       startTime = chosenStart
@@ -914,7 +934,7 @@ function generateConsultations(
       if (!therapistDayBookings[candidateDate]) {
         therapistDayBookings[candidateDate] = []
       }
-      therapistDayBookings[candidateDate].push({ start: chosenStart, end: chosenEnd })
+      therapistDayBookings[candidateDate]!.push({ start: chosenStart, end: chosenEnd })
     }
 
     if (!date || !startTime || !endTime || !duration) {
@@ -925,14 +945,17 @@ function generateConsultations(
       const timeRange = generateTimeRange(9, 16)
       date = fallbackDate
       startTime = timeRange.startTime
-      duration = randomItem(CONSULTATION_DURATIONS)
-      endTime = minutesToTime(timeToMinutes(startTime) + duration)
+      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      if (fallbackDuration) {
+        duration = fallbackDuration
+        endTime = minutesToTime(timeToMinutes(startTime) + duration)
+      }
     }
 
     const isPast = date < today
     const isToday = date === today
     const status = getConsultationStatus(isPast, isToday)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS)
+    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
 
     let roomId: string | null = null
     if (location === 'clinic' && availableRoomIds.length > 0 && Math.random() > 0.3) {
@@ -957,12 +980,12 @@ function generateConsultations(
       startTime,
       endTime,
       duration,
-      type: randomItem(VALID_CONSULTATION_TYPES),
+      type: randomItem(VALID_CONSULTATION_TYPES) || 'follow_up',
       status,
       location,
       billed: isPast && status === 'completed' ? date : null,
       insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
-      cost: duration * 50,
+      cost: duration ? duration * 50 : 50,
       chiefComplaint: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       treatmentSummary:
@@ -1002,42 +1025,49 @@ function generateConsultations(
     const availabilityRanges = getEffectiveAvailability(date, therapistTemplates, therapistExceptions)
     if (availabilityRanges && availabilityRanges.length > 0) {
       const selectedRange = randomItem(availabilityRanges)
-      const rangeStartMinutes = timeToMinutes(selectedRange.start)
-      const rangeEndMinutes = timeToMinutes(selectedRange.end)
+      if (selectedRange) {
+        const rangeStartMinutes = timeToMinutes(selectedRange.start)
+        const rangeEndMinutes = timeToMinutes(selectedRange.end)
 
-      if (rangeEndMinutes > rangeStartMinutes) {
-        const candidateDuration = randomItem(CONSULTATION_DURATIONS)
-        if (rangeEndMinutes - rangeStartMinutes >= candidateDuration) {
-          const possibleStarts: string[] = []
-          const slotIncrementMinutes = 15
+        if (rangeEndMinutes > rangeStartMinutes) {
+          const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+          if (candidateDuration && rangeEndMinutes - rangeStartMinutes >= candidateDuration) {
+            const possibleStarts: string[] = []
+            const slotIncrementMinutes = 15
 
-          for (
-            let mins = rangeStartMinutes;
-            mins + candidateDuration <= rangeEndMinutes;
-            mins += slotIncrementMinutes
-          ) {
-            const candidateStart = minutesToTime(mins)
-            const candidateEnd = minutesToTime(mins + candidateDuration)
-            const dayBookings = therapistDayBookings[date] || []
-            const hasConflictWithTherapist = dayBookings.some((booking) =>
-              hasTimeConflict(
-                booking.start,
-                booking.end,
-                candidateStart,
-                candidateEnd,
-                MINIMUM_CONSULTATION_GAP_MINUTES
+            for (
+              let mins = rangeStartMinutes;
+              mins + candidateDuration <= rangeEndMinutes;
+              mins += slotIncrementMinutes
+            ) {
+              const candidateStart = minutesToTime(mins)
+              const candidateEnd = minutesToTime(mins + candidateDuration)
+              const dayBookings = therapistDayBookings[date] || []
+              const hasConflictWithTherapist = dayBookings.some((booking) =>
+                hasTimeConflict(
+                  booking.start,
+                  booking.end,
+                  candidateStart,
+                  candidateEnd,
+                  MINIMUM_CONSULTATION_GAP_MINUTES
+                )
               )
-            )
 
-            if (!hasConflictWithTherapist) {
-              possibleStarts.push(candidateStart)
+              if (!hasConflictWithTherapist) {
+                possibleStarts.push(candidateStart)
+              }
             }
-          }
 
-          if (possibleStarts.length > 0) {
-            startTime = randomItem(possibleStarts)
-            duration = candidateDuration
-            endTime = minutesToTime(timeToMinutes(startTime) + duration)
+            if (possibleStarts.length > 0) {
+              const selectedStart = randomItem(possibleStarts)
+              if (selectedStart) {
+                startTime = selectedStart
+                duration = candidateDuration
+                if (startTime && duration) {
+                  endTime = minutesToTime(timeToMinutes(startTime) + duration)
+                }
+              }
+            }
           }
         }
       }
@@ -1046,20 +1076,28 @@ function generateConsultations(
     if (!startTime || !endTime || !duration) {
       const timeRange = generateTimeRange(9, 16)
       startTime = timeRange.startTime
-      duration = randomItem(CONSULTATION_DURATIONS)
-      endTime = minutesToTime(timeToMinutes(startTime) + duration)
+      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      if (fallbackDuration) {
+        duration = fallbackDuration
+        if (startTime && duration) {
+          endTime = minutesToTime(timeToMinutes(startTime) + duration)
+        }
+      }
     }
 
     const isPast = false
     const isToday = true
     const status = getConsultationStatus(isPast, isToday)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS)
+    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
       const activePlans = treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status))
       const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
-      treatmentPlanId = randomItem(source).id
+      const selectedPlan = randomItem(source)
+      if (selectedPlan) {
+        treatmentPlanId = selectedPlan.id
+      }
     }
 
     let roomId: string | null = null
@@ -1100,10 +1138,12 @@ function generateConsultations(
 
     consultationsData.push(consultation)
 
-    if (!therapistDayBookings[date]) {
-      therapistDayBookings[date] = []
+    if (startTime && endTime) {
+      if (!therapistDayBookings[date]) {
+        therapistDayBookings[date] = []
+      }
+      therapistDayBookings[date].push({ start: startTime, end: endTime })
     }
-    therapistDayBookings[date].push({ start: startTime, end: endTime })
   }
 
   if (activePlanIds.size > 0) {
@@ -1204,7 +1244,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const organizationIds: string[] = []
 
-  const adminUserId = userIds[0]
+  const adminUserId = userIds[0]!
 
   for (const org of SEED_CONFIG.organizations.names) {
     try {
@@ -1230,11 +1270,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
   let userIndex = 0
   for (let orgIndex = 0; orgIndex < SEED_CONFIG.organizations.userDistribution.length; orgIndex++) {
-    const usersInOrg = SEED_CONFIG.organizations.userDistribution[orgIndex]
-    const orgId = organizationIds[orgIndex]
+    const usersInOrg = SEED_CONFIG.organizations.userDistribution[orgIndex]!
+    const orgId = organizationIds[orgIndex]!
 
     for (let i = 0; i < usersInOrg && userIndex < userIds.length; i++, userIndex++) {
-      const userId = userIds[userIndex]
+      const userId = userIds[userIndex]!
       try {
         const created = await createMembership(event, userId, orgId, 'member')
         if (created) {
@@ -1294,7 +1334,7 @@ export default defineEventHandler(async (event: H3Event) => {
       .where(eq(members.userId, userId))
 
     if (userOrgMemberships.length > 0) {
-      const organizationId = userOrgMemberships[0].organizationId
+      const organizationId = userOrgMemberships[0]!.organizationId
 
       try {
         const templates = generateWeeklyTemplates(userId, organizationId)
@@ -1331,40 +1371,41 @@ export default defineEventHandler(async (event: H3Event) => {
   const totalPatientsToCreate = Math.min(SEED_CONFIG.patients.count, patientData.length)
 
   for (let i = 0; i < totalPatientsToCreate; i++) {
-    const patient = patientData[i]
-    const orgId = organizationIds[i % organizationIds.length]
+    const patient = patientData[i]!
+    const orgId = organizationIds[i % organizationIds.length]!
 
     const therapistsInOrg = await db
       .select({ userId: members.userId })
       .from(members)
       .where(eq(members.organizationId, orgId))
 
-    const therapistId = therapistsInOrg.length > 0 ? randomItem(therapistsInOrg).userId : null
+    const selectedTherapist = therapistsInOrg.length > 0 ? randomItem(therapistsInOrg) : null
+    const therapistId = selectedTherapist ? selectedTherapist.userId : null
 
     try {
       const patientRecord = await db
         .insert(patients)
         .values({
           organizationId: orgId,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          dateOfBirth: patient.dateOfBirth,
-          gender: patient.gender,
-          email: patient.email,
-          phone: patient.phone,
+          firstName: patient.firstName!,
+          lastName: patient.lastName!,
+          dateOfBirth: patient.dateOfBirth!,
+          gender: patient.gender!,
+          email: patient.email || null,
+          phone: patient.phone!,
           address: '123 Main Street',
-          city: patient.city,
+          city: patient.city || 'Casablanca',
           postalCode: '10000',
           country: 'Morocco',
-          emergencyContacts: [{ number: patient.phone, relationship: VALID_RELATIONSHIP_TYPES[22] }],
-          medicalConditions: [randomItem(medicalConditions)],
-          surgeries: Math.random() > 0.7 ? [randomItem(surgeries)] : [],
-          allergies: Math.random() > 0.8 ? [randomItem(allergies)] : [],
-          medications: Math.random() > 0.6 ? [randomItem(medications)] : [],
+          emergencyContacts: [{ number: patient.phone!, relationship: VALID_RELATIONSHIP_TYPES[22]! }],
+          medicalConditions: [randomItem(medicalConditions) || 'Hypertension'],
+          surgeries: Math.random() > 0.7 ? [randomItem(surgeries) || 'Knee surgery'] : [],
+          allergies: Math.random() > 0.8 ? [randomItem(allergies) || 'Penicillin'] : [],
+          medications: Math.random() > 0.6 ? [randomItem(medications) || 'Metformin'] : [],
           insuranceProvider: 'AXA Assurance',
           insuranceNumber: `INS-${randomInt(100000, 999999)}`,
           referralSource: 'Online',
-          status: VALID_PATIENT_STATUSES[0],
+          status: VALID_PATIENT_STATUSES[0]!,
           notes: []
         })
         .returning()
@@ -1393,7 +1434,7 @@ export default defineEventHandler(async (event: H3Event) => {
     const patientRecords = await db.select().from(patients).where(eq(patients.email, patient.email)).limit(1)
     if (patientRecords.length === 0) continue
 
-    const patientRecord = patientRecords[0]
+    const patientRecord = patientRecords[0]!
     const patientOrgId = patientRecord.organizationId
     const therapistsInOrg = await db
       .select({ userId: members.userId })
@@ -1403,14 +1444,16 @@ export default defineEventHandler(async (event: H3Event) => {
     if (therapistsInOrg.length === 0) continue
 
     const hasAdminInOrg = therapistsInOrg.some((therapist) => therapist.userId === adminUserId)
-    let therapistId: string
+    let therapistId!: string
 
     if (hasAdminInOrg) {
       const nonAdminTherapists = therapistsInOrg.filter((therapist) => therapist.userId !== adminUserId)
       const useAdminForToday = nonAdminTherapists.length === 0 || Math.random() < 0.4
-      therapistId = useAdminForToday ? adminUserId : randomItem(nonAdminTherapists).userId
+      const selected = randomItem(nonAdminTherapists)
+      therapistId = useAdminForToday ? adminUserId : (selected?.userId ?? adminUserId)
     } else {
-      therapistId = randomItem(therapistsInOrg).userId
+      const selected = randomItem(therapistsInOrg)
+      therapistId = selected?.userId ?? adminUserId
     }
     const availableRoomIds = orgRoomIds[patientOrgId] || []
 

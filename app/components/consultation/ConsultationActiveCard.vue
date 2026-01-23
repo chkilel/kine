@@ -1,10 +1,10 @@
 <script setup lang="ts">
   const { consultation } = defineProps<{
-    consultation: TherapistConsultation
+    consultation: Consultation
   }>()
 
   const emit = defineEmits<{
-    'view-session': [consultation: TherapistConsultation]
+    'view-session': [consultation: Consultation]
     'view-patient': [patientId: string]
   }>()
 </script>

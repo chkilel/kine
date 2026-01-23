@@ -1,12 +1,12 @@
 <script setup lang="ts">
   const { consultation } = defineProps<{
-    consultation: TherapistConsultation
+    consultation: Consultation
   }>()
 
   const emit = defineEmits<{
-    'start-session': [consultation: TherapistConsultation]
+    'start-session': [consultation: Consultation]
     'view-patient': [patientId: string]
-    'view-consultation': [consultation: TherapistConsultation]
+    'view-consultation': [consultation: Consultation]
   }>()
 
   const isInProgress = computed(() => consultation.status === 'in_progress')
