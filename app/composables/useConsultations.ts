@@ -154,8 +154,7 @@ const _useDeleteConsultation = () => {
   return useMutation({
     mutation: async ({
       patientId,
-      consultationId,
-      onSuccess
+      consultationId
     }: {
       patientId: string
       consultationId: string

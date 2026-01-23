@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import {
-    LazyAppModalConfirm,
     LazyConsultationActiveConsultationSlideover,
     LazyConsultationActiveCard,
     LazyConsultationListItem
@@ -21,9 +20,7 @@
   const router = useRouter()
   const overlay = useOverlay()
 
-  const confirmModal = overlay.create(LazyAppModalConfirm)
   const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
-  const { mutate: updateStatus } = useUpdateConsultationStatus()
 
   const currentDate = computed(() => {
     const dateFromQuery = route.query.date as string
@@ -64,23 +61,6 @@
   const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
 
   const handleStartSession = async (consultation: TherapistConsultation) => {
-    const confirmed = await confirmModal.open({
-      title: 'Démarrer la consultation',
-      message: `Démarrer la consultation avec ${consultation.patientName} à ${consultation.startTime} ?`,
-      confirmText: 'Démarrer',
-      cancelText: 'Annuler',
-      confirmColor: 'primary',
-      icon: 'i-hugeicons-play-circle'
-    })
-
-    if (!confirmed) return
-
-    updateStatus({
-      patientId: consultation.patientId,
-      consultationId: consultation.id,
-      status: 'in_progress'
-    })
-
     activeConsultationOverlay.open({
       patientId: consultation.patientId,
       consultationId: consultation.id

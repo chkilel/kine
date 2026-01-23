@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
+  import { useConsultationAction } from '~/composables/useConsultationAction'
 
   const props = defineProps<{
     patient: Patient
@@ -9,9 +10,11 @@
 
   const emit = defineEmits<{ close: [data?: any] }>()
   const overlay = useOverlay()
+  const toast = useToast()
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
   const { mutate: updateStatus } = useUpdateConsultationStatus()
+  const consultationAction = useConsultationAction()
 
   // Tab configuration
   //  const planningTabs = [
@@ -77,11 +80,24 @@
 
     if (!confirmed) return
 
-    updateStatus({
-      patientId: props.patient.id,
-      consultationId: props.consultation.id,
-      status: 'in_progress'
-    })
+    const actualStartTime = (() => {
+      const now = new Date()
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      const seconds = String(now.getSeconds()).padStart(2, '0')
+      return `${hours}:${minutes}:${seconds}`
+    })()
+
+    try {
+      await consultationAction.startAsync({
+        id: props.consultation.id,
+        patientId: props.patient.id,
+        actualStartTime
+      })
+    } catch (error) {
+      console.error('Failed to start session:', error)
+      return
+    }
 
     activeConsultationOverlay.open({
       patientId: props.patient.id,

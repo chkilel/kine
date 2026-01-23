@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm } from '#components'
-
   const props = defineProps<{
     patientId: string
     consultationId: string
@@ -13,37 +11,30 @@
     stop: []
   }>()
 
-  const overlay = useOverlay()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
-
   const { data: patient } = usePatientById(() => props.patientId)
+  const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
+  const { data: allConsultations } = useConsultationsList(() => props.patientId)
   const { data: consultation, isPending: consultationLoading } = useConsultation(
     () => props.patientId,
     () => props.consultationId
   )
-  const { data: allConsultations } = useConsultationsList(() => props.patientId)
-  const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
+  const queryCache = useQueryCache()
+
+  let syncInterval: ReturnType<typeof setInterval> | null = null
+  let timerId: ReturnType<typeof setInterval> | null = null
 
   const painLevelBefore = ref<number>(0)
   const painLevelAfter = ref<number | undefined>(undefined)
   const consultationNotes = ref('')
+  const selectedTags = ref<string[]>([])
 
   const timerSeconds = ref(0)
   const isPaused = ref(false)
-  const extendedDurationSeconds = ref(0)
-  let timerId: ReturnType<typeof setInterval> | null = null
 
-  function getConsultationStartDateTime(item: { date: string; startTime: string }): Date | null {
-    if (!item.date || !item.startTime) return null
-    const [hourString, minuteString] = item.startTime.split(':')
-    const hour = Number.parseInt(hourString || '0', 10)
-    const minute = Number.parseInt(minuteString || '0', 10)
-    if (Number.isNaN(hour) || Number.isNaN(minute)) return null
-    const date = new Date(item.date)
-    if (Number.isNaN(date.getTime())) return null
-    date.setHours(hour, minute, 0, 0)
-    return date
-  }
+  const actualStartTime = ref<string | null>(null)
+  const pauseStartTime = ref<string | null>(null)
+  const totalPausedSeconds = ref(0)
+  const actualDurationSeconds = ref(0)
 
   watch(
     consultation,
@@ -53,84 +44,88 @@
       painLevelAfter.value = value.painLevelAfter ?? undefined
       consultationNotes.value = value.notes || ''
 
-      const startDateTime = getConsultationStartDateTime({ date: value.date, startTime: value.startTime })
-      if (startDateTime) {
-        const diffSeconds = Math.floor((Date.now() - startDateTime.getTime()) / 1000)
-        timerSeconds.value = Math.max(diffSeconds, 0)
+      if (value.tags) {
+        try {
+          selectedTags.value = JSON.parse(value.tags)
+        } catch (e) {
+          selectedTags.value = []
+        }
       } else {
-        timerSeconds.value = 0
+        selectedTags.value = []
       }
 
-      startTimer()
+      actualStartTime.value = value.actualStartTime || null
+      pauseStartTime.value = value.pauseStartTime || null
+      totalPausedSeconds.value = value.totalPausedSeconds || 0
+      actualDurationSeconds.value = value.actualDurationSeconds || 0
+
+      if (value.status === 'in_progress' && actualStartTime.value) {
+        calculateElapsedTime()
+        startTimer()
+      } else if (value.status !== 'in_progress') {
+        timerSeconds.value = 0
+        if (timerId) {
+          clearInterval(timerId)
+          timerId = null
+        }
+      }
     },
     { immediate: true }
   )
 
-  const consultationDurationSeconds = computed(() => {
-    if (!consultation.value?.duration) return 0
-    return consultation.value.duration * 60 + extendedDurationSeconds.value
-  })
+  function calculateElapsedTime() {
+    if (!actualStartTime.value) {
+      timerSeconds.value = 0
+      return
+    }
 
-  const elapsedLabel = computed(() => {
-    const total = timerSeconds.value
-    const minutes = Math.floor(total / 60)
-    const seconds = total % 60
-    const paddedSeconds = seconds.toString().padStart(2, '0')
-    return `${minutes}:${paddedSeconds}`
-  })
+    const currentTime = getCurrentTimeHHMMSS()
+    const totalElapsedSeconds = calculateTimeDifference(actualStartTime.value, currentTime)
 
-  const remainingLabel = computed(() => {
-    if (!consultationDurationSeconds.value) return ''
-    const remaining = Math.max(consultationDurationSeconds.value - timerSeconds.value, 0)
-    const minutes = Math.floor(remaining / 60)
-    const seconds = remaining % 60
-    const paddedSeconds = seconds.toString().padStart(2, '0')
-    return `${minutes}:${paddedSeconds}`
-  })
+    timerSeconds.value = Math.max(0, totalElapsedSeconds - totalPausedSeconds.value)
+  }
 
-  const remainingSeconds = computed(() => {
-    if (!consultationDurationSeconds.value) return 0
-    return Math.max(consultationDurationSeconds.value - timerSeconds.value, 0)
-  })
+  async function toggleTag(tag: string) {
+    if (!consultation.value) return
 
-  const showFiveMinuteWarning = computed(() => {
-    const currentConsultation = consultation.value
-    if (!currentConsultation) return false
-    if (currentConsultation.status !== 'in_progress') return false
-    if (!consultationDurationSeconds.value) return false
-    return remainingSeconds.value > 0 && remainingSeconds.value <= 5 * 60
-  })
+    const previousTags = [...selectedTags.value]
 
-  const timerProgress = computed(() => {
-    if (!consultationDurationSeconds.value) return 0
-    return Math.min((timerSeconds.value / consultationDurationSeconds.value) * 100, 100)
-  })
+    if (selectedTags.value.includes(tag)) {
+      selectedTags.value = selectedTags.value.filter((t) => t !== tag)
+    } else {
+      selectedTags.value = [...selectedTags.value, tag]
+    }
+
+    try {
+      await consultationAction.updateTagsAsync({
+        id: consultation.value.id,
+        patientId: props.patientId,
+        tags: selectedTags.value
+      })
+    } catch (error) {
+      console.error('Failed to save tags:', error)
+      selectedTags.value = previousTags
+    }
+  }
 
   function startTimer() {
     if (timerId) return
     isPaused.value = false
     timerId = setInterval(() => {
-      if (!isPaused.value) {
-        timerSeconds.value += 1
+      if (!isPaused.value && actualStartTime.value) {
+        calculateElapsedTime()
       }
     }, 1000)
-  }
-
-  function pauseTimer() {
-    isPaused.value = !isPaused.value
-    emit('pause')
-  }
-
-  function stopTimer() {
-    isPaused.value = true
-    timerSeconds.value = 0
-    emit('stop')
   }
 
   onUnmounted(() => {
     if (timerId) {
       clearInterval(timerId)
       timerId = null
+    }
+    if (syncInterval) {
+      clearInterval(syncInterval)
+      syncInterval = null
     }
   })
 
@@ -166,24 +161,6 @@
     return Math.min(Math.round((completedSessionsCount.value / totalSessionsCount.value) * 100), 100)
   })
 
-  const evaValues = computed(() => Array.from({ length: 11 }, (_, index) => index))
-
-  function getEvaColor(value: number) {
-    if (value <= 3) return 'success'
-    if (value <= 5) return 'warning'
-    if (value <= 7) return 'orange'
-    return 'error'
-  }
-
-  function getEvaEmoji(value: number) {
-    if (value <= 1) return '😄'
-    if (value <= 3) return '🙂'
-    if (value <= 5) return '😐'
-    if (value <= 7) return '😕'
-    if (value <= 9) return '😣'
-    return '😭'
-  }
-
   const headerTitle = computed(() => {
     if (!patient.value) return 'Séance active'
     return `${patient.value.firstName} ${patient.value.lastName}`
@@ -196,50 +173,17 @@
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
 
-  const { mutate: updateConsultation } = useUpdateConsultation()
-  const { mutate: updateStatus } = useUpdateConsultationStatus()
+  const timeSincePause = computed(() => {
+    return getTimeSincePause(pauseStartTime.value)
+  })
 
-  function handleExtendFiveMinutes() {
-    extendedDurationSeconds.value += 5 * 60
-  }
-
-  async function handleComplete() {
-    if (!consultation.value) return
-
-    const confirmed = await confirmModal.open({
-      title: 'Terminer la consultation',
-      message: 'Confirmer la fin de la séance et enregistrer les données ?',
-      confirmText: 'Terminer',
-      cancelText: 'Annuler',
-      confirmColor: 'success',
-      icon: 'i-hugeicons-checkmark-circle-01'
-    })
-
-    if (!confirmed) return
-
-    updateConsultation({
-      patientId: consultation.value.patientId,
-      consultationId: consultation.value.id,
-      consultationData: {
-        notes: consultationNotes.value,
-        painLevelBefore: painLevelBefore.value ?? undefined,
-        painLevelAfter: painLevelAfter.value ?? undefined
+  onMounted(() => {
+    syncInterval = setInterval(() => {
+      if (consultation.value && consultation.value.status === 'in_progress') {
+        queryCache.invalidateQueries({ key: ['consultations', props.patientId, props.consultationId] })
       }
-    })
-
-    updateStatus({
-      patientId: consultation.value.patientId,
-      consultationId: consultation.value.id,
-      status: 'completed'
-    })
-
-    emit('complete')
-    emit('close')
-  }
-
-  function handleClose() {
-    emit('close')
-  }
+    }, 30000)
+  })
 </script>
 
 <template>
@@ -250,7 +194,7 @@
     :ui="{
       content: 'w-full max-w-[1500px] bg-elevated'
     }"
-    @close="handleClose"
+    @close="emit('close')"
   >
     <template #body>
       <div v-if="consultationLoading" class="flex justify-center py-10">
@@ -382,7 +326,7 @@
           <UCard>
             <div class="mb-6 flex items-center justify-between">
               <h3 class="flex items-center gap-2 text-base font-bold">
-                <UIcon name="i-hugeicons-straighten" class="text-primary text-xl" />
+                <UIcon name="i-hugeicons-straight-edge" class="text-primary text-xl" />
                 Niveau de Douleur (EVA)
               </h3>
               <div class="flex items-center gap-4">
@@ -460,11 +404,11 @@
                     'Renforcement'
                   ]"
                   :key="tag"
-                  icon="i-hugeicons-add-01"
-                  variant="outline"
-                  color="neutral"
+                  :icon="selectedTags.includes(tag) ? 'i-hugeicons-checkmark-circle-01' : 'i-hugeicons-add-01'"
+                  :variant="selectedTags.includes(tag) ? 'solid' : 'outline'"
+                  :color="selectedTags.includes(tag) ? 'primary' : 'neutral'"
                   size="xs"
-                  @click="consultationNotes = `${consultationNotes} [${tag}] `"
+                  @click="toggleTag(tag)"
                 >
                   {{ tag }}
                 </UButton>
@@ -474,65 +418,19 @@
         </div>
 
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
-          <UButton
-            color="neutral"
-            size="xl"
-            variant="solid"
-            block
-            class="rounded-xl text-lg font-bold shadow-lg"
-            icon="i-hugeicons-checkmark-circle-01"
-            @click="handleComplete"
-          >
-            <span>Terminer la séance</span>
-          </UButton>
-          <div class="bg-primary relative flex flex-col overflow-hidden rounded-xl text-white shadow-lg">
-            <div
-              class="pointer-events-none absolute top-0 right-0 -mt-8 -mr-8 h-40 w-40 rounded-full bg-white/10 blur-3xl"
-            ></div>
-            <div
-              class="pointer-events-none absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-black/10 blur-2xl"
-            ></div>
-            <div class="relative z-10 flex flex-col items-center p-6 pb-28 text-center">
-              <div class="mb-1 flex items-center justify-center gap-3">
-                <UIcon name="i-hugeicons-alarm-clock" class="animate-pulse text-4xl" />
-                <div class="font-display text-[48px] leading-none font-bold tracking-tight">
-                  {{ remainingLabel || '00:00' }}
-                </div>
-              </div>
-              <div class="text-primary-100 mb-5 text-lg font-medium">restant</div>
-              <div
-                class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-1.5 font-mono text-sm text-white/90 shadow-sm backdrop-blur-sm"
-              >
-                <span>Écoulé : {{ elapsedLabel }}</span>
-              </div>
-            </div>
-            <div
-              v-if="showFiveMinuteWarning"
-              class="bg-elevated border-warning absolute right-3 bottom-3 left-3 z-20 rounded-lg border-l-4 p-3 shadow-xl"
-            >
-              <div class="mb-3 flex items-start gap-3">
-                <span class="text-lg select-none">⚠️</span>
-                <div class="flex-1">
-                  <p class="text-sm leading-tight font-bold">5 minutes restantes</p>
-                  <p class="text-muted mt-0.5 text-xs">La séance se termine bientôt</p>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <UButton color="success" size="xs" class="flex-1 justify-center font-bold" @click="handleComplete">
-                  Terminer maintenant
-                </UButton>
-                <UButton
-                  variant="outline"
-                  color="neutral"
-                  size="xs"
-                  class="flex-1 justify-center font-bold"
-                  @click="handleExtendFiveMinutes"
-                >
-                  Prolonger de 5 min
-                </UButton>
-              </div>
-            </div>
-          </div>
+          <ConsultationTimerCard
+            v-if="consultation"
+            :consultation="consultation"
+            :timer-seconds="timerSeconds"
+            :time-since-pause="timeSincePause"
+            :actual-start-time="actualStartTime"
+            :total-paused-seconds="totalPausedSeconds"
+            :selected-tags="selectedTags"
+            :pain-level-after="painLevelAfter"
+            :consultation-notes="consultationNotes"
+            @complete="emit('complete')"
+            @close="emit('close')"
+          />
 
           <UCard>
             <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
@@ -576,39 +474,3 @@
     </template>
   </USlideover>
 </template>
-
-<style scoped>
-  .eva-0 {
-    background-color: rgb(34 197 94);
-  }
-  .eva-1 {
-    background-color: rgb(74 222 128);
-  }
-  .eva-2 {
-    background-color: rgb(132 204 22);
-  }
-  .eva-3 {
-    background-color: rgb(163 230 53);
-  }
-  .eva-4 {
-    background-color: rgb(234 179 8);
-  }
-  .eva-5 {
-    background-color: rgb(250 204 21);
-  }
-  .eva-6 {
-    background-color: rgb(249 115 22);
-  }
-  .eva-7 {
-    background-color: rgb(251 146 60);
-  }
-  .eva-8 {
-    background-color: rgb(239 68 68);
-  }
-  .eva-9 {
-    background-color: rgb(220 38 38);
-  }
-  .eva-10 {
-    background-color: rgb(220 38 38);
-  }
-</style>
