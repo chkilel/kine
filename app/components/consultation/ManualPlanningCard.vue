@@ -276,7 +276,6 @@
     try {
       if (isEditMode.value && props.consultation) {
         await updateConsultationMutation.mutateAsync({
-          patientId: props.patient.id,
           consultationId: props.consultation.id,
           consultationData: {
             ...consultationDetails.value,
@@ -288,7 +287,6 @@
         })
       } else {
         await createConsultationMutation.mutateAsync({
-          patientId: props.patient.id,
           consultationData: {
             ...consultationDetails.value,
             roomId:

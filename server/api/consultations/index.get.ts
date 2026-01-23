@@ -1,60 +1,44 @@
 import { eq, and, asc, isNull, gte, lte } from 'drizzle-orm'
 import { consultations, rooms } from '~~/server/database/schema'
 
-// GET /api/patients/[id]/consultations - List patient consultations
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const patientId = getRouterParam(event, 'id')
-
-  if (!patientId) {
-    throw createError({
-      statusCode: 400,
-      message: 'ID de patient requis'
-    })
-  }
-
-  // Get current user and organization from session
   const { organizationId } = await requireAuth(event)
 
   try {
-    // Parse and validate query parameters
     const validatedQuery = await getValidatedQuery(event, consultationQuerySchema.parse)
 
-    // Build base query conditions
-    const baseConditions = and(eq(consultations.organizationId, organizationId), eq(consultations.patientId, patientId))
+    const conditions = []
 
-    // Apply additional filters
-    let whereConditions = baseConditions
+    conditions.push(eq(consultations.organizationId, organizationId))
 
-    // Filter by treatment plan if specified
+    if (validatedQuery.patientId) {
+      conditions.push(eq(consultations.patientId, validatedQuery.patientId))
+    }
+
     if (validatedQuery.treatmentPlanId) {
-      whereConditions = and(whereConditions, eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
-    }
-    // Otherwise, filter by onlyIndependent flag
-    else if (validatedQuery.onlyIndependent === true) {
+      conditions.push(eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
+    } else if (validatedQuery.onlyIndependent === true) {
       console.log('validatedQuery.onlyIndependent', validatedQuery.onlyIndependent)
-      // Show only independent consultations (not linked to any treatment plan)
-      whereConditions = and(whereConditions, isNull(consultations.treatmentPlanId))
+      conditions.push(isNull(consultations.treatmentPlanId))
     }
-    // If neither treatmentPlanId nor onlyIndependent is provided, show ALL consultations
 
     if (validatedQuery.status) {
-      whereConditions = and(whereConditions, eq(consultations.status, validatedQuery.status))
+      conditions.push(eq(consultations.status, validatedQuery.status))
     }
 
     if (validatedQuery.type) {
-      whereConditions = and(whereConditions, eq(consultations.type, validatedQuery.type))
+      conditions.push(eq(consultations.type, validatedQuery.type))
     }
 
     if (validatedQuery.dateFrom) {
-      whereConditions = and(whereConditions, gte(consultations.date, validatedQuery.dateFrom))
+      conditions.push(gte(consultations.date, validatedQuery.dateFrom))
     }
 
     if (validatedQuery.dateTo) {
-      whereConditions = and(whereConditions, lte(consultations.date, validatedQuery.dateTo))
+      conditions.push(lte(consultations.date, validatedQuery.dateTo))
     }
 
-    // Execute query with room join
     const consultationsList = await db
       .select({
         id: consultations.id,
@@ -92,11 +76,11 @@ export default defineEventHandler(async (event) => {
       })
       .from(consultations)
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))
-      .where(whereConditions)
+      .where(and(...conditions))
       .orderBy(asc(consultations.date))
 
     return consultationsList
   } catch (error: unknown) {
-    handleApiError(error, 'Erreur lors de la récupération des consultations du patient')
+    handleApiError(error, 'Erreur lors de la récupération des consultations')
   }
 })

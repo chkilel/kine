@@ -1,23 +1,20 @@
 import { eq, and } from 'drizzle-orm'
 import { consultations, rooms } from '~~/server/database/schema'
 
-// GET /api/patients/[id]/consultations/[consultationId] - Get single consultation
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const patientId = getRouterParam(event, 'id')
-  const consultationId = getRouterParam(event, 'consultationId')
+  const id = getRouterParam(event, 'id')
 
   try {
-    if (!patientId || !consultationId) {
+    if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'ID de patient et ID de consultation requis'
+        message: 'ID de consultation requis'
       })
     }
 
     const { organizationId } = await requireAuth(event)
 
-    // Fetch consultation with room name
     const [consultationData] = await db
       .select({
         id: consultations.id,
@@ -55,13 +52,7 @@ export default defineEventHandler(async (event) => {
       })
       .from(consultations)
       .leftJoin(rooms, eq(consultations.roomId, rooms.id))
-      .where(
-        and(
-          eq(consultations.organizationId, organizationId),
-          eq(consultations.id, consultationId),
-          eq(consultations.patientId, patientId)
-        )
-      )
+      .where(and(eq(consultations.organizationId, organizationId), eq(consultations.id, id)))
       .limit(1)
 
     if (!consultationData) {

@@ -91,7 +91,6 @@
     try {
       await consultationAction.startAsync({
         id: props.consultation.id,
-        patientId: props.patient.id,
         actualStartTime
       })
     } catch (error) {

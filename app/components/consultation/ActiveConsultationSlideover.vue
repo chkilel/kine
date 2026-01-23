@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { useConsultationAction } from '~/composables/useConsultationAction'
+
   const props = defineProps<{
     patientId: string
     consultationId: string
@@ -6,19 +8,14 @@
 
   const emit = defineEmits<{
     close: []
-    complete: []
-    pause: []
-    stop: []
   }>()
 
   const { data: patient } = usePatientById(() => props.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
-  const { data: allConsultations } = useConsultationsList(() => props.patientId)
-  const { data: consultation, isPending: consultationLoading } = useConsultation(
-    () => props.patientId,
-    () => props.consultationId
-  )
+  const { data: allConsultations } = useConsultationsList(() => ({ patientId: props.patientId }))
+  const { data: consultation, isPending: consultationLoading } = useConsultation(() => props.consultationId)
   const queryCache = useQueryCache()
+  const consultationAction = useConsultationAction()
 
   let syncInterval: ReturnType<typeof setInterval> | null = null
   let timerId: ReturnType<typeof setInterval> | null = null
@@ -99,7 +96,6 @@
     try {
       await consultationAction.updateTagsAsync({
         id: consultation.value.id,
-        patientId: props.patientId,
         tags: selectedTags.value
       })
     } catch (error) {
@@ -180,7 +176,7 @@
   onMounted(() => {
     syncInterval = setInterval(() => {
       if (consultation.value && consultation.value.status === 'in_progress') {
-        queryCache.invalidateQueries({ key: ['consultations', props.patientId, props.consultationId] })
+        queryCache.invalidateQueries({ key: ['consultations', props.consultationId] })
       }
     }, 30000)
   })
@@ -428,7 +424,6 @@
             :selected-tags="selectedTags"
             :pain-level-after="painLevelAfter"
             :consultation-notes="consultationNotes"
-            @complete="emit('complete')"
             @close="emit('close')"
           />
 

@@ -2,11 +2,10 @@
   const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
   const deleteConsultationMutation = useDeleteConsultation()
-  const { data: consultationsData } = useConsultationsList(() => props.patientId)
+  const { data: consultationsData } = useConsultationsList(() => ({ patientId: props.patientId }))
 
   const deleteConsultation = async (consultationId: string) => {
     await deleteConsultationMutation.mutateAsync({
-      patientId: props.patientId,
       consultationId
     })
   }

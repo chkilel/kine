@@ -1,24 +1,15 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
-/**
- * Query for fetching consultations for a patient
- * @param patientId - Patient ID to fetch consultations for
- * @param queryParams - Optional query parameters for filtering and pagination
- * @returns Query result with consultations data and loading state
- */
-const _useConsultationsList = (
-  patientId: MaybeRefOrGetter<string>,
-  queryParams?: MaybeRefOrGetter<ConsultationQuery>
-) => {
+const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
     key: () => {
       const query = toValue(queryParams)
-      return query ? ['consultations', toValue(patientId), query] : ['consultations', toValue(patientId)]
+      return query ? ['consultations', query] : ['consultations']
     },
     query: async () => {
-      const resp = await requestFetch(`/api/patients/${toValue(patientId)}/consultations`, {
+      const resp = await requestFetch('/api/consultations', {
         query: toValue(queryParams)
       })
       return resp?.map((item) => ({
@@ -26,18 +17,11 @@ const _useConsultationsList = (
         createdAt: parseISO(item.createdAt),
         updatedAt: parseISO(item.updatedAt)
       }))
-    },
-    enabled: () => !!toValue(patientId)
+    }
   })
 }
 
-/**
- * Mutation for creating a new consultation
- * @returns Mutation with create functionality and error handling
- */
-
 type CreateConsultationParams = {
-  patientId: string
   consultationData: ConsultationCreate
   onSuccess?: () => void
 }
@@ -48,19 +32,22 @@ const _useCreateConsultation = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, consultationData }: CreateConsultationParams) =>
-      requestFetch(`/api/patients/${patientId}/consultations`, {
+    mutation: async ({ consultationData }: CreateConsultationParams) =>
+      requestFetch('/api/consultations', {
         method: 'POST',
         body: consultationData
       }),
-    onSuccess: (_, { patientId, onSuccess }) => {
+    onSuccess: (_, { consultationData, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Consultation créée avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+      if (consultationData.patientId) {
+        queryCache.invalidateQueries({ key: ['consultations', { patientId: consultationData.patientId }] })
+      }
+      queryCache.invalidateQueries({ key: ['consultations'] })
     },
     onError: (error: any) => {
       toast.add({
@@ -72,14 +59,10 @@ const _useCreateConsultation = () => {
   })
 }
 
-/**
- * Mutation for updating an existing consultation
- * @returns Mutation with update functionality and error handling
- */
 type UpdateConsultationParams = {
-  patientId: string
   consultationId: string
   consultationData: ConsultationUpdate
+  patientId?: string
   onSuccess?: () => void
 }
 const _useUpdateConsultation = () => {
@@ -88,8 +71,8 @@ const _useUpdateConsultation = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ patientId, consultationId, consultationData }: UpdateConsultationParams) =>
-      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+    mutation: async ({ consultationId, consultationData }: UpdateConsultationParams) =>
+      requestFetch(`/api/consultations/${consultationId}`, {
         method: 'PUT',
         body: consultationData
       }),
@@ -100,7 +83,10 @@ const _useUpdateConsultation = () => {
         description: 'Consultation mise à jour avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+      if (patientId) {
+        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+      }
+      queryCache.invalidateQueries({ key: ['consultations'] })
     },
     onError: (error: any) => {
       toast.add({
@@ -112,24 +98,16 @@ const _useUpdateConsultation = () => {
   })
 }
 
-/**
- * Query for fetching a single consultation
- * @param patientId - Patient ID
- * @param consultationId - Consultation ID to fetch
- * @returns Query result with consultation data and loading state
- */
-const _useConsultation = (patientId: MaybeRefOrGetter<string>, consultationId: MaybeRefOrGetter<string>) => {
+const _useConsultation = (consultationId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
   return useQuery({
     key: () => {
-      if (!!toValue(patientId) && !!toValue(consultationId)) {
-        return ['consultations', toValue(patientId), toValue(consultationId)]
-      }
-      return ['consultations']
+      const id = toValue(consultationId)
+      return id ? ['consultations', id] : ['consultations']
     },
     query: async () => {
-      const data = await requestFetch(`/api/patients/${toValue(patientId)}/consultations/${toValue(consultationId)}`)
+      const data = await requestFetch(`/api/consultations/${toValue(consultationId)}`)
       if (!data) return null
 
       return {
@@ -138,14 +116,10 @@ const _useConsultation = (patientId: MaybeRefOrGetter<string>, consultationId: M
         updatedAt: parseISO(data.updatedAt)
       }
     },
-    enabled: () => !!toValue(patientId) && !!toValue(consultationId)
+    enabled: () => !!toValue(consultationId)
   })
 }
 
-/**
- * Mutation for deleting a consultation
- * @returns Mutation with delete functionality and error handling
- */
 const _useDeleteConsultation = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -153,14 +127,14 @@ const _useDeleteConsultation = () => {
 
   return useMutation({
     mutation: async ({
-      patientId,
-      consultationId
+      consultationId,
+      patientId
     }: {
-      patientId: string
       consultationId: string
+      patientId?: string
       onSuccess?: () => void
     }) =>
-      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+      requestFetch(`/api/consultations/${consultationId}`, {
         method: 'DELETE'
       }),
     onSuccess: (_, { patientId, onSuccess }) => {
@@ -170,7 +144,10 @@ const _useDeleteConsultation = () => {
         description: 'Consultation supprimée avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+      if (patientId) {
+        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+      }
+      queryCache.invalidateQueries({ key: ['consultations'] })
     },
     onError: (error: any) => {
       toast.add({
@@ -182,10 +159,6 @@ const _useDeleteConsultation = () => {
   })
 }
 
-/**
- * Mutation for updating consultation status
- * @returns Mutation with status update functionality and error handling
- */
 const _useUpdateConsultationStatus = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
@@ -193,15 +166,15 @@ const _useUpdateConsultationStatus = () => {
 
   return useMutation({
     mutation: async ({
-      patientId,
       consultationId,
+      patientId,
       status
     }: {
-      patientId: string
       consultationId: string
+      patientId?: string
       status: ConsultationStatus
     }) =>
-      requestFetch(`/api/patients/${patientId}/consultations/${consultationId}`, {
+      requestFetch(`/api/consultations/${consultationId}`, {
         method: 'PUT',
         body: { status }
       }),
@@ -212,7 +185,10 @@ const _useUpdateConsultationStatus = () => {
         color: 'success'
       })
       queryCache.invalidateQueries({ key: ['therapist-consultations'] })
-      queryCache.invalidateQueries({ key: ['consultations', patientId] })
+      if (patientId) {
+        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+      }
+      queryCache.invalidateQueries({ key: ['consultations'] })
     },
     onError: (error: any) => {
       toast.add({

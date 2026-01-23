@@ -9,7 +9,7 @@
   const route = useRoute()
 
   const { latestActiveTreatmentPlan, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => patient?.id)
-  const { data: consultations } = useConsultationsList(() => patient?.id)
+  const { data: consultations } = useConsultationsList(() => ({ patientId: patient?.id }))
 
   const upcomingConsultations = computed(() => {
     if (!consultations.value) return []
