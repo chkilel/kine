@@ -47,11 +47,19 @@
                   />
                   <p class="font-semibold">
                     {{ removeSecondsFromTime(consultation.startTime) }} -
-                    {{ removeSecondsFromTime(addMinutesToTime(consultation.startTime, consultation.duration)) }}
+                    {{
+                      removeSecondsFromTime(
+                        addMinutesToTime(
+                          consultation.startTime,
+                          consultation.duration + (consultation.extendedDurationMinutes || 0)
+                        )
+                      )
+                    }}
                   </p>
                 </div>
                 <div class="text-muted text-xs">
-                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} · {{ consultation.duration }} min
+                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} ·
+                  {{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
             </div>

@@ -45,7 +45,14 @@
             <UIcon :name="getConsultationTypeIcon(consultation.type || 'follow_up')" class="size-4 shrink-0" />
             {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} •
             {{ removeSecondsFromTime(consultation.startTime) }} -
-            {{ removeSecondsFromTime(consultation.endTime) }}
+            {{
+              removeSecondsFromTime(
+                addMinutesToTime(
+                  consultation.startTime,
+                  consultation.duration + (consultation.extendedDurationMinutes || 0)
+                )
+              )
+            }}
           </p>
         </div>
       </div>

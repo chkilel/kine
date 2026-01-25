@@ -10,88 +10,62 @@
     close: []
   }>()
 
+  // Data fetching
   const { data: patient } = usePatientById(() => props.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
   const { data: allConsultations } = useConsultationsList(() => ({ patientId: props.patientId }))
   const { data: consultation, isPending: consultationLoading } = useConsultation(() => props.consultationId)
-  const queryCache = useQueryCache()
   const consultationAction = useConsultationAction()
 
-  let syncInterval: ReturnType<typeof setInterval> | null = null
-  let timerId: ReturnType<typeof setInterval> | null = null
-
+  // Form state
   const painLevelBefore = ref<number>(0)
   const painLevelAfter = ref<number | undefined>(undefined)
   const consultationNotes = ref('')
   const selectedTags = ref<string[]>([])
 
-  const timerSeconds = ref(0)
-  const isPaused = ref(false)
+  // Constants
+  const AVAILABLE_TAGS = [
+    'Douleur Diminuée',
+    'Gain Amplitude',
+    'Proprioception',
+    'Cryothérapie',
+    'Renforcement'
+  ] as const
+  const EVA_MIN = 0
+  const EVA_MAX = 10
+  const EVA_STEP = 1
 
-  const actualStartTime = ref<string | null>(null)
-  const pauseStartTime = ref<string | null>(null)
-  const totalPausedSeconds = ref(0)
-  const actualDurationSeconds = ref(0)
-
+  // Initialize form from consultation data
   watch(
     consultation,
     (value) => {
       if (!value) return
+
       painLevelBefore.value = value.painLevelBefore ?? 0
       painLevelAfter.value = value.painLevelAfter ?? undefined
       consultationNotes.value = value.notes || ''
-
-      if (value.tags) {
-        try {
-          selectedTags.value = JSON.parse(value.tags)
-        } catch (e) {
-          selectedTags.value = []
-        }
-      } else {
-        selectedTags.value = []
-      }
-
-      actualStartTime.value = value.actualStartTime || null
-      pauseStartTime.value = value.pauseStartTime || null
-      totalPausedSeconds.value = value.totalPausedSeconds || 0
-      actualDurationSeconds.value = value.actualDurationSeconds || 0
-
-      if (value.status === 'in_progress' && actualStartTime.value) {
-        calculateElapsedTime()
-        startTimer()
-      } else if (value.status !== 'in_progress') {
-        timerSeconds.value = 0
-        if (timerId) {
-          clearInterval(timerId)
-          timerId = null
-        }
-      }
+      selectedTags.value = parseTagsSafely(value.tags)
     },
     { immediate: true }
   )
 
-  function calculateElapsedTime() {
-    if (!actualStartTime.value) {
-      timerSeconds.value = 0
-      return
+  // Helper functions
+  function parseTagsSafely(tags: string | null | undefined): string[] {
+    if (!tags) return []
+    try {
+      return JSON.parse(tags)
+    } catch {
+      return []
     }
-
-    const currentTime = getCurrentTimeHHMMSS()
-    const totalElapsedSeconds = calculateTimeDifference(actualStartTime.value, currentTime)
-
-    timerSeconds.value = Math.max(0, totalElapsedSeconds - totalPausedSeconds.value)
   }
 
   async function toggleTag(tag: string) {
     if (!consultation.value) return
 
     const previousTags = [...selectedTags.value]
-
-    if (selectedTags.value.includes(tag)) {
-      selectedTags.value = selectedTags.value.filter((t) => t !== tag)
-    } else {
-      selectedTags.value = [...selectedTags.value, tag]
-    }
+    selectedTags.value = selectedTags.value.includes(tag)
+      ? selectedTags.value.filter((t) => t !== tag)
+      : [...selectedTags.value, tag]
 
     try {
       await consultationAction.updateTagsAsync({
@@ -104,31 +78,12 @@
     }
   }
 
-  function startTimer() {
-    if (timerId) return
-    isPaused.value = false
-    timerId = setInterval(() => {
-      if (!isPaused.value && actualStartTime.value) {
-        calculateElapsedTime()
-      }
-    }, 1000)
-  }
-
-  onUnmounted(() => {
-    if (timerId) {
-      clearInterval(timerId)
-      timerId = null
-    }
-    if (syncInterval) {
-      clearInterval(syncInterval)
-      syncInterval = null
-    }
-  })
-
+  // Computed values - memoized for performance
   const previousConsultations = computed(() => {
     const list = allConsultations.value
     const currentConsultation = consultation.value
     if (!list || !currentConsultation) return []
+
     return list
       .filter((c) => c.id !== currentConsultation.id && c.date <= currentConsultation.date)
       .slice(-5)
@@ -144,42 +99,39 @@
     if (!allConsultations.value || !consultation.value) return 0
     const planId = consultation.value.treatmentPlanId
     if (!planId) return 0
+
     return allConsultations.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
-  const totalSessionsCount = computed(() => {
-    if (!relatedTreatmentPlan.value) return 0
-    return relatedTreatmentPlan.value.numberOfSessions || 0
-  })
+  const totalSessionsCount = computed(() => relatedTreatmentPlan.value?.numberOfSessions || 0)
 
   const progressPercentage = computed(() => {
     if (!totalSessionsCount.value) return 0
     return Math.min(Math.round((completedSessionsCount.value / totalSessionsCount.value) * 100), 100)
   })
 
-  const headerTitle = computed(() => {
-    if (!patient.value) return 'Séance active'
-    return `${patient.value.firstName} ${patient.value.lastName}`
-  })
+  const headerTitle = computed(() =>
+    patient.value ? `${patient.value.firstName} ${patient.value.lastName}` : 'Séance active'
+  )
 
   const headerDescription = computed(() => {
     if (!consultation.value) return ''
     const typeLabel = getConsultationTypeLabel(consultation.value.type || 'follow_up')
-    const durationLabel = consultation.value.duration ? `${consultation.value.duration} min` : ''
+    const totalDuration = consultation.value.duration + (consultation.value.extendedDurationMinutes || 0)
+    const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
 
-  const timeSincePause = computed(() => {
-    return getTimeSincePause(pauseStartTime.value)
-  })
+  const hasPatientAlerts = computed(() =>
+    Boolean(
+      patient.value?.allergies?.length ||
+      patient.value?.medicalConditions?.length ||
+      patient.value?.surgeries?.length ||
+      patient.value?.medications?.length
+    )
+  )
 
-  onMounted(() => {
-    syncInterval = setInterval(() => {
-      if (consultation.value && consultation.value.status === 'in_progress') {
-        queryCache.invalidateQueries({ key: ['consultations', props.consultationId] })
-      }
-    }, 30000)
-  })
+  const evaScaleNumbers = computed(() => Array.from({ length: EVA_MAX - EVA_MIN + 1 }, (_, i) => i + EVA_MIN))
 </script>
 
 <template>
@@ -187,17 +139,20 @@
     :dismissible="false"
     :title="headerTitle"
     :description="headerDescription"
-    :ui="{
-      content: 'w-full max-w-[1500px] bg-elevated'
-    }"
+    :ui="{ content: 'w-full max-w-[1500px] bg-elevated' }"
     @close="emit('close')"
   >
     <template #body>
+      <!-- Loading State -->
       <div v-if="consultationLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
+
+      <!-- Main Content -->
       <div v-else class="grid h-full gap-6 lg:grid-cols-12">
+        <!-- Left Sidebar - Patient Info -->
         <aside class="flex flex-col gap-4 lg:col-span-3">
+          <!-- Patient Profile Card -->
           <UCard :ui="{ body: 'p-0 sm:p-0' }">
             <div class="flex flex-col items-center p-6">
               <div class="bg-primary-50 mb-4 size-28 rounded-full p-2">
@@ -212,7 +167,10 @@
                 </p>
               </div>
             </div>
+
+            <!-- Medical Info Section -->
             <div class="border-default border-t px-6 pt-6 pb-6">
+              <!-- Treatment Plan -->
               <div v-if="relatedTreatmentPlan" class="mb-5">
                 <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Diagnostic Principal</p>
                 <UAlert
@@ -227,14 +185,9 @@
                   }"
                 />
               </div>
-              <div
-                v-if="
-                  patient?.allergies?.length ||
-                  patient?.medicalConditions?.length ||
-                  patient?.surgeries?.length ||
-                  patient?.medications?.length
-                "
-              >
+
+              <!-- Medical Alerts -->
+              <div v-if="hasPatientAlerts">
                 <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Alertes Médicales</p>
 
                 <div class="space-y-3">
@@ -298,17 +251,18 @@
             </div>
           </UCard>
 
+          <!-- Stats Card -->
           <UCard :ui="{ body: 'flex items-center justify-between p-4' }">
             <div>
               <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Progression</p>
               <p class="text-lg font-bold">{{ progressPercentage }}%</p>
             </div>
-            <div class="bg-border h-8 w-px"></div>
+            <div class="bg-border h-8 w-px" />
             <div>
               <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Séances</p>
               <p class="text-lg font-bold">{{ completedSessionsCount }}/{{ totalSessionsCount }}</p>
             </div>
-            <div class="bg-border h-8 w-px"></div>
+            <div class="bg-border h-8 w-px" />
             <div>
               <p class="text-muted text-[10px] font-bold tracking-tight uppercase">Dernière EVA</p>
               <p class="text-lg font-bold">
@@ -318,7 +272,9 @@
           </UCard>
         </aside>
 
+        <!-- Center Column - Main Content -->
         <div class="flex flex-col gap-4 lg:col-span-6">
+          <!-- EVA Pain Scale Card -->
           <UCard>
             <div class="mb-6 flex items-center justify-between">
               <h3 class="flex items-center gap-2 text-base font-bold">
@@ -326,34 +282,36 @@
                 Niveau de Douleur (EVA)
               </h3>
               <div class="flex items-center gap-4">
-                <span class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-gray-400 uppercase">
-                  <span class="size-2 rounded-full bg-green-500"></span>
+                <span class="text-muted flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase">
+                  <span class="size-2 rounded-full bg-green-500" />
                   Aucun
                 </span>
-                <span class="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-gray-400 uppercase">
-                  <span class="size-2 rounded-full bg-red-600"></span>
+                <span class="text-muted flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase">
+                  <span class="size-2 rounded-full bg-red-600" />
                   Intense
                 </span>
                 <UBadge variant="subtle" size="xs" class="ml-2">Aujourd'hui</UBadge>
               </div>
             </div>
+
             <div class="flex justify-between text-sm">
               <span
-                v-for="(item, index) in [...Array(11).keys()]"
-                :key="index"
+                v-for="value in evaScaleNumbers"
+                :key="value"
                 :class="[
                   'inline-flex w-[2ch] justify-center border-t-3 p-0.5 tabular-nums transition-all',
-                  painLevelBefore === item ? 'text-error border-error font-bold' : 'border-transparent'
+                  painLevelBefore === value ? 'text-error border-error font-bold' : 'border-transparent'
                 ]"
               >
-                {{ item.toFixed(0).padStart(2, ' ') }}
+                {{ value.toString().padStart(2, ' ') }}
               </span>
             </div>
+
             <USlider
               v-model="painLevelBefore"
-              :min="0"
-              :max="10"
-              :step="1"
+              :min="EVA_MIN"
+              :max="EVA_MAX"
+              :step="EVA_STEP"
               :ui="{
                 root: 'w-full flex-1 mt-2',
                 track: 'bg-gradient-to-r from-green-600 via-yellow-400 to-red-500',
@@ -364,20 +322,24 @@
             />
           </UCard>
 
+          <!-- Notes Editor Card -->
           <UCard :ui="{ body: 'p-0 sm:p-0 flex flex-col space-y-2 overflow-hidden' }">
+            <!-- Toolbar -->
             <div class="border-default bg-muted-50 flex items-center gap-1 border-b p-2">
               <UButton icon="i-hugeicons-text-bold" variant="ghost" color="neutral" size="xs" square />
               <UButton icon="i-hugeicons-text-italic" variant="ghost" color="neutral" size="xs" square />
               <UButton icon="i-hugeicons-text-underline" variant="ghost" color="neutral" size="xs" square />
-              <div class="bg-border mx-2 h-6 w-px"></div>
+              <div class="bg-border mx-2 h-6 w-px" />
               <UButton icon="i-hugeicons-check-list" variant="ghost" color="neutral" size="xs" square />
               <UButton icon="i-hugeicons-left-to-right-list-number" variant="ghost" color="neutral" size="xs" square />
-              <div class="flex-1"></div>
+              <div class="flex-1" />
               <div class="text-muted flex items-center gap-1 text-xs">
                 <UIcon name="i-hugeicons-cloud-saving-done-01" class="size-4" />
                 Sauvegardé
               </div>
             </div>
+
+            <!-- Textarea -->
             <UTextarea
               v-model="consultationNotes"
               :rows="12"
@@ -385,6 +347,8 @@
               class="border-none bg-transparent focus:ring-0"
               :ui="{ root: 'flex-1 h-full' }"
             />
+
+            <!-- Smart Tags Section -->
             <div class="border-default bg-muted-50/50 dark:bg-muted-900/30 border-t p-4">
               <div class="mb-2 flex items-center justify-between">
                 <p class="text-muted text-xs font-bold tracking-wider uppercase">Smart Tags</p>
@@ -392,13 +356,7 @@
               </div>
               <div class="flex flex-wrap gap-2">
                 <UButton
-                  v-for="tag in [
-                    'Douleur Diminuée',
-                    'Gain Amplitude',
-                    'Proprioception',
-                    'Cryothérapie',
-                    'Renforcement'
-                  ]"
+                  v-for="tag in AVAILABLE_TAGS"
                   :key="tag"
                   :icon="selectedTags.includes(tag) ? 'i-hugeicons-checkmark-circle-01' : 'i-hugeicons-add-01'"
                   :variant="selectedTags.includes(tag) ? 'solid' : 'outline'"
@@ -413,20 +371,19 @@
           </UCard>
         </div>
 
+        <!-- Right Sidebar - Timer & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
+          <!-- Timer Card -->
           <ConsultationTimerCard
             v-if="consultation"
             :consultation="consultation"
-            :timer-seconds="timerSeconds"
-            :time-since-pause="timeSincePause"
-            :actual-start-time="actualStartTime"
-            :total-paused-seconds="totalPausedSeconds"
             :selected-tags="selectedTags"
             :pain-level-after="painLevelAfter"
             :consultation-notes="consultationNotes"
             @close="emit('close')"
           />
 
+          <!-- Previous Consultations Card -->
           <UCard>
             <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
               <UButton
@@ -443,6 +400,7 @@
                   Notes des séances précédentes
                 </span>
               </UButton>
+
               <template #content>
                 <div v-if="previousConsultations.length" class="space-y-5 pt-3">
                   <div v-for="previous in previousConsultations" :key="previous.id">
