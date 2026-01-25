@@ -125,6 +125,7 @@ CREATE TABLE `consultations` (
 	`actualDurationSeconds` integer,
 	`totalPausedSeconds` integer,
 	`pauseStartTime` text,
+	`extendedDurationMinutes` integer DEFAULT 0,
 	`tags` text,
 	`location` text DEFAULT 'clinic',
 	`billed` text,

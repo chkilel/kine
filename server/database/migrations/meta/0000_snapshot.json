@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0c5849f9-74a7-4a5b-94ed-1347e1021a9b",
+  "id": "3f62e9e6-6842-400e-b140-a056933703fa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -903,6 +903,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "extendedDurationMinutes": {
+          "name": "extendedDurationMinutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
         },
         "tags": {
           "name": "tags",

@@ -59,6 +59,7 @@ export const consultations = sqliteTable(
     actualDurationSeconds: integer(), // Actual therapy time in seconds (excluding pauses)
     totalPausedSeconds: integer(), // Cumulative pause duration in seconds
     pauseStartTime: text(), // Timestamp when current pause began (null if running) — e.g., "10:15:30"
+    extendedDurationMinutes: integer().default(0), // Minutes added beyond planned duration
     tags: text(), // JSON array of smart tags for session classification — e.g., '["Douleur Diminuée", "Proprioception"]'
 
     // ---- Planning location ----
