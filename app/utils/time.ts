@@ -1,11 +1,8 @@
-import { parseTime } from '@internationalized/date'
+import { Time, parseTime } from '@internationalized/date'
+import { format } from 'date-fns'
 
 export function getCurrentTimeHHMMSS(): string {
-  const now = new Date()
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  return `${hours}:${minutes}:${seconds}`
+  return format(new Date(), 'HH:mm:ss')
 }
 
 export function calculateTimeDifference(startTime: string, endTime: string): number {
@@ -18,6 +15,7 @@ export function calculateTimeDifference(startTime: string, endTime: string): num
 
     let diff = endSeconds - startSeconds
 
+    // Handle case where end time is on the next day
     if (diff < 0) {
       diff += 24 * 3600
     }
@@ -29,20 +27,26 @@ export function calculateTimeDifference(startTime: string, endTime: string): num
   }
 }
 
-export function formatSecondsAsMMSS(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-}
-
-export function formatSecondsAsHHMMSS(seconds: number): string {
+export function formatSecondsAsTime(seconds: number): Time {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = Math.floor(seconds % 60)
 
-  if (hours > 0) {
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  return new Time(hours, minutes, secs)
+}
+
+export function formatSecondsAsMMSS(seconds: number): string {
+  const time = formatSecondsAsTime(seconds)
+  return time.toString().slice(3) // Remove "HH:" to get "MM:SS"
+}
+
+export function formatSecondsAsHHMMSS(seconds: number): string {
+  const time = formatSecondsAsTime(seconds)
+
+  if (time.hour > 0) {
+    return time.toString() // Returns HH:mm:ss format
   }
+
   return formatSecondsAsMMSS(seconds)
 }
 
@@ -64,9 +68,10 @@ export function getTimeSincePause(pauseStartTime: string | null): string {
   const hours = Math.floor(elapsedSeconds / 3600)
   const remainingMinutes = Math.floor((elapsedSeconds % 3600) / 60)
 
-  if (remainingMinutes > 0) {
-    return `${hours}h${remainingMinutes}min`
-  }
+  return remainingMinutes > 0 ? `${hours}h${remainingMinutes}min` : `${hours}h`
+}
 
-  return `${hours}h`
+export function getCurrentTime(): Time {
+  const now = new Date()
+  return parseTime(now.toTimeString())
 }
