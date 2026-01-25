@@ -32,8 +32,11 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         dateTo: toValue(queryParamsValue.dateTo),
         date: toValue(queryParamsValue.date)
       }
+      const validatedQuery = consultationQuerySchema.parse(query)
       const resp = await requestFetch('/api/consultations', {
-        query: Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined && v !== null && v !== ''))
+        query: Object.fromEntries(
+          Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
+        )
       })
       return resp?.map((item) => ({
         ...item,
@@ -222,9 +225,41 @@ const _useUpdateConsultationStatus = () => {
   })
 }
 
+const _useTherapistConsultations = (
+  therapistId: MaybeRefOrGetter<string | undefined>,
+  date: MaybeRefOrGetter<string>
+) => {
+  const requestFetch = useRequestFetch()
+
+  return useQuery({
+    key: () => {
+      const therapistIdValue = toValue(therapistId)
+      const dateValue = toValue(date)
+      return therapistIdValue && dateValue
+        ? ['consultations', 'therapist', therapistIdValue, dateValue]
+        : ['consultations']
+    },
+    query: async () => {
+      const query = {
+        therapistId: toValue(therapistId),
+        date: toValue(date)
+      }
+      const validatedQuery = therapistConsultationsQuerySchema.parse(query)
+      const resp = await requestFetch('/api/consultations', { query: validatedQuery })
+      return resp?.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt)
+      }))
+    },
+    enabled: () => !!toValue(therapistId) && !!toValue(date)
+  })
+}
+
 export const useConsultationsList = _useConsultationsList
 export const useConsultation = _useConsultation
 export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
 export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
 export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)
 export const useUpdateConsultationStatus = createSharedComposable(_useUpdateConsultationStatus)
+export const useTherapistConsultations = _useTherapistConsultations

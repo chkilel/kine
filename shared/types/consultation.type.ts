@@ -57,6 +57,11 @@ export const consultationQuerySchema = z.object({
   tags: z.string().optional()
 })
 
+export const therapistConsultationsQuerySchema = z.object({
+  therapistId: z.string(),
+  date: calendarDateSchema
+})
+
 // Type inference
 export type Consultation = z.infer<typeof consultationSchema> & {
   roomName?: string | null

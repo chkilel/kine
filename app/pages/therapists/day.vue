@@ -42,10 +42,7 @@
   }
 
   const { user } = await useAuth()
-  const { data: consultations, isPending } = useConsultationsList(() => ({
-    date: currentDate.value,
-    therapistId: user.value?.id
-  }))
+  const { data: consultations, isPending } = useTherapistConsultations(() => user.value?.id, currentDate)
 
   const stats = computed(() => {
     const list = consultations.value || []
