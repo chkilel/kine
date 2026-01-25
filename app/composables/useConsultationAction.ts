@@ -34,7 +34,7 @@ const _useConsultationAction = () => {
         color: 'success'
       })
       queryCache.invalidateQueries({ key: ['consultations', id] })
-      queryCache.invalidateQueries({ key: ['therapist-consultations'] })
+      queryCache.invalidateQueries({ key: ['consultations', 'therapist'] })
     },
     onError: (error) => {
       toast.add({
