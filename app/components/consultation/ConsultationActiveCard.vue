@@ -17,14 +17,17 @@
     <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
       <div class="flex gap-4">
         <div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white/10 ring ring-white/30">
-          <UIcon name="i-hugeicons-play-circle" class="animate-pulse text-3xl" />
+          <UIcon
+            :name="consultation.pauseStartTime ? 'i-hugeicons-pause' : 'i-hugeicons-play'"
+            class="animate-pulse text-3xl"
+          />
         </div>
         <div>
           <div class="flex items-center gap-3">
             <!-- <span class="text-xs font-semibold tracking-widest uppercase">Consultation en cours</span> -->
             <UBadge
-              label="En cours"
-              color="success"
+              :label="consultation.pauseStartTime ? 'En pause' : 'En cours'"
+              :color="consultation.pauseStartTime ? 'warning' : 'success'"
               class="animate-pulse rounded-lg py-0.5 text-[10px] font-bold uppercase"
             />
             <UBadge
