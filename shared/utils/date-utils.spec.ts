@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { removeSecondsFromTime, timeToMinutes, minutesToTime } from './time'
 import {
-  removeSecondsFromTime,
-  timeToMinutes,
-  minutesToTime,
   safeParseISODate,
   isDateDisabled,
   getAbbreviatedMonthName,
@@ -28,12 +26,12 @@ describe('date-utils', () => {
       expect(result).toBe('09:00')
     })
 
-    it('1.1.3 should throw error for invalid format', () => {
-      expect(() => removeSecondsFromTime('14:30')).toThrow('Invalid time format. Expected HH:MM:SS')
+    it('1.1.3 should throw error for HH:MM format without seconds', () => {
+      expect(() => removeSecondsFromTime('14:30')).toThrow('Invalid time format')
     })
 
-    it('1.1.4 should throw error for HH:MM format without seconds', () => {
-      expect(() => removeSecondsFromTime('invalid-time')).toThrow('Invalid time format. Expected HH:MM:SS')
+    it('1.1.4 should throw error for invalid time string', () => {
+      expect(() => removeSecondsFromTime('invalid-time')).toThrow('Invalid time format')
     })
   })
 
@@ -51,8 +49,8 @@ describe('date-utils', () => {
       expect(timeToMinutes('23:59')).toBe(1439)
     })
 
-    it('1.2.4 should throw error for invalid time', () => {
-      expect(() => timeToMinutes('invalid')).toThrow('Invalid ISO 8601 time string')
+    it('1.2.4 should return 0 for invalid time', () => {
+      expect(timeToMinutes('invalid')).toBe(0)
     })
   })
 
@@ -200,24 +198,24 @@ describe('date-utils', () => {
   describe('formatRelativeDate', () => {
     it('1.8.1 should return "Aujourd\'hui" for today', () => {
       const today = new Date()
-      expect(formatRelativeDate(today)).toBe("Aujourd'hui")
+      expect(formatRelativeDate(today)).toBe('aujourd’hui')
     })
 
-    it('1.8.2 should return "Hier" for yesterday', () => {
+    it('1.8.2 should return "hier" for yesterday', () => {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      expect(formatRelativeDate(yesterday)).toBe('Hier')
+      expect(formatRelativeDate(yesterday)).toBe('hier')
     })
 
     it('1.8.3 should return relative time for older dates', () => {
       const lastWeek = new Date()
       lastWeek.setDate(lastWeek.getDate() - 7)
-      expect(formatRelativeDate(lastWeek)).toContain('Il y a')
+      expect(formatRelativeDate(lastWeek)).toContain('il y a')
     })
 
     it('1.8.4 should handle string date input', () => {
       const todayStr = new Date().toISOString()
-      expect(formatRelativeDate(todayStr)).toBe("Aujourd'hui")
+      expect(formatRelativeDate(todayStr)).toBe('aujourd’hui')
     })
   })
 

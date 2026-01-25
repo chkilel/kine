@@ -1,6 +1,7 @@
 import type { AvailabilityException, WeeklyAvailabilityTemplate } from '../types/availability.types'
 import { WORKING_HOURS } from './constants.availability'
-import { getDayOfWeek, minutesToTime, timeToMinutes } from './date-utils'
+import { getDayOfWeek } from './date-utils'
+import { minutesToTime, timeToMinutes } from './time'
 
 export interface TimeRange {
   start: string

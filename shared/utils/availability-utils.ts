@@ -1,4 +1,4 @@
-import { timeToMinutes } from './date-utils'
+import { timeToMinutes } from './time'
 import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
 
 export const hasTimeConflict = (

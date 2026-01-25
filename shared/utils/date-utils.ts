@@ -2,53 +2,12 @@ import {
   format,
   differenceInYears,
   parseISO,
-  formatDistanceToNow,
-  differenceInDays,
-  isToday,
-  isYesterday,
-  isTomorrow,
   differenceInCalendarDays,
   differenceInWeeks,
-  differenceInMonths,
-  formatDistance
+  differenceInMonths
 } from 'date-fns'
-import { CalendarDate, parseTime, Time } from '@internationalized/date'
+import { CalendarDate } from '@internationalized/date'
 import { fr } from 'date-fns/locale'
-
-// ============================================================================
-// TIME UTILITIES
-// ============================================================================
-
-export const removeSecondsFromTime = (timeString: string): string => {
-  const timeRegex = /^\d{2}:\d{2}:\d{2}$/
-
-  if (!timeRegex.test(timeString)) {
-    throw new Error('Invalid time format. Expected HH:MM:SS')
-  }
-
-  return timeString.slice(0, 5)
-}
-
-export const timeToMinutes = (time: string): number => {
-  const parsed = parseTime(time)
-  if (!parsed) return 0
-  return parsed.hour * 60 + parsed.minute
-}
-
-export const minutesToTime = (minutes: number): string => {
-  if (typeof minutes !== 'number' || isNaN(minutes)) {
-    throw new Error(`Invalid minutes value: ${minutes}`)
-  }
-  const hours = Math.floor(minutes / 60) % 24
-  const mins = minutes % 60
-  return new Time(hours, mins).toString()
-}
-
-export const addMinutesToTime = (time: string, minutes: number): string => {
-  const totalMinutes = timeToMinutes(time)
-  const newMinutes = totalMinutes + minutes
-  return minutesToTime(newMinutes)
-}
 
 // ============================================================================
 // DATE PARSING & VALIDATION
@@ -103,22 +62,25 @@ export function formatRelativeDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
   const now = new Date()
   const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
+  const rtfAlways = new Intl.RelativeTimeFormat('fr', { numeric: 'always' })
 
   const diffDays = differenceInCalendarDays(d, now)
 
   // Always use days as minimum unit
   if (diffDays === 0) return rtf.format(0, 'day') // "aujourd'hui"
 
-  if (Math.abs(diffDays) < 7) return rtf.format(diffDays, 'day')
+  if (diffDays === -1) return rtf.format(-1, 'day') // "hier"
+
+  if (Math.abs(diffDays) < 7) return rtfAlways.format(diffDays, 'day')
 
   const diffWeeks = differenceInWeeks(d, now)
-  if (Math.abs(diffWeeks) < 4) return rtf.format(diffWeeks, 'week')
+  if (Math.abs(diffWeeks) < 4) return rtfAlways.format(diffWeeks, 'week')
 
   const diffMonths = differenceInMonths(d, now)
-  if (Math.abs(diffMonths) < 12) return rtf.format(diffMonths, 'month')
+  if (Math.abs(diffMonths) < 12) return rtfAlways.format(diffMonths, 'month')
 
   const diffYears = differenceInYears(d, now)
-  return rtf.format(diffYears, 'year')
+  return rtfAlways.format(diffYears, 'year')
 }
 
 export function formatFrenchDate(date: Date | string | null): string {
