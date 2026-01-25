@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, getTableColumns } from 'drizzle-orm'
 import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
 import { requireAuth } from '~~/server/utils/auth'
 import { handleApiError } from '~~/server/utils/error'
@@ -56,32 +56,7 @@ export default defineEventHandler(async (event) => {
     // Execute query with room join
     const consultationsList = await db
       .select({
-        id: consultations.id,
-        organizationId: consultations.organizationId,
-        patientId: consultations.patientId,
-        treatmentPlanId: consultations.treatmentPlanId,
-        therapistId: consultations.therapistId,
-        roomId: consultations.roomId,
-        date: consultations.date,
-        startTime: consultations.startTime,
-        endTime: consultations.endTime,
-        duration: consultations.duration,
-        type: consultations.type,
-        chiefComplaint: consultations.chiefComplaint,
-        notes: consultations.notes,
-        treatmentSummary: consultations.treatmentSummary,
-        observations: consultations.observations,
-        nextSteps: consultations.nextSteps,
-        painLevelBefore: consultations.painLevelBefore,
-        painLevelAfter: consultations.painLevelAfter,
-        progressNotes: consultations.progressNotes,
-        status: consultations.status,
-        location: consultations.location,
-        billed: consultations.billed,
-        insuranceClaimed: consultations.insuranceClaimed,
-        cost: consultations.cost,
-        createdAt: consultations.createdAt,
-        updatedAt: consultations.updatedAt,
+        ...getTableColumns(consultations),
         roomName: rooms.name
       })
       .from(consultations)

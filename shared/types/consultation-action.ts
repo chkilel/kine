@@ -39,12 +39,17 @@ export const updateTagsActionSchema = z
     'Use end action for tag updates with other fields'
   )
 
+export const extendActionSchema = z.object({
+  extendedDurationMinutes: z.number().int().min(1)
+})
+
 export const consultationPatchSchema = z.union([
   startActionSchema,
   pauseActionSchema,
   resumeActionSchema,
   endActionSchema,
-  updateTagsActionSchema
+  updateTagsActionSchema,
+  extendActionSchema
 ])
 
 export type StartAction = z.infer<typeof startActionSchema>
@@ -52,7 +57,14 @@ export type PauseAction = z.infer<typeof pauseActionSchema>
 export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
+export type ExtendAction = z.infer<typeof extendActionSchema>
 
-export type ConsultationPatchBody = StartAction | PauseAction | ResumeAction | EndAction | UpdateTagsAction
+export type ConsultationPatchBody =
+  | StartAction
+  | PauseAction
+  | ResumeAction
+  | EndAction
+  | UpdateTagsAction
+  | ExtendAction
 
-export type ConsultationActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags'
+export type ConsultationActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'

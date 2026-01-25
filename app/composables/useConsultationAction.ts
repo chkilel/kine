@@ -11,8 +11,9 @@ type EndParams = {
   notes?: string
 }
 type UpdateTagsParams = { id: string; tags: string[] }
+type ExtendParams = { id: string; extendedDurationMinutes: number }
 
-type ConsultationActionParams = StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams
+type ConsultationActionParams = StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams
 
 const _useConsultationAction = () => {
   const toast = useToast()
@@ -56,7 +57,9 @@ const _useConsultationAction = () => {
     end: (params: EndParams) => mutation.mutate(params),
     endAsync: (params: EndParams) => mutation.mutateAsync(params),
     updateTags: (params: UpdateTagsParams) => mutation.mutate(params),
-    updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params)
+    updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params),
+    extend: (params: ExtendParams) => mutation.mutate(params),
+    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params)
   }
 }
 

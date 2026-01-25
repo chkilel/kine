@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
 import { consultations } from '~~/server/database/schema'
+import { extendActionSchema } from '~~/shared/types/consultation-action'
 
 function detectActionBySchema(body: ConsultationPatchBody): ConsultationActionType {
   if (resumeActionSchema.safeParse(body).success) return 'resume'
@@ -7,6 +8,7 @@ function detectActionBySchema(body: ConsultationPatchBody): ConsultationActionTy
   if (endActionSchema.safeParse(body).success) return 'end'
   if (startActionSchema.safeParse(body).success) return 'start'
   if (updateTagsActionSchema.safeParse(body).success) return 'updateTags'
+  if (extendActionSchema.safeParse(body).success) return 'extend'
 
   throw new Error('No valid action detected')
 }
@@ -37,7 +39,8 @@ function getSuccessMessage(action: ConsultationActionType) {
     pause: 'Session mise en pause',
     resume: 'Session reprise',
     end: 'Session terminée avec succès',
-    updateTags: 'Tags mis à jour'
+    updateTags: 'Tags mis à jour',
+    extend: 'Durée étendue avec succès'
   }
   return messages[action]
 }
@@ -122,6 +125,13 @@ export default defineEventHandler(async (event) => {
         const tagsValue = validated.tags && validated.tags.length > 0 ? JSON.stringify(validated.tags) : null
         updateData = {
           tags: tagsValue
+        }
+        break
+      }
+      case 'extend': {
+        const validated = extendActionSchema.parse(body)
+        updateData = {
+          extendedDurationMinutes: (consultation.extendedDurationMinutes || 0) + validated.extendedDurationMinutes
         }
         break
       }
