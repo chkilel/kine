@@ -13,12 +13,11 @@ import {
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
-import { minutesToTime, timeToMinutes } from '~~/shared/utils/date-utils'
+import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } from '~~/shared/utils/time'
 import {
   MINIMUM_CONSULTATION_GAP_MINUTES,
   CONSULTATION_DURATIONS,
-  VALID_CONSULTATION_TYPES,
-  VALID_CONSULTATION_STATUSES
+  VALID_CONSULTATION_TYPES
 } from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
@@ -27,6 +26,7 @@ import { VALID_PHONE_CATEGORIES } from '~~/shared/utils/constants.user'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/utils/constants.treatement-plan'
 
 import { createAuth } from '~~/server/utils/auth'
+import { getEffectiveAvailability } from '~~/shared/utils/planning-utils'
 
 type DrizzleDB = ReturnType<typeof useDrizzle>
 
@@ -52,20 +52,19 @@ const SEED_CONFIG = {
     adminEmail: 'admin@seed.local'
   },
   organizations: {
-    count: 2,
+    count: 1,
     names: [
       { name: 'Kine Clinic A', slug: 'kine-clinic-a' },
-      { name: 'Kine Clinic B', slug: 'kine-clinic-b' },
-      { name: 'Kine Clinic C', slug: 'kine-clinic-c' }
+      { name: 'Kine Clinic B', slug: 'kine-clinic-b' }
     ],
-    userDistribution: [4, 4, 3]
+    userDistribution: [5, 4]
   },
   patients: {
     count: 30,
-    distribution: [8, 6, 6]
+    distribution: [20, 6]
   },
   availability: {
-    templatesPerUser: { min: 3, max: 5 },
+    templatesPerUser: { min: 4, max: 5 },
     exceptionsPerUser: { min: 2, max: 4 },
     exceptionDaysRange: 90
   },
@@ -80,7 +79,7 @@ const SEED_CONFIG = {
     minPerPatient: 5,
     maxPerPatient: 30,
     dateRangeDays: 90,
-    pastPercentage: 0.6
+    pastPercentage: 0.1
   }
 } as const
 
@@ -411,11 +410,13 @@ const roomDescriptions = [
   'Zone de rééducation cardiovasculaire'
 ]
 
-function shuffleArray<T>(array: T[]): T[] {
+function shuffleArray<T>(array: readonly T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    const temp = arr[i]!
+    arr[i] = arr[j]!
+    arr[j] = temp
   }
   return arr
 }
@@ -424,35 +425,36 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function randomItem<T>(array: readonly T[]): T {
+function randomItem<T>(array: readonly T[]): T | undefined {
   return array[Math.floor(Math.random() * array.length)]
 }
 
-function generateTime(startHour: number, endHour: number): string {
-  const startMinutes = startHour * 60
-  const endMinutes = endHour * 60
+function getWeightedLocation(): (typeof VALID_CONSULTATION_LOCATIONS)[number] {
+  const roll = Math.random()
+  if (roll < 0.8) return 'clinic'
+  if (roll < 0.9) return 'home'
+  return 'telehealth'
+}
 
-  const availableSlots: number[] = []
-  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
-    availableSlots.push(mins)
-  }
+function generateTime(startHour: number, endHour: number): string {
+  const startTime = `${String(startHour).padStart(2, '0')}:00:00`
+  const endTime = `${String(endHour).padStart(2, '0')}:00:00`
+
+  const availableSlots = generateTimeSeriesInRange(startTime, endTime, 30)
 
   if (availableSlots.length === 0) {
     return '00:00:00'
   }
 
-  const slotStart = randomItem(availableSlots)
-  return minutesToTime(slotStart)
+  const selectedTime = randomItem(availableSlots)
+  return selectedTime || '00:00:00'
 }
 
 function generateTimeRange(startHour: number, endHour: number): { startTime: string; endTime: string } {
-  const startMinutes = startHour * 60
-  const endMinutes = endHour * 60
+  const startTime = `${String(startHour).padStart(2, '0')}:00:00`
+  const endTime = `${String(endHour).padStart(2, '0')}:00:00`
 
-  const availableSlots: number[] = []
-  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
-    availableSlots.push(mins)
-  }
+  const availableSlots = generateTimeSeriesInRange(startTime, endTime, 30)
 
   if (availableSlots.length < 2) {
     return {
@@ -463,13 +465,19 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
 
   const startSlotIndex = randomInt(0, Math.max(0, availableSlots.length - 2))
   const slotStart = availableSlots[startSlotIndex]
-
   const endSlotIndex = randomInt(Math.min(startSlotIndex + 1, availableSlots.length - 1), availableSlots.length - 1)
   const slotEnd = availableSlots[endSlotIndex]
 
+  if (!slotStart || !slotEnd) {
+    return {
+      startTime: '09:00:00',
+      endTime: '10:00:00'
+    }
+  }
+
   return {
-    startTime: minutesToTime(slotStart),
-    endTime: minutesToTime(slotEnd)
+    startTime: slotStart,
+    endTime: slotEnd
   }
 }
 
@@ -481,7 +489,8 @@ async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(availabilityExceptions)
   await db.delete(weeklyAvailabilityTemplates)
   await db.delete(members)
-  await db.delete(users)
+  // Do not delete users here: auth and foreign key constraints expect them to persist,
+  // and seeding reuses existing users by email instead of recreating them
   await db.delete(organizations)
 }
 
@@ -495,7 +504,13 @@ async function createOrganization(event: H3Event, name: string, slug: string, us
       .limit(1)
 
     if (existing.length > 0) {
-      return existing[0].id
+      const orgId = existing[0]!.id
+
+      if (userId) {
+        await createMembership(event, userId, orgId, 'admin')
+      }
+
+      return orgId
     }
 
     const orgRecord = await db
@@ -510,6 +525,9 @@ async function createOrganization(event: H3Event, name: string, slug: string, us
 
     if (orgRecord && orgRecord.id) {
       console.log('Created organization:', orgRecord.id, orgRecord.name)
+      if (userId) {
+        await createMembership(event, userId, orgRecord.id, 'admin')
+      }
       return orgRecord.id
     }
 
@@ -527,7 +545,7 @@ async function createUser(event: H3Event, user: UserData, password: string): Pro
     const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, user.email)).limit(1)
 
     if (existing.length > 0) {
-      return existing[0].id
+      return existing[0]!.id
     }
 
     const auth = createAuth(event)
@@ -556,7 +574,7 @@ async function createMembership(
   userId: string,
   organizationId: string,
   role: string = 'member'
-): Promise<void> {
+): Promise<boolean> {
   try {
     const db = useDrizzle(event)
     const existing = await db
@@ -566,7 +584,7 @@ async function createMembership(
       .limit(1)
 
     if (existing.length > 0) {
-      return
+      return false
     }
 
     await db.insert(members).values({
@@ -576,6 +594,7 @@ async function createMembership(
     })
 
     console.log(`Created membership: user=${userId}, org=${organizationId}, role=${role}`)
+    return true
   } catch (error) {
     console.error('Error creating membership:', error)
     throw error
@@ -611,7 +630,7 @@ function generateWeeklyTemplates(userId: string, organizationId: string): any[] 
   while (templates.length < count && attempts < 20) {
     attempts++
     const day = randomItem(days)
-    if (usedDays.has(day)) continue
+    if (!day || usedDays.has(day)) continue
     usedDays.add(day)
 
     const timeRange = generateTimeRange(9, 17)
@@ -621,7 +640,7 @@ function generateWeeklyTemplates(userId: string, organizationId: string): any[] 
       dayOfWeek: day,
       startTime: timeRange.startTime,
       endTime: timeRange.endTime,
-      location: randomItem(locations)
+      location: getWeightedLocation()
     }
 
     if (validateTemplateConflict(templates, template)) {
@@ -694,14 +713,33 @@ function generateAvailabilityExceptions(userId: string, organizationId: string):
 
 function generateTreatmentPlans(patientId: string, organizationId: string, therapistId: string): any[] {
   const count = SEED_CONFIG.treatmentPlans.minPerPatient
-  const shuffled = shuffleArray([...SEED_CONFIG.treatmentPlans.statuses])
-  const selectedStatuses = shuffled.slice(0, count)
+  const statuses: string[] = []
 
-  if (!selectedStatuses.includes('ongoing')) {
-    selectedStatuses[0] = 'ongoing'
+  statuses.push('ongoing')
+
+  let remaining = count - 1
+  const plannedTarget = Math.max(1, Math.round(count * 0.5))
+  const plannedToAdd = Math.min(remaining, plannedTarget)
+
+  for (let i = 0; i < plannedToAdd; i++) {
+    statuses.push('planned')
+  }
+  remaining -= plannedToAdd
+
+  const otherStatuses: string[] = ['completed', 'paused', 'cancelled']
+  let otherIndex = 0
+  while (remaining > 0) {
+    const status = otherStatuses[otherIndex % otherStatuses.length]
+    if (status) {
+      statuses.push(status)
+    }
+    otherIndex++
+    remaining--
   }
 
-  return selectedStatuses.map((status, index) => {
+  const shuffledStatuses = shuffleArray(statuses)
+
+  return shuffledStatuses.map((status, index) => {
     const startDate = format(addDays(new Date(), -randomInt(30, 180)), 'yyyy-MM-dd')
     const endDate = status === 'completed' ? format(addDays(new Date(), -randomInt(1, 30)), 'yyyy-MM-dd') : null
 
@@ -750,7 +788,7 @@ function generateRooms(organizationId: string): any[] {
 
 function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
   if (isToday) {
-    return Math.random() > 0.7 ? 'in_progress' : 'scheduled'
+    return 'scheduled'
   }
 
   if (isPastDate) {
@@ -768,12 +806,23 @@ function generateConsultations(
   patientId: string,
   organizationId: string,
   therapistId: string,
-  treatmentPlansMeta: { id: string; startDate: string; endDate: string | null }[],
+  treatmentPlansMeta: { id: string; startDate: string; endDate: string | null; status: string }[],
   availableRoomIds: string[],
-  roomBookings: Map<string, string>
+  roomBookings: Map<string, string>,
+  therapistTemplates: any[],
+  therapistExceptions: any[]
 ): any[] {
-  const count = randomInt(SEED_CONFIG.consultations.minPerPatient, SEED_CONFIG.consultations.maxPerPatient)
+  const activePlanIds = new Set(
+    treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
+  )
+
+  const minPerPatient = SEED_CONFIG.consultations.minPerPatient
+  const requiredForPlans = activePlanIds.size * 5
+  const effectiveMin = Math.min(SEED_CONFIG.consultations.maxPerPatient, Math.max(minPerPatient, requiredForPlans))
+
+  const count = randomInt(effectiveMin, SEED_CONFIG.consultations.maxPerPatient)
   const consultationsData: any[] = []
+  const therapistDayBookings: Record<string, { start: string; end: string }[]> = {}
 
   const indices = Array.from({ length: count }, (_, index) => index)
   const linkedIndices = new Set<number>()
@@ -784,56 +833,121 @@ function generateConsultations(
     const shuffledIndices = shuffleArray(indices)
 
     for (let i = 0; i < desiredLinkedCount && i < shuffledIndices.length; i++) {
-      linkedIndices.add(shuffledIndices[i])
+      linkedIndices.add(shuffledIndices[i]!)
     }
 
     if (count > 1 && linkedIndices.size === count) {
-      linkedIndices.delete(shuffledIndices[0])
+      linkedIndices.delete(shuffledIndices[0]!)
     }
   }
 
   for (let i = 0; i < count; i++) {
-    let date: string
+    let date: string | null = null
+    let startTime: string | null = null
+    let endTime: string | null = null
+    let duration: number | null = null
     let treatmentPlanId: string | null = null
 
     if (linkedIndices.has(i) && treatmentPlansMeta.length > 0) {
       const selectedPlan = randomItem(treatmentPlansMeta)
-      treatmentPlanId = selectedPlan.id
-
-      const planStart = new Date(selectedPlan.startDate)
-      const planEnd = selectedPlan.endDate ? new Date(selectedPlan.endDate) : null
-
-      if (!isNaN(planStart.getTime())) {
-        if (planEnd && !isNaN(planEnd.getTime()) && planEnd.getTime() >= planStart.getTime()) {
-          const totalDays = Math.floor((planEnd.getTime() - planStart.getTime()) / (1000 * 60 * 60 * 24))
-          const offset = totalDays > 0 ? randomInt(0, totalDays) : 0
-          date = format(addDays(planStart, offset), 'yyyy-MM-dd')
-        } else {
-          const offset = randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
-          date = format(addDays(planStart, offset), 'yyyy-MM-dd')
-        }
-      } else {
-        const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
-        date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+      if (selectedPlan) {
+        treatmentPlanId = selectedPlan.id
       }
-    } else {
-      const daysOffset = randomInt(-SEED_CONFIG.consultations.dateRangeDays, SEED_CONFIG.consultations.dateRangeDays)
-      date = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+    }
+
+    const wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+
+    let attempts = 0
+    while (attempts < 30 && (!date || !startTime || !endTime || !duration)) {
+      attempts++
+
+      let candidateDate: string
+
+      if (wantsPast) {
+        const daysOffset = -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
+        candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+      } else {
+        const daysOffset = randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+        candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
+      }
+
+      const availabilityRanges = getEffectiveAvailability(candidateDate, therapistTemplates, therapistExceptions)
+      if (!availabilityRanges || availabilityRanges.length === 0) {
+        continue
+      }
+
+      const selectedRange = randomItem(availabilityRanges)
+      if (!selectedRange) continue
+
+      const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+      if (!candidateDuration) continue
+
+      const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
+      if (rangeDuration < candidateDuration) {
+        continue
+      }
+
+      const possibleStarts: string[] = []
+      const slotIncrementMinutes = 15
+
+      const generatedStarts = generateTimeSeriesInRange(selectedRange.start, selectedRange.end, slotIncrementMinutes)
+      for (const candidateStart of generatedStarts) {
+        const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
+        const dayBookings = therapistDayBookings[candidateDate] || []
+        const hasConflictWithTherapist = dayBookings.some((booking) =>
+          hasTimeConflict(booking.start, booking.end, candidateStart, candidateEnd, MINIMUM_CONSULTATION_GAP_MINUTES)
+        )
+
+        if (!hasConflictWithTherapist) {
+          possibleStarts.push(candidateStart)
+        }
+      }
+
+      if (possibleStarts.length === 0) {
+        continue
+      }
+
+      const chosenStart = randomItem(possibleStarts)
+      if (!chosenStart) continue
+
+      const chosenEnd = calculateEndTime(chosenStart, candidateDuration ?? 60)
+
+      date = candidateDate
+      startTime = chosenStart
+      endTime = chosenEnd
+      duration = candidateDuration
+
+      if (!therapistDayBookings[candidateDate]) {
+        therapistDayBookings[candidateDate] = []
+      }
+      therapistDayBookings[candidateDate]!.push({ start: chosenStart, end: chosenEnd })
+    }
+
+    if (!date || !startTime || !endTime || !duration) {
+      const fallbackOffset = wantsPast
+        ? -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
+        : randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+      const fallbackDate = format(addDays(new Date(), fallbackOffset), 'yyyy-MM-dd')
+      const timeRange = generateTimeRange(9, 16)
+      date = fallbackDate
+      startTime = timeRange.startTime
+      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      if (fallbackDuration) {
+        duration = fallbackDuration
+        endTime = calculateEndTime(startTime, duration)
+      }
     }
 
     const isPast = date < today
     const isToday = date === today
     const status = getConsultationStatus(isPast, isToday)
-
-    const timeRange = generateTimeRange(9, 16)
-    const duration = randomItem(CONSULTATION_DURATIONS)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS)
+    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
 
     let roomId: string | null = null
     if (location === 'clinic' && availableRoomIds.length > 0 && Math.random() > 0.3) {
       const shuffledRooms = shuffleArray(availableRoomIds)
       for (const rId of shuffledRooms) {
-        const bookingKey = `${rId}_${date}_${timeRange.startTime}`
+        const bookingKey = `${rId}_${date}_${startTime}`
         if (!roomBookings.has(bookingKey)) {
           roomId = rId
           roomBookings.set(bookingKey, patientId)
@@ -841,9 +955,6 @@ function generateConsultations(
         }
       }
     }
-
-    const startTime = timeRange.startTime
-    const endTime = minutesToTime(timeToMinutes(startTime) + duration)
 
     const consultation: any = {
       organizationId,
@@ -855,12 +966,12 @@ function generateConsultations(
       startTime,
       endTime,
       duration,
-      type: randomItem(VALID_CONSULTATION_TYPES),
+      type: randomItem(VALID_CONSULTATION_TYPES) || 'follow_up',
       status,
       location,
       billed: isPast && status === 'completed' ? date : null,
       insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
-      cost: duration * 50,
+      cost: duration ? duration * 50 : 50,
       chiefComplaint: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       treatmentSummary:
@@ -887,6 +998,163 @@ function generateConsultations(
     }
 
     consultationsData.push(consultation)
+  }
+
+  const hasTodayConsultation = consultationsData.some((consultation) => consultation.date === today)
+
+  if (!hasTodayConsultation) {
+    const date = today
+    let startTime: string | null = null
+    let endTime: string | null = null
+    let duration: number | null = null
+
+    const availabilityRanges = getEffectiveAvailability(date, therapistTemplates, therapistExceptions)
+    if (availabilityRanges && availabilityRanges.length > 0) {
+      const selectedRange = randomItem(availabilityRanges)
+      if (selectedRange) {
+        const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+        if (candidateDuration) {
+          const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
+          if (rangeDuration >= candidateDuration) {
+            const possibleStarts: string[] = []
+            const slotIncrementMinutes = 15
+
+            const generatedStarts = generateTimeSeriesInRange(
+              selectedRange.start,
+              selectedRange.end,
+              slotIncrementMinutes
+            )
+            for (const candidateStart of generatedStarts) {
+              const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
+              const dayBookings = therapistDayBookings[date] || []
+              const hasConflictWithTherapist = dayBookings.some((booking) =>
+                hasTimeConflict(
+                  booking.start,
+                  booking.end,
+                  candidateStart,
+                  candidateEnd,
+                  MINIMUM_CONSULTATION_GAP_MINUTES
+                )
+              )
+
+              if (!hasConflictWithTherapist) {
+                possibleStarts.push(candidateStart)
+              }
+            }
+
+            if (possibleStarts.length > 0) {
+              const selectedStart = randomItem(possibleStarts)
+              if (selectedStart) {
+                startTime = selectedStart
+                duration = candidateDuration
+                if (startTime && duration) {
+                  endTime = calculateEndTime(startTime, duration)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!startTime || !endTime || !duration) {
+      const timeRange = generateTimeRange(9, 16)
+      startTime = timeRange.startTime
+      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      if (fallbackDuration) {
+        duration = fallbackDuration
+        if (startTime && duration) {
+          endTime = calculateEndTime(startTime, duration)
+        }
+      }
+    }
+
+    const isPast = false
+    const isToday = true
+    const status = getConsultationStatus(isPast, isToday)
+    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
+
+    let treatmentPlanId: string | null = null
+    if (treatmentPlansMeta.length > 0) {
+      const activePlans = treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status))
+      const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
+      const selectedPlan = randomItem(source)
+      if (selectedPlan) {
+        treatmentPlanId = selectedPlan.id
+      }
+    }
+
+    let roomId: string | null = null
+    if (location === 'clinic' && availableRoomIds.length > 0) {
+      const shuffledRooms = shuffleArray(availableRoomIds)
+      for (const rId of shuffledRooms) {
+        const bookingKey = `${rId}_${date}_${startTime}`
+        if (!roomBookings.has(bookingKey)) {
+          roomId = rId
+          roomBookings.set(bookingKey, patientId)
+          break
+        }
+      }
+    }
+
+    const durationValue = duration as number
+
+    const consultation: any = {
+      organizationId,
+      patientId,
+      therapistId,
+      treatmentPlanId,
+      roomId,
+      date,
+      startTime,
+      endTime,
+      duration: durationValue,
+      type: randomItem(VALID_CONSULTATION_TYPES),
+      status,
+      location,
+      billed: null,
+      insuranceClaimed: 0,
+      cost: durationValue * 50,
+      chiefComplaint: randomItem(medicalConditions),
+      notes: null,
+      treatmentSummary: null
+    }
+
+    consultationsData.push(consultation)
+
+    if (startTime && endTime) {
+      if (!therapistDayBookings[date]) {
+        therapistDayBookings[date] = []
+      }
+      therapistDayBookings[date].push({ start: startTime, end: endTime })
+    }
+  }
+
+  if (activePlanIds.size > 0) {
+    const countsByPlan: Record<string, number> = {}
+    for (const consultation of consultationsData) {
+      if (consultation.treatmentPlanId && activePlanIds.has(consultation.treatmentPlanId)) {
+        countsByPlan[consultation.treatmentPlanId] = (countsByPlan[consultation.treatmentPlanId] ?? 0) + 1
+      }
+    }
+
+    const unlinked = consultationsData.filter((consultation) => !consultation.treatmentPlanId)
+
+    for (const plan of treatmentPlansMeta) {
+      if (!activePlanIds.has(plan.id)) continue
+
+      let countForPlan = countsByPlan[plan.id] ?? 0
+      let safety = 0
+
+      while (countForPlan < 5 && unlinked.length > 0 && safety < 50) {
+        const consultation = unlinked.pop()
+        if (!consultation) break
+        consultation.treatmentPlanId = plan.id
+        countForPlan++
+        countsByPlan[plan.id] = countForPlan
+        safety++
+      }
+    }
   }
 
   consultationsData.sort((a, b) => {
@@ -960,7 +1228,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const organizationIds: string[] = []
 
-  const adminUserId = userIds[0]
+  const adminUserId = userIds[0]!
 
   for (const org of SEED_CONFIG.organizations.names) {
     try {
@@ -986,14 +1254,16 @@ export default defineEventHandler(async (event: H3Event) => {
 
   let userIndex = 0
   for (let orgIndex = 0; orgIndex < SEED_CONFIG.organizations.userDistribution.length; orgIndex++) {
-    const usersInOrg = SEED_CONFIG.organizations.userDistribution[orgIndex]
-    const orgId = organizationIds[orgIndex]
+    const usersInOrg = SEED_CONFIG.organizations.userDistribution[orgIndex]!
+    const orgId = organizationIds[orgIndex]!
 
     for (let i = 0; i < usersInOrg && userIndex < userIds.length; i++, userIndex++) {
-      const userId = userIds[userIndex]
+      const userId = userIds[userIndex]!
       try {
-        await createMembership(event, userId, orgId, 'member')
-        results.success.memberships++
+        const created = await createMembership(event, userId, orgId, 'member')
+        if (created) {
+          results.success.memberships++
+        }
       } catch (error) {
         results.errors.push({
           type: 'membership',
@@ -1004,15 +1274,32 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
+  for (const orgId of organizationIds) {
+    try {
+      const created = await createMembership(event, adminUserId, orgId, 'member')
+      if (created) {
+        results.success.memberships++
+      }
+    } catch (error) {
+      results.errors.push({
+        type: 'membership',
+        message: `Failed to ensure admin membership in org ${orgId}`,
+        details: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
   const db = useDrizzle(event)
 
   const orgRoomIds: Record<string, string[]> = {}
+  const templatesByUserId: Record<string, any[]> = {}
+  const exceptionsByUserId: Record<string, any[]> = {}
   for (const orgId of organizationIds) {
     try {
       const roomsData = generateRooms(orgId)
       if (roomsData.length > 0) {
-        await db.insert(rooms).values(roomsData)
-        orgRoomIds[orgId] = roomsData.map((r) => r.id)
+        const insertedRooms = await db.insert(rooms).values(roomsData).returning({ id: rooms.id })
+        orgRoomIds[orgId] = insertedRooms.map((r) => r.id)
         results.success.rooms += roomsData.length
       }
     } catch (error) {
@@ -1031,11 +1318,12 @@ export default defineEventHandler(async (event: H3Event) => {
       .where(eq(members.userId, userId))
 
     if (userOrgMemberships.length > 0) {
-      const organizationId = userOrgMemberships[0].organizationId
+      const organizationId = userOrgMemberships[0]!.organizationId
 
       try {
         const templates = generateWeeklyTemplates(userId, organizationId)
         if (templates.length > 0) {
+          templatesByUserId[userId] = templates
           await db.insert(weeklyAvailabilityTemplates).values(templates as any)
           results.success.weeklyTemplates += templates.length
         }
@@ -1050,6 +1338,7 @@ export default defineEventHandler(async (event: H3Event) => {
       try {
         const exceptions = generateAvailabilityExceptions(userId, organizationId)
         if (exceptions.length > 0) {
+          exceptionsByUserId[userId] = exceptions
           await db.insert(availabilityExceptions).values(exceptions as any)
           results.success.availabilityExceptions += exceptions.length
         }
@@ -1063,63 +1352,64 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
-  let patientIndex = 0
-  for (let orgIndex = 0; orgIndex < SEED_CONFIG.patients.distribution.length; orgIndex++) {
-    const patientsInOrg = SEED_CONFIG.patients.distribution[orgIndex]
-    const orgId = organizationIds[orgIndex]
+  const totalPatientsToCreate = Math.min(SEED_CONFIG.patients.count, patientData.length)
 
-    for (let i = 0; i < patientsInOrg && patientIndex < patientData.length; i++, patientIndex++) {
-      const patient = patientData[patientIndex]
-      const therapistsInOrg = await db
-        .select({ userId: members.userId })
-        .from(members)
-        .where(eq(members.organizationId, orgId))
+  for (let i = 0; i < totalPatientsToCreate; i++) {
+    const patient = patientData[i]!
+    const orgId = organizationIds[i % organizationIds.length]!
 
-      const therapistId = therapistsInOrg.length > 0 ? randomItem(therapistsInOrg).userId : null
+    const therapistsInOrg = await db
+      .select({ userId: members.userId })
+      .from(members)
+      .where(eq(members.organizationId, orgId))
 
-      try {
-        const patientRecord = await db
-          .insert(patients)
-          .values({
-            organizationId: orgId,
-            firstName: patient.firstName,
-            lastName: patient.lastName,
-            dateOfBirth: patient.dateOfBirth,
-            gender: patient.gender,
-            email: patient.email,
-            phone: patient.phone,
-            address: '123 Main Street',
-            city: patient.city,
-            postalCode: '10000',
-            country: 'Morocco',
-            emergencyContacts: [{ number: patient.phone, relationship: VALID_RELATIONSHIP_TYPES[22] }],
-            medicalConditions: [randomItem(medicalConditions)],
-            surgeries: Math.random() > 0.7 ? [randomItem(surgeries)] : [],
-            allergies: Math.random() > 0.8 ? [randomItem(allergies)] : [],
-            medications: Math.random() > 0.6 ? [randomItem(medications)] : [],
-            insuranceProvider: 'AXA Assurance',
-            insuranceNumber: `INS-${randomInt(100000, 999999)}`,
-            referralSource: 'Online',
-            status: VALID_PATIENT_STATUSES[0],
-            notes: []
-          })
-          .returning()
-          .then((rows) => rows[0])
+    const selectedTherapist = therapistsInOrg.length > 0 ? randomItem(therapistsInOrg) : null
+    const therapistId = selectedTherapist ? selectedTherapist.userId : null
 
-        if (patientRecord && therapistId) {
-          const treatmentPlansData = generateTreatmentPlans(patientRecord.id, orgId, therapistId)
-          await db.insert(treatmentPlans).values(treatmentPlansData)
-          results.success.treatmentPlans += treatmentPlansData.length
-        }
-
-        results.success.patients++
-      } catch (error) {
-        results.errors.push({
-          type: 'patient',
-          message: `Failed to create patient: ${patient.firstName} ${patient.lastName}`,
-          details: error instanceof Error ? error.message : String(error)
+    try {
+      const patientRecord = await db
+        .insert(patients)
+        .values({
+          organizationId: orgId,
+          firstName: patient.firstName!,
+          lastName: patient.lastName!,
+          dateOfBirth: patient.dateOfBirth!,
+          gender: patient.gender!,
+          email: patient.email || null,
+          phone: patient.phone!,
+          address: '123 Main Street',
+          city: patient.city || 'Casablanca',
+          postalCode: '10000',
+          country: 'Morocco',
+          emergencyContacts: [{ number: patient.phone!, relationship: VALID_RELATIONSHIP_TYPES[22]! }],
+          medicalConditions: [randomItem(medicalConditions) || 'Hypertension'],
+          surgeries: Math.random() > 0.7 ? [randomItem(surgeries) || 'Knee surgery'] : [],
+          allergies: Math.random() > 0.8 ? [randomItem(allergies) || 'Penicillin'] : [],
+          medications: Math.random() > 0.6 ? [randomItem(medications) || 'Metformin'] : [],
+          insuranceProvider: 'AXA Assurance',
+          insuranceNumber: `INS-${randomInt(100000, 999999)}`,
+          referralSource: 'Online',
+          status: VALID_PATIENT_STATUSES[0]!,
+          notes: []
         })
+        .returning()
+        .then((rows) => rows[0])
+
+      if (patientRecord && therapistId) {
+        const treatmentPlansData = generateTreatmentPlans(patientRecord.id, orgId, therapistId)
+        for (const plan of treatmentPlansData) {
+          await db.insert(treatmentPlans).values(plan)
+          results.success.treatmentPlans++
+        }
       }
+
+      results.success.patients++
+    } catch (error) {
+      results.errors.push({
+        type: 'patient',
+        message: `Failed to create patient: ${patient.firstName} ${patient.lastName}`,
+        details: error instanceof Error ? error.message : String(error)
+      })
     }
   }
 
@@ -1128,7 +1418,7 @@ export default defineEventHandler(async (event: H3Event) => {
     const patientRecords = await db.select().from(patients).where(eq(patients.email, patient.email)).limit(1)
     if (patientRecords.length === 0) continue
 
-    const patientRecord = patientRecords[0]
+    const patientRecord = patientRecords[0]!
     const patientOrgId = patientRecord.organizationId
     const therapistsInOrg = await db
       .select({ userId: members.userId })
@@ -1137,22 +1427,42 @@ export default defineEventHandler(async (event: H3Event) => {
 
     if (therapistsInOrg.length === 0) continue
 
-    const therapistId = randomItem(therapistsInOrg).userId
+    const hasAdminInOrg = therapistsInOrg.some((therapist) => therapist.userId === adminUserId)
+    let therapistId!: string
+
+    if (hasAdminInOrg) {
+      const nonAdminTherapists = therapistsInOrg.filter((therapist) => therapist.userId !== adminUserId)
+      const useAdminForToday = nonAdminTherapists.length === 0 || Math.random() < 0.4
+      const selected = randomItem(nonAdminTherapists)
+      therapistId = useAdminForToday ? adminUserId : (selected?.userId ?? adminUserId)
+    } else {
+      const selected = randomItem(therapistsInOrg)
+      therapistId = selected?.userId ?? adminUserId
+    }
     const availableRoomIds = orgRoomIds[patientOrgId] || []
 
     const patientTreatmentPlans = await db
-      .select({ id: treatmentPlans.id, startDate: treatmentPlans.startDate, endDate: treatmentPlans.endDate })
+      .select({
+        id: treatmentPlans.id,
+        startDate: treatmentPlans.startDate,
+        endDate: treatmentPlans.endDate,
+        status: treatmentPlans.status
+      })
       .from(treatmentPlans)
       .where(eq(treatmentPlans.patientId, patientRecord.id))
 
     try {
+      const therapistTemplates = templatesByUserId[therapistId] || []
+      const therapistExceptions = exceptionsByUserId[therapistId] || []
       const consultationsData = generateConsultations(
         patientRecord.id,
         patientOrgId,
         therapistId,
         patientTreatmentPlans,
         availableRoomIds,
-        roomBookings
+        roomBookings,
+        therapistTemplates,
+        therapistExceptions
       )
       if (consultationsData.length > 0) {
         for (const consultation of consultationsData) {

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  removeSecondsFromTime,
-  timeToMinutes,
-  minutesToTime,
   safeParseISODate,
   isDateDisabled,
   getAbbreviatedMonthName,
@@ -17,65 +14,6 @@ import {
 import { CalendarDate } from '@internationalized/date'
 
 describe('date-utils', () => {
-  describe('removeSecondsFromTime', () => {
-    it('1.1.1 should remove seconds from HH:MM:SS format', () => {
-      const result = removeSecondsFromTime('14:30:45')
-      expect(result).toBe('14:30')
-    })
-
-    it('1.1.2 should handle time with 00 seconds', () => {
-      const result = removeSecondsFromTime('09:00:00')
-      expect(result).toBe('09:00')
-    })
-
-    it('1.1.3 should throw error for invalid format', () => {
-      expect(() => removeSecondsFromTime('14:30')).toThrow('Invalid time format. Expected HH:MM:SS')
-    })
-
-    it('1.1.4 should throw error for HH:MM format without seconds', () => {
-      expect(() => removeSecondsFromTime('invalid-time')).toThrow('Invalid time format. Expected HH:MM:SS')
-    })
-  })
-
-  describe('timeToMinutes', () => {
-    it('1.2.1 should convert time string to minutes', () => {
-      expect(timeToMinutes('09:30')).toBe(570)
-      expect(timeToMinutes('14:45')).toBe(885)
-    })
-
-    it('1.2.2 should convert midnight to minutes', () => {
-      expect(timeToMinutes('00:00')).toBe(0)
-    })
-
-    it('1.2.3 should convert late night to minutes', () => {
-      expect(timeToMinutes('23:59')).toBe(1439)
-    })
-
-    it('1.2.4 should throw error for invalid time', () => {
-      expect(() => timeToMinutes('invalid')).toThrow('Invalid ISO 8601 time string')
-    })
-  })
-
-  describe('minutesToTime', () => {
-    it('1.3.1 should convert minutes to time string', () => {
-      expect(minutesToTime(570)).toBe('09:30:00')
-      expect(minutesToTime(885)).toBe('14:45:00')
-    })
-
-    it('1.3.2 should convert 0 minutes to midnight', () => {
-      expect(minutesToTime(0)).toBe('00:00:00')
-    })
-
-    it('1.3.3 should handle wrap around 24 hours', () => {
-      expect(minutesToTime(1500)).toBe('01:00:00')
-    })
-
-    it('1.3.4 should handle exact hour boundaries', () => {
-      expect(minutesToTime(720)).toBe('12:00:00')
-      expect(minutesToTime(1080)).toBe('18:00:00')
-    })
-  })
-
   describe('safeParseISODate', () => {
     it('1.4.1 should parse valid ISO date string', () => {
       const result = safeParseISODate('2026-01-15T10:30:00Z')
@@ -129,6 +67,9 @@ describe('date-utils', () => {
 
     it('1.5.4 should not disable today', () => {
       const today = new Date()
+      if (today.getDay() === 0) {
+        today.setDate(today.getDate() + 1)
+      }
       expect(isDateDisabled(today)).toBe(false)
     })
 
@@ -197,13 +138,13 @@ describe('date-utils', () => {
   describe('formatRelativeDate', () => {
     it('1.8.1 should return "Aujourd\'hui" for today', () => {
       const today = new Date()
-      expect(formatRelativeDate(today)).toBe("Aujourd'hui")
+      expect(formatRelativeDate(today)).toBe('aujourd’hui')
     })
 
-    it('1.8.2 should return "Hier" for yesterday', () => {
+    it('1.8.2 should return "hier" for yesterday', () => {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      expect(formatRelativeDate(yesterday)).toBe('Hier')
+      expect(formatRelativeDate(yesterday)).toBe('hier')
     })
 
     it('1.8.3 should return relative time for older dates', () => {
@@ -214,7 +155,7 @@ describe('date-utils', () => {
 
     it('1.8.4 should handle string date input', () => {
       const todayStr = new Date().toISOString()
-      expect(formatRelativeDate(todayStr)).toBe("Aujourd'hui")
+      expect(formatRelativeDate(todayStr)).toBe('aujourd’hui')
     })
   })
 

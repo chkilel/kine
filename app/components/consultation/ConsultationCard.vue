@@ -45,7 +45,7 @@
 
           <div class="flex items-center gap-1 sm:px-3">
             <UIcon name="i-hugeicons-clock-01" />
-            <p>{{ consultation.duration }} min</p>
+            <p>{{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min</p>
           </div>
 
           <div v-if="consultation.roomName" class="flex items-center gap-1 sm:px-3">

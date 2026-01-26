@@ -1,6 +1,7 @@
 /// <reference types="../../env.d.ts" />
 import { drizzle } from 'drizzle-orm/d1'
 import type { H3Event } from 'h3'
+import { createError } from 'h3'
 
 // Database access composables for Cloudflare D1 in Nuxt Nitro.
 // Three ways to use the database:

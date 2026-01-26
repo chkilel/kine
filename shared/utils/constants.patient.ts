@@ -31,8 +31,15 @@ export const VALID_RELATIONSHIP_TYPES = [
   'other'
 ] as const
 
-// Valid biological sex values for patient records
+// Valid sex values for patient records
 export const VALID_SEX_VALUES = ['male', 'female'] as const
+
+export const GENDER_CONFIG = {
+  male: 'Homme',
+  female: 'Femme'
+} as const
+
+export const getGenderLabel = (sex: 'male' | 'female') => GENDER_CONFIG[sex]
 
 // Valid status values for patient records
 export const VALID_PATIENT_STATUSES = ['active', 'inactive', 'discharged', 'archived'] as const

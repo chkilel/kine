@@ -1,6 +1,14 @@
 import type { AvailabilityException, WeeklyAvailabilityTemplate } from '../types/availability.types'
+import { parseTime } from '@internationalized/date'
 import { WORKING_HOURS } from './constants.availability'
-import { getDayOfWeek, minutesToTime, timeToMinutes } from './date-utils'
+import { getDayOfWeek } from './date-utils'
+import {
+  addMinutesToTime,
+  calculateEndTime,
+  compareTimes,
+  generateTimeSeriesInRange,
+  subtractMinutesFromTime
+} from './time'
 
 export interface TimeRange {
   start: string
@@ -132,15 +140,23 @@ export function generateTimeSlots(
 
   // Iterate through each available time range
   for (const range of availableRanges) {
-    // Convert range times to minutes for easier calculations
-    const startMinutes = timeToMinutes(range.start)
-    const endMinutes = timeToMinutes(range.end)
+    // Generate possible start times at regular intervals
+    const possibleStarts = generateTimeSeriesInRange(range.start, range.end, slotIncrementMinutes)
 
-    // Try to place slots at slotIncrement-minute intervals within the range
-    for (let time = startMinutes; time + duration <= endMinutes; time += slotIncrementMinutes) {
-      // Convert current position to time strings
-      const startTime = minutesToTime(time)
-      const endTime = minutesToTime(time + duration)
+    // Try to place slots at each possible start time
+    for (const startTime of possibleStarts) {
+      // Calculate the end time for this slot
+      const endTime = calculateEndTime(startTime, duration)
+
+      // Check if end time is within range (calculateEndTime handles overflow)
+      const parsedStart = parseTime(startTime)
+      const parsedEnd = parseTime(endTime)
+      const parsedRangeEnd = parseTime(range.end)
+
+      // Skip if slot extends beyond the available range
+      if (parsedEnd.compare(parsedRangeEnd) > 0) {
+        continue
+      }
 
       // Check if this time slot conflicts with any existing booking
       const hasConflictWithBookings = checkTimeSlotConflicts(startTime, endTime, bookedPeriods, gapMinutes)
@@ -218,22 +234,14 @@ export function subtractBookedPeriods(
  * @returns Array of remaining available ranges (0, 1, or 2 ranges)
  */
 function subtractPeriodFromRange(range: TimeRange, booked: BookedPeriod, gapMinutes: number): TimeRange[] {
-  // Convert all times to minutes for easier comparison
-  const rangeStart = timeToMinutes(range.start)
-  const rangeEnd = timeToMinutes(range.end)
-  const bookedStart = timeToMinutes(booked.start)
-  const bookedEnd = timeToMinutes(booked.end)
-
-  // Set gap buffer before and after booked period
-  const gapBefore = gapMinutes
-  const gapAfter = gapMinutes
-
   // Calculate effective booked period with gaps
-  const effectiveBookedStart = Math.max(0, bookedStart - gapBefore)
-  const effectiveBookedEnd = bookedEnd + gapAfter
+  const effectiveBookedStart = subtractMinutesFromTime(booked.start, gapMinutes)
+  const effectiveBookedEnd = addMinutesToTime(booked.end, gapMinutes)
 
   // If no overlap between range and booked period, return original range
-  if (effectiveBookedEnd <= rangeStart || effectiveBookedStart >= rangeEnd) {
+  const noOverlap =
+    compareTimes(effectiveBookedEnd, range.start) <= 0 || compareTimes(effectiveBookedStart, range.end) >= 0
+  if (noOverlap) {
     return [range]
   }
 
@@ -241,17 +249,17 @@ function subtractPeriodFromRange(range: TimeRange, booked: BookedPeriod, gapMinu
   const result: TimeRange[] = []
 
   // If booked period starts after range starts, add range before gap
-  if (effectiveBookedStart > rangeStart) {
+  if (compareTimes(effectiveBookedStart, range.start) > 0) {
     result.push({
       start: range.start,
-      end: minutesToTime(effectiveBookedStart)
+      end: effectiveBookedStart
     })
   }
 
   // If booked period ends before range ends, add range after gap
-  if (effectiveBookedEnd < rangeEnd) {
+  if (compareTimes(effectiveBookedEnd, range.end) < 0) {
     result.push({
-      start: minutesToTime(effectiveBookedEnd),
+      start: effectiveBookedEnd,
       end: range.end
     })
   }
@@ -290,20 +298,18 @@ function checkTimeSlotConflicts(
   bookedPeriods: BookedPeriod[],
   gapMinutes: number
 ): boolean {
-  // Convert slot times to minutes
-  const newStart = timeToMinutes(startTime)
-  const newEnd = timeToMinutes(endTime)
+  // Calculate new slot bounds with gap
+  const newEndsWithGap = addMinutesToTime(endTime, gapMinutes)
 
   // Check each booked period for conflicts
   for (const booked of bookedPeriods) {
-    // Convert booked period times to minutes
-    const bookedStart = timeToMinutes(booked.start)
-    const bookedEnd = timeToMinutes(booked.end)
+    // Calculate booked period bounds with gap
+    const bookedEndsWithGap = addMinutesToTime(booked.end, gapMinutes)
 
     // Check if new slot ends before booked period starts (with gap buffer)
-    const newEndsBeforeBooked = newEnd + gapMinutes <= bookedStart
+    const newEndsBeforeBooked = compareTimes(newEndsWithGap, booked.start) <= 0
     // Check if new slot starts after booked period ends (with gap buffer)
-    const newStartsAfterBooked = newStart >= bookedEnd + gapMinutes
+    const newStartsAfterBooked = compareTimes(startTime, bookedEndsWithGap) >= 0
 
     // If neither condition is true, there's a conflict
     if (!newEndsBeforeBooked && !newStartsAfterBooked) {
@@ -328,21 +334,6 @@ export function addSecondsToTime(time: string): string {
   }
   // Already has seconds, return as-is
   return time
-}
-
-/**
- * Calculates the end time based on start time and duration.
- * @param startTime - Start time in HH:MM format
- * @param duration - Duration in minutes
- * @returns End time in HH:MM format
- */
-export function calculateEndTime(startTime: string, duration: number): string {
-  // Convert start time to total minutes
-  const startMinutes = timeToMinutes(startTime)
-  // Add duration to get end time in minutes
-  const endMinutes = startMinutes + duration
-  // Convert back to time string format (HH:MM)
-  return minutesToTime(endMinutes)
 }
 
 /**

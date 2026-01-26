@@ -82,7 +82,7 @@
             </div>
             <div class="space-y-1.5">
               <div class="text-highlighted text-md font-semibold">
-                {{ removeSecondsFromTime(template.startTime) }} - {{ removeSecondsFromTime(template.endTime) }}
+                {{ formatTimeString(template.startTime) }} - {{ formatTimeString(template.endTime) }}
               </div>
               <UBadge
                 :icon="getLocationIcon(template.location)"

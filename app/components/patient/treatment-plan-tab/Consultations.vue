@@ -14,12 +14,10 @@
     data: consultations,
     isLoading,
     refetch
-  } = useConsultationsList(
-    () => props.patient.id,
-    () => ({
-      treatmentPlanId: props.treatmentPlan.id
-    })
-  )
+  } = useConsultationsList(() => ({
+    patientId: props.patient.id,
+    treatmentPlanId: props.treatmentPlan.id
+  }))
   const { mutate: deleteConsultation, isLoading: isDeleting } = useDeleteConsultation()
 
   // Refresh consultations data
@@ -45,7 +43,6 @@
 
     if (confirmed) {
       deleteConsultation({
-        patientId: props.patient.id,
         consultationId: consultation.id
       })
     }

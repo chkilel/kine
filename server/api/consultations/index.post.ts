@@ -3,18 +3,17 @@ import { consultations, patients, users, rooms } from '~~/server/database/schema
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const patientId = getRouterParam(event, 'id')
 
   try {
-    if (!patientId) {
+    const { organizationId } = await requireAuth(event)
+    const body = await readValidatedBody(event, consultationCreateSchema.parse)
+
+    if (!body.patientId) {
       throw createError({
         statusCode: 400,
         message: 'ID de patient requis'
       })
     }
-
-    const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, consultationCreateSchema.parse)
 
     if (body.location === 'clinic' && !body.roomId) {
       throw createError({
@@ -33,7 +32,7 @@ export default defineEventHandler(async (event) => {
     const [patient] = await db
       .select()
       .from(patients)
-      .where(and(eq(patients.organizationId, organizationId), eq(patients.id, patientId)))
+      .where(and(eq(patients.organizationId, organizationId), eq(patients.id, body.patientId)))
       .limit(1)
 
     if (!patient) {
@@ -71,8 +70,7 @@ export default defineEventHandler(async (event) => {
 
     const consultationData = {
       ...body,
-      organizationId,
-      date: body.date
+      organizationId
     }
 
     const [newConsultation] = await db.insert(consultations).values(consultationData).returning()

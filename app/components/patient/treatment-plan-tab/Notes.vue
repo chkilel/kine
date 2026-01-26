@@ -52,7 +52,6 @@
     const currentNotes = props.treatmentPlan.notes || []
 
     updateTreatmentPlan({
-      patientId: props.patient.id,
       planId: props.treatmentPlan.id,
       data: {
         notes: [...currentNotes, newNoteEntry]

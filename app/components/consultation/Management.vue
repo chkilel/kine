@@ -2,11 +2,10 @@
   const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
   const deleteConsultationMutation = useDeleteConsultation()
-  const { data: consultationsData } = useConsultationsList(() => props.patientId)
+  const { data: consultationsData } = useConsultationsList(() => ({ patientId: props.patientId }))
 
   const deleteConsultation = async (consultationId: string) => {
     await deleteConsultationMutation.mutateAsync({
-      patientId: props.patientId,
       consultationId
     })
   }
@@ -47,12 +46,20 @@
                     :class="getLocationColor(consultation.location)"
                   />
                   <p class="font-semibold">
-                    {{ removeSecondsFromTime(consultation.startTime) }} -
-                    {{ removeSecondsFromTime(addMinutesToTime(consultation.startTime, consultation.duration)) }}
+                    {{ formatTimeString(consultation.startTime) }} -
+                    {{
+                      formatTimeString(
+                        addMinutesToTime(
+                          consultation.startTime,
+                          consultation.duration + (consultation.extendedDurationMinutes || 0)
+                        )
+                      )
+                    }}
                   </p>
                 </div>
                 <div class="text-muted text-xs">
-                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} · {{ consultation.duration }} min
+                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} ·
+                  {{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
             </div>

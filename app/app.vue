@@ -1,8 +1,11 @@
 <script setup lang="ts">
+  import type { ToasterProps } from '@nuxt/ui'
   import { fr } from '@nuxt/ui/locale'
-  const colorMode = useColorMode()
   import { PiniaColadaDevtools } from '@pinia/colada-devtools'
 
+  const toaster: ToasterProps = { expand: false, duration: 2000, position: 'top-center' }
+
+  const colorMode = useColorMode()
   const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
 
   useHead({
@@ -13,7 +16,7 @@
     ],
     link: [{ rel: 'icon', href: '/favicon.ico' }],
     htmlAttrs: {
-      lang: 'en'
+      lang: 'fr'
     }
   })
 
@@ -33,7 +36,7 @@
 </script>
 
 <template>
-  <UApp :locale="fr" :toaster="{ position: 'top-center' }">
+  <UApp :locale="fr" :toaster>
     <NuxtLoadingIndicator />
 
     <NuxtLayout>

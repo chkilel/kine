@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { betterAuth, DBFieldAttribute, DBFieldType } from 'better-auth'
+import { betterAuth, type DBFieldAttribute, type DBFieldType } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { customSession, organization } from 'better-auth/plugins'
 import { eq } from 'drizzle-orm'
-import { v7 as uuidv7 } from 'uuid'
+import { createError, getHeaders, getRequestURL } from 'h3'
 
 import { useDrizzle } from './database'
 import * as schemas from '~~/server/database/schema'

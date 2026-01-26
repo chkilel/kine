@@ -66,7 +66,6 @@
     try {
       if (isEditMode.value) {
         updateTreatmentPlan({
-          patientId: props.patient.id,
           planId: props.treatmentPlan!.id,
           data: event.data,
           onSuccess: () => {
@@ -76,11 +75,12 @@
         })
       } else {
         createTreatmentPlan({
-          patientId: props.patient.id,
-          data: event.data
+          data: event.data,
+          onSuccess: () => {
+            emit('close')
+            resetForm()
+          }
         })
-        emit('close')
-        resetForm()
       }
     } catch (error: any) {
       console.error('Error creating/updating treatment plan:', error)

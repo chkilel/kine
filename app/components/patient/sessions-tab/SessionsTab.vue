@@ -70,7 +70,7 @@
   })
 
   const queryParams = computed(() => {
-    const params: ConsultationQuery = {}
+    const params: ConsultationQuery = { patientId: props.patient.id }
     if (!selectedPlanId.value && onlyIndependentConsultations.value) {
       params.onlyIndependent = true
     } else if (selectedPlan.value) {
@@ -79,11 +79,7 @@
     return params
   })
 
-  const {
-    data: consultations,
-    isLoading,
-    refetch: refetchConsultations
-  } = useConsultationsList(() => props.patient.id, queryParams)
+  const { data: consultations, isLoading, refetch: refetchConsultations } = useConsultationsList(queryParams)
 
   const selectedPlanTitle = computed(() => {
     if (onlyIndependentConsultations.value) return 'Consultations Indépendantes'

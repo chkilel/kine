@@ -45,8 +45,8 @@
 ## 6. API Integration
 
 - [x] 6.1 Use existing `useUpdateTreatmentPlan` composable for note submission
-- [x] 6.2 Call PUT `/api/patients/[id]/treatment-plans/[planId]` endpoint
-- [x] 6.3 Pass patientId, planId, and updated notes array in data
+- [x] 6.2 Call PUT `/api/treatment-plans/[id]` endpoint
+- [x] 6.3 Pass planId and updated notes array in data
 - [x] 6.4 Use onSuccess callback to clear input and reset loading state
 - [x] 6.5 Implement manual loading state management for better UX
 

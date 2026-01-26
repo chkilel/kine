@@ -36,19 +36,36 @@ export const consultationSchema = createSelectSchema(consultations, {
 })
 
 export const consultationQuerySchema = z.object({
+  therapistId: z.string().optional(),
+  patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
   onlyIndependent: z
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
-    .optional(), // independent are not linked to a treatment plan
+    .optional(),
   status: consultationStatusSchema.optional(),
   type: consultationTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
-  dateTo: calendarDateSchema.optional()
+  dateTo: calendarDateSchema.optional(),
+  date: calendarDateSchema.optional(),
+  actualStartTime: z.string().optional(),
+  actualDurationSeconds: z.number().optional(),
+  totalPausedSeconds: z.number().optional(),
+  pauseStartTime: z.string().optional(),
+  tags: z.string().optional()
+})
+
+export const therapistConsultationsQuerySchema = z.object({
+  therapistId: z.string(),
+  date: calendarDateSchema
 })
 
 // Type inference
-export type Consultation = z.infer<typeof consultationSchema> & { roomName?: string | null }
+export type Consultation = z.infer<typeof consultationSchema> & {
+  roomName?: string | null
+  patientName?: string | null
+  planTitle?: string | null
+}
 export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
 export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>
 export type ConsultationQuery = z.infer<typeof consultationQuerySchema>

@@ -53,7 +53,7 @@ The system SHALL NOT load therapist information in the treatment plans GET endpo
 #### Scenario: Fetch treatment plans without therapist data
 
 - **GIVEN** an authenticated user requesting patient treatment plans
-- **WHEN** the GET /api/patients/[id]/treatment-plans endpoint is called
+- **WHEN** the GET /api/treatment-plans?patientId=<id> endpoint is called
 - **THEN** the system returns treatment plans with therapistId only, without fetching full therapist details
 
 #### Scenario: Therapist data loaded separately

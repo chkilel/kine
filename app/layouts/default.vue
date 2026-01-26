@@ -31,6 +31,14 @@
         }
       },
       {
+        label: 'Planning quotidien',
+        icon: 'i-lucide-calendar',
+        to: '/therapists/day',
+        onSelect: () => {
+          open.value = false
+        }
+      },
+      {
         label: 'Cabinets',
         icon: 'i-lucide-building-2',
         to: '/organizations',

@@ -6,7 +6,6 @@ import {
   subtractBookedPeriods,
   hasConflict,
   addSecondsToTime,
-  calculateEndTime,
   normalizeTimeFormat
 } from './planning-utils'
 import type { BookedPeriod, TimeRange } from './planning-utils'
@@ -520,23 +519,6 @@ describe('planning-utils', () => {
     it('3.1.2 should keep HH:MM:SS format unchanged', () => {
       const result = addSecondsToTime('09:30:45')
       expect(result).toBe('09:30:45')
-    })
-  })
-
-  describe('calculateEndTime', () => {
-    it('3.2.1 should calculate simple duration addition', () => {
-      const result = calculateEndTime('09:00', 30)
-      expect(result).toBe('09:30:00')
-    })
-
-    it('3.2.2 should handle crossing hour boundaries', () => {
-      const result = calculateEndTime('09:45', 30)
-      expect(result).toBe('10:15:00')
-    })
-
-    it('3.2.3 should handle crossing day boundaries (24+ hours)', () => {
-      const result = calculateEndTime('23:00', 120)
-      expect(result).toBe('01:00:00')
     })
   })
 

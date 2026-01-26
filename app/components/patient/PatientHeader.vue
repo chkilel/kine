@@ -4,7 +4,7 @@
 
   const props = defineProps<{ patient: Patient }>()
 
-  const { data: consultations } = useConsultationsList(() => props.patient?.id || '')
+  const { data: consultations } = useConsultationsList(() => ({ patientId: props.patient?.id || '' }))
 
   const overlay = useOverlay()
   const patientEditSlideover = overlay.create(LazyPatientEditSlideover)
@@ -25,7 +25,7 @@
   const formatNextAppointment = computed(() => {
     if (!nextAppointment.value) return null
     const { day, month, dayName } = extractDayAndMonth(nextAppointment.value.date)
-    const time = removeSecondsFromTime(nextAppointment.value.startTime)
+    const time = formatTimeString(nextAppointment.value.startTime)
     const h = time.split(':')[0]
     const min = time.split(':')[1]
     return { day, month, dayName, time, h, min }
