@@ -82,17 +82,16 @@
   }
 
   // Interval management with cleanup
-  const { pause: pauseTimer, resume: resumeTimer } = useIntervalFn(
+  const { pause: pauseMainTimer, resume: resumeMainTimer } = useIntervalFn(
     () => {
-      if (actualStartTime.value && !isPaused.value) {
-        calculateElapsedTime()
-      }
+      if (actualStartTime.value && !isPaused.value) calculateElapsedTime()
     },
     1000,
     { immediate: false }
   )
 
   const { pause: pausePauseTimer, resume: resumePauseTimer } = useIntervalFn(updatePauseDuration, 30000, {
+    immediateCallback: true,
     immediate: false
   })
 
@@ -108,14 +107,15 @@
 
       if (value.status === 'in_progress' && actualStartTime.value) {
         calculateElapsedTime()
-        resumeTimer()
         if (pauseStartTime.value) {
           resumePauseTimer()
+        } else {
+          resumeMainTimer()
         }
       } else if (value.status !== 'in_progress') {
         timerSeconds.value = 0
         timeSincePause.value = ''
-        pauseTimer()
+        pauseMainTimer()
         pausePauseTimer()
       }
     },
@@ -124,12 +124,12 @@
 
   watch(isPaused, (paused) => {
     if (paused) {
-      pauseTimer()
+      pauseMainTimer()
       updatePauseDuration()
       resumePauseTimer()
     } else {
       pausePauseTimer()
-      resumeTimer()
+      resumeMainTimer()
     }
   })
 
