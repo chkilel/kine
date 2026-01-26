@@ -9,6 +9,7 @@ import {
   calculateEndTime,
   compareTimes,
   isTimeBetween,
+  formatSecondsAsDuration,
   formatSecondsAsHHMMSS,
   formatTimeString,
   getTimeSincePause
@@ -359,6 +360,36 @@ describe('time-utils', () => {
 
     it('1.16.6 should throw error for invalid time', () => {
       expect(() => formatTimeString('invalid')).toThrow('Invalid time format')
+    })
+  })
+
+  describe('formatSecondsAsDuration', () => {
+    it('1.17.1 should return empty string for 0 seconds', () => {
+      expect(formatSecondsAsDuration(0)).toBe('')
+    })
+
+    it('1.17.2 should format as Xmin for durations less than 1 hour', () => {
+      expect(formatSecondsAsDuration(60)).toBe('1min')
+      expect(formatSecondsAsDuration(90)).toBe('1min')
+      expect(formatSecondsAsDuration(125)).toBe('2min')
+      expect(formatSecondsAsDuration(1800)).toBe('30min')
+    })
+
+    it('1.17.3 should format as Xh for exact hours', () => {
+      expect(formatSecondsAsDuration(3600)).toBe('1h')
+      expect(formatSecondsAsDuration(7200)).toBe('2h')
+      expect(formatSecondsAsDuration(10800)).toBe('3h')
+    })
+
+    it('1.17.4 should format as Xh Xmin for durations with hours and minutes', () => {
+      expect(formatSecondsAsDuration(3661)).toBe('1h 1min')
+      expect(formatSecondsAsDuration(7320)).toBe('2h 2min')
+      expect(formatSecondsAsDuration(12295)).toBe('3h 24min')
+    })
+
+    it('1.17.5 should handle negative seconds as 0', () => {
+      expect(formatSecondsAsDuration(-60)).toBe('')
+      expect(formatSecondsAsDuration(-3600)).toBe('')
     })
   })
 })

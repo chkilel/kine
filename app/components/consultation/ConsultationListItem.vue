@@ -19,10 +19,11 @@
   const timeLabel = computed(() => formatTimeString(consultation.startTime))
 
   const durationLabel = computed(() => {
-    if (status.value.completed && consultation.actualDurationSeconds) {
-      return `${Math.round(consultation.actualDurationSeconds / 60)} min`
-    }
-    return `${consultation.duration + (consultation.extendedDurationMinutes || 0)} min`
+    const seconds =
+      status.value.completed && consultation.actualDurationSeconds
+        ? consultation.actualDurationSeconds
+        : (consultation.duration + (consultation.extendedDurationMinutes || 0)) * 60
+    return formatSecondsAsDuration(seconds)
   })
 
   const locationLabel = computed(() => {
@@ -67,30 +68,43 @@
 
 <template>
   <div
-    class="ring-default bg-muted flex items-center gap-4 rounded-xl p-4 shadow-sm ring transition-all hover:shadow-md"
-    :class="[status.completed && 'bg-muted opacity-75 shadow-none grayscale-[0.5] hover:shadow-none']"
+    class="flex items-center gap-4 rounded-xl p-4 shadow-sm ring transition-all hover:shadow-md"
+    :class="[
+      status.completed
+        ? 'ring-default bg-success/10 opacity-80 shadow-none grayscale-70 hover:shadow-none'
+        : 'ring-info/30 bg-muted'
+    ]"
   >
     <AppIconBox :name="statusIcon" :color="statusColor" size="xl" />
     <!-- Time Display -->
     <div class="w-16 shrink-0 text-center">
       <p :class="['text-lg font-bold', status.completed ? 'text-muted' : 'text-default']">{{ timeLabel }}</p>
-      <p class="text-muted text-[10px] font-bold uppercase">{{ durationLabel }}</p>
+      <p class="text-muted text-[10px] font-bold">{{ durationLabel }}</p>
     </div>
 
     <!-- Status Indicator -->
     <div
-      class="w-2 self-stretch rounded"
-      :class="[status.completed && 'bg-accented', status.scheduled && 'bg-success']"
+      class="w-1.5 self-stretch rounded"
+      :class="[status.completed && 'bg-success', status.scheduled && 'bg-info']"
     />
 
     <!-- Patient Info -->
     <div class="min-w-0 flex-1">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <h4
           :class="['font-bold', status.completed && 'line-through', status.completed ? 'text-muted' : 'text-default']"
         >
           {{ consultation.patientName }}
         </h4>
+        <UBadge
+          v-if="locationLabel"
+          :label="locationLabel"
+          :icon="locationIcon"
+          :color="locationColor"
+          size="sm"
+          variant="subtle"
+          class="rounded-lg uppercase"
+        />
       </div>
 
       <div class="mt-1 flex items-center gap-4">
@@ -102,15 +116,6 @@
           <UIcon :name="getConsultationStatusIcon(consultation.status)" class="text-sm" />
           {{ getConsultationStatusLabel(consultation.status || 'follow_up') }}
         </p>
-        <UBadge
-          v-if="locationLabel"
-          :label="locationLabel"
-          :icon="locationIcon"
-          :color="locationColor"
-          size="sm"
-          variant="subtle"
-          class="rounded-lg uppercase"
-        />
       </div>
     </div>
 
@@ -120,7 +125,7 @@
       label="Commencer"
       icon="i-hugeicons-play"
       size="lg"
-      color="success"
+      color="info"
       variant="solid"
       :ui="{ base: 'rounded-xl' }"
       class="shadow-success/10 shrink-0 font-semibold text-white shadow-lg"
@@ -130,16 +135,17 @@
     <UBadge
       v-else-if="status.completed"
       label="Terminée"
-      size="md"
+      size="lg"
       icon="i-hugeicons-checkmark-circle-02"
-      color="neutral"
-      variant="soft"
-      class="shrink-0 rounded-xl"
+      color="success"
+      variant="subtle"
+      class="shrink-0 rounded-full"
+      :ui="{ label: 'text-success-600' }"
     />
 
     <!-- Dropdown Menu -->
     <UDropdownMenu :items="menuItems" :content="{ align: 'center' }" :ui="{ content: 'min-w-0' }">
-      <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" square />
+      <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="primary" square class="rounded-full" />
     </UDropdownMenu>
   </div>
 </template>

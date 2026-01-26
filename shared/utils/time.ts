@@ -4,7 +4,6 @@ import { Time, parseTime } from '@internationalized/date'
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = 3600
 const SECONDS_PER_DAY = 86400
-const MINUTES_PER_HOUR = 60
 const HOURS_PER_DAY = 24
 
 /**
@@ -167,6 +166,22 @@ export function isTimeBetween(time: string, start: string, end: string): boolean
     // Normal range: time must be >= start AND <= end
     return t.compare(s) >= 0 && t.compare(e) <= 0
   }
+}
+
+/**
+ * Formats a duration in seconds as human-readable format
+ * @returns Empty string for 0 seconds, "Xmin" for < 1 hour, "Xh Xmin" otherwise
+ * @example formatSecondsAsDuration(90) // '1min'
+ * @example formatSecondsAsDuration(3600) // '1h'
+ * @example formatSecondsAsDuration(7320) // '2h 2min'
+ */
+export function formatSecondsAsDuration(seconds: number): string {
+  const normalized = Math.max(0, seconds)
+  if (normalized === 0) return ''
+  if (normalized < SECONDS_PER_HOUR) return `${Math.floor(normalized / SECONDS_PER_MINUTE)}min`
+  const hours = Math.floor(normalized / SECONDS_PER_HOUR)
+  const remainingMinutes = Math.floor((normalized % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE)
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`
 }
 
 /**
