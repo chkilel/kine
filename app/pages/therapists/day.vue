@@ -113,12 +113,12 @@
           <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
             <div class="space-y-6 xl:col-span-4">
               <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-                <AppStatCard label="Consultations" :value="stats.total" unit="rdvs" icon="i-hugeicons-calendar-02" />
+                <AppStatCard label="Consultations" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
                 <AppStatCard
                   label="Terminées"
                   color="success"
                   :value="stats.completed"
-                  :unit="`/ ${stats.completedPercentage}%`"
+                  :unit="`${stats.completedPercentage}%`"
                   icon="i-hugeicons-checkmark-circle-02"
                 />
                 <AppStatCard
@@ -126,13 +126,13 @@
                   color="primary"
                   :value="stats.upcoming"
                   unit="restant"
-                  icon="i-hugeicons-clock-01"
+                  icon="i-hugeicons-clock-02"
                 />
                 <AppStatCard
                   label="Annulées"
                   color="error"
                   :value="stats.cancelled"
-                  unit="rdvs"
+                  unit="RDVs"
                   icon="i-hugeicons-cancel-circle-half-dot"
                 />
               </div>
