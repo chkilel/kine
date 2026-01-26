@@ -19,9 +19,30 @@
   const timeLabel = computed(() => formatTimeString(consultation.startTime))
 
   const durationLabel = computed(() => {
-    if (status.value.completed) return 'Fait'
+    if (status.value.completed && consultation.actualDurationSeconds) {
+      return `${Math.round(consultation.actualDurationSeconds / 60)} min`
+    }
     return `${consultation.duration + (consultation.extendedDurationMinutes || 0)} min`
   })
+
+  const locationLabel = computed(() => {
+    if (consultation.location === 'clinic') {
+      return consultation.roomName
+    }
+    return getLocationLabel(consultation.location || 'clinic')
+  })
+
+  const locationIcon = computed(() => {
+    if (consultation.location === 'clinic') {
+      return 'i-hugeicons-door-01'
+    }
+    return getLocationIcon(consultation.location || 'clinic')
+  })
+
+  const locationColor = computed(() => getLocationColor(consultation.location || 'clinic'))
+
+  const statusIcon = computed(() => getConsultationStatusIcon(consultation.status))
+  const statusColor = computed(() => getConsultationStatusColor(consultation.status))
 
   // Dropdown menu items - memoized
   const menuItems = computed(() => [
@@ -47,19 +68,20 @@
 <template>
   <div
     class="ring-default bg-muted flex items-center gap-4 rounded-xl p-4 shadow-sm ring transition-all hover:shadow-md"
-    :class="[status.completed && 'bg-muted opacity-75 grayscale-[0.5] hover:shadow-none']"
+    :class="[status.completed && 'bg-muted opacity-75 shadow-none grayscale-[0.5] hover:shadow-none']"
   >
-    <!-- Status Indicator -->
-    <div
-      class="w-1.5 self-stretch rounded-full"
-      :class="[status.completed && 'bg-accented', status.scheduled && 'bg-success']"
-    />
-
+    <AppIconBox :name="statusIcon" :color="statusColor" size="xl" />
     <!-- Time Display -->
     <div class="w-16 shrink-0 text-center">
       <p :class="['text-lg font-bold', status.completed ? 'text-muted' : 'text-default']">{{ timeLabel }}</p>
       <p class="text-muted text-[10px] font-bold uppercase">{{ durationLabel }}</p>
     </div>
+
+    <!-- Status Indicator -->
+    <div
+      class="w-2 self-stretch rounded"
+      :class="[status.completed && 'bg-accented', status.scheduled && 'bg-success']"
+    />
 
     <!-- Patient Info -->
     <div class="min-w-0 flex-1">
@@ -72,14 +94,19 @@
       </div>
 
       <div class="mt-1 flex items-center gap-4">
+        <p v-if="consultation.planTitle" class="text-muted flex items-center gap-1 text-xs">
+          <UIcon name="i-hugeicons-file-01" class="text-sm" />
+          {{ consultation.planTitle }}
+        </p>
         <p class="text-muted flex items-center gap-1 text-xs">
           <UIcon :name="getConsultationStatusIcon(consultation.status)" class="text-sm" />
           {{ getConsultationStatusLabel(consultation.status || 'follow_up') }}
         </p>
         <UBadge
-          v-if="consultation.roomName"
-          :label="consultation.roomName"
-          icon="i-hugeicons-door-01"
+          v-if="locationLabel"
+          :label="locationLabel"
+          :icon="locationIcon"
+          :color="locationColor"
           size="sm"
           variant="subtle"
           class="rounded-lg uppercase"

@@ -1,6 +1,14 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+export const CONSULTATION_KEYS = {
+  root: ['consultations'] as const,
+  list: (params: ConsultationQuery) => [...CONSULTATION_KEYS.root, params],
+  single: (id: string) => [...CONSULTATION_KEYS.root, id],
+  therapist: (therapistId: string, date: string) => [...CONSULTATION_KEYS.root, 'therapist', therapistId, date],
+  therapistRoot: () => [...CONSULTATION_KEYS.root, 'therapist']
+}
+
 const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
@@ -17,7 +25,7 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         dateTo: toValue(queryParamsValue.dateTo),
         date: toValue(queryParamsValue.date)
       }
-      return ['consultations', JSON.stringify(query)]
+      return CONSULTATION_KEYS.list(query as ConsultationQuery)
     },
     query: async () => {
       const queryParamsValue = toValue(queryParams) || {}
@@ -71,9 +79,10 @@ const _useCreateConsultation = () => {
         color: 'success'
       })
       if (consultationData.patientId) {
-        queryCache.invalidateQueries({ key: ['consultations', { patientId: consultationData.patientId }] })
+        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId: consultationData.patientId }) })
       }
-      queryCache.invalidateQueries({ key: ['consultations'] })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
@@ -110,9 +119,10 @@ const _useUpdateConsultation = () => {
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: ['consultations'] })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
@@ -130,7 +140,7 @@ const _useConsultation = (consultationId: MaybeRefOrGetter<string>) => {
   return useQuery({
     key: () => {
       const id = toValue(consultationId)
-      return id ? ['consultations', id] : ['consultations']
+      return id ? CONSULTATION_KEYS.single(id) : CONSULTATION_KEYS.root
     },
     query: async () => {
       const data = await requestFetch(`/api/consultations/${toValue(consultationId)}`)
@@ -171,9 +181,10 @@ const _useDeleteConsultation = () => {
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: ['consultations'] })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
@@ -211,9 +222,10 @@ const _useUpdateConsultationStatus = () => {
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: ['consultations', { patientId }] })
+        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: ['consultations'] })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
@@ -236,8 +248,8 @@ const _useTherapistConsultations = (
       const therapistIdValue = toValue(therapistId)
       const dateValue = toValue(date)
       return therapistIdValue && dateValue
-        ? ['consultations', 'therapist', therapistIdValue, dateValue]
-        : ['consultations']
+        ? CONSULTATION_KEYS.therapist(therapistIdValue, dateValue)
+        : CONSULTATION_KEYS.root
     },
     query: async () => {
       const query = {
@@ -245,7 +257,9 @@ const _useTherapistConsultations = (
         date: toValue(date)
       }
       const validatedQuery = therapistConsultationsQuerySchema.parse(query)
-      const resp = await requestFetch('/api/consultations', { query: validatedQuery })
+      const resp = await requestFetch(`/api/therapists/${validatedQuery.therapistId}/day`, {
+        query: { date: validatedQuery.date }
+      })
       return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),

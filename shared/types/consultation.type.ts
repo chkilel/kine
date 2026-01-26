@@ -8,9 +8,7 @@ import {
   consultationTypeSchema,
   consultationStatusSchema,
   locationSchema,
-  type ConsultationLocation,
-  type ConsultationType,
-  type ConsultationStatus
+  type ConsultationLocation
 } from './base.types'
 
 z.config(fr())
@@ -66,6 +64,7 @@ export const therapistConsultationsQuerySchema = z.object({
 export type Consultation = z.infer<typeof consultationSchema> & {
   roomName?: string | null
   patientName?: string | null
+  planTitle?: string | null
 }
 export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
 export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>

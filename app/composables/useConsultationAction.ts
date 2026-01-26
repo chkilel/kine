@@ -1,4 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
+import { CONSULTATION_KEYS } from './useConsultations'
 
 type StartParams = { id: string; actualStartTime: string }
 type PauseParams = { id: string; pauseStartTime: string }
@@ -35,7 +36,7 @@ const _useConsultationAction = () => {
         color: 'success'
       })
       queryCache.invalidateQueries({ key: ['consultations', id] })
-      queryCache.invalidateQueries({ key: ['consultations', 'therapist'] })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
     },
     onError: (error) => {
       toast.add({
