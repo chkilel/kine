@@ -28,7 +28,7 @@
   <UBadge v-bind="forwardedAttrs" :color="color || 'neutral'" :variant="variant || 'subtle'" :class="defaultClass">
     <span class="text-xs capitalize">{{ extractDayAndMonth(date).dayNameShort }}</span>
     <span class="text-sm leading-none font-bold">
-      {{ removeSecondsFromTime(time) }}
+      {{ formatTimeString(time) }}
     </span>
   </UBadge>
 </template>

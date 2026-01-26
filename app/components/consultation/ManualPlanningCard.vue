@@ -547,7 +547,7 @@
                 color="primary"
                 class="flex"
               >
-                {{ removeSecondsFromTime(template.startTime) }} - {{ removeSecondsFromTime(template.endTime) }} ({{
+                {{ formatTimeString(template.startTime) }} - {{ formatTimeString(template.endTime) }} ({{
                   getLocationLabel(template.location)
                 }})
               </UBadge>
@@ -562,7 +562,7 @@
                 <template #title>
                   <div class="flex justify-between">
                     <span v-if="exception.startTime && exception.endTime">
-                      {{ removeSecondsFromTime(exception.startTime) }} - {{ removeSecondsFromTime(exception.endTime) }}
+                      {{ formatTimeString(exception.startTime) }} - {{ formatTimeString(exception.endTime) }}
                     </span>
                     <span>
                       {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
@@ -656,7 +656,7 @@
                 :variant="consultationDetails.startTime === time ? 'solid' : 'subtle'"
                 :color="consultationDetails.startTime === time ? 'primary' : 'success'"
                 size="md"
-                :label="removeSecondsFromTime(time)"
+                :label="formatTimeString(time)"
                 @click="selectTime(time)"
               />
             </div>

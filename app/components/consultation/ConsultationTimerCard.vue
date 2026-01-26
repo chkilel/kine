@@ -286,7 +286,7 @@
       <div
         class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-1.5 text-right text-sm text-white/90 slashed-zero tabular-nums shadow-sm backdrop-blur-sm"
       >
-        Écoulé : {{ formatSecondsAsMMSS(timerSeconds) }}
+        Écoulé : {{ formatSecondsAsHHMMSS(timerSeconds) }}
       </div>
     </div>
 

@@ -2,14 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   getCurrentTimeHHMMSS,
   getCurrentTime,
-  removeSecondsFromTime,
-  timeToMinutes,
-  minutesToTime,
   addMinutesToTime,
+  subtractMinutesFromTime,
+  addHoursToTime,
   calculateTimeDifference,
-  formatSecondsAsTime,
-  formatSecondsAsMMSS,
+  calculateEndTime,
+  compareTimes,
+  isTimeBetween,
   formatSecondsAsHHMMSS,
+  formatTimeString,
   getTimeSincePause
 } from './time'
 import { Time } from '@internationalized/date'
@@ -49,102 +50,6 @@ describe('time-utils', () => {
       const result = getCurrentTime()
       expect(result.second).toBeGreaterThanOrEqual(0)
       expect(result.second).toBeLessThan(60)
-    })
-  })
-
-  describe('removeSecondsFromTime', () => {
-    it('1.3.1 should remove seconds from HH:MM:SS format', () => {
-      const result = removeSecondsFromTime('14:30:45')
-      expect(result).toBe('14:30')
-    })
-
-    it('1.3.2 should handle time with 00 seconds', () => {
-      const result = removeSecondsFromTime('09:00:00')
-      expect(result).toBe('09:00')
-    })
-
-    it('1.3.3 should handle single digit hour', () => {
-      const result = removeSecondsFromTime('9:05:30')
-      expect(result).toBe('9:05')
-    })
-
-    it('1.3.4 should throw error for invalid format', () => {
-      expect(() => removeSecondsFromTime('14:30')).toThrow('Invalid time format')
-    })
-
-    it('1.3.5 should throw error for invalid time string', () => {
-      expect(() => removeSecondsFromTime('invalid-time')).toThrow('Invalid time format')
-    })
-
-    it('1.3.6 should throw error for invalid seconds', () => {
-      expect(() => removeSecondsFromTime('14:30:70')).toThrow('Invalid time format')
-    })
-
-    it('1.3.7 should throw error for invalid minutes', () => {
-      expect(() => removeSecondsFromTime('14:70:45')).toThrow('Invalid time format')
-    })
-
-    it('1.3.8 should throw error for invalid hours', () => {
-      expect(() => removeSecondsFromTime('25:30:45')).toThrow('Invalid time format')
-    })
-  })
-
-  describe('timeToMinutes', () => {
-    it('1.4.1 should convert time string to minutes', () => {
-      expect(timeToMinutes('09:30')).toBe(570)
-      expect(timeToMinutes('14:45')).toBe(885)
-    })
-
-    it('1.4.2 should convert midnight to minutes', () => {
-      expect(timeToMinutes('00:00')).toBe(0)
-    })
-
-    it('1.4.3 should convert late night to minutes', () => {
-      expect(timeToMinutes('23:59')).toBe(1439)
-    })
-
-    it('1.4.4 should return 0 for invalid time', () => {
-      expect(timeToMinutes('invalid')).toBe(0)
-    })
-
-    it('1.4.5 should handle time with seconds', () => {
-      expect(timeToMinutes('09:30:45')).toBe(570)
-    })
-  })
-
-  describe('minutesToTime', () => {
-    it('1.5.1 should convert minutes to time string', () => {
-      expect(minutesToTime(570)).toBe('09:30:00')
-      expect(minutesToTime(885)).toBe('14:45:00')
-    })
-
-    it('1.5.2 should convert 0 minutes to midnight', () => {
-      expect(minutesToTime(0)).toBe('00:00:00')
-    })
-
-    it('1.5.3 should handle wrap around 24 hours', () => {
-      expect(minutesToTime(1500)).toBe('01:00:00')
-    })
-
-    it('1.5.4 should handle exact hour boundaries', () => {
-      expect(minutesToTime(720)).toBe('12:00:00')
-      expect(minutesToTime(1080)).toBe('18:00:00')
-    })
-
-    it('1.5.5 should handle negative minutes', () => {
-      expect(minutesToTime(-60)).toBe('23:00:00')
-    })
-
-    it('1.5.6 should handle large values', () => {
-      expect(minutesToTime(3000)).toBe('02:00:00')
-    })
-
-    it('1.5.7 should throw error for NaN', () => {
-      expect(() => minutesToTime(NaN)).toThrow('Invalid minutes value')
-    })
-
-    it('1.5.8 should throw error for non-number', () => {
-      expect(() => minutesToTime('60' as unknown as number)).toThrow('Invalid minutes value')
     })
   })
 
@@ -212,75 +117,6 @@ describe('time-utils', () => {
 
     it('1.7.8 should handle edge case - exactly 24 hours', () => {
       expect(calculateTimeDifference('00:00:00', '00:00:00')).toBe(0)
-    })
-  })
-
-  describe('formatSecondsAsTime', () => {
-    it('1.8.1 should format seconds as Time object', () => {
-      const result = formatSecondsAsTime(3661)
-      expect(result).toBeInstanceOf(Time)
-      expect(result.hour).toBe(1)
-      expect(result.minute).toBe(1)
-      expect(result.second).toBe(1)
-    })
-
-    it('1.8.2 should handle 0 seconds', () => {
-      const result = formatSecondsAsTime(0)
-      expect(result.hour).toBe(0)
-      expect(result.minute).toBe(0)
-      expect(result.second).toBe(0)
-    })
-
-    it('1.8.3 should handle seconds less than minute', () => {
-      const result = formatSecondsAsTime(45)
-      expect(result.hour).toBe(0)
-      expect(result.minute).toBe(0)
-      expect(result.second).toBe(45)
-    })
-
-    it('1.8.4 should wrap around 24 hours', () => {
-      const result = formatSecondsAsTime(90000)
-      expect(result.hour).toBe(1)
-      expect(result.minute).toBe(0)
-      expect(result.second).toBe(0)
-    })
-
-    it('1.8.5 should handle exact hour boundary', () => {
-      const result = formatSecondsAsTime(3600)
-      expect(result.hour).toBe(1)
-      expect(result.minute).toBe(0)
-      expect(result.second).toBe(0)
-    })
-
-    it('1.8.6 should handle negative seconds', () => {
-      const result = formatSecondsAsTime(-60)
-      expect(result.hour).toBe(0)
-      expect(result.minute).toBe(0)
-      expect(result.second).toBe(0)
-    })
-  })
-
-  describe('formatSecondsAsMMSS', () => {
-    it('1.9.1 should format seconds as MM:SS', () => {
-      expect(formatSecondsAsMMSS(65)).toBe('01:05')
-      expect(formatSecondsAsMMSS(125)).toBe('02:05')
-    })
-
-    it('1.9.2 should handle seconds less than minute', () => {
-      expect(formatSecondsAsMMSS(45)).toBe('00:45')
-      expect(formatSecondsAsMMSS(5)).toBe('00:05')
-    })
-
-    it('1.9.3 should handle 0 seconds', () => {
-      expect(formatSecondsAsMMSS(0)).toBe('00:00')
-    })
-
-    it('1.9.4 should handle large values', () => {
-      expect(formatSecondsAsMMSS(3665)).toBe('01:05')
-    })
-
-    it('1.9.5 should handle exactly 60 seconds', () => {
-      expect(formatSecondsAsMMSS(60)).toBe('01:00')
     })
   })
 
@@ -364,6 +200,165 @@ describe('time-utils', () => {
     it('1.11.9 should handle pause of 1 hour', () => {
       vi.setSystemTime(new Date('2026-01-25T11:00:00'))
       expect(getTimeSincePause('10:00:00')).toBe('1h')
+    })
+  })
+
+  describe('subtractMinutesFromTime', () => {
+    it('1.12.1 should subtract minutes from time', () => {
+      expect(subtractMinutesFromTime('09:30:00', 30)).toBe('09:00:00')
+      expect(subtractMinutesFromTime('15:00:00', 15)).toBe('14:45:00')
+    })
+
+    it('1.12.2 should handle crossing hour boundary', () => {
+      expect(subtractMinutesFromTime('09:15:00', 30)).toBe('08:45:00')
+    })
+
+    it('1.12.3 should handle crossing midnight', () => {
+      expect(subtractMinutesFromTime('00:15:00', 30)).toBe('23:45:00')
+    })
+
+    it('1.12.4 should handle negative subtraction (add)', () => {
+      expect(subtractMinutesFromTime('09:00:00', -30)).toBe('09:30:00')
+    })
+
+    it('1.12.5 should throw error for invalid time', () => {
+      expect(() => subtractMinutesFromTime('invalid', 30)).toThrow('Failed to parse time')
+    })
+  })
+
+  describe('addHoursToTime', () => {
+    it('1.13.1 should add hours to time', () => {
+      expect(addHoursToTime('09:00:00', 2)).toBe('11:00:00')
+      expect(addHoursToTime('14:30:00', 4)).toBe('18:30:00')
+    })
+
+    it('1.13.2 should handle crossing midnight', () => {
+      expect(addHoursToTime('23:00:00', 2)).toBe('01:00:00')
+    })
+
+    it('1.13.3 should handle negative hours (subtract)', () => {
+      expect(addHoursToTime('11:00:00', -2)).toBe('09:00:00')
+    })
+
+    it('1.13.4 should throw error for invalid time', () => {
+      expect(() => addHoursToTime('invalid', 2)).toThrow('Failed to parse time')
+    })
+  })
+
+  describe('calculateEndTime', () => {
+    it('1.14.1 should calculate end time correctly', () => {
+      expect(calculateEndTime('09:00:00', 30)).toBe('09:30:00')
+      expect(calculateEndTime('14:30:00', 45)).toBe('15:15:00')
+      expect(calculateEndTime('09:00', 30)).toBe('09:30:00')
+    })
+
+    it('1.14.2 should handle crossing hour boundary', () => {
+      expect(calculateEndTime('09:45:00', 30)).toBe('10:15:00')
+      expect(calculateEndTime('09:45', 30)).toBe('10:15:00')
+    })
+
+    it('1.14.3 should handle crossing midnight', () => {
+      expect(calculateEndTime('23:45:00', 30)).toBe('00:15:00')
+      expect(calculateEndTime('23:00', 120)).toBe('01:00:00')
+    })
+
+    it('1.14.4 should handle long durations', () => {
+      expect(calculateEndTime('09:00:00', 180)).toBe('12:00:00')
+      expect(calculateEndTime('08:00:00', 300)).toBe('13:00:00')
+    })
+
+    it('1.14.5 should throw error for invalid time', () => {
+      expect(() => calculateEndTime('invalid', 30)).toThrow('Failed to calculate end time')
+    })
+  })
+
+  describe('compareTimes', () => {
+    it('1.15.1 should return negative when time1 < time2', () => {
+      expect(compareTimes('09:00:00', '10:00:00')).toBe(-1)
+      expect(compareTimes('08:30:00', '09:15:00')).toBe(-1)
+    })
+
+    it('1.15.2 should return positive when time1 > time2', () => {
+      expect(compareTimes('10:00:00', '09:00:00')).toBe(1)
+      expect(compareTimes('14:30:00', '11:45:00')).toBe(1)
+    })
+
+    it('1.15.3 should return 0 for equal times', () => {
+      expect(compareTimes('09:00:00', '09:00:00')).toBe(0)
+      expect(compareTimes('14:30:45', '14:30:45')).toBe(0)
+    })
+
+    it('1.15.4 should handle times without seconds', () => {
+      expect(compareTimes('09:00', '10:00')).toBe(-1)
+      expect(compareTimes('09:00:00', '09:00')).toBe(0)
+    })
+  })
+
+  describe('isTimeBetween', () => {
+    it('1.16.1 should return true when time is within range', () => {
+      expect(isTimeBetween('09:30:00', '09:00:00', '10:00:00')).toBe(true)
+      expect(isTimeBetween('12:00:00', '09:00:00', '18:00:00')).toBe(true)
+    })
+
+    it('1.16.2 should return true when time equals start', () => {
+      expect(isTimeBetween('09:00:00', '09:00:00', '10:00:00')).toBe(true)
+    })
+
+    it('1.16.3 should return true when time equals end', () => {
+      expect(isTimeBetween('10:00:00', '09:00:00', '10:00:00')).toBe(true)
+    })
+
+    it('1.16.4 should return false when time is before range', () => {
+      expect(isTimeBetween('08:30:00', '09:00:00', '10:00:00')).toBe(false)
+      expect(isTimeBetween('08:59:59', '09:00:00', '10:00:00')).toBe(false)
+    })
+
+    it('1.16.5 should return false when time is after range', () => {
+      expect(isTimeBetween('10:30:00', '09:00:00', '10:00:00')).toBe(false)
+      expect(isTimeBetween('10:00:01', '09:00:00', '10:00:00')).toBe(false)
+    })
+
+    it('1.16.6 should handle times crossing midnight', () => {
+      expect(isTimeBetween('00:30:00', '23:00:00', '02:00:00')).toBe(true)
+      expect(isTimeBetween('22:00:00', '23:00:00', '02:00:00')).toBe(false)
+    })
+
+    it('1.16.7 should handle times without seconds', () => {
+      expect(isTimeBetween('09:30', '09:00', '10:00')).toBe(true)
+    })
+
+    it('1.16.8 should return true when range is same time', () => {
+      expect(isTimeBetween('12:00:00', '12:00:00', '12:00:00')).toBe(true)
+    })
+  })
+
+  describe('formatTimeString', () => {
+    it('1.16.1 should format without seconds by default', () => {
+      expect(formatTimeString('09:30:45')).toBe('09:30')
+      expect(formatTimeString('14:15:30')).toBe('14:15')
+    })
+
+    it('1.16.2 should include seconds when requested', () => {
+      expect(formatTimeString('09:30:45', true)).toBe('09:30:45')
+      expect(formatTimeString('14:15:30', true)).toBe('14:15:30')
+    })
+
+    it('1.16.3 should handle HH:MM format', () => {
+      expect(formatTimeString('09:30')).toBe('09:30')
+      expect(formatTimeString('14:15')).toBe('14:15')
+    })
+
+    it('1.16.4 should handle HH:MM format with seconds requested', () => {
+      expect(formatTimeString('09:30', true)).toBe('09:30:00')
+    })
+
+    it('1.16.5 should handle single digit hour', () => {
+      expect(formatTimeString('9:05:30')).toBe('09:05')
+      expect(formatTimeString('9:30')).toBe('09:30')
+    })
+
+    it('1.16.6 should throw error for invalid time', () => {
+      expect(() => formatTimeString('invalid')).toThrow('Invalid time format')
     })
   })
 })

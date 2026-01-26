@@ -16,7 +16,7 @@
   }))
 
   // Computed text values
-  const timeLabel = computed(() => removeSecondsFromTime(consultation.startTime))
+  const timeLabel = computed(() => formatTimeString(consultation.startTime))
 
   const durationLabel = computed(() => {
     if (status.value.completed) return 'Fait'

@@ -90,7 +90,7 @@
               à
 
               <span class="font-semibold">
-                {{ removeSecondsFromTime(consultation.startTime) }}
+                {{ formatTimeString(consultation.startTime) }}
               </span>
 
               - {{ consultation.duration }} min

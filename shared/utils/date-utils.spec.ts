@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { removeSecondsFromTime, timeToMinutes, minutesToTime } from './time'
 import {
   safeParseISODate,
   isDateDisabled,
@@ -15,65 +14,6 @@ import {
 import { CalendarDate } from '@internationalized/date'
 
 describe('date-utils', () => {
-  describe('removeSecondsFromTime', () => {
-    it('1.1.1 should remove seconds from HH:MM:SS format', () => {
-      const result = removeSecondsFromTime('14:30:45')
-      expect(result).toBe('14:30')
-    })
-
-    it('1.1.2 should handle time with 00 seconds', () => {
-      const result = removeSecondsFromTime('09:00:00')
-      expect(result).toBe('09:00')
-    })
-
-    it('1.1.3 should throw error for HH:MM format without seconds', () => {
-      expect(() => removeSecondsFromTime('14:30')).toThrow('Invalid time format')
-    })
-
-    it('1.1.4 should throw error for invalid time string', () => {
-      expect(() => removeSecondsFromTime('invalid-time')).toThrow('Invalid time format')
-    })
-  })
-
-  describe('timeToMinutes', () => {
-    it('1.2.1 should convert time string to minutes', () => {
-      expect(timeToMinutes('09:30')).toBe(570)
-      expect(timeToMinutes('14:45')).toBe(885)
-    })
-
-    it('1.2.2 should convert midnight to minutes', () => {
-      expect(timeToMinutes('00:00')).toBe(0)
-    })
-
-    it('1.2.3 should convert late night to minutes', () => {
-      expect(timeToMinutes('23:59')).toBe(1439)
-    })
-
-    it('1.2.4 should return 0 for invalid time', () => {
-      expect(timeToMinutes('invalid')).toBe(0)
-    })
-  })
-
-  describe('minutesToTime', () => {
-    it('1.3.1 should convert minutes to time string', () => {
-      expect(minutesToTime(570)).toBe('09:30:00')
-      expect(minutesToTime(885)).toBe('14:45:00')
-    })
-
-    it('1.3.2 should convert 0 minutes to midnight', () => {
-      expect(minutesToTime(0)).toBe('00:00:00')
-    })
-
-    it('1.3.3 should handle wrap around 24 hours', () => {
-      expect(minutesToTime(1500)).toBe('01:00:00')
-    })
-
-    it('1.3.4 should handle exact hour boundaries', () => {
-      expect(minutesToTime(720)).toBe('12:00:00')
-      expect(minutesToTime(1080)).toBe('18:00:00')
-    })
-  })
-
   describe('safeParseISODate', () => {
     it('1.4.1 should parse valid ISO date string', () => {
       const result = safeParseISODate('2026-01-15T10:30:00Z')

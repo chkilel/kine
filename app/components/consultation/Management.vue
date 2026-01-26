@@ -46,9 +46,9 @@
                     :class="getLocationColor(consultation.location)"
                   />
                   <p class="font-semibold">
-                    {{ removeSecondsFromTime(consultation.startTime) }} -
+                    {{ formatTimeString(consultation.startTime) }} -
                     {{
-                      removeSecondsFromTime(
+                      formatTimeString(
                         addMinutesToTime(
                           consultation.startTime,
                           consultation.duration + (consultation.extendedDurationMinutes || 0)

@@ -87,8 +87,8 @@
             <div class="flex flex-col gap-1.5">
               <div class="text-base font-bold">
                 <template v-if="exception.startTime && exception.endTime">
-                  {{ removeSecondsFromTime(exception.startTime) }} -
-                  {{ removeSecondsFromTime(exception.endTime) }}
+                  {{ formatTimeString(exception.startTime) }} -
+                  {{ formatTimeString(exception.endTime) }}
                 </template>
                 <div v-else class="flex items-baseline gap-6">
                   {{ formatFrenchDate(exception.date) }}

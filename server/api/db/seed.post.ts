@@ -13,7 +13,7 @@ import {
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
-import { minutesToTime, timeToMinutes } from '~~/shared/utils/time'
+import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } from '~~/shared/utils/time'
 import {
   MINIMUM_CONSULTATION_GAP_MINUTES,
   CONSULTATION_DURATIONS,
@@ -437,31 +437,24 @@ function getWeightedLocation(): (typeof VALID_CONSULTATION_LOCATIONS)[number] {
 }
 
 function generateTime(startHour: number, endHour: number): string {
-  const startMinutes = startHour * 60
-  const endMinutes = endHour * 60
+  const startTime = `${String(startHour).padStart(2, '0')}:00:00`
+  const endTime = `${String(endHour).padStart(2, '0')}:00:00`
 
-  const availableSlots: number[] = []
-  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
-    availableSlots.push(mins)
-  }
+  const availableSlots = generateTimeSeriesInRange(startTime, endTime, 30)
 
   if (availableSlots.length === 0) {
     return '00:00:00'
   }
 
-  const slotStart = randomItem(availableSlots)
-  if (!slotStart) return '00:00:00'
-  return minutesToTime(slotStart)
+  const selectedTime = randomItem(availableSlots)
+  return selectedTime || '00:00:00'
 }
 
 function generateTimeRange(startHour: number, endHour: number): { startTime: string; endTime: string } {
-  const startMinutes = startHour * 60
-  const endMinutes = endHour * 60
+  const startTime = `${String(startHour).padStart(2, '0')}:00:00`
+  const endTime = `${String(endHour).padStart(2, '0')}:00:00`
 
-  const availableSlots: number[] = []
-  for (let mins = startMinutes; mins <= endMinutes; mins += 30) {
-    availableSlots.push(mins)
-  }
+  const availableSlots = generateTimeSeriesInRange(startTime, endTime, 30)
 
   if (availableSlots.length < 2) {
     return {
@@ -483,8 +476,8 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
   }
 
   return {
-    startTime: minutesToTime(slotStart),
-    endTime: minutesToTime(slotEnd)
+    startTime: slotStart,
+    endTime: slotEnd
   }
 }
 
@@ -886,26 +879,20 @@ function generateConsultations(
       const selectedRange = randomItem(availabilityRanges)
       if (!selectedRange) continue
 
-      const rangeStartMinutes = timeToMinutes(selectedRange.start)
-      const rangeEndMinutes = timeToMinutes(selectedRange.end)
-
-      if (rangeEndMinutes <= rangeStartMinutes) {
-        continue
-      }
-
       const candidateDuration = randomItem(CONSULTATION_DURATIONS)
       if (!candidateDuration) continue
 
-      if (rangeEndMinutes - rangeStartMinutes < candidateDuration) {
+      const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
+      if (rangeDuration < candidateDuration) {
         continue
       }
 
       const possibleStarts: string[] = []
       const slotIncrementMinutes = 15
 
-      for (let mins = rangeStartMinutes; mins + candidateDuration <= rangeEndMinutes; mins += slotIncrementMinutes) {
-        const candidateStart = minutesToTime(mins)
-        const candidateEnd = minutesToTime(mins + candidateDuration)
+      const generatedStarts = generateTimeSeriesInRange(selectedRange.start, selectedRange.end, slotIncrementMinutes)
+      for (const candidateStart of generatedStarts) {
+        const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
         const dayBookings = therapistDayBookings[candidateDate] || []
         const hasConflictWithTherapist = dayBookings.some((booking) =>
           hasTimeConflict(booking.start, booking.end, candidateStart, candidateEnd, MINIMUM_CONSULTATION_GAP_MINUTES)
@@ -923,7 +910,7 @@ function generateConsultations(
       const chosenStart = randomItem(possibleStarts)
       if (!chosenStart) continue
 
-      const chosenEnd = minutesToTime(timeToMinutes(chosenStart) + (candidateDuration ?? 60))
+      const chosenEnd = calculateEndTime(chosenStart, candidateDuration ?? 60)
 
       date = candidateDate
       startTime = chosenStart
@@ -947,7 +934,7 @@ function generateConsultations(
       const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
       if (fallbackDuration) {
         duration = fallbackDuration
-        endTime = minutesToTime(timeToMinutes(startTime) + duration)
+        endTime = calculateEndTime(startTime, duration)
       }
     }
 
@@ -1025,22 +1012,20 @@ function generateConsultations(
     if (availabilityRanges && availabilityRanges.length > 0) {
       const selectedRange = randomItem(availabilityRanges)
       if (selectedRange) {
-        const rangeStartMinutes = timeToMinutes(selectedRange.start)
-        const rangeEndMinutes = timeToMinutes(selectedRange.end)
-
-        if (rangeEndMinutes > rangeStartMinutes) {
-          const candidateDuration = randomItem(CONSULTATION_DURATIONS)
-          if (candidateDuration && rangeEndMinutes - rangeStartMinutes >= candidateDuration) {
+        const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+        if (candidateDuration) {
+          const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
+          if (rangeDuration >= candidateDuration) {
             const possibleStarts: string[] = []
             const slotIncrementMinutes = 15
 
-            for (
-              let mins = rangeStartMinutes;
-              mins + candidateDuration <= rangeEndMinutes;
-              mins += slotIncrementMinutes
-            ) {
-              const candidateStart = minutesToTime(mins)
-              const candidateEnd = minutesToTime(mins + candidateDuration)
+            const generatedStarts = generateTimeSeriesInRange(
+              selectedRange.start,
+              selectedRange.end,
+              slotIncrementMinutes
+            )
+            for (const candidateStart of generatedStarts) {
+              const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
               const dayBookings = therapistDayBookings[date] || []
               const hasConflictWithTherapist = dayBookings.some((booking) =>
                 hasTimeConflict(
@@ -1063,7 +1048,7 @@ function generateConsultations(
                 startTime = selectedStart
                 duration = candidateDuration
                 if (startTime && duration) {
-                  endTime = minutesToTime(timeToMinutes(startTime) + duration)
+                  endTime = calculateEndTime(startTime, duration)
                 }
               }
             }
@@ -1079,7 +1064,7 @@ function generateConsultations(
       if (fallbackDuration) {
         duration = fallbackDuration
         if (startTime && duration) {
-          endTime = minutesToTime(timeToMinutes(startTime) + duration)
+          endTime = calculateEndTime(startTime, duration)
         }
       }
     }
