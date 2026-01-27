@@ -18,7 +18,7 @@
   const consultationNotes = ref('')
   const selectedTags = ref<string[]>([])
   const evaValidated = ref<boolean>(false)
-  const evaDisabled = ref<boolean>(false)
+  const evaEnabled = ref<boolean>(false)
 
   // Initialize form from consultation data
   watch(
@@ -37,7 +37,7 @@
         (value.painLevelBefore !== null && value.painLevelBefore !== undefined)
 
       // Set EVA as disabled if pain level is explicitly set to null
-      evaDisabled.value = value.painLevelBefore === null
+      evaEnabled.value = value.painLevelBefore === null
     },
     { immediate: true }
   )
@@ -65,7 +65,7 @@
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
 
-  const canStartSession = computed(() => evaValidated.value || evaDisabled.value)
+  const canStartSession = computed(() => evaValidated.value || evaEnabled.value)
 </script>
 
 <template>
@@ -97,7 +97,7 @@
           <ConsultationEvaCard
             v-model:pain-level-before="painLevelBefore"
             v-model:eva-validated="evaValidated"
-            v-model:eva-disabled="evaDisabled"
+            v-model:eva-enabled="evaEnabled"
           />
 
           <ConsultationEditor
