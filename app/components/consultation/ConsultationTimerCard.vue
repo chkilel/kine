@@ -6,6 +6,7 @@
     selectedTags: string[]
     painLevelAfter: number | undefined
     consultationNotes: string
+    canStartSession: boolean
   }>()
 
   const emit = defineEmits<{
@@ -235,18 +236,56 @@
 </script>
 
 <template>
-  <UButton
-    v-if="isScheduled"
-    color="success"
-    size="xl"
-    variant="solid"
-    block
-    class="rounded-xl text-lg font-bold shadow-lg"
-    icon="i-hugeicons-play-circle"
-    @click="startSession"
-  >
-    <span>Démarrer la séance</span>
-  </UButton>
+  <div v-if="isScheduled">
+    <!-- Disabled planned duration display when can't start -->
+    <UCard v-if="!canStartSession">
+      <p class="text-muted mb-4 text-center text-[10px] font-bold tracking-wider uppercase">Durée prévue</p>
+      <div class="mb-6 flex gap-2 px-0 py-2">
+        <div class="flex flex-1 basis-0 flex-col items-center gap-1">
+          <div class="bg-muted flex h-12 w-full items-center justify-center rounded-lg opacity-40">
+            <p class="text-muted text-xl font-bold tracking-tighter">
+              {{ formatSecondsAsHHMMSS(consultationDurationSeconds).split(':')[0] }}
+            </p>
+          </div>
+          <p class="text-muted text-[10px] font-bold uppercase">Heures</p>
+        </div>
+        <div class="flex flex-1 basis-0 flex-col items-center gap-1">
+          <div class="bg-muted flex h-12 w-full items-center justify-center rounded-lg opacity-40">
+            <p class="text-muted text-xl font-bold tracking-tighter">
+              {{ formatSecondsAsHHMMSS(consultationDurationSeconds).split(':')[1] }}
+            </p>
+          </div>
+          <p class="text-muted text-[10px] font-bold uppercase">Min</p>
+        </div>
+        <div class="flex flex-1 basis-0 flex-col items-center gap-1">
+          <div class="bg-muted flex h-12 w-full items-center justify-center rounded-lg opacity-40">
+            <p class="text-muted text-xl font-bold tracking-tighter">
+              {{ formatSecondsAsHHMMSS(consultationDurationSeconds).split(':')[2] }}
+            </p>
+          </div>
+          <p class="text-muted text-[10px] font-bold uppercase">Sec</p>
+        </div>
+      </div>
+      <UButton color="neutral" variant="solid" size="lg" block disabled class="font-bold" icon="i-hugeicons-play-arrow">
+        Démarrer la séance
+      </UButton>
+      <p class="text-muted mt-3 text-center text-[10px] italic">Débloquez ce bouton en validant l'EVA</p>
+    </UCard>
+
+    <!-- Normal start button when can start -->
+    <UButton
+      v-else
+      color="success"
+      size="xl"
+      variant="solid"
+      block
+      class="rounded-xl text-lg font-bold shadow-lg"
+      icon="i-hugeicons-play-circle"
+      @click="startSession"
+    >
+      <span>Démarrer la séance</span>
+    </UButton>
+  </div>
 
   <UButton
     v-else-if="isInProgress"
