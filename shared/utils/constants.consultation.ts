@@ -27,15 +27,20 @@ export const VALID_CONSULTATION_TYPES = [
   'reeducation'
 ] as const
 
-// Valid status values for appointments
-export const VALID_CONSULTATION_STATUSES = [
-  'confirmed',
+// Valid appointment statuses (scheduling lifecycle)
+export const VALID_APPOINTMENT_STATUSES = [
   'scheduled',
-  'in_progress',
-  'completed',
+  'confirmed',
   'cancelled',
-  'no_show'
+  'no_show',
+  'linked_to_consultation'
 ] as const
+
+// Valid consultation statuses (session lifecycle - only in-progress and completed)
+export const VALID_CONSULTATION_STATUSES = ['in_progress', 'completed'] as const
+
+// Valid session steps (UI workflow)
+export const VALID_SESSION_STEPS = ['pre-session', 'active-session', 'post-session', 'summary'] as const
 
 // Consultation Status Configuration
 export const SESSION_STATUS_CONFIG = {

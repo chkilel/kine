@@ -13,8 +13,16 @@ type EndParams = {
 }
 type UpdateTagsParams = { id: string; tags: string[] }
 type ExtendParams = { id: string; extendedDurationMinutes: number }
+type UpdateStepParams = { id: string; sessionStep: string }
 
-type ConsultationActionParams = StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams
+type ConsultationActionParams =
+  | StartParams
+  | PauseParams
+  | ResumeParams
+  | EndParams
+  | UpdateTagsParams
+  | ExtendParams
+  | UpdateStepParams
 
 const _useConsultationAction = () => {
   const toast = useToast()
@@ -36,7 +44,7 @@ const _useConsultationAction = () => {
         color: 'success'
       })
       queryCache.invalidateQueries({ key: ['consultations', id] })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
     },
     onError: (error) => {
       toast.add({
@@ -60,7 +68,9 @@ const _useConsultationAction = () => {
     updateTags: (params: UpdateTagsParams) => mutation.mutate(params),
     updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params),
     extend: (params: ExtendParams) => mutation.mutate(params),
-    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params)
+    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params),
+    updateStep: (params: UpdateStepParams) => mutation.mutate(params),
+    updateStepAsync: (params: UpdateStepParams) => mutation.mutateAsync(params)
   }
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
+  import { LazyAppModalConfirm } from '#components'
   import { useConsultationAction } from '~/composables/useConsultationAction'
 
   const props = defineProps<{
@@ -12,7 +12,6 @@
   const overlay = useOverlay()
   const toast = useToast()
   const confirmModal = overlay.create(LazyAppModalConfirm)
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
   const { mutate: updateStatus } = useUpdateConsultationStatus()
   const consultationAction = useConsultationAction()
 
@@ -98,12 +97,8 @@
       return
     }
 
-    activeConsultationOverlay.open({
-      patientId: props.patient.id,
-      consultationId: props.consultation.id
-    })
-
     emit('close')
+    navigateTo(`/consultations/${props.consultation.id}`)
   }
 
   const handleCompleteSession = async () => {

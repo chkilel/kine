@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import { v7 as uuidv7 } from 'uuid'
 import { addDays, format } from 'date-fns'
 import { eq, and } from 'drizzle-orm'
 import {
@@ -9,6 +10,7 @@ import {
   weeklyAvailabilityTemplates,
   availabilityExceptions,
   consultations,
+  appointments,
   rooms
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
@@ -17,7 +19,9 @@ import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } 
 import {
   MINIMUM_CONSULTATION_GAP_MINUTES,
   CONSULTATION_DURATIONS,
-  VALID_CONSULTATION_TYPES
+  VALID_CONSULTATION_TYPES,
+  VALID_APPOINTMENT_STATUSES,
+  VALID_CONSULTATION_STATUSES
 } from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
@@ -40,6 +44,7 @@ type SeedResults = {
     weeklyTemplates: number
     availabilityExceptions: number
     rooms: number
+    appointments: number
     consultations: number
   }
   errors: Array<{ type: string; message: string; details?: any }>
@@ -53,11 +58,8 @@ const SEED_CONFIG = {
   },
   organizations: {
     count: 1,
-    names: [
-      { name: 'Kine Clinic A', slug: 'kine-clinic-a' },
-      { name: 'Kine Clinic B', slug: 'kine-clinic-b' }
-    ],
-    userDistribution: [5, 4]
+    names: [{ name: 'Kine Clinic A', slug: 'kine-clinic-a' }],
+    userDistribution: [10]
   },
   patients: {
     count: 30,
@@ -483,6 +485,7 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
 
 async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(consultations)
+  await db.delete(appointments)
   await db.delete(rooms)
   await db.delete(treatmentPlans)
   await db.delete(patients)
@@ -786,23 +789,23 @@ function generateRooms(organizationId: string): any[] {
   return roomsData
 }
 
-function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
+function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
   if (isToday) {
     return 'scheduled'
   }
 
   if (isPastDate) {
     const rand = Math.random()
-    if (rand < 0.7) return 'completed'
+    if (rand < 0.7) return 'linked_to_consultation'
     if (rand < 0.85) return 'cancelled'
     if (rand < 0.95) return 'no_show'
-    return 'completed'
+    return 'linked_to_consultation'
   }
 
   return Math.random() > 0.3 ? 'confirmed' : 'scheduled'
 }
 
-function generateConsultations(
+function generateAppointmentsAndConsultations(
   patientId: string,
   organizationId: string,
   therapistId: string,
@@ -811,7 +814,7 @@ function generateConsultations(
   roomBookings: Map<string, string>,
   therapistTemplates: any[],
   therapistExceptions: any[]
-): any[] {
+): { appointments: any[]; consultations: any[] } {
   const activePlanIds = new Set(
     treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
   )
@@ -821,6 +824,7 @@ function generateConsultations(
   const effectiveMin = Math.min(SEED_CONFIG.consultations.maxPerPatient, Math.max(minPerPatient, requiredForPlans))
 
   const count = randomInt(effectiveMin, SEED_CONFIG.consultations.maxPerPatient)
+  const appointmentsData: any[] = []
   const consultationsData: any[] = []
   const therapistDayBookings: Record<string, { start: string; end: string }[]> = {}
 
@@ -940,7 +944,7 @@ function generateConsultations(
 
     const isPast = date < today
     const isToday = date === today
-    const status = getConsultationStatus(isPast, isToday)
+    const status = getAppointmentStatus(isPast, isToday)
     const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
 
     let roomId: string | null = null
@@ -956,150 +960,12 @@ function generateConsultations(
       }
     }
 
-    const consultation: any = {
-      organizationId,
-      patientId,
-      therapistId,
-      treatmentPlanId,
-      roomId,
-      date,
-      startTime,
-      endTime,
-      duration,
-      type: randomItem(VALID_CONSULTATION_TYPES) || 'follow_up',
-      status,
-      location,
-      billed: isPast && status === 'completed' ? date : null,
-      insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
-      cost: duration ? duration * 50 : 50,
-      chiefComplaint: randomItem(medicalConditions),
-      notes: status === 'completed' ? 'Session terminée avec succès' : null,
-      treatmentSummary:
-        status === 'completed'
-          ? randomItem([
-              'Thérapie manuelle et étirements',
-              'Exercices de renforcement',
-              'Mobilisation articulaire',
-              'Rééducation fonctionnelle'
-            ])
-          : null
-    }
-
-    if (status === 'completed') {
-      const painBefore = randomInt(3, 8)
-      consultation.painLevelBefore = painBefore
-      consultation.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
-      consultation.observations = randomItem([
-        'Bonne réponse au traitement',
-        'Amélioration de la mobilité',
-        'Patient motivé',
-        'Progrès significatifs'
-      ])
-    }
-
-    consultationsData.push(consultation)
-  }
-
-  const hasTodayConsultation = consultationsData.some((consultation) => consultation.date === today)
-
-  if (!hasTodayConsultation) {
-    const date = today
-    let startTime: string | null = null
-    let endTime: string | null = null
-    let duration: number | null = null
-
-    const availabilityRanges = getEffectiveAvailability(date, therapistTemplates, therapistExceptions)
-    if (availabilityRanges && availabilityRanges.length > 0) {
-      const selectedRange = randomItem(availabilityRanges)
-      if (selectedRange) {
-        const candidateDuration = randomItem(CONSULTATION_DURATIONS)
-        if (candidateDuration) {
-          const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
-          if (rangeDuration >= candidateDuration) {
-            const possibleStarts: string[] = []
-            const slotIncrementMinutes = 15
-
-            const generatedStarts = generateTimeSeriesInRange(
-              selectedRange.start,
-              selectedRange.end,
-              slotIncrementMinutes
-            )
-            for (const candidateStart of generatedStarts) {
-              const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
-              const dayBookings = therapistDayBookings[date] || []
-              const hasConflictWithTherapist = dayBookings.some((booking) =>
-                hasTimeConflict(
-                  booking.start,
-                  booking.end,
-                  candidateStart,
-                  candidateEnd,
-                  MINIMUM_CONSULTATION_GAP_MINUTES
-                )
-              )
-
-              if (!hasConflictWithTherapist) {
-                possibleStarts.push(candidateStart)
-              }
-            }
-
-            if (possibleStarts.length > 0) {
-              const selectedStart = randomItem(possibleStarts)
-              if (selectedStart) {
-                startTime = selectedStart
-                duration = candidateDuration
-                if (startTime && duration) {
-                  endTime = calculateEndTime(startTime, duration)
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (!startTime || !endTime || !duration) {
-      const timeRange = generateTimeRange(9, 16)
-      startTime = timeRange.startTime
-      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
-      if (fallbackDuration) {
-        duration = fallbackDuration
-        if (startTime && duration) {
-          endTime = calculateEndTime(startTime, duration)
-        }
-      }
-    }
-
-    const isPast = false
-    const isToday = true
-    const status = getConsultationStatus(isPast, isToday)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
-
-    let treatmentPlanId: string | null = null
-    if (treatmentPlansMeta.length > 0) {
-      const activePlans = treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status))
-      const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
-      const selectedPlan = randomItem(source)
-      if (selectedPlan) {
-        treatmentPlanId = selectedPlan.id
-      }
-    }
-
-    let roomId: string | null = null
-    if (location === 'clinic' && availableRoomIds.length > 0) {
-      const shuffledRooms = shuffleArray(availableRoomIds)
-      for (const rId of shuffledRooms) {
-        const bookingKey = `${rId}_${date}_${startTime}`
-        if (!roomBookings.has(bookingKey)) {
-          roomId = rId
-          roomBookings.set(bookingKey, patientId)
-          break
-        }
-      }
-    }
-
+    const appointmentId = uuidv7()
+    const type = randomItem(VALID_CONSULTATION_TYPES) || 'follow_up'
     const durationValue = duration as number
 
-    const consultation: any = {
+    const appointment: any = {
+      id: appointmentId,
       organizationId,
       patientId,
       therapistId,
@@ -1109,63 +975,112 @@ function generateConsultations(
       startTime,
       endTime,
       duration: durationValue,
-      type: randomItem(VALID_CONSULTATION_TYPES),
+      type,
       status,
       location,
-      billed: null,
-      insuranceClaimed: 0,
-      cost: durationValue * 50,
-      chiefComplaint: randomItem(medicalConditions),
-      notes: null,
-      treatmentSummary: null
+      consultationId: null
     }
 
-    consultationsData.push(consultation)
+    if (status === 'linked_to_consultation') {
+      const consultationId = uuidv7()
+      appointment.consultationId = consultationId
 
-    if (startTime && endTime) {
-      if (!therapistDayBookings[date]) {
-        therapistDayBookings[date] = []
+      const consultation: any = {
+        id: consultationId,
+        appointmentId: appointmentId,
+        patientId,
+        therapistId,
+        treatmentPlanId,
+        chiefComplaint: randomItem(medicalConditions),
+        notes: 'Session terminée avec succès',
+        treatmentSummary: randomItem([
+          'Thérapie manuelle et étirements',
+          'Exercices de renforcement',
+          'Mobilisation articulaire',
+          'Rééducation fonctionnelle'
+        ]),
+        observations: randomItem([
+          'Bonne réponse au traitement',
+          'Amélioration de la mobilité',
+          'Patient motivé',
+          'Progrès significatifs'
+        ]),
+        painLevelBefore: randomInt(3, 8),
+        painLevelAfter: randomInt(0, 3),
+        sessionStep: 'summary',
+        status: 'completed',
+        actualStartTime: startTime,
+        actualDurationSeconds: durationValue * 60,
+        billed: date,
+        insuranceClaimed: true,
+        cost: durationValue * 50
       }
-      therapistDayBookings[date].push({ start: startTime, end: endTime })
+      consultationsData.push(consultation)
+    }
+
+    appointmentsData.push(appointment)
+  }
+
+  // Ensure at least one appointment today if none exists
+  const hasTodayAppointment = appointmentsData.some((app) => app.date === today)
+
+  if (!hasTodayAppointment) {
+    const availabilityRanges = getEffectiveAvailability(today, therapistTemplates, therapistExceptions)
+    if (availabilityRanges && availabilityRanges.length > 0) {
+      const selectedRange = randomItem(availabilityRanges)
+      if (selectedRange) {
+        const candidateDuration = 60
+        const possibleStarts: string[] = []
+        const generatedStarts = generateTimeSeriesInRange(selectedRange.start, selectedRange.end, 30)
+
+        for (const candidateStart of generatedStarts) {
+          const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
+          const dayBookings = therapistDayBookings[today] || []
+          const hasConflict = dayBookings.some((booking) =>
+            hasTimeConflict(booking.start, booking.end, candidateStart, candidateEnd, MINIMUM_CONSULTATION_GAP_MINUTES)
+          )
+          if (!hasConflict) {
+            possibleStarts.push(candidateStart)
+          }
+        }
+
+        if (possibleStarts.length > 0) {
+          const startTime = randomItem(possibleStarts)!
+          const endTime = calculateEndTime(startTime, candidateDuration)
+
+          const appointmentId = uuidv7()
+          const appointment: any = {
+            id: appointmentId,
+            organizationId,
+            patientId,
+            therapistId,
+            treatmentPlanId: treatmentPlansMeta[0]?.id || null,
+            roomId: availableRoomIds.length > 0 ? randomItem(availableRoomIds) : null,
+            date: today,
+            startTime,
+            endTime,
+            duration: candidateDuration,
+            type: 'follow_up',
+            status: 'scheduled',
+            location: 'clinic',
+            consultationId: null
+          }
+          appointmentsData.push(appointment)
+        }
+      }
     }
   }
 
-  if (activePlanIds.size > 0) {
-    const countsByPlan: Record<string, number> = {}
-    for (const consultation of consultationsData) {
-      if (consultation.treatmentPlanId && activePlanIds.has(consultation.treatmentPlanId)) {
-        countsByPlan[consultation.treatmentPlanId] = (countsByPlan[consultation.treatmentPlanId] ?? 0) + 1
-      }
-    }
-
-    const unlinked = consultationsData.filter((consultation) => !consultation.treatmentPlanId)
-
-    for (const plan of treatmentPlansMeta) {
-      if (!activePlanIds.has(plan.id)) continue
-
-      let countForPlan = countsByPlan[plan.id] ?? 0
-      let safety = 0
-
-      while (countForPlan < 5 && unlinked.length > 0 && safety < 50) {
-        const consultation = unlinked.pop()
-        if (!consultation) break
-        consultation.treatmentPlanId = plan.id
-        countForPlan++
-        countsByPlan[plan.id] = countForPlan
-        safety++
-      }
-    }
-  }
-
-  consultationsData.sort((a, b) => {
+  appointmentsData.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date)
     return a.startTime.localeCompare(b.startTime)
   })
 
-  return consultationsData
+  return { appointments: appointmentsData, consultations: consultationsData }
 }
 
 export default defineEventHandler(async (event: H3Event) => {
+  console.log('--- STARTING SEED PROCESS (UPDATED) ---')
   const config = useRuntimeConfig()
   const isDevelopment = config.env === 'development' || process.env.NODE_ENV === 'development'
 
@@ -1186,6 +1101,7 @@ export default defineEventHandler(async (event: H3Event) => {
       weeklyTemplates: 0,
       availabilityExceptions: 0,
       rooms: 0,
+      appointments: 0,
       consultations: 0
     },
     errors: []
@@ -1454,7 +1370,7 @@ export default defineEventHandler(async (event: H3Event) => {
     try {
       const therapistTemplates = templatesByUserId[therapistId] || []
       const therapistExceptions = exceptionsByUserId[therapistId] || []
-      const consultationsData = generateConsultations(
+      const { appointments: appointmentsData, consultations: consultationsData } = generateAppointmentsAndConsultations(
         patientRecord.id,
         patientOrgId,
         therapistId,
@@ -1464,26 +1380,57 @@ export default defineEventHandler(async (event: H3Event) => {
         therapistTemplates,
         therapistExceptions
       )
-      if (consultationsData.length > 0) {
-        for (const consultation of consultationsData) {
+
+      if (appointmentsData.length > 0) {
+        for (const appointment of appointmentsData) {
+          const linkedConsultationId = appointment.consultationId
+          // Set consultationId to null for initial insert to avoid FK constraint issues
+          // if the consultation doesn't exist yet (though appointment.consultationId is nullable)
+          const appointmentToInsert = { ...appointment, consultationId: null }
+
           try {
-            await db.insert(consultations).values(consultation)
-            results.success.consultations++
+            await db.insert(appointments).values(appointmentToInsert)
+            results.success.appointments++
+
+            if (linkedConsultationId) {
+              const consultation = consultationsData.find((c) => c.id === linkedConsultationId)
+              if (consultation) {
+                // Ensure treatmentPlanId is undefined if null to avoid binding issues
+                if (consultation.treatmentPlanId === null) {
+                  delete consultation.treatmentPlanId
+                }
+
+                try {
+                  await db.insert(consultations).values(consultation)
+                  results.success.consultations++
+
+                  await db
+                    .update(appointments)
+                    .set({ consultationId: linkedConsultationId })
+                    .where(eq(appointments.id, appointment.id))
+                } catch (consErr: any) {
+                  // If consultation insert fails, we log it but don't fail the whole seed
+                  results.errors.push({
+                    type: 'consultation_insert',
+                    message: `Failed to insert consultation for patient`,
+                    details: {
+                      error: consErr.message,
+                      id: consultation.id
+                    }
+                  })
+                }
+              }
+            }
           } catch (err) {
             results.errors.push({
-              type: 'consultation',
-              message: `Failed to create consultation for patient ${patient.firstName} ${patient.lastName}`,
+              type: 'appointment_consultation',
+              message: `Failed to create appointment/consultation for patient ${patient.firstName} ${patient.lastName}`,
               details: {
                 error: err instanceof Error ? err.message : String(err),
-                consultation: {
-                  id: consultation.id,
-                  date: consultation.date,
-                  startTime: consultation.startTime,
-                  endTime: consultation.endTime,
-                  duration: consultation.duration,
-                  status: consultation.status,
-                  location: consultation.location,
-                  roomId: consultation.roomId
+                appointment: {
+                  id: appointment.id,
+                  date: appointment.date,
+                  startTime: appointment.startTime
                 }
               }
             })

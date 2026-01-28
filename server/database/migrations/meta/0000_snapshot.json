@@ -1,9 +1,318 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3f62e9e6-6842-400e-b140-a056933703fa",
+  "id": "6c9f863f-11b8-45f2-a3fe-5f27b8b52a9b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "appointments": {
+      "name": "appointments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "patientId": {
+          "name": "patientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "treatmentPlanId": {
+          "name": "treatmentPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "therapistId": {
+          "name": "therapistId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "roomId": {
+          "name": "roomId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'clinic'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'scheduled'"
+        },
+        "confirmedAt": {
+          "name": "confirmedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cancelledAt": {
+          "name": "cancelledAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "noShowReason": {
+          "name": "noShowReason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "consultationId": {
+          "name": "consultationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_appointments_org_patient_date": {
+          "name": "idx_appointments_org_patient_date",
+          "columns": [
+            "organizationId",
+            "patientId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_date": {
+          "name": "idx_appointments_org_date",
+          "columns": [
+            "organizationId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_created_at": {
+          "name": "idx_appointments_org_created_at",
+          "columns": [
+            "organizationId",
+            "createdAt"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_status_date": {
+          "name": "idx_appointments_org_status_date",
+          "columns": [
+            "organizationId",
+            "status",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_therapist_date": {
+          "name": "idx_appointments_org_therapist_date",
+          "columns": [
+            "organizationId",
+            "therapistId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_session_type_date": {
+          "name": "idx_appointments_org_session_type_date",
+          "columns": [
+            "organizationId",
+            "type",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_location_date": {
+          "name": "idx_appointments_org_location_date",
+          "columns": [
+            "organizationId",
+            "location",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_org_therapist_date_status": {
+          "name": "idx_appointments_org_therapist_date_status",
+          "columns": [
+            "organizationId",
+            "therapistId",
+            "date",
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_room_booking_unique": {
+          "name": "idx_appointments_room_booking_unique",
+          "columns": [
+            "roomId",
+            "date",
+            "startTime"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_room_date": {
+          "name": "idx_appointments_room_date",
+          "columns": [
+            "roomId",
+            "date"
+          ],
+          "isUnique": false
+        },
+        "idx_appointments_room_date_time": {
+          "name": "idx_appointments_room_date_time",
+          "columns": [
+            "roomId",
+            "date",
+            "startTime"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "appointments_organizationId_organizations_id_fk": {
+          "name": "appointments_organizationId_organizations_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "appointments_patientId_patients_id_fk": {
+          "name": "appointments_patientId_patients_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "patients",
+          "columnsFrom": [
+            "patientId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "appointments_treatmentPlanId_treatment_plans_id_fk": {
+          "name": "appointments_treatmentPlanId_treatment_plans_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "treatment_plans",
+          "columnsFrom": [
+            "treatmentPlanId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "appointments_therapistId_users_id_fk": {
+          "name": "appointments_therapistId_users_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "therapistId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "appointments_roomId_rooms_id_fk": {
+          "name": "appointments_roomId_rooms_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "roomId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "accounts": {
       "name": "accounts",
       "columns": {
@@ -749,6 +1058,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "appointmentId": {
+          "name": "appointmentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "patientId": {
           "name": "patientId",
           "type": "text",
@@ -768,48 +1084,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "roomId": {
-          "name": "roomId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "date": {
-          "name": "date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "startTime": {
-          "name": "startTime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "endTime": {
-          "name": "endTime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "chiefComplaint": {
@@ -868,13 +1142,21 @@
           "notNull": false,
           "autoincrement": false
         },
+        "sessionStep": {
+          "name": "sessionStep",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'pre-session'"
+        },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'scheduled'"
+          "default": "'in_progress'"
         },
         "actualStartTime": {
           "name": "actualStartTime",
@@ -919,14 +1201,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "location": {
-          "name": "location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'clinic'"
-        },
         "billed": {
           "name": "billed",
           "type": "text",
@@ -965,154 +1239,18 @@
         }
       },
       "indexes": {
-        "idx_consultations_org_patient_date": {
-          "name": "idx_consultations_org_patient_date",
-          "columns": [
-            "organizationId",
-            "patientId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_date": {
-          "name": "idx_consultations_org_date",
-          "columns": [
-            "organizationId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_created_at": {
-          "name": "idx_consultations_org_created_at",
-          "columns": [
-            "organizationId",
-            "createdAt"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_status_date": {
-          "name": "idx_consultations_org_status_date",
-          "columns": [
-            "organizationId",
-            "status",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_therapist_date": {
-          "name": "idx_consultations_org_therapist_date",
-          "columns": [
-            "organizationId",
-            "therapistId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_session_type_date": {
-          "name": "idx_consultations_org_session_type_date",
-          "columns": [
-            "organizationId",
-            "type",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_location_date": {
-          "name": "idx_consultations_org_location_date",
-          "columns": [
-            "organizationId",
-            "location",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_billed_date": {
-          "name": "idx_consultations_org_billed_date",
-          "columns": [
-            "organizationId",
-            "billed",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_insurance_date": {
-          "name": "idx_consultations_org_insurance_date",
-          "columns": [
-            "organizationId",
-            "insuranceClaimed",
-            "date"
-          ],
-          "isUnique": false
-        },
         "idx_consultations_patient_date": {
           "name": "idx_consultations_patient_date",
           "columns": [
             "patientId",
-            "date"
+            "createdAt"
           ],
           "isUnique": false
         },
-        "idx_consultations_org_date_patient": {
-          "name": "idx_consultations_org_date_patient",
+        "idx_consultations_appointment": {
+          "name": "idx_consultations_appointment",
           "columns": [
-            "organizationId",
-            "date",
-            "patientId"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_plan_date": {
-          "name": "idx_consultations_org_plan_date",
-          "columns": [
-            "organizationId",
-            "treatmentPlanId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_therapist_date_status": {
-          "name": "idx_consultations_org_therapist_date_status",
-          "columns": [
-            "organizationId",
-            "therapistId",
-            "date",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_org_patient_plan_date": {
-          "name": "idx_consultations_org_patient_plan_date",
-          "columns": [
-            "organizationId",
-            "patientId",
-            "treatmentPlanId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_room_booking_unique": {
-          "name": "idx_consultations_room_booking_unique",
-          "columns": [
-            "roomId",
-            "date",
-            "startTime"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_room_date": {
-          "name": "idx_consultations_room_date",
-          "columns": [
-            "roomId",
-            "date"
-          ],
-          "isUnique": false
-        },
-        "idx_consultations_room_date_time": {
-          "name": "idx_consultations_room_date_time",
-          "columns": [
-            "roomId",
-            "date",
-            "startTime"
+            "appointmentId"
           ],
           "isUnique": false
         }
@@ -1124,6 +1262,19 @@
           "tableTo": "organizations",
           "columnsFrom": [
             "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "consultations_appointmentId_appointments_id_fk": {
+          "name": "consultations_appointmentId_appointments_id_fk",
+          "tableFrom": "consultations",
+          "tableTo": "appointments",
+          "columnsFrom": [
+            "appointmentId"
           ],
           "columnsTo": [
             "id"
@@ -1168,19 +1319,6 @@
             "id"
           ],
           "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "consultations_roomId_rooms_id_fk": {
-          "name": "consultations_roomId_rooms_id_fk",
-          "tableFrom": "consultations",
-          "tableTo": "rooms",
-          "columnsFrom": [
-            "roomId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

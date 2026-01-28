@@ -1,3 +1,41 @@
+CREATE TABLE `appointments` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organizationId` text NOT NULL,
+	`patientId` text NOT NULL,
+	`treatmentPlanId` text,
+	`therapistId` text NOT NULL,
+	`roomId` text,
+	`date` text NOT NULL,
+	`startTime` text NOT NULL,
+	`endTime` text NOT NULL,
+	`duration` integer NOT NULL,
+	`type` text,
+	`location` text DEFAULT 'clinic',
+	`status` text DEFAULT 'scheduled' NOT NULL,
+	`confirmedAt` integer,
+	`cancelledAt` integer,
+	`noShowReason` text,
+	`consultationId` text,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`roomId`) REFERENCES `rooms`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_patient_date` ON `appointments` (`organizationId`,`patientId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_date` ON `appointments` (`organizationId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_created_at` ON `appointments` (`organizationId`,`createdAt`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_status_date` ON `appointments` (`organizationId`,`status`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_therapist_date` ON `appointments` (`organizationId`,`therapistId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_session_type_date` ON `appointments` (`organizationId`,`type`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_location_date` ON `appointments` (`organizationId`,`location`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_org_therapist_date_status` ON `appointments` (`organizationId`,`therapistId`,`date`,`status`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_room_booking_unique` ON `appointments` (`roomId`,`date`,`startTime`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_room_date` ON `appointments` (`roomId`,`date`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_room_date_time` ON `appointments` (`roomId`,`date`,`startTime`);--> statement-breakpoint
 CREATE TABLE `accounts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`accountId` text NOT NULL,
@@ -103,15 +141,10 @@ CREATE INDEX `idx_weekly_templates_org_location` ON `weekly_availability_templat
 CREATE TABLE `consultations` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
+	`appointmentId` text NOT NULL,
 	`patientId` text NOT NULL,
 	`treatmentPlanId` text,
 	`therapistId` text NOT NULL,
-	`roomId` text,
-	`date` text NOT NULL,
-	`startTime` text NOT NULL,
-	`endTime` text NOT NULL,
-	`duration` integer NOT NULL,
-	`type` text,
 	`chiefComplaint` text,
 	`notes` text,
 	`treatmentSummary` text,
@@ -120,43 +153,28 @@ CREATE TABLE `consultations` (
 	`painLevelBefore` integer,
 	`painLevelAfter` integer,
 	`progressNotes` text,
-	`status` text DEFAULT 'scheduled' NOT NULL,
+	`sessionStep` text DEFAULT 'pre-session',
+	`status` text DEFAULT 'in_progress' NOT NULL,
 	`actualStartTime` text,
 	`actualDurationSeconds` integer,
 	`totalPausedSeconds` integer,
 	`pauseStartTime` text,
 	`extendedDurationMinutes` integer DEFAULT 0,
 	`tags` text,
-	`location` text DEFAULT 'clinic',
 	`billed` text,
 	`insuranceClaimed` integer DEFAULT false,
 	`cost` integer,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`appointmentId`) REFERENCES `appointments`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`treatmentPlanId`) REFERENCES `treatment_plans`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`roomId`) REFERENCES `rooms`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`therapistId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE INDEX `idx_consultations_org_patient_date` ON `consultations` (`organizationId`,`patientId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_date` ON `consultations` (`organizationId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_created_at` ON `consultations` (`organizationId`,`createdAt`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_status_date` ON `consultations` (`organizationId`,`status`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_therapist_date` ON `consultations` (`organizationId`,`therapistId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_session_type_date` ON `consultations` (`organizationId`,`type`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_location_date` ON `consultations` (`organizationId`,`location`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_billed_date` ON `consultations` (`organizationId`,`billed`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_insurance_date` ON `consultations` (`organizationId`,`insuranceClaimed`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_patient_date` ON `consultations` (`patientId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_date_patient` ON `consultations` (`organizationId`,`date`,`patientId`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_plan_date` ON `consultations` (`organizationId`,`treatmentPlanId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_therapist_date_status` ON `consultations` (`organizationId`,`therapistId`,`date`,`status`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_org_patient_plan_date` ON `consultations` (`organizationId`,`patientId`,`treatmentPlanId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_room_booking_unique` ON `consultations` (`roomId`,`date`,`startTime`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_room_date` ON `consultations` (`roomId`,`date`);--> statement-breakpoint
-CREATE INDEX `idx_consultations_room_date_time` ON `consultations` (`roomId`,`date`,`startTime`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_patient_date` ON `consultations` (`patientId`,`createdAt`);--> statement-breakpoint
+CREATE INDEX `idx_consultations_appointment` ON `consultations` (`appointmentId`);--> statement-breakpoint
 CREATE TABLE `patient_documents` (
 	`id` text PRIMARY KEY NOT NULL,
 	`patientId` text NOT NULL,

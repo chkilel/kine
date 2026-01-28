@@ -1,6 +1,7 @@
 import { eq, and, asc, sql, getTableColumns } from 'drizzle-orm'
-import { consultations, rooms, patients, treatmentPlans } from '~~/server/database/schema'
+import { appointments, rooms, patients, treatmentPlans } from '~~/server/database/schema'
 import { z } from 'zod'
+import { calendarDateSchema } from '~~/shared/types/base.types'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -17,27 +18,27 @@ export default defineEventHandler(async (event) => {
   try {
     const { date } = await getValidatedQuery(event, z.object({ date: calendarDateSchema }).parse)
 
-    const consultationsList = await db
+    const appointmentsList = await db
       .select({
-        ...getTableColumns(consultations),
+        ...getTableColumns(appointments),
         roomName: rooms.name,
         patientName: sql<string>`(${patients.firstName} || ' ' || ${patients.lastName})`,
         planTitle: treatmentPlans.title
       })
-      .from(consultations)
-      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
-      .leftJoin(patients, eq(consultations.patientId, patients.id))
-      .leftJoin(treatmentPlans, eq(consultations.treatmentPlanId, treatmentPlans.id))
+      .from(appointments)
+      .leftJoin(rooms, eq(appointments.roomId, rooms.id))
+      .leftJoin(patients, eq(appointments.patientId, patients.id))
+      .leftJoin(treatmentPlans, eq(appointments.treatmentPlanId, treatmentPlans.id))
       .where(
         and(
-          eq(consultations.organizationId, organizationId),
-          eq(consultations.therapistId, therapistId),
-          eq(consultations.date, date)
+          eq(appointments.organizationId, organizationId),
+          eq(appointments.therapistId, therapistId),
+          eq(appointments.date, date)
         )
       )
-      .orderBy(asc(consultations.date))
+      .orderBy(asc(appointments.startTime))
 
-    return consultationsList
+    return appointmentsList
   } catch (error: unknown) {
     handleApiError(error, 'Erreur lors de la récupération des consultations du jour')
   }

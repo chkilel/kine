@@ -1,9 +1,5 @@
 <script setup lang="ts">
-  import {
-    LazyConsultationActiveConsultationSlideover,
-    LazyConsultationActiveCard,
-    LazyConsultationListItem
-  } from '#components'
+  import { LazyConsultationActiveCard, LazyConsultationListItem } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -18,9 +14,6 @@
 
   const route = useRoute()
   const router = useRouter()
-  const overlay = useOverlay()
-
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
 
   const currentDate = computed(() => {
     const dateFromQuery = route.query.date as string
@@ -62,17 +55,11 @@
   const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
 
   const handleStartSession = async (consultation: Consultation) => {
-    activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
-    })
+    navigateTo(`/consultations/${consultation.id}`)
   }
 
   const handleViewSession = (consultation: Consultation) => {
-    activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
-    })
+    navigateTo(`/consultations/${consultation.id}`)
   }
 
   function handleViewPatient(patientId: string) {

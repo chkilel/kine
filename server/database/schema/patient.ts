@@ -2,6 +2,11 @@ import { v7 as uuidv7 } from 'uuid'
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
+import {
+  VALID_PATIENT_STATUSES,
+  VALID_RELATIONSHIP_TYPES,
+  VALID_SEX_VALUES
+} from '../../../shared/utils/constants.patient'
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { consultations } from './consultation'

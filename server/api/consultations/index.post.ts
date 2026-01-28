@@ -1,20 +1,14 @@
 import { eq, and } from 'drizzle-orm'
-import { consultations, patients, users, rooms } from '~~/server/database/schema'
+import { appointments, patients, users, rooms } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
   try {
     const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, consultationCreateSchema.parse)
+    const body = await readValidatedBody(event, appointmentCreateSchema.parse)
 
-    if (!body.patientId) {
-      throw createError({
-        statusCode: 400,
-        message: 'ID de patient requis'
-      })
-    }
-
+    // Validate room requirement
     if (body.location === 'clinic' && !body.roomId) {
       throw createError({
         statusCode: 400,
@@ -29,6 +23,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Validate patient
     const [patient] = await db
       .select()
       .from(patients)
@@ -42,11 +37,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Validate room (if provided)
     if (body.roomId) {
       const [room] = await db
         .select()
         .from(rooms)
-        .where(and(eq(rooms.id, body.roomId), eq(rooms.organizationId, organizationId)))
+        .where(and(eq(rooms.organizationId, organizationId), eq(rooms.id, body.roomId)))
         .limit(1)
 
       if (!room) {
@@ -57,26 +53,30 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // Validate therapist (optional)
     if (body.therapistId) {
       const [therapist] = await db.select().from(users).where(eq(users.id, body.therapistId)).limit(1)
 
       if (!therapist) {
         throw createError({
-          statusCode: 400,
+          statusCode: 404,
           message: 'Thérapeute introuvable'
         })
       }
     }
 
-    const consultationData = {
-      ...body,
-      organizationId
-    }
+    // Create appointment (consultation not created yet)
+    const [newAppointment] = await db
+      .insert(appointments)
+      .values({
+        ...body,
+        organizationId,
+        status: 'scheduled'
+      })
+      .returning()
 
-    const [newConsultation] = await db.insert(consultations).values(consultationData).returning()
-
-    return successResponse(newConsultation, 'Consultation créée avec succès')
+    return successResponse(newAppointment, 'Rendez-vous créé')
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la création de la consultation')
+    handleApiError(error, 'Échec de la création du rendez-vous')
   }
 })

@@ -18,12 +18,18 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         therapistId: toValue(queryParamsValue.therapistId),
         patientId: toValue(queryParamsValue.patientId),
         treatmentPlanId: toValue(queryParamsValue.treatmentPlanId),
-        onlyIndependent: toValue(queryParamsValue.onlyIndependent),
+        consultationStatus: toValue(queryParamsValue.consultationStatus),
+        sessionStep: toValue(queryParamsValue.sessionStep),
         status: toValue(queryParamsValue.status),
         type: toValue(queryParamsValue.type),
+        date: toValue(queryParamsValue.date),
         dateFrom: toValue(queryParamsValue.dateFrom),
         dateTo: toValue(queryParamsValue.dateTo),
-        date: toValue(queryParamsValue.date)
+        actualStartTime: toValue(queryParamsValue.actualStartTime),
+        actualDurationSeconds: toValue(queryParamsValue.actualDurationSeconds),
+        totalPausedSeconds: toValue(queryParamsValue.totalPausedSeconds),
+        pauseStartTime: toValue(queryParamsValue.pauseStartTime),
+        tags: toValue(queryParamsValue.tags)
       }
       return CONSULTATION_KEYS.list(query as ConsultationQuery)
     },

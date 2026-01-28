@@ -1,5 +1,5 @@
-import { eq, and, asc, isNull, gte, lte, getTableColumns } from 'drizzle-orm'
-import { consultations, rooms } from '~~/server/database/schema'
+import { eq, and, asc, gte, lte } from 'drizzle-orm'
+import { appointments, consultations, rooms } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -10,54 +10,101 @@ export default defineEventHandler(async (event) => {
 
     const conditions = []
 
-    conditions.push(eq(consultations.organizationId, organizationId))
-
+    // Filter by therapist
     if (validatedQuery.therapistId) {
-      conditions.push(eq(consultations.therapistId, validatedQuery.therapistId))
+      conditions.push(eq(appointments.therapistId, validatedQuery.therapistId))
     }
 
+    // Filter by patient
     if (validatedQuery.patientId) {
-      conditions.push(eq(consultations.patientId, validatedQuery.patientId))
+      conditions.push(eq(appointments.patientId, validatedQuery.patientId))
     }
 
+    // Filter by treatment plan (in appointments)
     if (validatedQuery.treatmentPlanId) {
-      conditions.push(eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
-    } else if (validatedQuery.onlyIndependent === true) {
-      console.log('validatedQuery.onlyIndependent', validatedQuery.onlyIndependent)
-      conditions.push(isNull(consultations.treatmentPlanId))
+      conditions.push(eq(appointments.treatmentPlanId, validatedQuery.treatmentPlanId))
     }
 
+    // Filter by status (appointment status)
     if (validatedQuery.status) {
-      conditions.push(eq(consultations.status, validatedQuery.status))
+      conditions.push(eq(appointments.status, validatedQuery.status))
     }
 
-    if (validatedQuery.type) {
-      conditions.push(eq(consultations.type, validatedQuery.type))
-    }
-
+    // Filter by date range
     if (validatedQuery.date) {
-      conditions.push(eq(consultations.date, validatedQuery.date))
+      conditions.push(eq(appointments.date, validatedQuery.date))
     } else {
       if (validatedQuery.dateFrom) {
-        conditions.push(gte(consultations.date, validatedQuery.dateFrom))
+        conditions.push(gte(appointments.date, validatedQuery.dateFrom))
       }
 
       if (validatedQuery.dateTo) {
-        conditions.push(lte(consultations.date, validatedQuery.dateTo))
+        conditions.push(lte(appointments.date, validatedQuery.dateTo))
       }
     }
 
-    const consultationsList = await db
+    const results = await db
       .select({
-        ...getTableColumns(consultations),
+        // Appointment fields (scheduling)
+        id: appointments.id,
+        organizationId: appointments.organizationId,
+        patientId: appointments.patientId,
+        treatmentPlanId: appointments.treatmentPlanId,
+        therapistId: appointments.therapistId,
+        roomId: appointments.roomId,
+        date: appointments.date,
+        startTime: appointments.startTime,
+        endTime: appointments.endTime,
+        duration: appointments.duration,
+        type: appointments.type,
+        location: appointments.location,
+        status: appointments.status,
+        confirmedAt: appointments.confirmedAt,
+        cancelledAt: appointments.cancelledAt,
+        consultationId: appointments.consultationId,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt,
+
+        // Consultation fields (clinical)
+        chiefComplaint: consultations.chiefComplaint,
+        notes: consultations.notes,
+        treatmentSummary: consultations.treatmentSummary,
+        observations: consultations.observations,
+        nextSteps: consultations.nextSteps,
+        painLevelBefore: consultations.painLevelBefore,
+        painLevelAfter: consultations.painLevelAfter,
+        progressNotes: consultations.progressNotes,
+        sessionStep: consultations.sessionStep,
+        consultationStatus: consultations.status,
+        actualStartTime: consultations.actualStartTime,
+        actualDurationSeconds: consultations.actualDurationSeconds,
+        totalPausedSeconds: consultations.totalPausedSeconds,
+        pauseStartTime: consultations.pauseStartTime,
+        extendedDurationMinutes: consultations.extendedDurationMinutes,
+        tags: consultations.tags,
+        billed: consultations.billed,
+        insuranceClaimed: consultations.insuranceClaimed,
+        cost: consultations.cost,
+
+        // Join fields
         roomName: rooms.name
       })
-      .from(consultations)
-      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
+      .from(appointments)
+      .leftJoin(consultations, eq(appointments.consultationId, consultations.id))
+      .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .where(and(...conditions))
-      .orderBy(asc(consultations.date))
+      .orderBy(asc(appointments.date), asc(appointments.startTime))
 
-    return consultationsList
+    // Merge results for backward compatibility
+    const mergedResults = results.map((r) => ({
+      ...r,
+      // Use appointment ID as the primary ID
+      status: r.status, // Appointment status (scheduled, confirmed, etc.)
+      // If consultation exists, override with consultation status
+      ...(r.consultationId ? { status: r.consultationStatus } : {})
+    }))
+
+    return mergedResults
   } catch (error: unknown) {
     handleApiError(error, 'Erreur lors de la récupération des consultations')
   }

@@ -3,6 +3,10 @@
   const evaValidated = defineModel<boolean>('evaValidated', { default: false })
   const evaEnabled = defineModel<boolean>('evaEnabled', { default: true })
 
+  const props = defineProps<{
+    disabled?: boolean
+  }>()
+
   watch(evaEnabled, (newValue) => {
     if (newValue) {
       painLevelBefore.value = 0
@@ -17,9 +21,9 @@
     <template #actions>
       <div class="flex items-center gap-3">
         <span class="text-muted text-sm font-medium">
-          {{ evaEnabled ? 'Evaluaution Obligatoire' : 'Evaluaution Non nécessaire' }}
+          {{ evaEnabled ? 'Évaluation Obligatoire' : 'Évaluation Non nécessaire' }}
         </span>
-        <USwitch v-model="evaEnabled" color="neutral" size="lg" />
+        <USwitch v-model="evaEnabled" :disabled="disabled" color="neutral" size="lg" />
       </div>
     </template>
 
@@ -31,7 +35,7 @@
             <span class="text-error text-xs font-bold">Douleur maximale</span>
           </div>
 
-          <AppEvaSlider v-model="painLevelBefore" />
+          <AppEvaSlider v-model="painLevelBefore" :disabled="disabled" />
         </div>
 
         <div v-if="!evaValidated" class="flex flex-col items-center gap-2">
@@ -45,6 +49,7 @@
           variant="solid"
           size="lg"
           block
+          :disabled="disabled"
           class="font-bold"
           @click="evaValidated = true"
         >
@@ -57,6 +62,7 @@
           variant="outline"
           size="lg"
           block
+          :disabled="disabled"
           class="font-bold"
           @click="evaValidated = false"
         >

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { timeFormatSchema } from './base.types'
+import { timeFormatSchema, sessionStepSchema } from './base.types'
 
 export const startActionSchema = z
   .object({
@@ -43,13 +43,18 @@ export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
 
+export const updateStepActionSchema = z.object({
+  sessionStep: sessionStepSchema.optional()
+})
+
 export const consultationPatchSchema = z.union([
   startActionSchema,
   pauseActionSchema,
   resumeActionSchema,
   endActionSchema,
   updateTagsActionSchema,
-  extendActionSchema
+  extendActionSchema,
+  updateStepActionSchema
 ])
 
 export type StartAction = z.infer<typeof startActionSchema>
@@ -58,6 +63,7 @@ export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
+export type UpdateStepAction = z.infer<typeof updateStepActionSchema>
 
 export type ConsultationPatchBody =
   | StartAction
@@ -66,5 +72,6 @@ export type ConsultationPatchBody =
   | EndAction
   | UpdateTagsAction
   | ExtendAction
+  | UpdateStepAction
 
-export type ConsultationActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'
+export type ConsultationActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend' | 'updateStep'
