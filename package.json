@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "kine-desk",
   "type": "module",
   "private": true,
   "scripts": {
@@ -17,46 +17,47 @@
     "db:seed": "curl -X POST http://localhost:3000/api/db/seed",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "nuxi typecheck"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.958.0",
-    "@aws-sdk/s3-request-presigner": "^3.958.0",
+    "@aws-sdk/client-s3": "^3.957.0",
+    "@aws-sdk/s3-request-presigner": "^3.975.0",
     "@internationalized/date": "^3.10.1",
-    "@pinia/colada": "^0.20.0",
+    "@pinia/colada": "^0.21.2",
     "@pinia/colada-nuxt": "0.3.0",
     "@pinia/nuxt": "0.11.3",
     "@unovis/ts": "^1.6.2",
     "@unovis/vue": "^1.6.2",
     "@vueuse/nuxt": "^14.1.0",
-    "better-auth": "^1.4.9",
+    "better-auth": "^1.4.17",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
-    "nuxt": "^4.2.2",
+    "nuxt": "^4.3.0",
     "pinia": "^3.0.4",
     "uuid": "^13.0.0",
-    "vue": "^3.5.26",
+    "vue": "^3.5.27",
     "vue-router": "^4.6.4",
-    "zod": "^4.2.1"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.22",
     "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.63",
-    "@nuxt/ui": "^4.3.0",
-    "@pinia/colada-devtools": "^0.4.0",
-    "@types/node": "^25.0.3",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@nuxt/ui": "^4.4.0",
+    "@pinia/colada-devtools": "^0.4.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "drizzle-kit": "^0.31.8",
     "nitro-cloudflare-dev": "^0.2.2",
-    "nitropack": "^2.12.9",
-    "prettier": "^3.7.4",
+    "nitropack": "^2.13.1",
+    "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "vitest": "^4.0.16",
-    "wrangler": "^4.54.0"
+    "tailwindcss": "^4.1.18",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.61.0"
   },
-  "packageManager": "pnpm@10.27.0",
+  "packageManager": "pnpm@10.28.2",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
