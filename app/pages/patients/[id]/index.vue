@@ -48,72 +48,53 @@
 </script>
 
 <template>
-  <UDashboardPanel id="patient-profil" class="bg-elevated">
-    <template #header>
-      <UDashboardNavbar>
-        <template #leading>
-          <UDashboardSidebarCollapse />
+  <AppDashboardPage
+    id="patient-profil"
+    :title="patient ? formatFullName(patient) : 'Profil du patient'"
+    :breadcrumbs="breadcrumbItems"
+  >
+    <div v-if="isPending" class="flex justify-center py-8">
+      <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
+    </div>
+
+    <div v-else-if="patient" class="space-y-6">
+      <!-- Patient Header -->
+      <PatientHeader v-if="patient" :patient="patient" />
+
+      <!-- Tabs -->
+      <UTabs
+        v-model="activeTab"
+        variant="link"
+        :items="tabs"
+        default-value="overview"
+        :ui="{ content: 'pt-4' }"
+        class="w-full"
+      >
+        <!-- Vue d'Ensemble Tab -->
+        <template #overview>
+          <LazyPatientOverviewTab v-if="patient" :patient="patient" />
         </template>
 
-        <template #title>
-          <ClientOnly>
-            {{ patient ? formatFullName(patient) : 'Profil du patient' }}
-          </ClientOnly>
+        <!-- Séances Tab -->
+        <template #seances>
+          <LazyPatientSessionsTab v-if="patient" :patient="patient" />
         </template>
 
-        <template #right>notifications</template>
-      </UDashboardNavbar>
-    </template>
+        <!-- Plan de traitement Tab -->
+        <template #plan>
+          <LazyPatientTreatmentPlanTab v-if="patient" :patient="patient" />
+        </template>
 
-    <template #body>
-      <UContainer>
-        <div v-if="isPending" class="flex justify-center py-8">
-          <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
-        </div>
+        <!-- Documents Tab -->
+        <template #documents>
+          <LazyPatientDocumentsTab />
+        </template>
 
-        <div v-else-if="patient" class="space-y-6">
-          <!-- Breadcrumb -->
-          <UBreadcrumb :items="breadcrumbItems" />
-
-          <!-- Patient Header -->
-          <PatientHeader v-if="patient" :patient="patient" />
-
-          <!-- Tabs -->
-          <UTabs
-            v-model="activeTab"
-            variant="link"
-            :items="tabs"
-            default-value="overview"
-            :ui="{ content: 'pt-4' }"
-            class="w-full"
-          >
-            <!-- Vue d'Ensemble Tab -->
-            <template #overview>
-              <LazyPatientOverviewTab v-if="patient" :patient="patient" />
-            </template>
-
-            <!-- Séances Tab -->
-            <template #seances>
-              <LazyPatientSessionsTab v-if="patient" :patient="patient" />
-            </template>
-
-            <!-- Plan de traitement Tab -->
-            <template #plan>
-              <LazyPatientTreatmentPlanTab v-if="patient" :patient="patient" />
-            </template>
-
-            <!-- Documents Tab -->
-            <template #documents>
-              <LazyPatientDocumentsTab />
-            </template>
-
-            <!-- Facturation Tab -->
-            <template #facturation>
-              <PatientBillingTab />
-            </template>
-          </UTabs>
-        </div>
-      </UContainer>
-    </template>
-  </UDashboardPanel>
+        <!-- Facturation Tab -->
+        <template #facturation>
+          <PatientBillingTab />
+        </template>
+      </UTabs>
+    </div>
+  </AppDashboardPage>
 </template>

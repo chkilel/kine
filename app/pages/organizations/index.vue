@@ -256,130 +256,117 @@
 </script>
 
 <template>
-  <UDashboardPanel id="organizations" class="bg-elevated">
-    <template #header>
-      <UDashboardNavbar title="Organisations">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>Notif</template>
-      </UDashboardNavbar>
-    </template>
+  <AppDashboardPage id="organizations" title="Organisations">
+    <UCard>
+      <div class="flex flex-wrap items-center justify-between gap-1.5">
+        <UInput
+          :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
+          class="max-w-sm"
+          icon="i-lucide-search"
+          placeholder="Filtrer les noms..."
+          @update:model-value="table?.tableApi?.getColumn('name')?.setFilterValue($event)"
+        />
 
-    <template #body>
-      <UContainer>
-        <UCard>
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <UInput
-              :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
-              class="max-w-sm"
-              icon="i-lucide-search"
-              placeholder="Filtrer les noms..."
-              @update:model-value="table?.tableApi?.getColumn('name')?.setFilterValue($event)"
-            />
+        <div class="flex flex-wrap items-center gap-1.5">
+          <UButton
+            v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+            label="Supprimer"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-trash"
+            @click="
+              toast.add({
+                title: 'Suppression',
+                description: 'Organisations sélectionnées supprimées',
+                color: 'success'
+              })
+            "
+          >
+            <template #trailing>
+              <UKbd>
+                {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
+              </UKbd>
+            </template>
+          </UButton>
 
-            <div class="flex flex-wrap items-center gap-1.5">
-              <UButton
-                v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-                label="Supprimer"
-                color="error"
-                variant="subtle"
-                icon="i-lucide-trash"
-                @click="
-                  toast.add({
-                    title: 'Suppression',
-                    description: 'Organisations sélectionnées supprimées',
-                    color: 'success'
-                  })
-                "
-              >
-                <template #trailing>
-                  <UKbd>
-                    {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length }}
-                  </UKbd>
-                </template>
-              </UButton>
-
-              <USelect
-                v-model="statusFilter"
-                :items="[
-                  { label: 'Toutes', value: 'all' },
-                  { label: '0 membres', value: '0' },
-                  { label: '1-5 membres', value: '1-5' },
-                  { label: '6+ membres', value: '6+' }
-                ]"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                placeholder="Filtrer par taille"
-                class="min-w-28"
-              />
-              <UDropdownMenu
-                :items="
-                  table?.tableApi
-                    ?.getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return {
-                        label: columnLabels[column.id] || upperFirst(column.id),
-                        type: 'checkbox' as const,
-                        checked: column.getIsVisible(),
-                        onUpdateChecked(checked: boolean) {
-                          table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
-                        },
-                        onSelect(e?: Event) {
-                          e?.preventDefault()
-                        }
-                      }
-                    })
-                "
-                :content="{ align: 'end' }"
-              >
-                <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
-              </UDropdownMenu>
-
-              <UButton label="Créer une organisation" icon="i-lucide-plus" @click="openCreateOrganizationModal" />
-            </div>
-          </div>
-
-          <UTable
-            ref="table"
-            v-model:column-filters="columnFilters"
-            v-model:column-visibility="columnVisibility"
-            v-model:row-selection="rowSelection"
-            v-model:pagination="pagination"
-            :pagination-options="{
-              getPaginationRowModel: getPaginationRowModel()
-            }"
-            class="mt-6 shrink-0"
-            :data="organizations"
-            :columns="columns"
-            :loading="orgList.isPending"
-            empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
-            :ui="{
-              base: 'table-fixed border-separate border-spacing-0',
-              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-              tbody: '[&>tr]:last:[&>td]:border-b-0',
-              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-              td: 'border-b border-default'
-            }"
+          <USelect
+            v-model="statusFilter"
+            :items="[
+              { label: 'Toutes', value: 'all' },
+              { label: '0 membres', value: '0' },
+              { label: '1-5 membres', value: '1-5' },
+              { label: '6+ membres', value: '6+' }
+            ]"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+            placeholder="Filtrer par taille"
+            class="min-w-28"
           />
+          <UDropdownMenu
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return {
+                    label: columnLabels[column.id] || upperFirst(column.id),
+                    type: 'checkbox' as const,
+                    checked: column.getIsVisible(),
+                    onUpdateChecked(checked: boolean) {
+                      table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+                    },
+                    onSelect(e?: Event) {
+                      e?.preventDefault()
+                    }
+                  }
+                })
+            "
+            :content="{ align: 'end' }"
+          >
+            <UButton label="Affichage" color="neutral" variant="outline" trailing-icon="i-lucide-settings-2" />
+          </UDropdownMenu>
 
-          <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
-            <div class="text-muted text-sm">
-              {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} sur
-              {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} ligne(s) sélectionnée(s).
-            </div>
+          <UButton label="Créer une organisation" icon="i-lucide-plus" @click="openCreateOrganizationModal" />
+        </div>
+      </div>
 
-            <div class="flex items-center gap-1.5">
-              <UPagination
-                :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-                :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-                :total="table?.tableApi?.getFilteredRowModel().rows.length"
-                @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
-              />
-            </div>
-          </div>
-        </UCard>
-      </UContainer>
-    </template>
-  </UDashboardPanel>
+      <UTable
+        ref="table"
+        v-model:column-filters="columnFilters"
+        v-model:column-visibility="columnVisibility"
+        v-model:row-selection="rowSelection"
+        v-model:pagination="pagination"
+        :pagination-options="{
+          getPaginationRowModel: getPaginationRowModel()
+        }"
+        class="mt-6 shrink-0"
+        :data="organizations"
+        :columns="columns"
+        :loading="orgList.isPending"
+        empty="Aucune organisation trouvée. Créez votre première organisation pour commencer."
+        :ui="{
+          base: 'table-fixed border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0',
+          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default'
+        }"
+      />
+
+      <div class="border-default mt-auto flex items-center justify-between gap-3 border-t pt-4">
+        <div class="text-muted text-sm">
+          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} sur
+          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} ligne(s) sélectionnée(s).
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <UPagination
+            :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+            :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+            :total="table?.tableApi?.getFilteredRowModel().rows.length"
+            @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+          />
+        </div>
+      </div>
+    </UCard>
+  </AppDashboardPage>
 </template>
