@@ -40,13 +40,15 @@
           </slot>
         </template>
 
-        <template v-if="$slots['header-title'] || breadcrumbs" #title>
+        <template #title>
           <slot name="header-title">
-            <h1 v-if="title" class="font-semibold">{{ title }}</h1>
-            <template v-if="breadcrumbs">
-              <USeparator orientation="vertical" class="h-(--ui-header-height) px-4" />
-              <UBreadcrumb :items="breadcrumbs" />
-            </template>
+            <div class="flex items-center gap-5">
+              <h1 v-if="title" class="font-semibold">{{ title }}</h1>
+              <template v-if="breadcrumbs">
+                <USeparator orientation="vertical" class="h-(--ui-header-height)" />
+                <UBreadcrumb :items="breadcrumbs" />
+              </template>
+            </div>
           </slot>
         </template>
 
