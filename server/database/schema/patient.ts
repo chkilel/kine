@@ -7,6 +7,11 @@ import { organizations } from './organization'
 import { consultations } from './consultation'
 import { treatmentPlans } from './treatment-plan'
 import { patientDocuments } from './document'
+import {
+  VALID_PATIENT_STATUSES,
+  VALID_RELATIONSHIP_TYPES,
+  VALID_SEX_VALUES
+} from '../../../shared/utils/constants.patient'
 
 /**
  * ================================================================
