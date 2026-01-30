@@ -35,6 +35,9 @@ importers:
       '@vueuse/nuxt':
         specifier: ^14.1.0
         version: 14.1.0(magicast@0.5.1)(nuxt@4.3.0(@parcel/watcher@2.5.1)(@types/node@25.0.3)(@vue/compiler-sfc@3.5.27)(cac@6.7.14)(db0@0.3.4(drizzle-orm@0.45.1(kysely@0.28.9)))(drizzle-orm@0.45.1(kysely@0.28.9))(ioredis@5.9.1)(lightningcss@1.30.2)(magicast@0.5.1)(rollup@4.55.1)(terser@5.44.1)(typescript@5.9.3)(vite@7.3.1(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))(yaml@2.8.2))(vue@3.5.27(typescript@5.9.3))
+      '@vueuse/router':
+        specifier: ^14.1.0
+        version: 14.1.0(vue-router@4.6.4(vue@3.5.27(typescript@5.9.3)))(vue@3.5.27(typescript@5.9.3))
       better-auth:
         specifier: ^1.4.17
         version: 1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.45.1(kysely@0.28.9))(vitest@4.0.18(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))(vue@3.5.27(typescript@5.9.3))
@@ -3411,6 +3414,12 @@ packages:
     peerDependencies:
       nuxt: ^3.0.0 || ^4.0.0-0
       vue: ^3.5.0
+
+  '@vueuse/router@14.1.0':
+    resolution: {integrity: sha512-8h7g0PhjcMC2Vnu9zBkN1J038JFIzkS3/DP2L5ouzFEhY3YAM8zkIOZ0K+hzAWkYEFLGmWGcgBfuvCUD0U42Jw==}
+    peerDependencies:
+      vue: ^3.5.0
+      vue-router: ^4.0.0
 
   '@vueuse/shared@10.11.1':
     resolution: {integrity: sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA==}
@@ -10524,6 +10533,12 @@ snapshots:
       vue: 3.5.27(typescript@5.9.3)
     transitivePeerDependencies:
       - magicast
+
+  '@vueuse/router@14.1.0(vue-router@4.6.4(vue@3.5.27(typescript@5.9.3)))(vue@3.5.27(typescript@5.9.3))':
+    dependencies:
+      '@vueuse/shared': 14.1.0(vue@3.5.27(typescript@5.9.3))
+      vue: 3.5.27(typescript@5.9.3)
+      vue-router: 4.6.4(vue@3.5.27(typescript@5.9.3))
 
   '@vueuse/shared@10.11.1(vue@3.5.27(typescript@5.9.3))':
     dependencies:

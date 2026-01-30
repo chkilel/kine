@@ -1,61 +1,43 @@
 <script setup lang="ts">
-  // Constants
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' }, { label: 'Patients' }]
 
-  const route = useRoute()
-  const router = useRouter()
+  const page = useRouteQuery('page', '1', { transform: Number })
+  const limit = useRouteQuery('limit', '10', { transform: Number })
+  const search = useRouteQuery<string>('search', '')
+  const status = useRouteQuery<PatientStatus | undefined>('status', undefined)
 
-  // Query state - single source of truth
-  const queryParams = ref<PatientQuery>({
-    page: Number(route.query.page) || 1,
-    limit: Number(route.query.limit) || 10,
-    status: (route.query.status as PatientStatus) || undefined,
-    search: (route.query.search as string) || ''
-  })
+  const queryParams = computed<PatientQuery>(() => ({
+    page: page.value,
+    limit: limit.value,
+    status: status.value,
+    search: search.value
+  }))
 
-  // Fetch data
-  const { data: patients, isPending, error } = usePatientsList(queryParams)
+  const { data: patients, isPending, error, refresh } = usePatientsList(queryParams)
 
-  // Debounced search
-  const debouncedSearch = useDebounceFn((searchValue: string) => {
-    queryParams.value.search = searchValue
-    queryParams.value.page = 1 // Reset to first page when searching
-    updateURL()
+  // Local search input state (separate from URL state for better UX)
+  const searchInput = ref('')
+
+  // Sync URL search to input on mount and when URL changes
+  watch(
+    search,
+    (newVal) => {
+      searchInput.value = newVal
+    },
+    { immediate: true }
+  )
+
+  const debouncedSearch = useDebounceFn((value: string) => {
+    search.value = value
+    page.value = 1
   }, 300)
 
-  // Watch search and trigger debounced search
-  watch(
-    () => queryParams.value.search,
-    () => queryParams.value.search && debouncedSearch(queryParams.value.search)
-  )
-
-  // Update URL with current query params
-  const updateURL = () => {
-    const query: Record<string, string> = {}
-
-    if (queryParams.value.page > 1) query.page = queryParams.value.page.toString()
-    if (queryParams.value.limit !== 10) query.limit = queryParams.value.limit.toString()
-    if (queryParams.value.search) query.search = queryParams.value.search
-    if (queryParams.value.status) query.status = queryParams.value.status
-
-    router.replace({ query })
-  }
-
-  // Watch all query params and update URL
-  watch(
-    () => [queryParams.value.status, queryParams.value.limit],
-    () => {
-      queryParams.value.page = 1 // Reset page when filters change
-      updateURL()
-    }
-  )
-
-  watch(() => queryParams.value.page, updateURL)
-
-  // Computed properties
-  const hasActiveFilters = computed(() => {
-    return queryParams.value.search || queryParams.value.status
+  // Reset page when limit changes
+  watch(limit, () => {
+    page.value = 1
   })
+
+  const hasActiveFilters = computed(() => search.value || status.value)
 
   const emptyStateConfig = computed(() => {
     if (hasActiveFilters.value) {
@@ -89,12 +71,16 @@
     }
   })
 
-  // Methods
   const clearFilters = () => {
-    queryParams.value.search = ''
-    queryParams.value.status = undefined
+    search.value = ''
+    status.value = undefined
+    page.value = 1
+  }
 
-    updateURL()
+  const clearSearch = () => {
+    searchInput.value = ''
+    search.value = ''
+    page.value = 1
   }
 
   const handlePatientClick = (patient: Patient) => {
@@ -108,8 +94,12 @@
     }
   }
 
-  const handlePageChange = (page: number) => {
-    queryParams.value.page = page
+  const handlePageChange = (newPage: number) => {
+    page.value = newPage
+  }
+
+  const handleStatusChange = () => {
+    page.value = 1
   }
 </script>
 
@@ -121,21 +111,22 @@
         <!-- Search Input -->
         <div class="flex-1">
           <UInput
-            v-model="queryParams.search"
+            v-model="searchInput"
+            @input="debouncedSearch($event.target.value)"
             icon="i-hugeicons-search-01"
             placeholder="Rechercher par nom ou prénom"
             size="lg"
             class="w-full"
             aria-label="Rechercher des patients"
           >
-            <template v-if="queryParams.search" #trailing>
+            <template v-if="searchInput" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
                 icon="i-hugeicons-cancel-01"
                 aria-label="Effacer la recherche"
-                @click="queryParams.search = ''"
+                @click="clearSearch"
               />
             </template>
           </UInput>
@@ -144,12 +135,13 @@
         <!-- Filters -->
         <div class="flex items-center gap-3">
           <USelect
-            v-model="queryParams.status"
+            v-model="status"
             :items="STATUS_FILTER_OPTIONS"
             size="lg"
             placeholder="Statut: Tous"
             class="min-w-40"
             aria-label="Filtrer par statut"
+            @update:model-value="handleStatusChange"
           />
 
           <UButton
@@ -171,8 +163,30 @@
     </UCard>
 
     <!-- Loading State -->
-    <div v-if="isPending" class="space-y-4">
-      <USkeleton v-for="i in 5" :key="i" class="h-24 w-full" :ui="{ background: 'bg-default' }" />
+    <div v-if="isPending" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <UCard v-for="i in 6" :key="i" variant="outline" class="h-48">
+        <div class="flex items-start gap-4">
+          <USkeleton class="h-14 w-14 shrink-0 rounded-full" />
+          <div class="flex-1 space-y-2">
+            <USkeleton class="h-5 w-3/4" />
+            <USkeleton class="h-3 w-1/2" />
+          </div>
+        </div>
+        <div class="mt-6 space-y-3">
+          <div class="flex items-center gap-3">
+            <USkeleton class="h-8 w-8 shrink-0 rounded-md" />
+            <USkeleton class="h-4 w-32" />
+          </div>
+          <div class="flex items-center gap-3">
+            <USkeleton class="h-8 w-8 shrink-0 rounded-md" />
+            <USkeleton class="h-4 w-40" />
+          </div>
+          <div class="flex items-center gap-3">
+            <USkeleton class="h-8 w-8 shrink-0 rounded-md" />
+            <USkeleton class="h-4 w-24" />
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <!-- Error State -->
@@ -183,6 +197,15 @@
       variant="solid"
       title="Erreur de chargement"
       :description="error.message"
+      :actions="[
+        {
+          label: 'Réessayer',
+          icon: 'i-hugeicons-refresh-01',
+          onClick: () => {
+            refresh()
+          }
+        }
+      ]"
     />
 
     <!-- Patient List -->
