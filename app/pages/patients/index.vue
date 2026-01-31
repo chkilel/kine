@@ -112,7 +112,7 @@
         <div class="flex-1">
           <UInput
             v-model="searchInput"
-            @input="debouncedSearch($event.target.value)"
+            @update:modelValue="debouncedSearch"
             icon="i-hugeicons-search-01"
             placeholder="Rechercher par nom ou prénom"
             size="lg"
@@ -228,7 +228,7 @@
           v-for="patient in patients.data"
           :key="patient.id"
           variant="outline"
-          class="group hover:ring-accented flex flex-col justify-between ring transition-all duration-200 hover:shadow-md focus-visible:shadow focus-visible:outline-none"
+          class="group hover:ring-accented focus-visible:ring-primary ring transition-all duration-200 hover:cursor-pointer hover:shadow-md focus-visible:shadow focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           :ui="{ body: 'p-5' }"
           tabindex="0"
           role="button"
@@ -267,11 +267,11 @@
               <!-- RIGHT SIDE -->
               <UBadge
                 variant="subtle"
-                size="lg"
-                :color="STATUS_CONFIG[patient.status]?.color || 'neutral'"
-                class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                size="md"
+                :color="getPatientStatusColor(patient.status)"
+                class="rounded-full px-2.5"
               >
-                {{ STATUS_CONFIG[patient.status]?.label || patient.status }}
+                {{ getPatientStatusLabel(patient.status) }}
               </UBadge>
             </div>
 
