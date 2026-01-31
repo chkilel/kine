@@ -1,8 +1,8 @@
 <script setup lang="ts">
   const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' }, { label: 'Patients' }]
 
-  const page = useRouteQuery('page', '1', { transform: Number })
-  const limit = useRouteQuery('limit', '10', { transform: Number })
+  const page = useRouteQuery('page', 1, { transform: Number })
+  const limit = useRouteQuery('limit', 10, { transform: Number })
   const search = useRouteQuery<string>('search', '')
   const status = useRouteQuery<PatientStatus | undefined>('status', undefined)
 
