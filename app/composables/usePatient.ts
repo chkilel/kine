@@ -42,7 +42,6 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
  */
 const _useCreatePatient = () => {
   const toast = useToast()
-  const router = useRouter()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
@@ -60,7 +59,7 @@ const _useCreatePatient = () => {
       })
 
       queryCache.invalidateQueries({ key: PATIENT_KEYS.root })
-      router.push('/patients')
+      navigateTo('/patients')
     },
     onError: (error: any) => {
       toast.add({

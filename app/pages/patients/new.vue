@@ -8,7 +8,7 @@
     { label: 'Dashboard', to: '/' },
     { label: 'Patients', to: '/patients' },
     { label: 'Nouvelle fiche patient' }
-  ] as Array<BreadcrumbItem>
+  ] as BreadcrumbItem[]
 
   const { activeOrganization } = useOrganization()
   const { mutate: createPatient, isLoading } = useCreatePatient()
