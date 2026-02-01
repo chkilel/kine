@@ -9,7 +9,7 @@
     /**
      * Page title for the header
      */
-    title: string
+    title?: string
     /**
      * Breadcrumb items (optional, shows title if not provided)
      */
@@ -42,10 +42,10 @@
 
         <template #title>
           <slot name="header-title">
-            <div class="flex items-center gap-5">
+            <div class="flex items-center">
               <h1 v-if="title" class="font-semibold">{{ title }}</h1>
               <template v-if="breadcrumbs">
-                <USeparator orientation="vertical" class="h-(--ui-header-height)" />
+                <USeparator orientation="vertical" class="h-(--ui-header-height) px-4" />
                 <UBreadcrumb :items="breadcrumbs" />
               </template>
             </div>
