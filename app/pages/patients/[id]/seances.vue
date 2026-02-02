@@ -1,23 +1,22 @@
 <script setup lang="ts">
   import { LazyAppModalConfirm, LazyConsultationPlanningSlideover } from '#components'
+  const route = useRoute()
+  const { data: patient, isPending } = usePatientById(() => route.params.id as string)
 
-  const props = defineProps<{ patient: Patient }>()
-
-  const toast = useToast()
   const overlay = useOverlay()
-
-  const { openCreateSlideover } = useTreatmentPlanSlideover()
-
   const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
+  // Fetching Data
   const {
     treatmentPlans: allPlans,
     activeTreatmentPlans,
     latestActiveTreatmentPlan,
     archivedTreatmentPlans
-  } = usePatientTreatmentPlans(() => props.patient.id)
-  const { mutate: deleteConsultation, isLoading: isDeleting } = useDeleteConsultation()
+  } = usePatientTreatmentPlans(() => route.params.id as string)
+
+  // Mutating Data
+  const { mutate: deleteConsultation } = useDeleteConsultation()
 
   const onlyIndependentConsultations = ref(false)
   const searchQuery = ref('')
@@ -70,7 +69,7 @@
   })
 
   const queryParams = computed(() => {
-    const params: ConsultationQuery = { patientId: props.patient.id }
+    const params: ConsultationQuery = { patientId: route.params.id as string }
     if (!selectedPlanId.value && onlyIndependentConsultations.value) {
       params.onlyIndependent = true
     } else if (selectedPlan.value) {
@@ -79,7 +78,7 @@
     return params
   })
 
-  const { data: consultations, isLoading, refetch: refetchConsultations } = useConsultationsList(queryParams)
+  const { data: consultations, isLoading } = useConsultationsList(queryParams)
 
   const selectedPlanTitle = computed(() => {
     if (onlyIndependentConsultations.value) return 'Consultations Indépendantes'
@@ -127,9 +126,10 @@
     selectedPlanId.value = planId || null
   }
 
-  const openCreateSessionSlideover = () => {
+  const handleCreateSession = () => {
+    if (!patient.value) return
     sessionPlanningOverlay.open({
-      patient: props.patient,
+      patient: patient.value,
       treatmentPlan: selectedPlan.value
     })
   }
@@ -146,22 +146,27 @@
 
     if (confirmed) {
       deleteConsultation({
-        patientId: props.patient.id,
+        patientId: route.params.id as string,
         consultationId: consultation.id
       })
     }
   }
 
   const handleEditSession = (consultation: Consultation) => {
+    if (!patient.value) return
     sessionPlanningOverlay.open({
-      patient: props.patient,
+      patient: patient.value,
       treatmentPlan: selectedPlan.value,
       consultation: consultation
     })
   }
 </script>
-
 <template>
+  <div v-if="isPending" class="flex justify-center py-8">
+    <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
+  </div>
+
+  <!-- <LazyPatientSessionsTab v-else-if="patient" :patient="patient" /> -->
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <!-- Left Column (1/3) -->
     <aside class="flex flex-col gap-4">
@@ -321,7 +326,7 @@
               size="sm"
               :disabled="isArchivedPlan"
               :label="addButtonLabel"
-              @click="openCreateSessionSlideover"
+              @click="handleCreateSession"
             />
           </UTooltip>
         </template>
@@ -405,7 +410,7 @@
               label: addButtonLabel,
               icon: 'i-lucide-plus',
               color: 'primary',
-              onClick: openCreateSessionSlideover,
+              onClick: handleCreateSession,
               disabled: isArchivedPlan
             }
           ]"

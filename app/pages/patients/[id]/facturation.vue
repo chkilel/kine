@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  // Component for patient billing/invoicing tab
+  // BillingTab is currently static with mock data
 </script>
 
 <template>
