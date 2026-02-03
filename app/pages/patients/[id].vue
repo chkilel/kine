@@ -21,12 +21,12 @@
         },
         {
           label: 'Plan de traitement',
-          icon: 'i-hugeicons-stethoscope',
+          icon: 'hugeicons-first-aid-kit',
           value: 'plan'
         },
         {
-          label: 'Séances',
-          icon: 'i-hugeicons-calendar-03',
+          label: 'Hors Plan',
+          icon: 'hugeicons-folder-details',
           value: 'seances'
         },
         {
