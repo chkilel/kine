@@ -199,7 +199,7 @@
 </script>
 
 <template>
-  <AppCard variant="outline" title="Documents du plan de traitement">
+  <AppCard variant="outline" title="Documents du plan">
     <template #actions>
       <UButton v-if="hasDocuments" icon="i-lucide-plus" color="primary" size="sm" @click="openFileDialog">
         Ajouter un document
@@ -270,8 +270,10 @@
         <UEmpty
           v-if="!hasDocuments"
           icon="i-lucide-file-plus"
+          size="sm"
+          variant="subtle"
           title="Aucun document"
-          description="Ce patient n'a pas encore de document. Ajoutez-en un pour commencer le suivi."
+          description="Ce patient n'a pas encore de document."
           :actions="[
             {
               label: 'Ajouter un document',

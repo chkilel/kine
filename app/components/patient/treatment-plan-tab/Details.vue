@@ -8,50 +8,33 @@
   <UCard :ui="{ body: 'p-0 sm:p-0' }">
     <UCollapsible :default-open="false">
       <UButton
-        color="neutral"
+        color="primary"
         variant="ghost"
         class="group p-4 sm:px-6 sm:py-4"
-        :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+        :ui="{
+          base: 'hover:rounded-b-none',
+          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+        }"
         trailing-icon="i-lucide-chevron-down"
         block
       >
-        <h3 class="text-base font-bold">Détails du plan</h3>
+        <h3 class="text-default text-base font-bold">Détails du plan</h3>
       </UButton>
 
       <template #content>
         <div class="border-default space-y-5 border-t p-4 sm:p-6">
           <div class="space-y-1">
             <h4 class="text-muted text-xs font-semibold uppercase">Objectifs thérapeutiques</h4>
-            <p class="bg-muted border-default rounded-bl-lg border-l-6 px-2 py-1 text-sm leading-relaxed">
+            <p class="bg-muted border-accented rounded-md border-l-4 px-2 py-1 text-sm leading-relaxed">
               {{ treatmentPlan.objective || 'Non spécifié' }}
             </p>
           </div>
 
           <div class="space-y-1">
             <h4 class="text-muted text-xs font-semibold uppercase">Contexte pathologique</h4>
-            <p class="bg-muted border-default rounded-bl-lg border-l-6 px-2 py-1 text-sm leading-relaxed">
+            <p class="bg-muted border-accented rounded-md border-l-4 px-2 py-1 text-sm leading-relaxed">
               {{ treatmentPlan.diagnosis || 'Non spécifié' }}
             </p>
-          </div>
-
-          <div v-if="treatmentPlan.painLevel">
-            <div class="mb-2 flex items-center justify-between">
-              <h4 class="text-sm font-semibold">Niveau de douleur (actuel)</h4>
-              <UBadge color="error" variant="subtle" class="font-semibold">{{ treatmentPlan.painLevel }}/10</UBadge>
-            </div>
-            <div class="flex items-center gap-3">
-              <USlider
-                :model-value="treatmentPlan.painLevel"
-                :max="10"
-                :min="0"
-                color="error"
-                disabled
-                :ui="{
-                  range: 'bg-transparent',
-                  thumb: 'inset-ring-2 inset-ring-error'
-                }"
-              />
-            </div>
           </div>
 
           <div class="border-default grid grid-cols-1 gap-4 border-t pt-2">

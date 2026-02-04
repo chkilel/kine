@@ -8,10 +8,34 @@
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
   const {
     refetchTreatmentPlans,
+    treatmentPlans,
     latestActiveTreatmentPlan,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
   } = usePatientTreatmentPlans(() => route.params.id as string)
+
+  // Get selected plan from URL or default to latest active
+  const selectedPlanId = computed<string>({
+    get: () => {
+      const planId = route.query.planId as string | undefined
+      if (planId && treatmentPlans.value?.some((p) => p.id === planId)) {
+        return planId
+      }
+      return latestActiveTreatmentPlan.value?.id ?? ''
+    },
+    set: (id) => {
+      navigateTo({
+        path: route.path,
+        query: { ...route.query, planId: id || undefined }
+      })
+    }
+  })
+
+  const selectedTreatmentPlan = computed((): TreatmentPlanWithProgress | null => {
+    if (!treatmentPlans.value || !selectedPlanId.value) return null
+    const plan = treatmentPlans.value.find((p) => p.id === selectedPlanId.value)
+    return plan ? ({ ...plan } as TreatmentPlanWithProgress) : null
+  })
 
   // Retry fetch with user feedback
   async function retryFetch() {
@@ -57,7 +81,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!latestActiveTreatmentPlan" class="mt-6">
+    <div v-else-if="!treatmentPlans?.length" class="mt-6">
       <UEmpty
         icon="i-lucide-clipboard-plus"
         title="Aucun plan de traitement"
@@ -74,23 +98,42 @@
     </div>
 
     <!-- Treatment Plan Content -->
-    <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <!-- Left Column -->
-      <div class="flex flex-col gap-6 lg:col-span-1">
-        <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
+    <div v-else class="space-y-4">
+      <!-- Plan Selector -->
+      <PatientTreatmentPlanTabPlanSelector
+        :patient="patient"
+        :treatment-plans="(treatmentPlans || []) as readonly TreatmentPlanWithProgress[]"
+        v-model:selected-plan-id="selectedPlanId"
+      />
 
-        <PatientTreatmentPlanTabDetails :treatment-plan="latestActiveTreatmentPlan" />
+      <!-- Selected Plan Content -->
+      <div v-if="selectedTreatmentPlan">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <!-- Left Column -->
+          <div class="flex flex-col gap-6 lg:col-span-1">
+            <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="selectedTreatmentPlan" />
 
-        <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
+            <PatientTreatmentPlanTabDetails :treatment-plan="selectedTreatmentPlan" />
+
+            <!-- Documents -->
+            <PatientTreatmentPlanTabDocuments :treatment-plan="selectedTreatmentPlan" />
+          </div>
+
+          <!-- Right Column -->
+          <div class="flex flex-col gap-6 lg:col-span-2">
+            <!-- Consultations -->
+            <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="selectedTreatmentPlan" />
+
+            <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="selectedTreatmentPlan" />
+          </div>
+        </div>
       </div>
 
-      <!-- Right Column -->
-      <div class="flex flex-col gap-6 lg:col-span-2">
-        <!-- Consultations -->
-        <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="latestActiveTreatmentPlan" />
-
-        <!-- Documents -->
-        <PatientTreatmentPlanTabDocuments :treatment-plan="latestActiveTreatmentPlan" />
+      <!-- No Plan Selected State -->
+      <div v-else class="mt-6">
+        <UAlert color="warning" icon="i-lucide-alert-circle" title="Plan non trouvé">
+          <template #description>Le plan de traitement sélectionné n'existe pas ou a été supprimé.</template>
+        </UAlert>
       </div>
     </div>
   </template>

@@ -26,12 +26,12 @@
         {{ getTreatmentPlanStatusLabel(treatmentPlan.status) }}
       </UBadge>
     </template>
-    <div class="flex flex-col gap-5">
+    <div class="flex flex-col gap-4">
       <div class="space-y-1">
         <p class="text-primary text-sm font-medium">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</p>
         <p class="text-muted mt-1 text-xs">Objectif principal : {{ treatmentPlan.objective || 'Non spécifié' }}</p>
       </div>
-      <div class="border-default text-muted flex flex-col gap-2 border-t border-b py-3 text-xs">
+      <div class="border-default text-muted flex flex-col gap-2 border-t py-4 text-xs">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <UIcon name="i-hugeicons-calendar-02" class="text-[16px]" />
