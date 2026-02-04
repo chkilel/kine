@@ -11,9 +11,9 @@ z.config(fr())
 // Patient Document Schemas and Types
 // =============================================================================
 export const patientDocumentCreateSchema = createInsertSchema(patientDocuments, {
-  patientId: z.string(),
+  patientId: z.string().optional(),
   organizationId: z.string().min(1),
-  uploadedById: z.string(),
+  uploadedById: z.string().optional(),
   treatmentPlanId: z.string().optional(),
   fileName: z.string().min(1),
   originalFileName: z.string().min(1),
