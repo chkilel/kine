@@ -113,8 +113,6 @@
           <div class="flex flex-col gap-6 lg:col-span-1">
             <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="selectedTreatmentPlan" />
 
-            <PatientTreatmentPlanTabDetails :treatment-plan="selectedTreatmentPlan" />
-
             <!-- Documents -->
             <PatientTreatmentPlanTabDocuments :treatment-plan="selectedTreatmentPlan" />
           </div>

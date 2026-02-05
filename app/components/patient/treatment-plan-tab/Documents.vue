@@ -58,6 +58,15 @@
   function getDocumentActions(doc: PatientDocument): DropdownMenuItem[][] {
     return [
       [
+        ...(isViewableByBrowser(doc.mimeType)
+          ? [
+              {
+                label: 'Voir',
+                icon: 'i-hugeicons-view',
+                onSelect: () => documentViewerModal.open({ document: doc, patientId: props.treatmentPlan.patientId })
+              }
+            ]
+          : []),
         {
           label: 'Télécharger',
           icon: 'i-hugeicons-download-01',
@@ -270,194 +279,218 @@
 </script>
 
 <template>
-  <AppCard variant="outline" title="Documents du plan">
-    <template #actions>
+  <UCard :ui="{ body: 'p-0 sm:p-0' }">
+    <UCollapsible :default-open="true">
       <UButton
-        v-if="hasDocuments"
-        icon="i-hugeicons-plus-sign"
         color="primary"
         variant="ghost"
-        size="sm"
-        @click="openFileDialog"
-      />
-    </template>
-    <input
-      ref="fileInputRef"
-      type="file"
-      multiple
-      class="hidden"
-      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-      @change="handleFileSelect"
-    />
+        class="group p-4 sm:px-6 sm:py-4"
+        :ui="{
+          base: 'hover:rounded-b-none',
+          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+        }"
+        trailing-icon="i-lucide-chevron-down"
+        block
+      >
+        <h3 class="text-default text-base font-bold">Documents du plan</h3>
+      </UButton>
 
-    <div class="space-y-4">
-      <!-- Staged Files -->
-      <div v-if="uploadedFiles.length > 0" class="space-y-3">
-        <div
-          v-for="(uploadedFile, index) in uploadedFiles"
-          :key="index"
-          class="border-default bg-muted space-y-3 rounded-lg border p-2"
-        >
-          <div class="flex w-full items-start gap-10">
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ uploadedFile.file.name }}</p>
-              <p class="text-muted mt-1 text-xs">
-                Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
-              </p>
-            </div>
-            <UButton
-              icon="i-hugeicons-delete-02"
-              variant="ghost"
-              color="error"
-              size="sm"
-              square
-              @click="removeFile(index)"
-            />
-          </div>
+      <template #content>
+        <div class="border-default space-y-5 border-t p-4 sm:p-6">
+          <input
+            ref="fileInputRef"
+            type="file"
+            multiple
+            class="hidden"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            @change="handleFileSelect"
+          />
 
-          <div class="grid gap-4">
-            <UFormField label="Titre descriptif du document" size="xs">
-              <UInput
-                v-model="uploadedFile.title"
-                variant="outline"
-                placeholder="Titre descriptif"
-                size="sm"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField label="Type de document" size="xs">
-              <USelect
-                v-model="uploadedFile.type"
-                value-key="value"
-                variant="outline"
-                size="sm"
-                :items="DOCUMENT_CATEGORY_OPTIONS"
-                class="w-full"
-              />
-            </UFormField>
-          </div>
-        </div>
-
-        <!-- Upload Button -->
-        <div class="flex justify-end">
-          <UButton
-            icon="i-hugeicons-upload-01"
-            color="primary"
-            size="sm"
-            :loading="documentLoading"
-            :disabled="documentLoading || uploadedFiles.length === 0"
-            @click="uploadDocuments"
-          >
-            Téléverser {{ uploadedFiles.length }} document(s)
-          </UButton>
-        </div>
-      </div>
-
-      <!-- Existing Documents -->
-      <div class="space-y-3">
-        <UEmpty
-          v-if="!hasDocuments"
-          icon="i-hugeicons-file-add"
-          size="sm"
-          variant="subtle"
-          title="Aucun document"
-          description="Ce patient n'a pas encore de document."
-          :actions="[
-            {
-              label: 'Ajouter un document',
-              icon: 'i-hugeicons-plus-sign',
-              color: 'primary',
-              onClick: openFileDialog
-            }
-          ]"
-        />
-
-        <div
-          v-for="doc in documents"
-          :key="doc.id"
-          class="border-default bg-muted flex items-start gap-4 space-y-2 rounded-md border p-2"
-          :class="{ 'ring-neutral ring-2 ring-offset-2': editingDocument?.id === doc.id }"
-        >
-          <!-- Edit Mode -->
-          <div v-if="editingDocument?.id === doc.id" class="w-full space-y-3">
-            <div class="flex items-center gap-3">
-              <UBadge
-                :icon="getDocumentIcon(editingDocument.category)"
-                :color="getDocumentColor(editingDocument.category)"
-                variant="soft"
-                size="lg"
-                square
-              />
-              <p class="text-default text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
-            </div>
-            <div class="grid gap-4">
-              <UFormField label="Titre descriptif du document" size="xs">
-                <UInput
-                  v-model="editingDocument.description"
-                  variant="outline"
-                  placeholder="Titre descriptif"
-                  size="sm"
-                  class="w-full"
-                />
-              </UFormField>
-              <UFormField label="Type de document" size="xs">
-                <USelect
-                  v-model="editingDocument.category"
-                  value-key="value"
-                  variant="outline"
-                  size="sm"
-                  :items="DOCUMENT_CATEGORY_OPTIONS"
-                  class="w-full"
-                />
-              </UFormField>
-            </div>
-
-            <div class="flex justify-end gap-2">
-              <UButton variant="outline" color="neutral" size="sm" @click="cancelEditDocument">Annuler</UButton>
-              <UButton color="primary" size="sm" :loading="isUpdating" :disabled="isUpdating" @click="saveDocumentEdit">
-                Enregistrer
-              </UButton>
-            </div>
-          </div>
-
-          <!-- View Mode -->
-          <div v-else class="flex w-full flex-col gap-1">
-            <div class="flex items-start gap-4">
-              <UBadge
-                :icon="getDocumentIcon(doc.category)"
-                :color="getDocumentColor(doc.category)"
-                variant="soft"
-                size="lg"
-                square
-              />
-              <div class="min-w-0 grow">
-                <p class="text-xs uppercase">{{ getDocumentCategoryLabel(doc.category) }}</p>
-                <p class="text-default truncate text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
-                <div class="mt-1 flex items-center justify-between gap-x-2">
-                  <span class="text-muted text-xs">
-                    {{ new Date(doc.createdAt).toLocaleDateString('fr-FR') }}
-                  </span>
-
-                  <div class="flex items-center justify-end gap-1">
-                    <UButton
-                      v-if="isViewableByBrowser(doc.mimeType)"
-                      icon="i-hugeicons-view"
-                      variant="ghost"
-                      color="neutral"
-                      size="sm"
-                      square
-                      @click="documentViewerModal.open({ document: doc, patientId: props.treatmentPlan.patientId })"
-                    />
-                    <UDropdownMenu size="sm" :items="getDocumentActions(doc)" :content="{ align: 'end' }">
-                      <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
-                    </UDropdownMenu>
+          <div class="space-y-4">
+            <!-- Staged Files -->
+            <div v-if="uploadedFiles.length > 0" class="space-y-3">
+              <div
+                v-for="(uploadedFile, index) in uploadedFiles"
+                :key="index"
+                class="border-default bg-muted space-y-3 rounded-lg border p-2"
+              >
+                <div class="flex w-full items-start gap-10">
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium">{{ uploadedFile.file.name }}</p>
+                    <p class="text-muted mt-1 text-xs">
+                      Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
+                    </p>
                   </div>
+                  <UButton
+                    icon="i-hugeicons-delete-02"
+                    variant="ghost"
+                    color="error"
+                    size="sm"
+                    square
+                    @click="removeFile(index)"
+                  />
+                </div>
+
+                <div class="grid gap-4">
+                  <UFormField label="Titre descriptif du document" size="xs">
+                    <UInput
+                      v-model="uploadedFile.title"
+                      variant="outline"
+                      placeholder="Titre descriptif"
+                      size="sm"
+                      class="w-full"
+                    />
+                  </UFormField>
+                  <UFormField label="Type de document" size="xs">
+                    <USelect
+                      v-model="uploadedFile.type"
+                      value-key="value"
+                      variant="outline"
+                      size="sm"
+                      :items="DOCUMENT_CATEGORY_OPTIONS"
+                      class="w-full"
+                    />
+                  </UFormField>
+                </div>
+              </div>
+
+              <!-- Upload Button -->
+              <div class="flex justify-end">
+                <UButton
+                  icon="i-hugeicons-upload-01"
+                  color="primary"
+                  size="sm"
+                  :loading="documentLoading"
+                  :disabled="documentLoading || uploadedFiles.length === 0"
+                  @click="uploadDocuments"
+                >
+                  Téléverser {{ uploadedFiles.length }} document(s)
+                </UButton>
+              </div>
+            </div>
+
+            <!-- Existing Documents -->
+            <div class="space-y-3">
+              <UEmpty
+                v-if="!hasDocuments"
+                icon="i-hugeicons-file-add"
+                size="sm"
+                variant="subtle"
+                title="Aucun document"
+                description="Ce patient n'a pas encore de document."
+                :actions="[
+                  {
+                    label: 'Ajouter un document',
+                    icon: 'i-hugeicons-plus-sign',
+                    color: 'primary',
+                    onClick: openFileDialog
+                  }
+                ]"
+              />
+
+              <div
+                v-for="doc in documents"
+                :key="doc.id"
+                class="border-default bg-muted items-start gap-4 space-y-2 rounded-md border p-2"
+                :class="{ 'ring-neutral ring-2 ring-offset-2': editingDocument?.id === doc.id }"
+              >
+                <!-- Edit Mode -->
+                <div v-if="editingDocument?.id === doc.id" class="w-full space-y-3">
+                  <div class="flex items-center gap-3">
+                    <UBadge
+                      :icon="getDocumentIcon(editingDocument.category)"
+                      :color="getDocumentColor(editingDocument.category)"
+                      variant="soft"
+                      size="lg"
+                      square
+                    />
+                    <p class="text-default text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
+                  </div>
+                  <div class="grid gap-4">
+                    <UFormField label="Titre descriptif du document" size="xs">
+                      <UInput
+                        v-model="editingDocument.description"
+                        variant="outline"
+                        placeholder="Titre descriptif"
+                        size="sm"
+                        class="w-full"
+                      />
+                    </UFormField>
+                    <UFormField label="Type de document" size="xs">
+                      <USelect
+                        v-model="editingDocument.category"
+                        value-key="value"
+                        variant="outline"
+                        size="sm"
+                        :items="DOCUMENT_CATEGORY_OPTIONS"
+                        class="w-full"
+                      />
+                    </UFormField>
+                  </div>
+
+                  <div class="flex justify-end gap-2">
+                    <UButton variant="outline" color="neutral" size="sm" @click="cancelEditDocument">Annuler</UButton>
+                    <UButton
+                      color="primary"
+                      size="sm"
+                      :loading="isUpdating"
+                      :disabled="isUpdating"
+                      @click="saveDocumentEdit"
+                    >
+                      Enregistrer
+                    </UButton>
+                  </div>
+                </div>
+
+                <!-- View Mode -->
+                <div v-if="editingDocument?.id !== doc.id" class="relative flex items-start gap-4">
+                  <UBadge
+                    :icon="getDocumentIcon(doc.category)"
+                    :color="getDocumentColor(doc.category)"
+                    variant="soft"
+                    size="lg"
+                    square
+                  />
+                  <div class="flex min-w-0 grow flex-col">
+                    <span class="text-primary text-[10px] leading-none font-semibold uppercase">
+                      {{ getDocumentCategoryLabel(doc.category) }}
+                    </span>
+
+                    <span class="text-default truncate text-sm font-medium">
+                      {{ doc.description || doc.originalFileName }}
+                    </span>
+
+                    <time class="text-muted text-xs">
+                      {{ formatFrenchDate(doc.createdAt) }}
+                    </time>
+                  </div>
+
+                  <!-- DropdownMenu -->
+                  <UDropdownMenu
+                    size="sm"
+                    :items="getDocumentActions(doc)"
+                    :content="{ align: 'end' }"
+                    class="absolute top-0 right-0"
+                  >
+                    <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
+                  </UDropdownMenu>
                 </div>
               </div>
             </div>
           </div>
+
+          <div v-if="hasDocuments" class="flex w-full justify-end">
+            <UButton
+              label="Document"
+              icon="i-hugeicons-plus-sign"
+              color="primary"
+              variant="soft"
+              size="sm"
+              @click="openFileDialog"
+            />
+          </div>
         </div>
-      </div>
-    </div>
-  </AppCard>
+      </template>
+    </UCollapsible>
+  </UCard>
 </template>
