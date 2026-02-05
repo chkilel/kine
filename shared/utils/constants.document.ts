@@ -15,12 +15,12 @@ export const VALID_DOCUMENT_TYPES = [
 ] as const
 
 export const DOCUMENT_CATEGORIES_CONFIG = {
-  referral: { label: 'Lettre de recommandation', icon: 'i-lucide-file-text', color: 'neutral' },
-  imaging: { label: 'Radiologie', icon: 'i-lucide-image', color: 'primary' },
-  lab_results: { label: 'Résultats de laboratoire', icon: 'i-lucide-file-text', color: 'secondary' },
-  treatment_notes: { label: 'Notes de traitement', icon: 'i-lucide-file-text', color: 'info' },
-  prescriptions: { label: 'Ordonnance', icon: 'i-lucide-pill', color: 'warning' },
-  other: { label: 'Autre', icon: 'i-lucide-file-text', color: 'neutral' }
+  referral: { label: 'Lettre de recommandation', icon: 'i-hugeicons-mail-01', color: 'success' },
+  imaging: { label: 'Radiologie', icon: 'i-hugeicons-x-ray', color: 'primary' },
+  lab_results: { label: 'Laboratoire', icon: 'i-hugeicons-test-tube-01', color: 'secondary' },
+  treatment_notes: { label: 'Notes de traitement', icon: 'i-hugeicons-medical-file', color: 'info' },
+  prescriptions: { label: 'Ordonnance', icon: 'i-hugeicons-prescription', color: 'warning' },
+  other: { label: 'Autre', icon: 'i-hugeicons-file-02', color: 'neutral' }
 } as const
 
 // Document Category Options
