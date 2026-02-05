@@ -17,7 +17,7 @@ export const VALID_DOCUMENT_TYPES = [
 export const DOCUMENT_CATEGORIES_CONFIG = {
   referral: { label: 'Lettre de recommandation', icon: 'i-hugeicons-mail-01', color: 'success' },
   imaging: { label: 'Radiologie', icon: 'i-hugeicons-x-ray', color: 'primary' },
-  lab_results: { label: 'Laboratoire', icon: 'i-hugeicons-test-tube-01', color: 'secondary' },
+  lab_results: { label: 'Laboratoire', icon: 'i-hugeicons-labs', color: 'secondary' },
   treatment_notes: { label: 'Notes de traitement', icon: 'i-hugeicons-medical-file', color: 'info' },
   prescriptions: { label: 'Ordonnance', icon: 'i-hugeicons-prescription', color: 'warning' },
   other: { label: 'Autre', icon: 'i-hugeicons-file-02', color: 'neutral' }
