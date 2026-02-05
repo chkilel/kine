@@ -37,7 +37,7 @@
       icon: 'i-hugeicons-search-01'
     }"
     :ui="{
-      base: 'ring-primary hover:bg-primary/5 w-full cursor-pointer rounded-2xl ring-2',
+      base: 'border-primary border ring-0 border-dashed bg-primary/5 hover:bg-default w-full cursor-pointer rounded-xl ',
       trailingIcon: 'size-8'
     }"
   >
