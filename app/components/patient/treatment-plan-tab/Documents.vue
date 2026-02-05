@@ -1,5 +1,6 @@
 <script setup lang="ts">
-  import { LazyDocumentViewerModal } from '#components'
+  import type { DropdownMenuItem } from '@nuxt/ui'
+  import { LazyDocumentViewerModal, LazyAppModalConfirm } from '#components'
 
   interface UploadedFile {
     file: File
@@ -10,10 +11,13 @@
 
   const props = defineProps<{ treatmentPlan: TreatmentPlan }>()
 
+  const overlay = useOverlay()
+  const confirmModal = overlay.create(LazyAppModalConfirm)
+  const documentViewerModal = overlay.create(LazyDocumentViewerModal)
   const toast = useToast()
   const queryCache = useQueryCache()
 
-  const { uploadFile } = useUploads()
+  const { uploadFile, getPresignUrl } = useUploads()
   const { data: documents } = useDocumentsList(
     () => props.treatmentPlan.patientId,
     () => props.treatmentPlan.id
@@ -22,11 +26,61 @@
   const { mutate: deleteDocument, isLoading: isDeleting } = useDeleteDocument(() => props.treatmentPlan.patientId)
 
   const editingDocument = ref<PatientDocument | null>(null)
-  const showDeleteModal = ref(false)
-  const documentToDelete = ref<PatientDocument | null>(null)
   const uploadedFiles = ref<UploadedFile[]>([])
   const fileInputRef = ref<HTMLInputElement>()
   const documentLoading = ref(false)
+
+  // Download document
+  const downloadDocument = async (doc: PatientDocument) => {
+    try {
+      const url = await getPresignUrl(doc.storageKey)
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = doc.originalFileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+    } catch (err: any) {
+      console.error('Error downloading document:', err)
+      toast.add({
+        title: 'Erreur',
+        description: 'Échec du téléchargement du document',
+        color: 'error'
+      })
+    }
+  }
+
+  // Dropdown menu items for document actions
+  function getDocumentActions(doc: PatientDocument): DropdownMenuItem[][] {
+    return [
+      [
+        {
+          label: 'Télécharger',
+          icon: 'i-hugeicons-download-01',
+          onSelect: () => downloadDocument(doc)
+        },
+        {
+          label: 'Modifier',
+          icon: 'i-hugeicons-pencil-edit-01',
+          disabled: !!editingDocument.value,
+          onSelect: () => startEditDocument(doc)
+        }
+      ],
+      [
+        {
+          label: 'Supprimer',
+          icon: 'i-hugeicons-delete-02',
+          color: 'error',
+          disabled: isDeleting.value,
+          onSelect: () => confirmDeleteDocument(doc)
+        }
+      ]
+    ]
+  }
 
   // Computed properties
   const hasDocuments = computed(() => !!(documents.value?.length || uploadedFiles.value.length))
@@ -163,30 +217,27 @@
   }
 
   // Delete functions
-  function confirmDeleteDocument(document: PatientDocument) {
-    documentToDelete.value = document
-    showDeleteModal.value = true
-  }
+  async function confirmDeleteDocument(document: PatientDocument) {
+    const confirmed = await confirmModal.open({
+      title: 'Supprimer le document',
+      message: `Êtes-vous sûr de vouloir supprimer "${document.originalFileName}" ? Cette action est irréversible.`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      confirmColor: 'error',
+      icon: 'i-hugeicons-delete-02'
+    })
 
-  function cancelDeleteDocument() {
-    documentToDelete.value = null
-    showDeleteModal.value = false
-  }
+    if (confirmed) {
+      try {
+        deleteDocument({ documentId: document.id })
 
-  async function executeDeleteDocument() {
-    if (!documentToDelete.value) return
-
-    try {
-      deleteDocument({ documentId: documentToDelete.value.id })
-
-      // Optimistic UI update
-      if (documents.value) {
-        documents.value = documents.value.filter((doc) => doc.id !== documentToDelete.value?.id)
+        // Optimistic UI update
+        if (documents.value) {
+          documents.value = documents.value.filter((doc) => doc.id !== document.id)
+        }
+      } catch (error) {
+        console.error('Error deleting document:', error)
       }
-
-      cancelDeleteDocument()
-    } catch (error) {
-      console.error('Error deleting document:', error)
     }
   }
 
@@ -196,14 +247,39 @@
       cancelEditDocument()
     }
   })
+
+  function isViewableByBrowser(mimeType: string): boolean {
+    const viewableTypes = [
+      'application/pdf',
+      'text/plain',
+      'text/html',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
+      'video/mp4',
+      'video/webm',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/ogg'
+    ]
+    return viewableTypes.includes(mimeType)
+  }
 </script>
 
 <template>
   <AppCard variant="outline" title="Documents du plan">
     <template #actions>
-      <UButton v-if="hasDocuments" icon="i-lucide-plus" color="primary" size="sm" @click="openFileDialog">
-        Ajouter un document
-      </UButton>
+      <UButton
+        v-if="hasDocuments"
+        icon="i-hugeicons-plus-sign"
+        color="primary"
+        variant="ghost"
+        size="sm"
+        @click="openFileDialog"
+      />
     </template>
     <input
       ref="fileInputRef"
@@ -220,7 +296,7 @@
         <div
           v-for="(uploadedFile, index) in uploadedFiles"
           :key="index"
-          class="border-default bg-muted space-y-3 rounded-xl border p-4"
+          class="border-default bg-muted space-y-3 rounded-lg border p-2"
         >
           <div class="flex w-full items-start gap-10">
             <div class="min-w-0 flex-1">
@@ -229,31 +305,43 @@
                 Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
               </p>
             </div>
-            <UButton icon="i-lucide-trash" variant="ghost" color="error" size="sm" square @click="removeFile(index)" />
+            <UButton
+              icon="i-hugeicons-delete-02"
+              variant="ghost"
+              color="error"
+              size="sm"
+              square
+              @click="removeFile(index)"
+            />
           </div>
 
-          <div class="border-default bg-default rounded-lg border p-3">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <UFormField label="Titre descriptif du document" size="xs" class="sm:col-span-2">
-                <UInput v-model="uploadedFile.title" placeholder="Titre descriptif" size="sm" class="w-full" />
-              </UFormField>
-              <UFormField label="Type de document" size="xs">
-                <USelectMenu
-                  v-model="uploadedFile.type"
-                  value-key="value"
-                  size="sm"
-                  :items="DOCUMENT_CATEGORY_OPTIONS"
-                  class="w-full"
-                />
-              </UFormField>
-            </div>
+          <div class="grid gap-4">
+            <UFormField label="Titre descriptif du document" size="xs">
+              <UInput
+                v-model="uploadedFile.title"
+                variant="outline"
+                placeholder="Titre descriptif"
+                size="sm"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="Type de document" size="xs">
+              <USelect
+                v-model="uploadedFile.type"
+                value-key="value"
+                variant="outline"
+                size="sm"
+                :items="DOCUMENT_CATEGORY_OPTIONS"
+                class="w-full"
+              />
+            </UFormField>
           </div>
         </div>
 
         <!-- Upload Button -->
         <div class="flex justify-end">
           <UButton
-            icon="i-lucide-upload"
+            icon="i-hugeicons-upload-01"
             color="primary"
             size="sm"
             :loading="documentLoading"
@@ -269,7 +357,7 @@
       <div class="space-y-3">
         <UEmpty
           v-if="!hasDocuments"
-          icon="i-lucide-file-plus"
+          icon="i-hugeicons-file-add"
           size="sm"
           variant="subtle"
           title="Aucun document"
@@ -277,7 +365,7 @@
           :actions="[
             {
               label: 'Ajouter un document',
-              icon: 'i-lucide-plus',
+              icon: 'i-hugeicons-plus-sign',
               color: 'primary',
               onClick: openFileDialog
             }
@@ -287,7 +375,7 @@
         <div
           v-for="doc in documents"
           :key="doc.id"
-          class="border-default flex items-start gap-4 rounded-lg border p-3"
+          class="border-default bg-muted flex items-start gap-4 space-y-2 rounded-md border p-2"
           :class="{ 'ring-neutral ring-2 ring-offset-2': editingDocument?.id === doc.id }"
         >
           <!-- Edit Mode -->
@@ -300,19 +388,26 @@
                 size="lg"
                 square
               />
-              <p class="text-default grow font-semibold">{{ doc.originalFileName }}</p>
+              <p class="text-default text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
             </div>
-
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <UFormField label="Titre descriptif du document" size="xs" class="sm:col-span-2">
-                <UInput v-model="editingDocument.description" placeholder="Titre descriptif" size="sm" />
+            <div class="grid gap-4">
+              <UFormField label="Titre descriptif du document" size="xs">
+                <UInput
+                  v-model="editingDocument.description"
+                  variant="outline"
+                  placeholder="Titre descriptif"
+                  size="sm"
+                  class="w-full"
+                />
               </UFormField>
               <UFormField label="Type de document" size="xs">
-                <USelectMenu
+                <USelect
                   v-model="editingDocument.category"
                   value-key="value"
+                  variant="outline"
                   size="sm"
                   :items="DOCUMENT_CATEGORY_OPTIONS"
+                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -326,98 +421,43 @@
           </div>
 
           <!-- View Mode -->
-          <div v-else class="flex w-full items-center gap-4">
-            <UBadge
-              :icon="getDocumentIcon(doc.category)"
-              :color="getDocumentColor(doc.category)"
-              variant="soft"
-              size="lg"
-              square
-            />
-            <div class="grow">
-              <p class="text-default font-semibold">{{ doc.originalFileName }}</p>
-              <div class="text-muted mt-1 flex items-center gap-x-2 text-xs">
-                <span>{{ getDocumentCategoryLabel(doc.category) }}</span>
-                <span class="text-muted">•</span>
-                <span>{{ doc.description || 'Aucune description' }}</span>
-                <span class="text-muted">•</span>
-                <span>{{ new Date(doc.createdAt).toLocaleDateString('fr-FR') }}</span>
+          <div v-else class="flex w-full flex-col gap-1">
+            <div class="flex items-start gap-4">
+              <UBadge
+                :icon="getDocumentIcon(doc.category)"
+                :color="getDocumentColor(doc.category)"
+                variant="soft"
+                size="lg"
+                square
+              />
+              <div class="min-w-0 grow">
+                <p class="text-xs uppercase">{{ getDocumentCategoryLabel(doc.category) }}</p>
+                <p class="text-default truncate text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
+                <div class="mt-1 flex items-center justify-between gap-x-2">
+                  <span class="text-muted text-xs">
+                    {{ new Date(doc.createdAt).toLocaleDateString('fr-FR') }}
+                  </span>
+
+                  <div class="flex items-center justify-end gap-1">
+                    <UButton
+                      v-if="isViewableByBrowser(doc.mimeType)"
+                      icon="i-hugeicons-view"
+                      variant="ghost"
+                      color="neutral"
+                      size="sm"
+                      square
+                      @click="documentViewerModal.open({ document: doc, patientId: props.treatmentPlan.patientId })"
+                    />
+                    <UDropdownMenu size="sm" :items="getDocumentActions(doc)" :content="{ align: 'end' }">
+                      <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
+                    </UDropdownMenu>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1">
-              <LazyDocumentViewerModal :document="doc" :patientId="props.treatmentPlan.patientId" />
-              <UButton
-                icon="i-lucide-edit"
-                variant="ghost"
-                color="neutral"
-                size="sm"
-                square
-                :disabled="!!editingDocument"
-                @click="startEditDocument(doc)"
-              />
-              <UButton
-                icon="i-lucide-trash"
-                variant="ghost"
-                color="error"
-                size="sm"
-                square
-                :loading="isDeleting && documentToDelete?.id === doc.id"
-                :disabled="isDeleting"
-                @click="confirmDeleteDocument(doc)"
-              />
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <AppCard>
-          <div class="mb-4 flex items-center gap-3">
-            <UBadge
-              icon="i-lucide-trash-2"
-              color="error"
-              variant="subtle"
-              size="xl"
-              class="flex size-12 shrink-0 items-center justify-center rounded-full"
-            />
-            <div>
-              <h3 class="text-lg font-semibold">Supprimer le document</h3>
-              <p class="text-muted text-sm">
-                Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.
-              </p>
-            </div>
-          </div>
-
-          <div v-if="documentToDelete" class="bg-muted mb-6 rounded-lg p-3">
-            <div class="flex items-center gap-3">
-              <UBadge
-                :icon="getDocumentIcon(documentToDelete.category)"
-                :color="getDocumentColor(documentToDelete.category)"
-                variant="soft"
-                size="lg"
-                square
-              />
-              <div>
-                <p class="font-medium">{{ documentToDelete.originalFileName }}</p>
-                <p class="text-muted text-xs">
-                  {{ getDocumentCategoryLabel(documentToDelete.category) }} •
-                  {{ new Date(documentToDelete.createdAt).toLocaleDateString('fr-FR') }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <UButton variant="outline" color="neutral" @click="cancelDeleteDocument">Annuler</UButton>
-            <UButton color="error" :loading="isDeleting" :disabled="isDeleting" @click="executeDeleteDocument">
-              Supprimer
-            </UButton>
-          </div>
-        </AppCard>
-      </template>
-    </UModal>
   </AppCard>
 </template>
