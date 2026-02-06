@@ -86,13 +86,22 @@
     <div v-if="isPending" class="flex justify-center py-8">
       <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
     </div>
-
     <div v-else-if="patient" class="space-y-6">
-      <!-- Patient Header -->
-      <PatientHeader :patient="patient" />
-
-      <!-- Tabs Navigation -->
-      <UTabs v-model="activeTab" :content="false" :items="items" variant="link" class="w-full" />
+      <UCard :ui="{ root: 'rounded-b', body: 'p-0 sm:p-0 rounded-b-none' }">
+        <!-- Patient Header -->
+        <PatientHeader :patient="patient" class="p-4 sm:p-6" />
+        <USeparator />
+        <!-- Tabs Navigation -->
+        <UTabs
+          v-model="activeTab"
+          :content="false"
+          :items="items"
+          variant="link"
+          size="lg"
+          class="bg-muted mb-px w-full"
+          :ui="{ indicator: 'h-[2px]' }"
+        />
+      </UCard>
 
       <!-- Tab Content -->
       <NuxtPage />
