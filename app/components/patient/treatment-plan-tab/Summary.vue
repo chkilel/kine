@@ -66,13 +66,10 @@
 </script>
 
 <template>
-  <AppCard>
-    <template #title>
-      <h3 class="text-dimmed text-sm font-bold tracking-widest uppercase">Progression &amp; Équipe</h3>
-    </template>
+  <AppCard title="Détail du plan" class="relative">
     <template #actions>
-      <UDropdownMenu :items="dropdownItems">
-        <UButton icon="i-hugeicons-more-vertical" color="neutral" variant="ghost" size="xs" />
+      <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }" class="absolute top-3 right-2">
+        <UButton icon="i-hugeicons-more-vertical" color="neutral" variant="ghost" size="sm" />
       </UDropdownMenu>
     </template>
     <div class="flex flex-col gap-4 text-xs">
