@@ -47,29 +47,13 @@
     </div>
 
     <div v-else-if="documents && documents.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <UCard v-for="document in documents" :key="document.id">
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-3">
-            <div class="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-              <UIcon :name="getDocumentIcon(document.category)" class="text-xl" />
-            </div>
-            <div>
-              <h3 class="text-default text-sm font-bold">{{ document.originalFileName }}</h3>
-              <p class="text-muted text-xs">{{ formatFrenchDate(document.createdAt) }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 mb-4 grow">
-          <p class="text-toned text-sm">{{ document.description || 'Aucune description' }}</p>
-        </div>
-        <template #footer>
-          <div class="border-default flex items-center justify-end gap-2">
-            <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-eye" square />
-            <UButton variant="ghost" color="neutral" size="sm" icon="i-lucide-download" square />
-            <UButton variant="ghost" color="error" size="sm" icon="i-lucide-trash-2" square />
-          </div>
-        </template>
-      </UCard>
+      <DocumentCard
+        v-for="document in documents"
+        :key="document.id"
+        :document="document"
+        :patient-id="route.params.id as string"
+        variant="extended"
+      />
     </div>
 
     <div v-else class="py-8 text-center">

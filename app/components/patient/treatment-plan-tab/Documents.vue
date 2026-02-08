@@ -1,7 +1,4 @@
 <script setup lang="ts">
-  import type { DropdownMenuItem } from '@nuxt/ui'
-  import { LazyDocumentViewerModal, LazyAppModalConfirm } from '#components'
-
   interface UploadedFile {
     file: File
     title: string
@@ -11,85 +8,18 @@
 
   const props = defineProps<{ treatmentPlan: TreatmentPlan }>()
 
-  const overlay = useOverlay()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
-  const documentViewerModal = overlay.create(LazyDocumentViewerModal)
   const toast = useToast()
   const queryCache = useQueryCache()
 
-  const { uploadFile, getPresignUrl } = useUploads()
+  const { uploadFile } = useUploads()
   const { data: documents } = useDocumentsList(
     () => props.treatmentPlan.patientId,
     () => props.treatmentPlan.id
   )
-  const { mutate: updateDocument, isLoading: isUpdating } = useUpdateDocument(() => props.treatmentPlan.patientId)
-  const { mutate: deleteDocument, isLoading: isDeleting } = useDeleteDocument(() => props.treatmentPlan.patientId)
 
-  const editingDocument = ref<PatientDocument | null>(null)
   const uploadedFiles = ref<UploadedFile[]>([])
   const fileInputRef = ref<HTMLInputElement>()
   const documentLoading = ref(false)
-
-  // Download document
-  const downloadDocument = async (doc: PatientDocument) => {
-    try {
-      const url = await getPresignUrl(doc.storageKey)
-      const response = await fetch(url)
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = doc.originalFileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(blobUrl)
-    } catch (err: any) {
-      console.error('Error downloading document:', err)
-      toast.add({
-        title: 'Erreur',
-        description: 'Échec du téléchargement du document',
-        color: 'error'
-      })
-    }
-  }
-
-  // Dropdown menu items for document actions
-  function getDocumentActions(doc: PatientDocument): DropdownMenuItem[][] {
-    return [
-      [
-        ...(isViewableByBrowser(doc.mimeType)
-          ? [
-              {
-                label: 'Voir',
-                icon: 'i-hugeicons-view',
-                onSelect: () => documentViewerModal.open({ document: doc, patientId: props.treatmentPlan.patientId })
-              }
-            ]
-          : []),
-        {
-          label: 'Télécharger',
-          icon: 'i-hugeicons-download-01',
-          onSelect: () => downloadDocument(doc)
-        },
-        {
-          label: 'Modifier',
-          icon: 'i-hugeicons-pencil-edit-01',
-          disabled: !!editingDocument.value,
-          onSelect: () => startEditDocument(doc)
-        }
-      ],
-      [
-        {
-          label: 'Supprimer',
-          icon: 'i-hugeicons-delete-02',
-          color: 'error',
-          disabled: isDeleting.value,
-          onSelect: () => confirmDeleteDocument(doc)
-        }
-      ]
-    ]
-  }
 
   // Computed properties
   const hasDocuments = computed(() => !!(documents.value?.length || uploadedFiles.value.length))
@@ -197,84 +127,6 @@
     } finally {
       documentLoading.value = false
     }
-  }
-
-  // Edit functions
-  function startEditDocument(document: PatientDocument) {
-    editingDocument.value = { ...document }
-  }
-
-  function cancelEditDocument() {
-    editingDocument.value = null
-  }
-
-  async function saveDocumentEdit() {
-    if (!editingDocument.value) return
-
-    try {
-      updateDocument({
-        documentId: editingDocument.value.id,
-        data: {
-          description: editingDocument.value.description || undefined,
-          category: editingDocument.value.category
-        }
-      })
-      cancelEditDocument()
-    } catch (error) {
-      console.error('Error updating document:', error)
-    }
-  }
-
-  // Delete functions
-  async function confirmDeleteDocument(document: PatientDocument) {
-    const confirmed = await confirmModal.open({
-      title: 'Supprimer le document',
-      message: `Êtes-vous sûr de vouloir supprimer "${document.originalFileName}" ? Cette action est irréversible.`,
-      confirmText: 'Supprimer',
-      cancelText: 'Annuler',
-      confirmColor: 'error',
-      icon: 'i-hugeicons-delete-02'
-    })
-
-    if (confirmed) {
-      try {
-        deleteDocument({ documentId: document.id })
-
-        // Optimistic UI update
-        if (documents.value) {
-          documents.value = documents.value.filter((doc) => doc.id !== document.id)
-        }
-      } catch (error) {
-        console.error('Error deleting document:', error)
-      }
-    }
-  }
-
-  // Keyboard shortcuts
-  onKeyStroke('Escape', () => {
-    if (editingDocument.value) {
-      cancelEditDocument()
-    }
-  })
-
-  function isViewableByBrowser(mimeType: string): boolean {
-    const viewableTypes = [
-      'application/pdf',
-      'text/plain',
-      'text/html',
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'image/svg+xml',
-      'video/mp4',
-      'video/webm',
-      'audio/mpeg',
-      'audio/wav',
-      'audio/ogg'
-    ]
-    return viewableTypes.includes(mimeType)
   }
 </script>
 
@@ -388,94 +240,13 @@
                 ]"
               />
 
-              <div
+              <DocumentCard
                 v-for="doc in documents"
                 :key="doc.id"
-                class="border-default bg-muted items-start gap-4 space-y-2 rounded-md border p-2"
-                :class="{ 'ring-neutral ring-2 ring-offset-2': editingDocument?.id === doc.id }"
-              >
-                <!-- Edit Mode -->
-                <div v-if="editingDocument?.id === doc.id" class="w-full space-y-3">
-                  <div class="flex items-center gap-3">
-                    <UBadge
-                      :icon="getDocumentIcon(editingDocument.category)"
-                      :color="getDocumentColor(editingDocument.category)"
-                      variant="soft"
-                      size="lg"
-                      square
-                    />
-                    <p class="text-default text-sm font-medium">{{ doc.description || doc.originalFileName }}</p>
-                  </div>
-                  <div class="grid gap-4">
-                    <UFormField label="Titre descriptif du document" size="xs">
-                      <UInput
-                        v-model="editingDocument.description"
-                        variant="outline"
-                        placeholder="Titre descriptif"
-                        size="sm"
-                        class="w-full"
-                      />
-                    </UFormField>
-                    <UFormField label="Type de document" size="xs">
-                      <USelect
-                        v-model="editingDocument.category"
-                        value-key="value"
-                        variant="outline"
-                        size="sm"
-                        :items="DOCUMENT_CATEGORY_OPTIONS"
-                        class="w-full"
-                      />
-                    </UFormField>
-                  </div>
-
-                  <div class="flex justify-end gap-2">
-                    <UButton variant="outline" color="neutral" size="sm" @click="cancelEditDocument">Annuler</UButton>
-                    <UButton
-                      color="primary"
-                      size="sm"
-                      :loading="isUpdating"
-                      :disabled="isUpdating"
-                      @click="saveDocumentEdit"
-                    >
-                      Enregistrer
-                    </UButton>
-                  </div>
-                </div>
-
-                <!-- View Mode -->
-                <div v-if="editingDocument?.id !== doc.id" class="relative flex items-start gap-4">
-                  <UBadge
-                    :icon="getDocumentIcon(doc.category)"
-                    :color="getDocumentColor(doc.category)"
-                    variant="soft"
-                    size="lg"
-                    square
-                  />
-                  <div class="flex min-w-0 grow flex-col">
-                    <span class="text-primary text-[10px] leading-none font-semibold uppercase">
-                      {{ getDocumentCategoryLabel(doc.category) }}
-                    </span>
-
-                    <span class="text-default truncate text-sm font-medium">
-                      {{ doc.description || doc.originalFileName }}
-                    </span>
-
-                    <time class="text-muted text-xs">
-                      {{ formatFrenchDate(doc.createdAt) }}
-                    </time>
-                  </div>
-
-                  <!-- DropdownMenu -->
-                  <UDropdownMenu
-                    size="sm"
-                    :items="getDocumentActions(doc)"
-                    :content="{ align: 'end' }"
-                    class="absolute top-0 right-0"
-                  >
-                    <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
-                  </UDropdownMenu>
-                </div>
-              </div>
+                :document="doc"
+                :patient-id="treatmentPlan.patientId"
+                variant="mini"
+              />
             </div>
           </div>
 
