@@ -3,26 +3,50 @@
     label: string
     value: string
     description: string
-    status: TreatmentPlan['status']
+    status: TreatmentPlan['status'] | 'all'
   }
 
-  const props = defineProps<{
-    patient: Patient
+  interface Props {
     treatmentPlans: readonly TreatmentPlanWithProgress[]
-  }>()
+    showAllOption?: boolean
+    allOptionLabel?: string
+    allOptionDescription?: string
+  }
+
+  const {
+    treatmentPlans,
+    showAllOption,
+    allOptionLabel = 'Tous les plans',
+    allOptionDescription = 'Afficher tous les plans de traitement'
+  } = defineProps<Props>()
+
+  const { getTherapistName } = useOrganizationMembers()
 
   const selectedPlanId = defineModel<string>('selectedPlanId', { required: true })
 
-  const selectedPlan = computed(() => props.treatmentPlans.find((p) => p.id === selectedPlanId.value) ?? null)
+  const selectedPlan = computed(() => treatmentPlans.find((p) => p.id === selectedPlanId.value) ?? null)
 
   const planOptions = computed<PlanOption[]>(() => {
-    return props.treatmentPlans.map((plan) => ({
+    const allOption: PlanOption | null = showAllOption
+      ? {
+          label: allOptionLabel,
+          value: 'all',
+          description: allOptionDescription,
+          status: 'all'
+        }
+      : null
+
+    const planOptions = treatmentPlans.map((plan) => ({
       label: plan.title || 'Plan sans titre',
       value: plan.id,
-      description: formatFrenchDateRange(plan.startDate, plan.endDate),
+      description: `${formatFrenchDateRange(plan.startDate, plan.endDate)} · ${getTherapistName(plan.therapistId)}`,
       status: plan.status
     }))
+
+    return allOption ? [allOption, ...planOptions] : planOptions
   })
+
+  const isAllSelected = computed(() => selectedPlanId.value === 'all')
 </script>
 
 <template>
@@ -32,6 +56,7 @@
     value-key="value"
     size="xl"
     variant="outline"
+    :clear="!isAllSelected && showAllOption"
     :search-input="{
       placeholder: 'Rechercher un plan de traitement...',
       icon: 'i-hugeicons-search-01'
@@ -40,8 +65,18 @@
       base: 'border-primary border ring-0 border-dashed bg-primary/5 hover:bg-default w-full cursor-pointer rounded-xl ',
       trailingIcon: 'size-8'
     }"
+    @clear="selectedPlanId = 'all'"
   >
-    <div v-if="selectedPlan" class="flex w-full items-center gap-3 p-2">
+    <div v-if="isAllSelected" class="flex w-full items-center gap-3 p-2">
+      <AppIconBox name="i-hugeicons:file-01" color="neutral" size="xl" class="shrink-0 rounded" />
+      <div class="flex-1 text-left">
+        <h3 class="text-lg font-bold">
+          {{ allOptionLabel || 'Tous les plans' }}
+        </h3>
+        <p class="text-muted text-xs">{{ allOptionDescription || 'Afficher tous les documents' }}</p>
+      </div>
+    </div>
+    <div v-else-if="selectedPlan" class="flex w-full items-center gap-3 p-2">
       <AppIconBox
         :name="getTreatmentPlanStatusIcon(selectedPlan.status)"
         :color="getTreatmentPlanStatusColor(selectedPlan.status)"
@@ -63,19 +98,24 @@
     <template #item="{ item }">
       <div class="flex w-full items-center gap-3 p-2">
         <AppIconBox
-          :name="getTreatmentPlanStatusIcon(item.status)"
-          :color="getTreatmentPlanStatusColor(item.status)"
+          :name="item.status === 'all' ? 'i-hugeicons:file-01' : getTreatmentPlanStatusIcon(item.status)"
+          :color="item.status === 'all' ? 'neutral' : getTreatmentPlanStatusColor(item.status)"
           class="shrink-0"
         />
         <div class="flex-1 text-left">
           <h3 class="text-sm font-semibold">
             {{ item.label }}
           </h3>
-          <p class="text-muted text-[10px]">
-            {{ getTreatmentPlanStatusDescription(item.status) }}
+          <p class="text-muted text-xs">
+            {{ item.description }}
           </p>
         </div>
-        <UBadge :color="getTreatmentPlanStatusColor(item.status)" variant="solid" size="md">
+        <UBadge
+          v-if="item.status !== 'all'"
+          :color="getTreatmentPlanStatusColor(item.status)"
+          variant="solid"
+          size="md"
+        >
           {{ getTreatmentPlanStatusLabel(item.status) }}
         </UBadge>
       </div>
