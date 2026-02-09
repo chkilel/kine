@@ -8,17 +8,14 @@
   }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  // Date formatter
+  const df = new DateFormatter('fr-FR', { dateStyle: 'long' })
+
   const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
-  if (!user || !activeOrganization.value.data) {
-    await navigateTo('/login')
-  }
-  // Date formatter
-  const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
-
   const { mutate: createTreatmentPlan } = useCreateTreatmentPlan()
   const { mutate: updateTreatmentPlan } = useUpdateTreatmentPlan()
-  const { therapists, getTherapistName } = useOrganizationMembers()
+  const { therapists } = useOrganizationMembers()
 
   const loading = ref(false)
   const isEditMode = computed(() => !!props.treatmentPlan)
@@ -129,8 +126,8 @@
     :title="isEditMode ? 'Modifier un plan de traitement' : 'Créer un plan de traitement'"
     :description="
       isEditMode
-        ? 'Modifiez les informations du plan de traitement.'
-        : 'Ajoutez les informations de base du plan de traitement.'
+        ? 'Ajustez les paramètres du plan : prescription, objectifs, séances et suivi.'
+        : 'Configurez un plan complet : médecin prescripteur, diagnostic, objectifs, séances et couverture.'
     "
     :ui="{ content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated' }"
   >
@@ -143,8 +140,9 @@
         @submit="handleSubmit"
       >
         <div class="space-y-6">
-          <!-- Patient Information -->
+          <!-- Medical Data and Insurance -->
           <UCard variant="outline">
+            <h3 class="text-highlighted mb-4 text-base font-bold">Prescription et couverture</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Médecin prescripteur" name="prescribingDoctor" required>
                 <UInput v-model="formState.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
@@ -163,12 +161,25 @@
                   </template>
                 </UPopover>
               </UFormField>
+              <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
+                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+              </UFormField>
+              <UFormField label="Statut de couverture">
+                <USelectMenu
+                  v-model="formState.coverageStatus"
+                  :items="INSURANCE_COVERAGE_OPTIONS"
+                  value-key="value"
+                  label-key="label"
+                  placeholder="Selectionner ..."
+                  class="w-full"
+                />
+              </UFormField>
             </div>
           </UCard>
 
           <!-- Treatment Plan Details -->
           <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Détails du plan de traitement</h3>
+            <h3 class="text-highlighted mb-4 text-base font-bold">Contenu du plan</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Titre" name="title" required class="md:col-span-2">
                 <UInput v-model="formState.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
@@ -225,26 +236,6 @@
                     <UCalendar v-model="startDateModel" class="p-2" />
                   </template>
                 </UPopover>
-              </UFormField>
-            </div>
-          </UCard>
-
-          <!-- Medical Data and Insurance -->
-          <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Données médicales et assurance</h3>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
-                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
-              </UFormField>
-              <UFormField label="Statut de couverture">
-                <USelectMenu
-                  v-model="formState.coverageStatus"
-                  :items="INSURANCE_COVERAGE_OPTIONS"
-                  value-key="value"
-                  label-key="label"
-                  placeholder="Selectionner ..."
-                  class="w-full"
-                />
               </UFormField>
             </div>
           </UCard>
