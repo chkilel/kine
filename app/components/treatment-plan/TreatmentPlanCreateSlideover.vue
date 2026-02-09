@@ -38,7 +38,6 @@
     endDate: props.treatmentPlan?.endDate,
     numberOfSessions: props.treatmentPlan?.numberOfSessions || 0,
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
-    painLevel: props.treatmentPlan?.painLevel || 10,
     coverageStatus: props.treatmentPlan?.coverageStatus || 'not_required',
     insuranceInfo: props.treatmentPlan?.insuranceInfo || '',
     notes: props.treatmentPlan?.notes || null
@@ -103,7 +102,6 @@
       endDate: undefined,
       numberOfSessions: 4,
       sessionFrequency: undefined,
-      painLevel: 4,
       coverageStatus: 'not_required',
       insuranceInfo: '',
       notes: undefined
@@ -235,19 +233,6 @@
           <UCard variant="outline">
             <h3 class="text-highlighted mb-4 text-base font-bold">Données médicales et assurance</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <UFormField
-                label="Niveau de douleur actuel"
-                name="painLevel"
-                help="Échelle de 0 à 10"
-                class="md:col-span-2"
-              >
-                <div class="space-y-2">
-                  <div class="flex justify-between text-xs">
-                    <span v-for="(item, index) in [...Array(11).keys()]" :key="index">{{ item }}</span>
-                  </div>
-                  <USlider v-model="formState.painLevel" :min="0" :max="10" :step="1" class="w-full flex-1" />
-                </div>
-              </UFormField>
               <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
                 <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
               </UFormField>
@@ -261,30 +246,6 @@
                   class="w-full"
                 />
               </UFormField>
-            </div>
-          </UCard>
-
-          <!-- Summary -->
-          <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Résumé avant validation</h3>
-            <div class="text-muted space-y-3 text-sm">
-              <p>
-                <strong>Patient :</strong>
-                {{ `${patient.firstName} ${patient.lastName}` }}
-              </p>
-              <p>
-                <strong>Plan :</strong>
-                {{ formState.title || 'Non défini' }}
-              </p>
-              <p>
-                <strong>Kinésithérapeute :</strong>
-                {{ getTherapistName(formState.therapistId) }}
-              </p>
-              <p>
-                <strong>Période :</strong>
-                À partir du
-                {{ startDateModel ? df.format(startDateModel.toDate(getLocalTimeZone())) : '[Date de début]' }}
-              </p>
             </div>
           </UCard>
         </div>

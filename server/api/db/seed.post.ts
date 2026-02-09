@@ -874,7 +874,6 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       status,
       prescribingDoctor: 'Dr. Smith',
       prescriptionDate: startDate,
-      painLevel: randomInt(0, 10),
       coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
       insuranceInfo: 'Insurance Co. Ltd.',
       notes: []

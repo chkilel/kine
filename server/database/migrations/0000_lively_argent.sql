@@ -310,7 +310,6 @@ CREATE TABLE `treatment_plans` (
 	`status` text DEFAULT 'planned' NOT NULL,
 	`prescribingDoctor` text,
 	`prescriptionDate` text NOT NULL,
-	`painLevel` integer DEFAULT 0 NOT NULL,
 	`coverageStatus` text,
 	`insuranceInfo` text,
 	`notes` text DEFAULT '[]',
