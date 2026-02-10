@@ -68,9 +68,11 @@
 <template>
   <AppCard title="Détail du plan" class="relative">
     <template #actions>
-      <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }" class="absolute top-3 right-2">
-        <UButton icon="i-hugeicons-more-vertical" color="neutral" variant="ghost" size="sm" />
-      </UDropdownMenu>
+      <ClientOnly>
+        <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }" class="absolute top-3 right-2">
+          <UButton icon="i-hugeicons-more-vertical" color="neutral" variant="ghost" size="sm" />
+        </UDropdownMenu>
+      </ClientOnly>
     </template>
     <div class="flex flex-col gap-4 text-xs">
       <div class="flex items-center justify-between">
