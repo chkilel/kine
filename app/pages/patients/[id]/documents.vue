@@ -1,7 +1,11 @@
 <script setup lang="ts">
   import type { SelectItem } from '@nuxt/ui'
+  import { LazyDocumentCreateSlideover } from '#components'
 
   const route = useRoute()
+
+  const overlay = useOverlay()
+  const documentCreateOverlay = overlay.create(LazyDocumentCreateSlideover)
 
   const categoryFilter = [
     { label: 'Tous les types', value: 'all', icon: 'i-hugeicons-paragraph-bullets-point-01' },
@@ -55,6 +59,15 @@
   })
 
   const isLoading = computed(() => patientLoading.value || treatmentPlansLoading.value || documentsLoading.value)
+
+  function handleAddDocument() {
+    if (!patient.value) return
+    const planId = selectedPlanId.value === 'all' ? undefined : selectedPlanId.value
+    documentCreateOverlay.open({
+      patient: patient.value,
+      treatmentPlanId: planId
+    })
+  }
 </script>
 
 <template>
@@ -71,7 +84,14 @@
         />
       </div>
       <div class="flex w-full flex-col gap-2 md:w-48 md:items-end">
-        <UButton icon="i-hugeicons-plus-sign" label="Ajouter un document" color="primary" size="lg" block />
+        <UButton
+          icon="i-hugeicons-plus-sign"
+          label="Ajouter un document"
+          color="primary"
+          size="lg"
+          block
+          @click="handleAddDocument"
+        />
         <div class="w-full">
           <USelect v-model="selectedDocumentType" :items="categoryFilter" :icon="icon" size="lg" class="w-full" />
         </div>
