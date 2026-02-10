@@ -5,7 +5,7 @@
 import type { DocumentCategory } from '../types/base.types'
 
 export const MAX_FILE_SIZE = 4 * 1024 * 1024
-export const ACCEPTED_FILE_TYPES = '.pdf,.jpg,.jpeg,.png,.doc,.docx'
+export const ACCEPTED_FILE_TYPES = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']
 
 // Valid document types for patient files
 export const VALID_DOCUMENT_TYPES = [

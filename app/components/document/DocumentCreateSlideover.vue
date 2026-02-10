@@ -1,11 +1,4 @@
 <script setup lang="ts">
-  interface UploadedFile {
-    file: File
-    title: string
-    category: DocumentCategory
-    description: string
-  }
-
   const props = defineProps<{
     patient: Patient
     treatmentPlanId?: string
@@ -13,154 +6,19 @@
 
   const emit = defineEmits<{ close: [] }>()
 
-  const toast = useToast()
-  const queryCache = useQueryCache()
-  const { uploadFile } = useUploads()
-
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patient.id)
 
-  const uploadedFiles = ref<UploadedFile[]>([])
   const selectedPlanId = ref<string>(props.treatmentPlanId || '')
-  const uploadLoading = ref(false)
   const fileInputRef = ref<HTMLInputElement>()
-  const dragOver = ref(false)
 
-  function handleFileSelect(event: Event) {
-    const target = event.target as HTMLInputElement
-    const files = Array.from(target.files || [])
-    addFiles(files)
-  }
-
-  function handleDrop(event: DragEvent) {
-    dragOver.value = false
-    if (event.dataTransfer?.files) {
-      addFiles(Array.from(event.dataTransfer.files))
-    }
-  }
-
-  function addFiles(files: File[]) {
-    const invalidFiles = files.filter(
-      (file) => file.size > MAX_FILE_SIZE || !file.name.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/i)
-    )
-
-    if (invalidFiles.length > 0) {
-      toast.add({
-        title: 'Fichiers non valides',
-        description: `Certains fichiers dépassent 4MB ou ne sont pas dans un format accepté (PDF, JPG, PNG, DOC, DOCX).`,
-        color: 'error'
-      })
-    }
-
-    const validFiles = files.filter(
-      (file) => file.size <= MAX_FILE_SIZE && file.name.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/i)
-    )
-
-    const newFiles = validFiles.map((file) => ({
-      file,
-      title: file.name.replace(/\.[^/.]+$/, ''),
-      category: 'other' as DocumentCategory,
-      description: ''
-    }))
-
-    uploadedFiles.value.push(...newFiles)
-  }
-
-  function removeFile(index: number) {
-    uploadedFiles.value.splice(index, 1)
-  }
-
-  function openFileDialog() {
-    fileInputRef.value?.click()
-  }
-
-  async function uploadDocuments() {
-    if (!selectedPlanId.value) {
-      toast.add({
-        title: 'Plan de traitement requis',
-        description: 'Veuillez sélectionner un plan de traitement pour ajouter des documents.',
-        color: 'error'
-      })
-      return
-    }
-
-    if (uploadedFiles.value.length === 0) return
-
-    const patientId = props.patient.id
-    const organizationId = props.patient.organizationId
-
-    if (!patientId || !organizationId) {
-      toast.add({
-        title: 'Erreur',
-        description: 'Informations patient manquantes',
-        color: 'error'
-      })
-      return
-    }
-
-    uploadLoading.value = true
-    const uploadedDocuments = []
-
-    try {
-      for (const uploadedFile of uploadedFiles.value) {
-        try {
-          const uploadResult = await uploadFile({
-            file: uploadedFile.file,
-            folder: `orgs/${organizationId}/docs/${patientId}`,
-            name: uploadedFile.file.name
-          })
-
-          const documentData = {
-            organizationId,
-            treatmentPlanId: selectedPlanId.value,
-            fileName: uploadedFile.file.name,
-            originalFileName: uploadedFile.file.name,
-            mimeType: uploadedFile.file.type,
-            fileSize: uploadedFile.file.size,
-            storageKey: uploadResult.key,
-            category: uploadedFile.category,
-            description: uploadedFile.title
-          }
-
-          const document = await $fetch(`/api/patients/${patientId}/documents`, {
-            method: 'POST',
-            body: documentData
-          })
-
-          if (document) {
-            uploadedDocuments.push(document)
-          }
-        } catch (error) {
-          console.error('Error uploading file:', uploadedFile.file.name, error)
-          toast.add({
-            title: 'Erreur',
-            description: `Échec du téléversement de ${uploadedFile.file.name}`,
-            color: 'error'
-          })
-        }
-      }
-
-      if (uploadedDocuments.length > 0) {
-        uploadedFiles.value = []
-        queryCache.invalidateQueries({ key: ['documents', patientId] })
-
-        toast.add({
-          title: 'Succès',
-          description: `${uploadedDocuments.length} document(s) téléversé(s) avec succès`,
-          color: 'success'
-        })
-        emit('close')
-      }
-    } catch (error: any) {
-      console.error('Error uploading documents:', error)
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec du téléversement des documents',
-        color: 'error'
-      })
-    } finally {
-      uploadLoading.value = false
-    }
-  }
+  const { uploadedFiles, documentLoading, handleFileSelect, handleDrop, removeFile, openFileDialog, uploadDocuments } =
+    useDocumentUpload({
+      patientId: () => props.patient.id,
+      organizationId: () => props.patient.organizationId,
+      treatmentPlanId: () => selectedPlanId.value,
+      fileInputRef,
+      onSuccess: () => emit('close')
+    })
 </script>
 
 <template>
@@ -189,17 +47,16 @@
 
           <div
             class="border-default bg-muted/30 mb-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors"
-            :class="{ 'border-primary bg-primary/5': dragOver }"
             @drop.prevent="handleDrop"
-            @dragover.prevent="dragOver = true"
-            @dragleave.prevent="dragOver = false"
+            @dragover.prevent="true"
+            @dragleave.prevent="false"
           >
             <input
               ref="fileInputRef"
               type="file"
               multiple
               class="hidden"
-              :accept="ACCEPTED_FILE_TYPES"
+              :accept="ACCEPTED_FILE_TYPES.join(',')"
               @change="handleFileSelect"
             />
             <UIcon name="i-hugeicons-upload-04" class="text-muted mb-3 size-12" />
@@ -263,15 +120,15 @@
 
     <template #footer>
       <div class="flex w-full justify-end gap-3">
-        <UButton variant="outline" color="neutral" size="lg" :disabled="uploadLoading" @click="emit('close')">
+        <UButton variant="outline" color="neutral" size="lg" :disabled="documentLoading" @click="emit('close')">
           Annuler
         </UButton>
         <UButton
           icon="i-hugeicons-upload-01"
           color="primary"
           size="lg"
-          :loading="uploadLoading"
-          :disabled="uploadLoading || uploadedFiles.length === 0 || !selectedPlanId"
+          :loading="documentLoading"
+          :disabled="documentLoading || uploadedFiles.length === 0 || !selectedPlanId"
           @click="uploadDocuments"
         >
           Téléverser {{ uploadedFiles.length }} document(s)

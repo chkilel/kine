@@ -1,133 +1,21 @@
 <script setup lang="ts">
-  interface UploadedFile {
-    file: File
-    title: string
-    type: DocumentCategory
-    stagedAt: Date
-  }
-
   const props = defineProps<{ treatmentPlan: TreatmentPlan }>()
 
-  const toast = useToast()
-  const queryCache = useQueryCache()
-
-  const { uploadFile } = useUploads()
   const { data: documents } = useDocumentsList(
     () => props.treatmentPlan.patientId,
     () => props.treatmentPlan.id
   )
 
-  const uploadedFiles = ref<UploadedFile[]>([])
+  const hasDocuments = computed(() => !!documents.value?.length)
   const fileInputRef = ref<HTMLInputElement>()
-  const documentLoading = ref(false)
 
-  // Computed properties
-  const hasDocuments = computed(() => !!(documents.value?.length || uploadedFiles.value.length))
-
-  // File management
-  function handleFileSelect(event: Event) {
-    const target = event.target as HTMLInputElement
-    const files = Array.from(target.files || [])
-
-    const newFiles = files.map((file) => ({
-      file,
-      title: file.name,
-      type: 'other' as DocumentCategory,
-      stagedAt: new Date()
-    }))
-
-    uploadedFiles.value.push(...newFiles)
-  }
-
-  function removeFile(index: number) {
-    uploadedFiles.value.splice(index, 1)
-  }
-
-  function openFileDialog() {
-    fileInputRef.value?.click()
-  }
-
-  // Upload documents
-  async function uploadDocuments() {
-    if (uploadedFiles.value.length === 0) return
-
-    const { id: planId, patientId, organizationId } = props.treatmentPlan
-
-    if (!planId) {
-      toast.add({
-        title: 'Erreur',
-        description: 'Aucun plan de traitement actif',
-        color: 'error'
-      })
-      return
-    }
-
-    documentLoading.value = true
-    const uploadedDocuments = []
-
-    try {
-      for (const uploadedFile of uploadedFiles.value) {
-        try {
-          const uploadResult = await uploadFile({
-            file: uploadedFile.file,
-            folder: `orgs/${organizationId}/docs/${patientId}`,
-            name: uploadedFile.file.name
-          })
-
-          const documentData = {
-            organizationId,
-            treatmentPlanId: planId,
-            fileName: uploadedFile.file.name,
-            originalFileName: uploadedFile.file.name,
-            mimeType: uploadedFile.file.type,
-            fileSize: uploadedFile.file.size,
-            storageKey: uploadResult.key,
-            category: uploadedFile.type,
-            description: uploadedFile.title
-          }
-
-          const document = await $fetch(`/api/patients/${patientId}/documents`, {
-            method: 'POST',
-            body: documentData
-          })
-
-          if (document) {
-            uploadedDocuments.push(document)
-          }
-        } catch (error) {
-          console.error('Error uploading file:', uploadedFile.file.name, error)
-          toast.add({
-            title: 'Erreur',
-            description: `Échec du téléversement de ${uploadedFile.file.name}`,
-            color: 'error'
-          })
-        }
-      }
-
-      if (uploadedDocuments.length > 0) {
-        uploadedFiles.value = []
-        await refreshNuxtData()
-        queryCache.invalidateQueries({
-          key: ['documents', props.treatmentPlan.patientId]
-        })
-
-        toast.add({
-          title: 'Succès',
-          description: `${uploadedDocuments.length} document(s) téléversé(s) avec succès`,
-          color: 'success'
-        })
-      }
-    } catch (error: any) {
-      console.error('Error uploading documents:', error)
-      toast.add({
-        title: 'Erreur',
-        description: error.data?.statusMessage || 'Échec du téléversement des documents',
-        color: 'error'
-      })
-    } finally {
-      documentLoading.value = false
-    }
-  }
+  const { uploadedFiles, documentLoading, handleFileSelect, removeFile, openFileDialog, uploadDocuments } =
+    useDocumentUpload({
+      patientId: () => props.treatmentPlan.patientId,
+      organizationId: () => props.treatmentPlan.organizationId,
+      treatmentPlanId: () => props.treatmentPlan.id,
+      fileInputRef
+    })
 </script>
 
 <template>
@@ -154,7 +42,7 @@
             type="file"
             multiple
             class="hidden"
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            :accept="ACCEPTED_FILE_TYPES.join(',')"
             @change="handleFileSelect"
           />
 
@@ -195,7 +83,7 @@
                   </UFormField>
                   <UFormField label="Type de document" size="xs">
                     <USelect
-                      v-model="uploadedFile.type"
+                      v-model="uploadedFile.category"
                       value-key="value"
                       variant="outline"
                       size="sm"
