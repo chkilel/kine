@@ -11,13 +11,17 @@
     showAllOption?: boolean
     allOptionLabel?: string
     allOptionDescription?: string
+    placeholder?: string
+    hint?: string
   }
 
   const {
     treatmentPlans,
     showAllOption,
     allOptionLabel = 'Tous les plans',
-    allOptionDescription = 'Afficher tous les plans de traitement'
+    allOptionDescription = 'Afficher tous les plans de traitement',
+    placeholder = 'Sélectionner un plan de traitement...',
+    hint
   } = defineProps<Props>()
 
   const { getTherapistName } = useOrganizationMembers()
@@ -56,6 +60,7 @@
     value-key="value"
     size="xl"
     variant="outline"
+    :placeholder="placeholder"
     :clear="!isAllSelected && showAllOption"
     :search-input="{
       placeholder: 'Rechercher un plan de traitement...',
@@ -94,6 +99,15 @@
       <UBadge :color="getTreatmentPlanStatusColor(selectedPlan.status)" variant="solid" size="md">
         {{ getTreatmentPlanStatusLabel(selectedPlan.status) }}
       </UBadge>
+    </div>
+    <div v-else-if="!selectedPlanId" class="flex w-full items-center gap-3 p-2">
+      <AppIconBox name="i-hugeicons:first-aid-kit" color="neutral" size="xl" class="shrink-0 rounded" />
+      <div class="flex-1 text-left">
+        <h3 class="text-lg font-bold">
+          {{ placeholder }}
+        </h3>
+        <p v-if="hint" class="text-muted text-xs">{{ hint }}</p>
+      </div>
     </div>
     <template #item="{ item }">
       <div class="flex w-full items-center gap-3 p-2">
