@@ -1,16 +1,6 @@
 <script setup lang="ts">
   const emergencyContacts = defineModel<EmergencyContact[] | null>()
 
-  watch(
-    emergencyContacts,
-    (v) => {
-      console.log('🚀 >>> ', 'v', ': ', v)
-    },
-    {
-      immediate: true
-    }
-  )
-
   const contactState = reactive({
     editingIndex: null as number | null,
     name: '',
@@ -74,16 +64,16 @@
       <div v-for="(contact, index) in emergencyContacts" :key="`contact-${index}`" class="py-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <UBadge icon="i-lucide-user" color="primary" variant="soft" size="lg" square />
+            <UBadge icon="i-hugeicons-user" color="primary" variant="soft" size="lg" square />
             <div>
               <p class="font-semibold">{{ contact.name || 'Contact sans nom' }}</p>
               <p class="text-muted flex gap-4 text-xs">
                 <span class="flex items-center gap-1">
-                  <UIcon name="i-lucide-phone" class="h-3 w-3" />
+                  <UIcon name="i-hugeicons-call-02" class="h-3 w-3" />
                   {{ contact.number }}
                 </span>
                 <span v-if="contact.relationship" class="ml-2 flex items-center gap-1">
-                  <UIcon name="i-lucide-users" class="h-3 w-3" />
+                  <UIcon name="i-hugeicons-user-group" class="h-3 w-3" />
                   {{ getRelationshipLabel(contact.relationship) }}
                 </span>
               </p>
@@ -91,7 +81,7 @@
           </div>
           <div class="flex items-center gap-2">
             <UButton
-              icon="i-lucide-edit-2"
+              icon="i-hugeicons-edit-04"
               variant="ghost"
               color="neutral"
               size="sm"
@@ -99,7 +89,7 @@
               @click="startEditContact(index)"
             />
             <UButton
-              icon="i-lucide-trash-2"
+              icon="i-hugeicons-delete-02"
               variant="ghost"
               color="error"
               size="sm"
@@ -116,7 +106,14 @@
         <h4 class="font-semibold">
           {{ isEditingContact ? 'Modifier le contact' : 'Ajouter un contact' }}
         </h4>
-        <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" square @click="resetContactForm" />
+        <UButton
+          icon="i-hugeicons-cancel-01"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          square
+          @click="resetContactForm"
+        />
       </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <UFormField label="Nom du contact">
@@ -151,12 +148,12 @@
     <UEmpty
       v-if="!emergencyContacts?.length && !contactState.isAdding"
       variant="naked"
-      icon="i-lucide-id-card"
+      icon="i-hugeicons-identity-card"
       title="Aucun contact d'urgence ajouté"
       description="Il semble que vous n'ayez ajouté aucun contact. Ajoutez-en un pour commencer."
       :actions="[
         {
-          icon: 'i-lucide-plus',
+          icon: 'i-hugeicons-add-01',
           label: 'Ajouter un contact',
           variant: 'subtle',
           onClick(event) {
@@ -169,7 +166,7 @@
 
     <UButton
       v-if="emergencyContacts?.length && !contactState.isAdding"
-      icon="i-lucide-plus"
+      icon="i-hugeicons-add-01"
       label="Ajouter un autre contact"
       color="primary"
       variant="outline"
