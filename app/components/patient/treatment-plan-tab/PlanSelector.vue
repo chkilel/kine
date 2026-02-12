@@ -6,29 +6,27 @@
     status: TreatmentPlan['status'] | 'all'
   }
 
-  interface Props {
-    treatmentPlans: readonly TreatmentPlanWithProgress[]
+  const selectedPlanId = defineModel<string>('selectedPlanId', { required: true })
+  const {
+    showAllOption,
+    patientId,
+    allOptionLabel = 'Tous les plans',
+    allOptionDescription = 'Afficher tous les plans de traitement',
+    placeholder = 'Sélectionner un plan de traitement...',
+    hint
+  } = defineProps<{
+    patientId: string
     showAllOption?: boolean
     allOptionLabel?: string
     allOptionDescription?: string
     placeholder?: string
     hint?: string
-  }
-
-  const {
-    treatmentPlans,
-    showAllOption,
-    allOptionLabel = 'Tous les plans',
-    allOptionDescription = 'Afficher tous les plans de traitement',
-    placeholder = 'Sélectionner un plan de traitement...',
-    hint
-  } = defineProps<Props>()
+  }>()
 
   const { getTherapistName } = useOrganizationMembers()
+  const { treatmentPlansGroupedByStatus: treatmentPlans } = usePatientTreatmentPlans(() => patientId)
 
-  const selectedPlanId = defineModel<string>('selectedPlanId', { required: true })
-
-  const selectedPlan = computed(() => treatmentPlans.find((p) => p.id === selectedPlanId.value) ?? null)
+  const selectedPlan = computed(() => treatmentPlans.value.find((p) => p.id === selectedPlanId.value) ?? null)
 
   const planOptions = computed<PlanOption[]>(() => {
     const allOption: PlanOption | null = showAllOption
@@ -40,7 +38,7 @@
         }
       : null
 
-    const planOptions = treatmentPlans.map((plan) => ({
+    const planOptions = treatmentPlans.value.map((plan) => ({
       label: plan.title || 'Plan sans titre',
       value: plan.id,
       description: `${formatFrenchDateRange(plan.startDate, plan.endDate)} · ${getTherapistName(plan.therapistId)}`,

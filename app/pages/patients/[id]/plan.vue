@@ -8,7 +8,7 @@
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
   const {
     refetchTreatmentPlans,
-    treatmentPlans,
+    treatmentPlansGroupedByStatus,
     latestActiveTreatmentPlan,
     loading: treatmentPlansLoading,
     error: treatmentPlansError
@@ -17,11 +17,9 @@
   // Get selected plan from URL or default to latest active
   const selectedPlanId = computed<string>({
     get: () => {
-      const planId = route.query.planId as string | undefined
-      if (planId && treatmentPlans.value?.some((p) => p.id === planId)) {
-        return planId
-      }
-      return latestActiveTreatmentPlan.value?.id ?? ''
+      const routePlanId = route.query.planId as string | undefined
+
+      return routePlanId ?? latestActiveTreatmentPlan.value?.id ?? ''
     },
     set: (id) => {
       navigateTo({
@@ -32,8 +30,8 @@
   })
 
   const selectedTreatmentPlan = computed((): TreatmentPlanWithProgress | null => {
-    if (!treatmentPlans.value || !selectedPlanId.value) return null
-    const plan = treatmentPlans.value.find((p) => p.id === selectedPlanId.value)
+    if (!treatmentPlansGroupedByStatus.value || !selectedPlanId.value) return null
+    const plan = treatmentPlansGroupedByStatus.value.find((p) => p.id === selectedPlanId.value)
     return plan ? ({ ...plan } as TreatmentPlanWithProgress) : null
   })
 
@@ -81,7 +79,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!treatmentPlans?.length" class="mt-6">
+    <div v-else-if="!treatmentPlansGroupedByStatus?.length" class="mt-6">
       <UEmpty
         icon="i-lucide-clipboard-plus"
         title="Aucun plan de traitement"
@@ -100,11 +98,7 @@
     <!-- Treatment Plan Content -->
     <div v-else class="space-y-4">
       <!-- Plan Selector -->
-      <PatientTreatmentPlanTabPlanSelector
-        :patient="patient"
-        :treatment-plans="(treatmentPlans || []) as readonly TreatmentPlanWithProgress[]"
-        v-model:selected-plan-id="selectedPlanId"
-      />
+      <PatientTreatmentPlanTabPlanSelector :patient-id="patient.id" v-model:selected-plan-id="selectedPlanId" />
 
       <!-- Selected Plan Content -->
       <div v-if="selectedTreatmentPlan">

@@ -76,8 +76,7 @@
       <div v-if="patient" class="w-full">
         <PatientTreatmentPlanTabPlanSelector
           v-model:selected-plan-id="selectedPlanId"
-          :patient="patient"
-          :treatment-plans="(treatmentPlans || []) as readonly TreatmentPlanWithProgress[]"
+          :patient-id="patient.id"
           show-all-option
           all-option-label="Tous les documents"
           all-option-description="Afficher tous les documents du patient"

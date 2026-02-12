@@ -6,8 +6,6 @@
 
   const emit = defineEmits<{ close: [] }>()
 
-  const { treatmentPlans } = usePatientTreatmentPlans(() => props.patient.id)
-
   const selectedPlanId = ref<string>(props.treatmentPlanId || '')
   const fileInputRef = ref<HTMLInputElement>()
 
@@ -35,7 +33,7 @@
           <UFormField label="Sélectionner un plan" required>
             <PatientTreatmentPlanTabPlanSelector
               v-model:selected-plan-id="selectedPlanId"
-              :treatment-plans="(treatmentPlans || []) as readonly TreatmentPlanWithProgress[]"
+              :patient-id="patient.id"
               placeholder="Sélectionner un plan de traitement"
               hint="Tous les documents doivent être associés à un plan de traitement."
             />
