@@ -123,7 +123,7 @@
   <!-- Mini Variant (List Item) -->
   <div
     v-if="variant === 'mini'"
-    class="border-default bg-muted items-start gap-4 space-y-2 rounded-md border p-2"
+    class="border-default bg-muted gap-4 space-y-2 rounded-md border p-2.5"
     :class="{ 'ring-neutral ring-2 ring-offset-2': isEditing }"
   >
     <!-- Edit Mode -->
@@ -171,7 +171,7 @@
     </div>
 
     <!-- View Mode -->
-    <div v-else class="relative flex items-start gap-4">
+    <div v-else class="flex items-start gap-4">
       <UBadge
         :icon="getDocumentIcon(patientDocument.category)"
         :color="getDocumentColor(patientDocument.category)"
@@ -179,7 +179,7 @@
         size="lg"
         square
       />
-      <div class="flex min-w-0 grow flex-col">
+      <div class="flex min-w-0 grow flex-col space-y-1">
         <span class="text-primary text-[10px] leading-none font-semibold uppercase">
           {{ getDocumentCategoryLabel(patientDocument.category) }}
         </span>
@@ -188,16 +188,17 @@
           {{ patientDocument.description || patientDocument.originalFileName }}
         </span>
 
-        <time class="text-muted text-xs">
-          {{ formatFrenchDate(patientDocument.createdAt) }}
-        </time>
+        <div class="mt-1 flex items-center justify-between text-xs">
+          <time class="text-muted text-xs">
+            {{ formatFrenchDate(patientDocument.createdAt) }}
+          </time>
+          <ClientOnly>
+            <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
+              <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
+            </UDropdownMenu>
+          </ClientOnly>
+        </div>
       </div>
-
-      <ClientOnly>
-        <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }" class="absolute top-0 right-0">
-          <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
-        </UDropdownMenu>
-      </ClientOnly>
     </div>
   </div>
 
