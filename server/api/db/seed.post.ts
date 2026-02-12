@@ -929,7 +929,7 @@ function generateConsultations(
   therapistExceptions: any[]
 ): any[] {
   const activePlanIds = new Set(
-    treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
+    treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
   )
 
   const minPerPatient = SEED_CONFIG.consultations.minPerPatient
@@ -1192,7 +1192,7 @@ function generateConsultations(
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
-      const activePlans = treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status))
+      const activePlans = treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status))
       const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
       const selectedPlan = randomItem(source)
       if (selectedPlan) {
