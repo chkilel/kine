@@ -65,7 +65,9 @@
     </template>
     <template v-if="!hasMedicalInfo">
       <UEmpty
-        icon="i-lucide-heartbeat"
+        size="sm"
+        variant="subtle"
+        icon="i-hugeicons-medical-file"
         title="Aucune information médicale"
         description="Aucune donnée médicale n'a été enregistrée pour ce patient."
       />
