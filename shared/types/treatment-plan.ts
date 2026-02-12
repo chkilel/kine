@@ -11,16 +11,44 @@ z.config(fr())
 // =============================================================================
 // Treatment Plan Schemas and Types
 // =============================================================================
+
+export const treatmentPlanSchema = createSelectSchema(treatmentPlans, {
+  id: z.string(),
+  organizationId: z.string(),
+  patientId: z.string(),
+  therapistId: z.string(),
+  title: z.string(),
+  diagnosis: z.string(),
+  objective: z.string().nullable(),
+  startDate: calendarDateSchema,
+  endDate: calendarDateSchema.nullable(),
+  numberOfSessions: z.number().nullable(),
+  sessionFrequency: z.number().nullable(),
+  status: treatmentPlanStatusSchema,
+  prescribingDoctor: z.string().nullable(),
+  prescriptionDate: calendarDateSchema,
+  coverageStatus: z.enum(VALID_COVERAGE_STATUSES).nullable(),
+  insuranceInfo: z.string().nullable(),
+  notes: z.array(noteSchema),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
 export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   patientId: z.string().min(1),
   organizationId: z.string().min(1),
   therapistId: z.string().min(1),
   title: z.string().min(3),
   diagnosis: z.string().min(3),
+  objective: z.string().optional(),
   startDate: calendarDateSchema,
+  endDate: calendarDateSchema.nullable().optional(),
+  prescribingDoctor: z.string().optional(),
+  prescriptionDate: calendarDateSchema,
   numberOfSessions: z.number().min(1).optional(),
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
+  insuranceInfo: z.string().optional(),
   coverageStatus: z.enum(VALID_COVERAGE_STATUSES).optional(),
   notes: z.array(noteSchema).nullable()
 }).omit({
@@ -30,7 +58,6 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
 })
 
 export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
-export const treatmentPlanSchema = createSelectSchema(treatmentPlans)
 
 // Query schemas
 
