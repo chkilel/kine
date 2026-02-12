@@ -108,9 +108,9 @@
 
       <!-- Selected Plan Content -->
       <div v-if="selectedTreatmentPlan">
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
           <!-- Left Column -->
-          <div class="flex flex-col gap-6 lg:col-span-1">
+          <div class="flex flex-col gap-6 lg:col-span-2">
             <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="selectedTreatmentPlan" />
 
             <!-- Documents -->
@@ -118,7 +118,7 @@
           </div>
 
           <!-- Right Column -->
-          <div class="flex flex-col gap-6 lg:col-span-2">
+          <div class="flex flex-col gap-6 lg:col-span-3">
             <!-- Consultations -->
             <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="selectedTreatmentPlan" />
 
