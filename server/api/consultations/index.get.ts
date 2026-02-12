@@ -23,7 +23,6 @@ export default defineEventHandler(async (event) => {
     if (validatedQuery.treatmentPlanId) {
       conditions.push(eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
     } else if (validatedQuery.onlyIndependent === true) {
-      console.log('validatedQuery.onlyIndependent', validatedQuery.onlyIndependent)
       conditions.push(isNull(consultations.treatmentPlanId))
     }
 

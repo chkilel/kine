@@ -1,5 +1,14 @@
 <script setup lang="ts">
+  import { LazyPatientMedicalEditSlideover } from '#components'
+
   const { patient } = defineProps<{ patient: Patient }>()
+
+  const overlay = useOverlay()
+  const patientEditSlideover = overlay.create(LazyPatientMedicalEditSlideover)
+
+  function openEditSlideover() {
+    patientEditSlideover.open({ patient })
+  }
 
   const medicalSections = computed(() => [
     {
@@ -43,7 +52,17 @@
 </script>
 
 <template>
-  <AppCard title="Aperçu Médical">
+  <AppCard title="Aperçu Médical" class="relative">
+    <template #actions>
+      <UButton
+        variant="ghost"
+        color="primary"
+        icon="i-hugeicons-more-vertical"
+        square
+        @click="openEditSlideover"
+        class="absolute top-3 right-3"
+      />
+    </template>
     <template v-if="!hasMedicalInfo">
       <UEmpty
         icon="i-lucide-heartbeat"
