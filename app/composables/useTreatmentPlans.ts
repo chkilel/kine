@@ -50,11 +50,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
 
   const latestActiveTreatmentPlan = computed(() => {
     if (!treatmentPlans.value) return null
-    return (
-      treatmentPlans.value
-        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
-        .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0] || null
-    )
+    return activeTreatmentPlans.value?.[0] || null
   })
 
   const completedTreatmentPlans = computed(() => {
