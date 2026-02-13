@@ -1,6 +1,12 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+export const PATIENT_KEYS = {
+  root: ['patients'] as const,
+  list: (params: PatientQuery) => [...PATIENT_KEYS.root, params],
+  single: (id: string) => [...PATIENT_KEYS.root, id]
+}
+
 /**
  * Query for fetching paginated patients list with optional filters
  * @param queryParams - Reactive query parameters for pagination and filtering
@@ -9,7 +15,7 @@ import { parseISO } from 'date-fns'
 const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => ['patients', queryParams.value],
+    key: () => PATIENT_KEYS.list(queryParams.value),
     query: async () => {
       const resp = await requestFetch('/api/patients', { query: queryParams.value })
       if (!resp) return
@@ -36,7 +42,6 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
  */
 const _useCreatePatient = () => {
   const toast = useToast()
-  const router = useRouter()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
@@ -53,8 +58,8 @@ const _useCreatePatient = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['patients'] })
-      router.push('/patients')
+      queryCache.invalidateQueries({ key: PATIENT_KEYS.root })
+      navigateTo('/patients')
     },
     onError: (error: any) => {
       toast.add({
@@ -74,7 +79,7 @@ const _useCreatePatient = () => {
 const _usePatientById = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => ['patient', toValue(patientId)],
+    key: () => PATIENT_KEYS.single(toValue(patientId)),
     query: async () => {
       const data = await requestFetch(`/api/patients/${toValue(patientId)}`)
       if (!data) return
@@ -122,8 +127,8 @@ const _useUpdatePatient = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['patients'] })
-      queryCache.invalidateQueries({ key: ['patient', patientId] })
+      queryCache.invalidateQueries({ key: PATIENT_KEYS.root })
+      queryCache.invalidateQueries({ key: PATIENT_KEYS.single(patientId) })
     },
     onError: (error: any) => {
       toast.add({
@@ -156,8 +161,8 @@ const _useDeletePatient = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['patients'] })
-      queryCache.invalidateQueries({ key: ['patient', patientId] })
+      queryCache.invalidateQueries({ key: PATIENT_KEYS.root })
+      queryCache.invalidateQueries({ key: PATIENT_KEYS.single(patientId) })
     },
     onError: (error: any) => {
       toast.add({
@@ -170,7 +175,7 @@ const _useDeletePatient = () => {
 }
 
 export const usePatientsList = _usePatientsList
-export const useCreatePatient = createSharedComposable(_useCreatePatient)
 export const usePatientById = _usePatientById
+export const useCreatePatient = createSharedComposable(_useCreatePatient)
 export const useUpdatePatient = createSharedComposable(_useUpdatePatient)
 export const useDeletePatient = createSharedComposable(_useDeletePatient)

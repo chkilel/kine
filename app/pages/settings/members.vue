@@ -15,7 +15,7 @@
 </script>
 
 <template>
-  <div>
+  <AppDashboardPage id="settings-members" title="Membres">
     <UPageCard
       title="Membres"
       description="Invitez de nouveaux membres par adresse email."
@@ -36,5 +36,5 @@
 
       <SettingsMembersList :members="filteredMembers" />
     </UPageCard>
-  </div>
+  </AppDashboardPage>
 </template>

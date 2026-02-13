@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3f62e9e6-6842-400e-b140-a056933703fa",
+  "id": "6e8769f3-8b70-4d97-846e-2a81db6dfd9c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -2293,14 +2293,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "painLevel": {
-          "name": "painLevel",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
         },
         "coverageStatus": {
           "name": "coverageStatus",

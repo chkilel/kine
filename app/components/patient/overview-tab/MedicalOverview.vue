@@ -1,5 +1,14 @@
 <script setup lang="ts">
+  import { LazyPatientMedicalEditSlideover } from '#components'
+
   const { patient } = defineProps<{ patient: Patient }>()
+
+  const overlay = useOverlay()
+  const patientEditSlideover = overlay.create(LazyPatientMedicalEditSlideover)
+
+  function openEditSlideover() {
+    patientEditSlideover.open({ patient })
+  }
 
   const medicalSections = computed(() => [
     {
@@ -43,10 +52,22 @@
 </script>
 
 <template>
-  <AppCard title="Aperçu Médical">
+  <AppCard title="Aperçu Médical" class="relative">
+    <template #actions>
+      <UButton
+        variant="ghost"
+        color="primary"
+        icon="i-hugeicons-more-vertical"
+        square
+        @click="openEditSlideover"
+        class="absolute top-3 right-3"
+      />
+    </template>
     <template v-if="!hasMedicalInfo">
       <UEmpty
-        icon="i-lucide-heartbeat"
+        size="sm"
+        variant="subtle"
+        icon="i-hugeicons-medical-file"
         title="Aucune information médicale"
         description="Aucune donnée médicale n'a été enregistrée pour ce patient."
       />
@@ -57,7 +78,7 @@
         :key="section.title"
         :class="{ 'pb-3': index !== medicalSections?.length - 1 }"
       >
-        <h4 class="text-muted mb-2 text-xs font-semibold tracking-wide uppercase">
+        <h4 class="text-dimmed mb-2 text-xs font-semibold tracking-wide uppercase">
           {{ section.title }}
         </h4>
         <template v-if="section.items && section.items.length > 0">
@@ -67,13 +88,13 @@
               :key="item"
               :color="section.color"
               variant="subtle"
-              class="rounded-full"
+              class="rounded-lg"
             >
               {{ item }}
             </UBadge>
           </div>
         </template>
-        <span v-else-if="section.emptyMessage" class="text-muted text-sm">
+        <span v-else-if="section.emptyMessage" class="text-muted text-xs italic">
           {{ section.emptyMessage }}
         </span>
       </div>

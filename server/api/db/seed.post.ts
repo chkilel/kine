@@ -360,26 +360,143 @@ const patientData = [
 ]
 
 const medicalConditions = [
-  'Hypertension',
-  'Diabetes Type 2',
-  'Osteoarthritis',
-  'Lower Back Pain',
-  'Sciatica',
-  'Tennis Elbow',
-  'Rotator Cuff Injury',
-  'Knee Meniscus Tear',
-  'Ankle Sprain',
-  'Neck Pain'
+  'Hypertension artérielle non contrôlée avec complications cardiovasculaires',
+  'Diabète de type 2 avec neuropathie périphérique et rétinopathie',
+  'Lombalgie chronique sévère avec hernie discale L4-L5 et sciatique',
+  'Arthrose fémoro-patellaire bilatérale avec gonalgies récurrentes',
+  'Tendinite de la coiffe des rotateurs avec épanchement sous-acromial',
+  'Syndrome du canal carpien bilatéral de gravité modérée',
+  'Épicondylite latérale résistante aux traitements conservateurs',
+  'Entorse de cheville de grade II avec instabilité ligamentaire',
+  "Capsulite rétractile de l'épaule en phase de rétraction",
+  'Myofasciite chronique des muscles érecteurs du rachis lombaire',
+  'Rupture partielle du ligament croisé antérieur du genou',
+  'Spondylolisthésis de grade I sur L5-S1 avec radiculalgie',
+  'Névralgie cervico-brachiale par hernie discale C5-C6 et C6-C7',
+  'Hyperlaxité ligamentaire généralisée avec instabilité rotulienne',
+  'Fracture de fatigue du troisième métatarse avec retard de consolidation'
 ]
 const surgeries = [
-  'Knee Surgery - 2018',
-  'Appendectomy - 2010',
-  'Hip Replacement - 2015',
-  'Shoulder Surgery - 2019',
-  'Spinal Fusion - 2016'
+  'Prothèse totale du genou droit - Mars 2023',
+  'Chirurgie de la coiffe des rotateurs - Septembre 2022',
+  'Arthroplastie de la hanche gauche - Janvier 2021',
+  'Laminectomie et libération médullaire L4-L5 - Juin 2020',
+  'Réparation arthroscopique du ménisque médial - Novembre 2019',
+  'Ostéosynthèse de la fracture du col fémoral - Avril 2018',
+  'Chirurgie de la main pour syndrome du canal carpien - Juillet 2022',
+  'Fixation interne de la fracture malléolaire - Octobre 2020',
+  'Fusion vertébrale cervicale C5-C6 - Février 2021',
+  "Prothèse d'épaule inversée - Août 2023"
 ]
-const allergies = ['Penicillin', 'Pollen', 'Dust Mites', 'Latex', 'Aspirin']
-const medications = ['Metformin', 'Ibuprofen', 'Lisinopril', 'Atorvastatin', 'Omeprazole']
+const allergies = [
+  'Pénicilline et dérivés bêta-lactamines',
+  "Pollens de graminées et d'arbres",
+  'Acariens et moisissures domestiques',
+  'Latex naturel et produits dérivés',
+  'Aspirine et anti-inflammatoires non stéroïdiens',
+  'Produits de contraste iodés',
+  'Coquillages et fruits de mer',
+  'Arachides et noix diverses',
+  "Piqûres d'insectes (abeilles, guêpes)",
+  'Sulfamides et sulfonamides'
+]
+const medications = [
+  'Metformine 850mg - 2 comprimés par jour',
+  'Ibuprofène 400mg - en cas de douleur',
+  'Lisinopril 10mg - 1 comprimé le matin',
+  'Atorvastatine 20mg - 1 comprimé au coucher',
+  'Oméprazole 20mg - avant le petit-déjeuner',
+  'Amlodipine 5mg - 1 comprimé par jour',
+  'Paracétamol 500mg - 3 fois par jour',
+  'Levothyroxine 75µg - à jeun le matin',
+  'Amlodipine/valsartan 5mg/160mg - 1 fois par jour',
+  'Doliprane 1000mg - en cas de fièvre'
+]
+
+const diagnoses = [
+  'Tendinite de la coiffe des rotateurs avec épanchement sous-acromial',
+  'Rupture partielle du ligament croisé antérieur du genou gauche',
+  'Lombalgie chronique associée à une hernie discale L4-L5',
+  'Syndrome du canal carpien bilatéral de gravité modérée',
+  'Entorse de grade II du ligament latéral externe de la cheville',
+  'Arthrose fémoro-patellaire bilatérale avec gonalgies récurrentes',
+  'Fracture du col du fémur opérée avec ostéosynthèse par clou gamma',
+  'Spondylolisthésis de grade I sur L5-S1 avec radiculalgie',
+  'Épicondylite latérale chronique résistante aux traitements médicaux',
+  "Syndrome de l'essuie-glace avec conflit fémoro-tibial externe",
+  "Algoneurodystrophie de l'épaule droite en phase de resorption",
+  'Paralysie faciale périphérique de grade III à IV de House-Brackmann',
+  "Tendinopathie d'insertion du tendon d'Achille bilatérale",
+  "Capsulite rétractile de l'épaule gauche en phase de rétraction",
+  'Myofasciite des muscles érecteurs du rachis lombaire chronique',
+  'Bursite trochantérienne bilatérale avec syndrome de la bandelette',
+  'Syndrome des loges chronique des compartiments antérieurs des jambes',
+  "Arthrose rhizomélique de l'articulation sterno-claviculaire droite",
+  'Scoliose idiopathique adolescente de 32 degrés avec déséquilibre',
+  'Prolapsus valvulaire mitral avec insuffisance cardiorespiratoire',
+  'Névralgie cervico-brachiale par hernie discale C5-C6 et C6-C7',
+  "Tendinose calcifiante de l'épaule droite avec impingement subacromial",
+  'Syndrome du piriforme avec compression du nerf sciatique droit',
+  'Hyperlaxité ligamentaire généralisée avec instabilité rotulienne',
+  'Fracture de fatigue du troisième métatarse avec retard de consolidation'
+]
+
+const objectives = [
+  "Restaurer l'amplitude articulaire complète et éliminer la douleur au mouvement",
+  'Améliorer la force musculaire des quadriceps et récupérer la stabilité du genou',
+  'Corriger la posture et renforcer les muscles profonds du tronc et du dos',
+  'Éliminer les troubles neurologiques et restaurer la fonction motrice fine',
+  'Réduire les œdèmes et récupérer la proprioception de la cheville atteinte',
+  "Diminuer l'inflammation et améliorer la mobilité articulaire sans douleur",
+  'Renforcer la ceinture pelvienne et récupérer la marche sans aide technique',
+  'Soulager la compression nerveuse et restaurer la force musculaire atrophiée',
+  'Éliminer les douleurs chroniques et améliorer la qualité de vie quotidienne',
+  'Optimiser la biomécanique articulaire et prévenir les récidives futures',
+  'Restaurer la sensibilité et la fonction motrice des muscles faciaux touchés',
+  "Améliorer l'endurance cardiovasculaire et augmenter la capacité respiratoire",
+  "Développer l'équilibre statique et dynamique pour prévenir les chutes",
+  'Éliminer les contractures musculaires et récupérer la flexibilité normale',
+  'Renforcer les muscles stabilisateurs et améliorer le contrôle neuromusculaire',
+  "Réduire les douleurs à l'effort et améliorer la performance sportive",
+  'Restaurer la fonction de préhension et la dextérité de la main atteinte',
+  'Améliorer la coordination et la synchronisation des mouvements automatiques',
+  "Éliminer les troubles de l'équilibre et réduire les sensations vertigineuses",
+  'Optimiser la cicatrisation osseuse et récupérer la charge fonctionnelle',
+  "Renforcer les muscles rotateurs et stabiliser l'épaule pendant les mouvements",
+  "Corriger les déséquilibres musculaires et améliorer l'alignement corporel",
+  "Restaurer la confiance et l'autonomie dans les activités de la vie quotidienne",
+  'Éliminer les tensions myofasciales et améliorer la circulation sanguine locale',
+  'Prévenir les complications secondaires et optimiser la récupération à long terme'
+]
+
+const treatmentPlanTitles = [
+  "Programme complet de rééducation de l'épaule pour douleur chronique",
+  'Protocole de récupération post-opératoire du genou et mobilité',
+  'Série de soulagement des lombalgies et renforcement du tronc',
+  'Traitement des cervicalgies avec thérapie manuelle et exercices',
+  'Récupération des blessures sportives pour retour à la compétition',
+  'Programme de rééducation fonctionnelle pour activités quotidiennes',
+  'Prise en charge de la douleur chronique avec thérapie manuelle',
+  'Plan de récupération de mobilité post-AVC et entraînement fonctionnel',
+  "Programme d'équilibre et de prévention des chutes pour personnes âgées",
+  'Rééducation cardiorespiratoire pour amélioration de la fonction respiratoire',
+  'Thérapie développementale pédiatrique pour amélioration des habiletés motrices',
+  'Soins post-opératoires de prothèse de hanche et renforcement musculaire',
+  "Récupération d'entorse de cheville avec proprioception et équilibre",
+  "Traitement de l'épicondylite par programme d'exercices excentriques",
+  'Soulagement de la sciatique par étirements ciblés et thérapie',
+  'Protocole de rééducation et de renforcement de la coiffe des rotateurs',
+  'Programme de récupération post-fracture pour soutien de la consolidation',
+  "Prise en charge de l'arthrose avec mobilité articulaire et analgésie",
+  "Série d'évaluation ergonomique au travail et correction posturale",
+  'Thérapie physique pré-chirurgicale pour préparation optimale à la récupération',
+  'Analyse et correction de la démarche pour amélioration de la marche',
+  'Rééducation du périnée pour soutien de la récupération post-partum',
+  "Rééducation vestibulaire pour vertiges et troubles de l'équilibre",
+  'Programme de thérapie de la main pour restauration des habiletés fines',
+  'Programme de stabilisation spinale pour problèmes lombaires chroniques'
+]
+
 const locations = VALID_CONSULTATION_LOCATIONS
 const exceptionReasons = VALID_SCHEDULE_EXCEPTION_TYPES
 
@@ -739,7 +856,7 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
 
   const shuffledStatuses = shuffleArray(statuses)
 
-  return shuffledStatuses.map((status, index) => {
+  return shuffledStatuses.map((status) => {
     const startDate = format(addDays(new Date(), -randomInt(30, 180)), 'yyyy-MM-dd')
     const endDate = status === 'completed' ? format(addDays(new Date(), -randomInt(1, 30)), 'yyyy-MM-dd') : null
 
@@ -747,9 +864,9 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       patientId,
       organizationId,
       therapistId,
-      title: `Treatment Plan ${index + 1}`,
-      diagnosis: randomItem(medicalConditions),
-      objective: 'Restore function and reduce pain',
+      title: randomItem(treatmentPlanTitles),
+      diagnosis: randomItem(diagnoses),
+      objective: randomItem(objectives),
       startDate,
       endDate,
       numberOfSessions: randomInt(5, 20),
@@ -757,7 +874,6 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       status,
       prescribingDoctor: 'Dr. Smith',
       prescriptionDate: startDate,
-      painLevel: randomInt(0, 10),
       coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
       insuranceInfo: 'Insurance Co. Ltd.',
       notes: []
@@ -813,7 +929,7 @@ function generateConsultations(
   therapistExceptions: any[]
 ): any[] {
   const activePlanIds = new Set(
-    treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
+    treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
   )
 
   const minPerPatient = SEED_CONFIG.consultations.minPerPatient
@@ -849,13 +965,31 @@ function generateConsultations(
     let treatmentPlanId: string | null = null
 
     if (linkedIndices.has(i) && treatmentPlansMeta.length > 0) {
-      const selectedPlan = randomItem(treatmentPlansMeta)
+      const nonPlannedPlans = treatmentPlansMeta.filter((plan) => plan.status !== 'planned')
+      const selectedPlan = nonPlannedPlans.length > 0 ? randomItem(nonPlannedPlans) : null
       if (selectedPlan) {
         treatmentPlanId = selectedPlan.id
       }
     }
 
-    const wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+    let wantsPast: boolean
+    let forceMinDaysOffset: number | null = null
+    let forceMaxDaysOffset: number | null = null
+
+    if (treatmentPlanId) {
+      const linkedPlan = treatmentPlansMeta.find((plan) => plan.id === treatmentPlanId)
+      if (linkedPlan?.status === 'ongoing') {
+        wantsPast = false
+        forceMinDaysOffset = 0
+        forceMaxDaysOffset = SEED_CONFIG.consultations.dateRangeDays
+      } else {
+        wantsPast = true
+        forceMinDaysOffset = -SEED_CONFIG.consultations.dateRangeDays
+        forceMaxDaysOffset = -1
+      }
+    } else {
+      wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+    }
 
     let attempts = 0
     while (attempts < 30 && (!date || !startTime || !endTime || !duration)) {
@@ -864,10 +998,16 @@ function generateConsultations(
       let candidateDate: string
 
       if (wantsPast) {
-        const daysOffset = -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
+        const daysOffset =
+          forceMinDaysOffset !== null && forceMaxDaysOffset !== null
+            ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
+            : -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       } else {
-        const daysOffset = randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+        const daysOffset =
+          forceMinDaysOffset !== null && forceMaxDaysOffset !== null
+            ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
+            : randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       }
 
@@ -1076,9 +1216,10 @@ function generateConsultations(
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
-      const activePlans = treatmentPlansMeta.filter((plan) => ['planned', 'ongoing', 'paused'].includes(plan.status))
-      const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
-      const selectedPlan = randomItem(source)
+      const nonPlannedPlans = treatmentPlansMeta.filter((plan) => plan.status !== 'planned')
+      const activePlans = nonPlannedPlans.filter((plan) => ['ongoing', 'paused'].includes(plan.status))
+      const source = activePlans.length > 0 ? activePlans : nonPlannedPlans
+      const selectedPlan = source.length > 0 ? randomItem(source) : null
       if (selectedPlan) {
         treatmentPlanId = selectedPlan.id
       }

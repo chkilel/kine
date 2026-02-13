@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import type { DropdownMenuItem } from '@nuxt/ui'
+
   const {
     consultation,
     canEdit = true,
@@ -15,11 +17,37 @@
   }>()
 
   const { getTherapistName } = useOrganizationMembers()
+
+  const isIndependent = computed(() => !consultation.treatmentPlanId)
+
+  const menuItems = computed<DropdownMenuItem[][]>(() => [
+    [
+      {
+        label: 'Modifier',
+        icon: 'i-hugeicons-pencil-edit-01',
+        color: 'info',
+        disabled: !canEdit,
+        onSelect: () => canEdit && emit('edit', consultation)
+      },
+      {
+        label: 'Supprimer',
+        icon: 'i-hugeicons-delete-02',
+        color: 'error',
+        disabled: !canDelete,
+        onSelect: () => canDelete && emit('delete', consultation)
+      }
+    ]
+  ])
 </script>
 
 <template>
   <div
-    class="bg-muted hover:border-default flex flex-col gap-4 rounded-lg border border-transparent p-3 transition-colors sm:flex-row sm:items-center"
+    class="flex flex-col gap-4 rounded-lg border p-3 transition-colors sm:flex-row sm:items-center"
+    :class="
+      isIndependent
+        ? 'border-warning/30 bg-warning/5 hover:border-warning/50'
+        : 'bg-muted hover:border-default border-transparent'
+    "
   >
     <div class="flex flex-1 items-center gap-4">
       <div class="flex">
@@ -34,25 +62,32 @@
       </div>
 
       <div class="min-w-0 flex-1">
-        <p class="text-default truncate font-semibold">
-          {{ getConsultationTypeLabel(consultation.type || 'follow_up') }}
-        </p>
+        <div class="flex items-center gap-2">
+          <UIcon :name="getLocationIcon(consultation.location || 'clinic')" />
+          <p class="text-default truncate font-semibold">
+            {{ getConsultationTypeLabel(consultation.type || 'follow_up') }}
+          </p>
+          <UBadge
+            :color="getConsultationStatusColor(consultation.status)"
+            size="sm"
+            variant="subtle"
+            class="rounded-full"
+          >
+            {{ getConsultationStatusLabel(consultation.status) }}
+          </UBadge>
+        </div>
 
-        <div class="text-muted sm:divide-default flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
-          <div class="flex items-center gap-1 sm:pr-3">
-            <UIcon :name="getLocationIcon(consultation.location || 'clinic')" />
-          </div>
-
-          <div class="flex items-center gap-1 sm:px-3">
+        <div class="text-muted sm:divide-muted mt-1.5 flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
+          <div class="flex items-center gap-1 sm:pr-2">
             <UIcon name="i-hugeicons-clock-01" />
             <p>{{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min</p>
           </div>
 
-          <div v-if="consultation.roomName" class="flex items-center gap-1 sm:px-3">
-            <UIcon name="i-hugeicons-hospital-bed-02" />
+          <div v-if="consultation.roomName" class="flex items-center gap-1 sm:px-2">
+            <UIcon name="i-hugeicons-door-01" />
             <p>{{ consultation.roomName }}</p>
           </div>
-          <div v-if="consultation.therapistId" class="flex items-center gap-1 sm:px-3">
+          <div v-if="consultation.therapistId" class="flex items-center gap-1 sm:px-2">
             <UIcon name="i-hugeicons-user" />
             <p>{{ getTherapistName(consultation.therapistId) }}</p>
           </div>
@@ -60,34 +95,10 @@
       </div>
     </div>
 
-    <div class="flex pl-4">
-      <div class="flex items-center gap-2">
-        <UBadge :color="getConsultationStatusColor(consultation.status)" variant="subtle">
-          {{ getConsultationStatusLabel(consultation.status) }}
-        </UBadge>
-      </div>
-      <div class="border-muted ml-2 flex items-center gap-1 border-l pl-2">
-        <div class="flex items-center justify-end gap-2">
-          <UButton
-            icon="i-lucide-edit"
-            variant="ghost"
-            :color="canEdit ? 'info' : 'neutral'"
-            size="sm"
-            square
-            :disabled="!canEdit"
-            @click="canEdit && emit('edit', consultation)"
-          />
-          <UButton
-            icon="i-lucide-trash"
-            variant="ghost"
-            :color="canDelete ? 'error' : 'neutral'"
-            size="sm"
-            square
-            :disabled="!canDelete"
-            @click="canDelete && emit('delete', consultation)"
-          />
-        </div>
-      </div>
+    <div class="flex items-center justify-end gap-2">
+      <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
+        <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
+      </UDropdownMenu>
     </div>
   </div>
 </template>

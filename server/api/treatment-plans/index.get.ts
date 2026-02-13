@@ -30,7 +30,6 @@ export default defineEventHandler(async (event) => {
         status: treatmentPlans.status,
         prescribingDoctor: treatmentPlans.prescribingDoctor,
         prescriptionDate: treatmentPlans.prescriptionDate,
-        painLevel: treatmentPlans.painLevel,
         coverageStatus: treatmentPlans.coverageStatus,
         insuranceInfo: treatmentPlans.insuranceInfo,
         notes: treatmentPlans.notes,

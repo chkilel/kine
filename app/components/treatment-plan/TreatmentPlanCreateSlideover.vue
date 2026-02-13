@@ -8,17 +8,14 @@
   }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  // Date formatter
+  const df = new DateFormatter('fr-FR', { dateStyle: 'long' })
+
   const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
-  if (!user || !activeOrganization.value.data) {
-    await navigateTo('/login')
-  }
-  // Date formatter
-  const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
-
   const { mutate: createTreatmentPlan } = useCreateTreatmentPlan()
   const { mutate: updateTreatmentPlan } = useUpdateTreatmentPlan()
-  const { therapists, getTherapistName } = useOrganizationMembers()
+  const { therapists } = useOrganizationMembers()
 
   const loading = ref(false)
   const isEditMode = computed(() => !!props.treatmentPlan)
@@ -38,7 +35,6 @@
     endDate: props.treatmentPlan?.endDate,
     numberOfSessions: props.treatmentPlan?.numberOfSessions || 0,
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
-    painLevel: props.treatmentPlan?.painLevel || 10,
     coverageStatus: props.treatmentPlan?.coverageStatus || 'not_required',
     insuranceInfo: props.treatmentPlan?.insuranceInfo || '',
     notes: props.treatmentPlan?.notes || null
@@ -103,7 +99,6 @@
       endDate: undefined,
       numberOfSessions: 4,
       sessionFrequency: undefined,
-      painLevel: 4,
       coverageStatus: 'not_required',
       insuranceInfo: '',
       notes: undefined
@@ -131,8 +126,8 @@
     :title="isEditMode ? 'Modifier un plan de traitement' : 'Créer un plan de traitement'"
     :description="
       isEditMode
-        ? 'Modifiez les informations du plan de traitement.'
-        : 'Ajoutez les informations de base du plan de traitement.'
+        ? 'Ajustez les paramètres du plan : prescription, objectifs, séances et suivi.'
+        : 'Configurez un plan complet : médecin prescripteur, diagnostic, objectifs, séances et couverture.'
     "
     :ui="{ content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated' }"
   >
@@ -145,8 +140,9 @@
         @submit="handleSubmit"
       >
         <div class="space-y-6">
-          <!-- Patient Information -->
+          <!-- Medical Data and Insurance -->
           <UCard variant="outline">
+            <h3 class="text-highlighted mb-4 text-base font-bold">Prescription et couverture</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Médecin prescripteur" name="prescribingDoctor" required>
                 <UInput v-model="formState.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
@@ -165,12 +161,25 @@
                   </template>
                 </UPopover>
               </UFormField>
+              <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
+                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+              </UFormField>
+              <UFormField label="Statut de couverture">
+                <USelectMenu
+                  v-model="formState.coverageStatus"
+                  :items="INSURANCE_COVERAGE_OPTIONS"
+                  value-key="value"
+                  label-key="label"
+                  placeholder="Selectionner ..."
+                  class="w-full"
+                />
+              </UFormField>
             </div>
           </UCard>
 
           <!-- Treatment Plan Details -->
           <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Détails du plan de traitement</h3>
+            <h3 class="text-highlighted mb-4 text-base font-bold">Contenu du plan</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <UFormField label="Titre" name="title" required class="md:col-span-2">
                 <UInput v-model="formState.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
@@ -228,63 +237,6 @@
                   </template>
                 </UPopover>
               </UFormField>
-            </div>
-          </UCard>
-
-          <!-- Medical Data and Insurance -->
-          <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Données médicales et assurance</h3>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <UFormField
-                label="Niveau de douleur actuel"
-                name="painLevel"
-                help="Échelle de 0 à 10"
-                class="md:col-span-2"
-              >
-                <div class="space-y-2">
-                  <div class="flex justify-between text-xs">
-                    <span v-for="(item, index) in [...Array(11).keys()]" :key="index">{{ item }}</span>
-                  </div>
-                  <USlider v-model="formState.painLevel" :min="0" :max="10" :step="1" class="w-full flex-1" />
-                </div>
-              </UFormField>
-              <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
-                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
-              </UFormField>
-              <UFormField label="Statut de couverture">
-                <USelectMenu
-                  v-model="formState.coverageStatus"
-                  :items="INSURANCE_COVERAGE_OPTIONS"
-                  value-key="value"
-                  label-key="label"
-                  placeholder="Selectionner ..."
-                  class="w-full"
-                />
-              </UFormField>
-            </div>
-          </UCard>
-
-          <!-- Summary -->
-          <UCard variant="outline">
-            <h3 class="text-highlighted mb-4 text-base font-bold">Résumé avant validation</h3>
-            <div class="text-muted space-y-3 text-sm">
-              <p>
-                <strong>Patient :</strong>
-                {{ `${patient.firstName} ${patient.lastName}` }}
-              </p>
-              <p>
-                <strong>Plan :</strong>
-                {{ formState.title || 'Non défini' }}
-              </p>
-              <p>
-                <strong>Kinésithérapeute :</strong>
-                {{ getTherapistName(formState.therapistId) }}
-              </p>
-              <p>
-                <strong>Période :</strong>
-                À partir du
-                {{ startDateModel ? df.format(startDateModel.toDate(getLocalTimeZone())) : '[Date de début]' }}
-              </p>
             </div>
           </UCard>
         </div>

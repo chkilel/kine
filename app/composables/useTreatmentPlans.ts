@@ -33,21 +33,24 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   })
 
   const activeTreatmentPlans = computed(() => {
+    const statusPriority = { ongoing: 0, planned: 1, paused: 2 }
     if (!treatmentPlans.value) return null
     return (
       treatmentPlans.value
         .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || null
+        .sort((a, b) => {
+          const priorityDiff =
+            statusPriority[a.status as keyof typeof statusPriority] -
+            statusPriority[b.status as keyof typeof statusPriority]
+          if (priorityDiff !== 0) return priorityDiff
+          return new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        }) || null
     )
   })
 
   const latestActiveTreatmentPlan = computed(() => {
     if (!treatmentPlans.value) return null
-    return (
-      treatmentPlans.value
-        .filter((plan) => plan.status === 'ongoing' || plan.status === 'planned' || plan.status === 'paused')
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null
-    )
+    return activeTreatmentPlans.value?.[0] || null
   })
 
   const completedTreatmentPlans = computed(() => {
@@ -59,7 +62,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     if (!treatmentPlans.value) return []
     return treatmentPlans.value
       .filter((plan) => plan.status === 'completed' || plan.status === 'cancelled')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
   })
 
   const treatmentPlansGroupedByStatus = computed(() => {
@@ -77,7 +80,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
       if (priorityA !== priorityB) {
         return priorityA - priorityB
       }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
     })
   })
 

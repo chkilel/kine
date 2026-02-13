@@ -1,9 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
 
-export type UploadResult = {
-  key: string
-}
-
 /**
  * Upload composable for handling file uploads to R2/S3
  * @returns Upload methods for file operations
@@ -27,7 +23,7 @@ const _useUploads = () => {
       if (errors && errors[key]) {
         throw createError({
           statusCode: 500,
-          statusMessage: 'Failed to get presigned GET URL',
+          statusMessage: "Échec de la récupération de l'URL de téléchargement",
           data: { details: errors[key] }
         })
       }
@@ -36,17 +32,17 @@ const _useUploads = () => {
       if (!url) {
         throw createError({
           statusCode: 500,
-          statusMessage: 'Failed to get presigned GET URL',
-          data: { details: 'No URL returned for key' }
+          statusMessage: "Échec de la récupération de l'URL de téléchargement",
+          data: { details: 'Aucune URL retournée pour cette clé' }
         })
       }
 
       return url
-    } catch (err: any) {
+    } catch (err) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to get presigned GET URL',
-        data: { details: err?.message }
+        statusMessage: parseError(err, "Échec de la récupération de l'URL de téléchargement").message,
+        data: { details: parseError(err).message }
       })
     }
   }
@@ -68,8 +64,8 @@ const _useUploads = () => {
     } catch (err: any) {
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to get presigned PUT URL',
-        data: { details: err?.message }
+        statusMessage: parseError(err, "Échec de la récupération de l'URL de téléversement").message,
+        data: { details: parseError(err).message }
       })
     }
   }
@@ -84,7 +80,7 @@ const _useUploads = () => {
     folder?: string
     name?: string
     expiresIn?: number
-  }): Promise<UploadResult> {
+  }): Promise<{ key: string }> {
     const { file, folder, name, expiresIn } = options
     const key = generateKey({ folder, name, file })
 
@@ -100,25 +96,19 @@ const _useUploads = () => {
         const text = await res.text().catch(() => '')
         throw createError({
           statusCode: res.status,
-          statusMessage: 'Upload failed',
+          statusMessage: 'Échec du téléversement',
           data: { statusText: res.statusText, body: text }
         })
       }
 
-      toast.add({
-        title: 'Succès',
-        description: 'Fichier téléchargé avec succès',
-        color: 'success'
-      })
-
       return { key }
-    } catch (err: any) {
+    } catch (error) {
       toast.add({
         title: 'Erreur',
-        description: parseError(err, 'Impossible de télécharger le fichier').message,
+        description: parseError(error, 'Impossible de téléverser le fichier').message,
         color: 'error'
       })
-      throw err
+      throw error
     }
   }
 

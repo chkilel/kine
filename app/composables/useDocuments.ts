@@ -26,26 +26,26 @@ const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId
 }
 
 type UpdateDocumentParams = {
+  patientId: string
   documentId: string
   data: PatientDocumentUpdate
   onSuccess?: () => void
 }
-const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
+const _useUpdateDocument = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
-  const parsedPatientId = toValue(patientId)
 
   return useMutation({
-    mutation: ({ documentId, data, onSuccess }: UpdateDocumentParams) =>
-      requestFetch<PatientDocument>(`/api/patients/${parsedPatientId}/documents/${documentId}`, {
+    mutation: ({ patientId, documentId, data }: UpdateDocumentParams) =>
+      requestFetch<PatientDocument>(`/api/patients/${patientId}/documents/${documentId}`, {
         method: 'PUT',
         body: data
       }),
-    onSuccess: (_, { onSuccess }) => {
+    onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       queryCache.invalidateQueries({
-        key: ['documents', parsedPatientId],
+        key: ['documents', patientId],
         exact: false
       })
       toast.add({
@@ -64,19 +64,23 @@ const _useUpdateDocument = (patientId: MaybeRefOrGetter<string>) => {
   })
 }
 
-const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
+type DeleteDocumentParams = {
+  patientId: string
+  documentId: string
+  onSuccess?: () => void
+}
+const _useDeleteDocument = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
-  const parsedPatientId = toValue(patientId)
 
   return useMutation({
-    mutation: ({ documentId, onSuccess }: { documentId: string; onSuccess?: () => void }) =>
-      requestFetch(`/api/patients/${parsedPatientId}/documents/${documentId}`, { method: 'DELETE' }),
-    onSuccess: (_, { onSuccess }) => {
+    mutation: ({ patientId, documentId }: DeleteDocumentParams) =>
+      requestFetch(`/api/patients/${patientId}/documents/${documentId}`, { method: 'DELETE' }),
+    onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       queryCache.invalidateQueries({
-        key: ['documents', parsedPatientId],
+        key: ['documents', patientId],
         exact: false
       })
       toast.add({
@@ -95,7 +99,38 @@ const _useDeleteDocument = (patientId: MaybeRefOrGetter<string>) => {
   })
 }
 
+const _useDownloadDocument = () => {
+  const toast = useToast()
+  const { getPresignUrl } = useUploads()
+
+  async function downloadDocument(storageKey: string, fileName: string) {
+    try {
+      const url = await getPresignUrl(storageKey)
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+    } catch (error: any) {
+      console.error('Error downloading document:', error)
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Échec du téléchargement du document').message,
+        color: 'error'
+      })
+    }
+  }
+
+  return { downloadDocument }
+}
+
 export const useDocumentsList = _useDocumentsList
 export const useDocumentDownloadUrl = _useDocumentDownloadUrl
-export const useUpdateDocument = _useUpdateDocument
-export const useDeleteDocument = _useDeleteDocument
+export const useUpdateDocument = createSharedComposable(_useUpdateDocument)
+export const useDeleteDocument = createSharedComposable(_useDeleteDocument)
+export const useDownloadDocument = createSharedComposable(_useDownloadDocument)

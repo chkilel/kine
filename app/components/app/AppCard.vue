@@ -34,20 +34,22 @@
 <template>
   <UCard v-bind="forwardedAttrs" :ui="mergedUi">
     <template v-if="showHeader" #header>
-      <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex flex-wrap items-start gap-2">
         <div>
           <div v-if="icon || $slots.title || title" class="flex items-center gap-1.5">
             <UIcon v-if="icon" :name="icon" class="size-5.5" :class="`text-${iconColor}`" />
-            <h3 v-if="$slots.title" class="flex items-center gap-2 text-lg font-bold">
+            <template v-if="$slots.title">
               <slot name="title" />
-            </h3>
-            <h3 v-else-if="title" class="text-lg font-bold">{{ title }}</h3>
+            </template>
+            <h3 v-else-if="title" class="font-bold">{{ title }}</h3>
           </div>
           <p v-if="description" class="text-muted truncate text-xs" :class="{ 'ml-7': !!icon }">
             {{ description }}
           </p>
         </div>
-        <slot name="actions" />
+        <div v-if="$slots.actions" class="ml-auto">
+          <slot name="actions" />
+        </div>
       </div>
     </template>
     <slot />
