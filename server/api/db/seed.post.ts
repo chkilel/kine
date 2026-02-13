@@ -965,13 +965,31 @@ function generateConsultations(
     let treatmentPlanId: string | null = null
 
     if (linkedIndices.has(i) && treatmentPlansMeta.length > 0) {
-      const selectedPlan = randomItem(treatmentPlansMeta)
+      const nonPlannedPlans = treatmentPlansMeta.filter((plan) => plan.status !== 'planned')
+      const selectedPlan = nonPlannedPlans.length > 0 ? randomItem(nonPlannedPlans) : null
       if (selectedPlan) {
         treatmentPlanId = selectedPlan.id
       }
     }
 
-    const wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+    let wantsPast: boolean
+    let forceMinDaysOffset: number | null = null
+    let forceMaxDaysOffset: number | null = null
+
+    if (treatmentPlanId) {
+      const linkedPlan = treatmentPlansMeta.find((plan) => plan.id === treatmentPlanId)
+      if (linkedPlan?.status === 'ongoing') {
+        wantsPast = false
+        forceMinDaysOffset = 0
+        forceMaxDaysOffset = SEED_CONFIG.consultations.dateRangeDays
+      } else {
+        wantsPast = true
+        forceMinDaysOffset = -SEED_CONFIG.consultations.dateRangeDays
+        forceMaxDaysOffset = -1
+      }
+    } else {
+      wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+    }
 
     let attempts = 0
     while (attempts < 30 && (!date || !startTime || !endTime || !duration)) {
@@ -980,10 +998,16 @@ function generateConsultations(
       let candidateDate: string
 
       if (wantsPast) {
-        const daysOffset = -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
+        const daysOffset =
+          forceMinDaysOffset !== null && forceMaxDaysOffset !== null
+            ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
+            : -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       } else {
-        const daysOffset = randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+        const daysOffset =
+          forceMinDaysOffset !== null && forceMaxDaysOffset !== null
+            ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
+            : randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       }
 
@@ -1192,9 +1216,10 @@ function generateConsultations(
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
-      const activePlans = treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status))
-      const source = activePlans.length > 0 ? activePlans : treatmentPlansMeta
-      const selectedPlan = randomItem(source)
+      const nonPlannedPlans = treatmentPlansMeta.filter((plan) => plan.status !== 'planned')
+      const activePlans = nonPlannedPlans.filter((plan) => ['ongoing', 'paused'].includes(plan.status))
+      const source = activePlans.length > 0 ? activePlans : nonPlannedPlans
+      const selectedPlan = source.length > 0 ? randomItem(source) : null
       if (selectedPlan) {
         treatmentPlanId = selectedPlan.id
       }
