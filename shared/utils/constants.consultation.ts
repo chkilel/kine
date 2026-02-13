@@ -38,7 +38,7 @@ export const VALID_CONSULTATION_STATUSES = [
 ] as const
 
 // Consultation Status Configuration
-export const SESSION_STATUS_CONFIG = {
+export const CONSULTATION_STATUS_CONFIG = {
   confirmed: { color: 'success', label: 'Confirmée', icon: 'i-hugeicons-calendar-check-in-01' },
   scheduled: { color: 'info', label: 'À venir', icon: 'i-hugeicons-clock-02' },
   completed: { color: 'success', label: 'Terminée', icon: 'i-hugeicons-checkmark-circle-02' },
@@ -48,7 +48,7 @@ export const SESSION_STATUS_CONFIG = {
 } as const
 
 // Consultation Status Options
-export const SESSION_STATUS_OPTIONS = Object.entries(SESSION_STATUS_CONFIG).map(([key, item]) => ({
+export const CONSULTATION_STATUS_OPTIONS = Object.entries(CONSULTATION_STATUS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
   color: item.color,
@@ -73,10 +73,10 @@ export const CONSULTATION_TYPES_OPTIONS = Object.entries(CONSULTATION_TYPES_CONF
 }))
 
 // Consultation Status Helpers
-export const getConsultationStatusLabel = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status].label
-export const getConsultationStatusColor = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status].color
-export const getConsultationStatusIcon = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status].icon
-export const getConsultationStatusConfig = (status: ConsultationStatus) => SESSION_STATUS_CONFIG[status]
+export const getConsultationStatusLabel = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].label
+export const getConsultationStatusColor = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].color
+export const getConsultationStatusIcon = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].icon
+export const getConsultationStatusConfig = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status]
 
 // Consultation Type Helpers
 export const getConsultationTypeLabel = (type: ConsultationType) => CONSULTATION_TYPES_CONFIG[type].label
