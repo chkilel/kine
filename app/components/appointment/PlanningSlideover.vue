@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { LazyAppModalConfirm, LazyConsultationSlideover } from '#components'
-  import { useConsultationAction } from '~/composables/useConsultationAction'
 
   const props = defineProps<{
     patient: Patient

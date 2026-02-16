@@ -1,5 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
-import { CONSULTATION_KEYS } from './useConsultations'
+import { CONSULTATION_KEYS } from './useAppointment'
 
 type StartParams = { id: string; actualStartTime: string }
 type PauseParams = { id: string; pauseStartTime: string }

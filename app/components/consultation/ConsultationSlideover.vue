@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { useConsultationAction } from '~/composables/useConsultationAction'
-
   const props = defineProps<{
     patientId: string
     consultationId: string
