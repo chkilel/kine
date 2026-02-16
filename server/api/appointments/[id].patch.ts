@@ -45,7 +45,7 @@ function getSuccessMessage(action: ConsultationActionType) {
   return messages[action]
 }
 
-// Event handler for PATCH /api/consultations/[id]
+// Event handler for PATCH /api/appointment/[id]
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')

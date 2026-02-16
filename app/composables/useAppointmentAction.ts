@@ -24,7 +24,7 @@ const _useConsultationAction = () => {
   const mutation = useMutation({
     mutation: async (params: ConsultationActionParams) => {
       const { id, ...body } = params
-      return requestFetch(`/api/consultations/${id}`, {
+      return requestFetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         body
       })

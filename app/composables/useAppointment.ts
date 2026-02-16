@@ -41,7 +41,7 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         date: toValue(queryParamsValue.date)
       }
       const validatedQuery = consultationQuerySchema.parse(query)
-      const resp = await requestFetch('/api/consultations', {
+      const resp = await requestFetch('/api/appointments', {
         query: Object.fromEntries(
           Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
         )
@@ -67,7 +67,7 @@ const _useCreateConsultation = () => {
 
   return useMutation({
     mutation: async ({ consultationData }: CreateConsultationParams) =>
-      requestFetch('/api/consultations', {
+      requestFetch('/api/appointments', {
         method: 'POST',
         body: consultationData
       }),
@@ -107,7 +107,7 @@ const _useUpdateConsultation = () => {
 
   return useMutation({
     mutation: async ({ consultationId, consultationData }: UpdateConsultationParams) =>
-      requestFetch(`/api/consultations/${consultationId}`, {
+      requestFetch(`/api/appointments/${consultationId}`, {
         method: 'PUT',
         body: consultationData
       }),
@@ -143,7 +143,7 @@ const _useConsultation = (consultationId: MaybeRefOrGetter<string>) => {
       return id ? CONSULTATION_KEYS.single(id) : CONSULTATION_KEYS.root
     },
     query: async () => {
-      const data = await requestFetch(`/api/consultations/${toValue(consultationId)}`)
+      const data = await requestFetch(`/api/appointments/${toValue(consultationId)}`)
       if (!data) return null
 
       return {
@@ -170,7 +170,7 @@ const _useDeleteConsultation = () => {
       patientId?: string
       onSuccess?: () => void
     }) =>
-      requestFetch(`/api/consultations/${consultationId}`, {
+      requestFetch(`/api/appointments/${consultationId}`, {
         method: 'DELETE'
       }),
     onSuccess: (_, { patientId, onSuccess }) => {
@@ -211,7 +211,7 @@ const _useUpdateConsultationStatus = () => {
       patientId?: string
       status: ConsultationStatus
     }) =>
-      requestFetch(`/api/consultations/${consultationId}`, {
+      requestFetch(`/api/appointments/${consultationId}`, {
         method: 'PUT',
         body: { status }
       }),
