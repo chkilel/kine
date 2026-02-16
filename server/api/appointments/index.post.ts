@@ -1,12 +1,12 @@
 import { eq, and } from 'drizzle-orm'
-import { consultations, patients, users, rooms } from '~~/server/database/schema'
+import { appointments, patients, users, rooms } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
   try {
     const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, consultationCreateSchema.parse)
+    const body = await readValidatedBody(event, appointmentCreateSchema.parse)
 
     if (!body.patientId) {
       throw createError({
@@ -18,14 +18,14 @@ export default defineEventHandler(async (event) => {
     if (body.location === 'clinic' && !body.roomId) {
       throw createError({
         statusCode: 400,
-        message: 'Une salle est requise pour les consultations en clinique'
+        message: 'Une salle est requise pour les rendez-vous en clinique'
       })
     }
 
     if ((body.location === 'home' || body.location === 'telehealth') && body.roomId) {
       throw createError({
         statusCode: 400,
-        message: `Une salle ne doit pas être fournie pour les consultations à ${body.location === 'home' ? 'domicile' : 'téléconsultation'}`
+        message: `Une salle ne doit pas être fournie pour les rendez-vous à ${body.location === 'home' ? 'domicile' : 'téléconsultation'}`
       })
     }
 
@@ -68,15 +68,15 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const consultationData = {
+    const appointmentData = {
       ...body,
       organizationId
     }
 
-    const [newConsultation] = await db.insert(consultations).values(consultationData).returning()
+    const [newAppointment] = await db.insert(appointments).values(appointmentData).returning()
 
-    return successResponse(newConsultation, 'Consultation créée avec succès')
+    return successResponse(newAppointment, 'Rendez-vous créé avec succès')
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la création de la consultation')
+    handleApiError(error, 'Échec de la création de la rendez-vous') 
   }
 })

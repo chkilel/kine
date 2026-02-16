@@ -31,12 +31,12 @@ export const additionalFields = {
     required: true,
     input: true
   },
-  defaultConsultationDuration: {
+  defaultAppointmentDuration: {
     type: 'number',
     required: false,
     input: true
   },
-  consultationGapMinutes: {
+  appointmentGapMinutes: {
     type: 'number',
     required: false,
     input: true

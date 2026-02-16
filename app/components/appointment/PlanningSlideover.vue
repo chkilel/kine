@@ -4,16 +4,15 @@
   const props = defineProps<{
     patient: Patient
     treatmentPlan?: TreatmentPlanWithProgress | null
-    consultation?: Consultation
+    appointment?: Appointment
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
   const overlay = useOverlay()
-  const toast = useToast()
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
-  const { mutate: updateStatus } = useUpdateConsultationStatus()
-  const consultationAction = useConsultationAction()
+  const { mutate: updateStatus } = useUpdateAppointmentStatus()
+  const appointmentAction = useAppointmentAction()
 
   // Tab configuration
   //  const planningTabs = [
@@ -34,14 +33,14 @@
   // Tab state
   const activePlanningTab = ref('manual')
 
-  const slideoverTitle = computed(() => (props.consultation ? 'Modifier la séance' : 'Planification des séances'))
+  const slideoverTitle = computed(() => (props.appointment ? 'Modifier la séance' : 'Planification des séances'))
 
   const slideoverDescription = computed(() => {
-    if (!props.consultation) {
+    if (!props.appointment) {
       const planInfo = props.treatmentPlan ? ` - Plan: ${props.treatmentPlan.title}` : ''
       return `Patient: ${formatFullName(props.patient)}${planInfo}`
     }
-    return `Modifier la séance du ${formatFrenchDate(props.consultation.date)} pour ${formatFullName(props.patient)}`
+    return `Modifier la séance du ${formatFrenchDate(props.appointment.date)} pour ${formatFullName(props.patient)}`
   })
 
   const treatmentPlanStats = ref<{
@@ -58,19 +57,19 @@
   })
 
   const canStartSession = computed(() => {
-    return props.consultation && ['scheduled', 'confirmed'].includes(props.consultation.status)
+    return props.appointment && ['scheduled', 'confirmed'].includes(props.appointment.status)
   })
 
   const canCompleteSession = computed(() => {
-    return props.consultation && props.consultation.status === 'in_progress'
+    return props.appointment && props.appointment.status === 'in_progress'
   })
 
   const handleStartSession = async () => {
-    if (!props.consultation) return
+    if (!props.appointment) return
 
     const confirmed = await confirmModal.open({
       title: 'Démarrer la consultation',
-      message: `Démarrer la consultation avec ${formatFullName(props.patient)} le ${formatFrenchDate(props.consultation.date)} à ${props.consultation.startTime} ?`,
+      message: `Démarrer la consultation avec ${formatFullName(props.patient)} le ${formatFrenchDate(props.appointment.date)} à ${props.appointment.startTime} ?`,
       confirmText: 'Démarrer',
       cancelText: 'Annuler',
       confirmColor: 'primary',
@@ -88,8 +87,8 @@
     })()
 
     try {
-      await consultationAction.startAsync({
-        id: props.consultation.id,
+      await appointmentAction.startAsync({
+        id: props.appointment.id,
         actualStartTime
       })
     } catch (error) {
@@ -99,14 +98,14 @@
 
     activeConsultationOverlay.open({
       patientId: props.patient.id,
-      consultationId: props.consultation.id
+      appointmentId: props.appointment.id
     })
 
     emit('close')
   }
 
   const handleCompleteSession = async () => {
-    if (!props.consultation) return
+    if (!props.appointment) return
 
     const confirmed = await confirmModal.open({
       title: 'Terminer la consultation',
@@ -120,7 +119,7 @@
     if (confirmed) {
       updateStatus({
         patientId: props.patient.id,
-        consultationId: props.consultation.id,
+        appointmentId: props.appointment.id,
         status: 'completed'
       })
     }
@@ -184,7 +183,7 @@
         <AppointmentManualPlanningCard
           :treatment-plan="treatmentPlan"
           :patient="patient"
-          :consultation="consultation"
+          :appointment="appointment"
         />
 
         <!-- -----------------------------Hiding the tabs witht automatique planning---------------------------------------- -->
@@ -260,7 +259,7 @@
 
         <div class="flex gap-3">
           <UButton variant="outline" color="neutral" size="lg" @click="close">Annuler</UButton>
-          <UButton color="primary" size="lg">{{ consultation ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
+          <UButton color="primary" size="lg">{{ appointment ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
         </div>
       </div>
     </template>

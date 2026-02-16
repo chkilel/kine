@@ -2,10 +2,10 @@
   import { LazyAppModalConfirm } from '#components'
 
   const props = defineProps<{
-    consultation: Consultation
+    appointment: Appointment
     selectedTags: string[]
     painLevelAfter: number | undefined
-    consultationNotes: string
+    appointmentNotes: string
   }>()
 
   const emit = defineEmits<{
@@ -13,7 +13,7 @@
     close: []
   }>()
 
-  const consultationAction = useConsultationAction()
+  const consultationAction = useAppointmentAction()
   const overlay = useOverlay()
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const queryCache = useQueryCache()
@@ -33,8 +33,8 @@
   const isPaused = computed(() => pauseStartTime.value !== null)
 
   const consultationDurationSeconds = computed(() => {
-    if (!props.consultation?.duration) return 0
-    return (props.consultation.duration + (props.consultation.extendedDurationMinutes || 0)) * 60
+    if (!props.appointment?.duration) return 0
+    return (props.appointment.duration + (props.appointment.extendedDurationMinutes || 0)) * 60
   })
 
   const remainingSeconds = computed(() => {
@@ -49,15 +49,15 @@
 
   const showFiveMinuteWarning = computed(() => {
     return (
-      props.consultation.status === 'in_progress' &&
+      props.appointment.status === 'in_progress' &&
       consultationDurationSeconds.value > 0 &&
       remainingSeconds.value > 0 &&
       remainingSeconds.value <= 300
     )
   })
 
-  const isInProgress = computed(() => props.consultation.status === 'in_progress')
-  const isScheduled = computed(() => ['scheduled', 'confirmed'].includes(props.consultation.status))
+  const isInProgress = computed(() => props.appointment.status === 'in_progress')
+  const isScheduled = computed(() => ['scheduled', 'confirmed'].includes(props.appointment.status))
 
   // Timer functions
   function calculateElapsedTime() {
@@ -97,7 +97,7 @@
 
   // Watchers
   watch(
-    () => props.consultation,
+    () => props.appointment,
     (value) => {
       if (!value) return
 
@@ -135,8 +135,8 @@
 
   // Auto-refresh consultation data
   const { pause: pauseRefresh } = useIntervalFn(() => {
-    if (props.consultation?.status === 'in_progress') {
-      queryCache.invalidateQueries({ key: ['consultations', props.consultation.id] })
+    if (props.appointment?.status === 'in_progress') {
+      queryCache.invalidateQueries({ key: ['consultations', props.appointment.id] })
     }
   }, 30000)
 
@@ -146,7 +146,7 @@
   async function startSession() {
     try {
       await consultationAction.startAsync({
-        id: props.consultation.id,
+        id: props.appointment.id,
         actualStartTime: getCurrentTimeHHMMSS()
       })
     } catch (error) {
@@ -160,7 +160,7 @@
     isPausing.value = true
     try {
       await consultationAction.pauseAsync({
-        id: props.consultation.id,
+        id: props.appointment.id,
         pauseStartTime: getCurrentTimeHHMMSS()
       })
     } catch (error) {
@@ -171,14 +171,14 @@
   }
 
   async function handleResumeTimer() {
-    if (!props.consultation.pauseStartTime || isResuming.value) return
+    if (!props.appointment.pauseStartTime || isResuming.value) return
 
     isResuming.value = true
     try {
-      const pauseDurationSeconds = calculateTimeDifference(props.consultation.pauseStartTime, getCurrentTimeHHMMSS())
+      const pauseDurationSeconds = calculateTimeDifference(props.appointment.pauseStartTime, getCurrentTimeHHMMSS())
 
       await consultationAction.resumeAsync({
-        id: props.consultation.id,
+        id: props.appointment.id,
         pauseDurationSeconds
       })
     } catch (error) {
@@ -191,7 +191,7 @@
   async function handleExtendFiveMinutes() {
     try {
       await consultationAction.extendAsync({
-        id: props.consultation.id,
+        id: props.appointment.id,
         extendedDurationMinutes: 5
       })
     } catch (error) {
@@ -204,11 +204,11 @@
 
     try {
       await consultationAction.endAsync({
-        id: props.consultation.id,
+        id: props.appointment.id,
         actualDurationSeconds: finalDurationSeconds,
         tags: props.selectedTags,
         painLevelAfter: props.painLevelAfter,
-        notes: props.consultationNotes
+        notes: props.appointmentNotes
       })
 
       emit('complete')

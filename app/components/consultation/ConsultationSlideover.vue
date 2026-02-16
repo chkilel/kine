@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const props = defineProps<{
     patientId: string
-    consultationId: string
+    appointmentId: string
   }>()
 
   const emit = defineEmits<{
@@ -11,14 +11,14 @@
   // Data fetching
   const { data: patient } = usePatientById(() => props.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
-  const { data: allConsultations } = useConsultationsList(() => ({ patientId: props.patientId }))
-  const { data: consultation, isPending: consultationLoading } = useConsultation(() => props.consultationId)
-  const consultationAction = useConsultationAction()
+  const { data: allAppointments } = useAppointmentsList(() => ({ patientId: props.patientId }))
+  const { data: appointment, isPending: appointmentLoading } = useAppointment(() => props.appointmentId)
+  const appointmentAction = useAppointmentAction()
 
   // Form state
   const painLevelBefore = ref<number>(0)
   const painLevelAfter = ref<number | undefined>(undefined)
-  const consultationNotes = ref('')
+  const appointmentNotes = ref('')
   const selectedTags = ref<string[]>([])
 
   // Constants
@@ -33,15 +33,15 @@
   const EVA_MAX = 10
   const EVA_STEP = 1
 
-  // Initialize form from consultation data
+  // Initialize form from appointment data
   watch(
-    consultation,
+    appointment,
     (value) => {
       if (!value) return
 
       painLevelBefore.value = value.painLevelBefore ?? 0
       painLevelAfter.value = value.painLevelAfter ?? undefined
-      consultationNotes.value = value.notes || ''
+      appointmentNotes.value = value.notes || ''
       selectedTags.value = parseTagsSafely(value.tags)
     },
     { immediate: true }
@@ -58,7 +58,7 @@
   }
 
   async function toggleTag(tag: string) {
-    if (!consultation.value) return
+    if (!appointment.value) return
 
     const previousTags = [...selectedTags.value]
     selectedTags.value = selectedTags.value.includes(tag)
@@ -66,8 +66,8 @@
       : [...selectedTags.value, tag]
 
     try {
-      await consultationAction.updateTagsAsync({
-        id: consultation.value.id,
+      await appointmentAction.updateTagsAsync({
+        id: appointment.value.id,
         tags: selectedTags.value
       })
     } catch (error) {
@@ -77,28 +77,28 @@
   }
 
   // Computed values - memoized for performance
-  const previousConsultations = computed(() => {
-    const list = allConsultations.value
-    const currentConsultation = consultation.value
-    if (!list || !currentConsultation) return []
+  const previousAppointments = computed(() => {
+    const list = allAppointments.value
+    const currentAppointment = appointment.value
+    if (!list || !currentAppointment) return []
 
     return list
-      .filter((c) => c.id !== currentConsultation.id && c.date <= currentConsultation.date)
+      .filter((c) => c.id !== currentAppointment.id && c.date <= currentAppointment.date)
       .slice(-5)
       .reverse()
   })
 
   const relatedTreatmentPlan = computed(() => {
-    if (!treatmentPlans.value || !consultation.value?.treatmentPlanId) return null
-    return treatmentPlans.value.find((plan) => plan.id === consultation.value?.treatmentPlanId) || null
+    if (!treatmentPlans.value || !appointment.value?.treatmentPlanId) return null
+    return treatmentPlans.value.find((plan) => plan.id === appointment.value?.treatmentPlanId) || null
   })
 
   const completedSessionsCount = computed(() => {
-    if (!allConsultations.value || !consultation.value) return 0
-    const planId = consultation.value.treatmentPlanId
+    if (!allAppointments.value || !appointment.value) return 0
+    const planId = appointment.value.treatmentPlanId
     if (!planId) return 0
 
-    return allConsultations.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
+    return allAppointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
   const totalSessionsCount = computed(() => relatedTreatmentPlan.value?.numberOfSessions || 0)
@@ -113,9 +113,9 @@
   )
 
   const headerDescription = computed(() => {
-    if (!consultation.value) return ''
-    const typeLabel = getConsultationTypeLabel(consultation.value.type || 'follow_up')
-    const totalDuration = consultation.value.duration + (consultation.value.extendedDurationMinutes || 0)
+    if (!appointment.value) return ''
+    const typeLabel = getAppointmentTypeLabel(appointment.value.type || 'follow_up')
+    const totalDuration = appointment.value.duration + (appointment.value.extendedDurationMinutes || 0)
     const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
@@ -142,7 +142,7 @@
   >
     <template #body>
       <!-- Loading State -->
-      <div v-if="consultationLoading" class="flex justify-center py-10">
+      <div v-if="appointmentLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
 
@@ -312,7 +312,7 @@
               :step="EVA_STEP"
               :ui="{
                 root: 'w-full flex-1 mt-2',
-                track: 'bg-gradient-to-r from-green-600 via-yellow-400 to-red-500',
+                track: 'bg-linear-to-r from-green-600 via-yellow-400 to-red-500',
                 range: 'bg-transparent',
                 thumb: 'bg-error ring-error focus-visible:outline-error/50'
               }"
@@ -339,7 +339,7 @@
 
             <!-- Textarea -->
             <UTextarea
-              v-model="consultationNotes"
+              v-model="appointmentNotes"
               :rows="12"
               placeholder="Notes de la séance... Décrivez les exercices effectués, les réactions du patient et les progrès observés."
               class="border-none bg-transparent focus:ring-0"
@@ -373,15 +373,15 @@
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
           <!-- Timer Card -->
           <ConsultationTimerCard
-            v-if="consultation"
-            :consultation="consultation"
+            v-if="appointment"
+            :appointment="appointment"
             :selected-tags="selectedTags"
             :pain-level-after="painLevelAfter"
-            :consultation-notes="consultationNotes"
+            :appointment-notes="appointmentNotes"
             @close="emit('close')"
           />
 
-          <!-- Previous Consultations Card -->
+          <!-- Previous Appointments Card -->
           <UCard>
             <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
               <UButton
@@ -400,8 +400,8 @@
               </UButton>
 
               <template #content>
-                <div v-if="previousConsultations.length" class="space-y-5 pt-3">
-                  <div v-for="previous in previousConsultations" :key="previous.id">
+                <div v-if="previousAppointments.length" class="space-y-5 pt-3">
+                  <div v-for="previous in previousAppointments" :key="previous.id">
                     <div class="mb-1 flex items-center justify-between">
                       <span class="text-sm font-bold">{{ formatFrenchDate(previous.date) }}</span>
                       <span

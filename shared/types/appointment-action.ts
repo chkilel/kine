@@ -43,7 +43,7 @@ export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
 
-export const consultationPatchSchema = z.union([
+export const appointmentPatchSchema = z.union([
   startActionSchema,
   pauseActionSchema,
   resumeActionSchema,
@@ -59,7 +59,7 @@ export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
 
-export type ConsultationPatchBody =
+export type AppointmentPatchBody =
   | StartAction
   | PauseAction
   | ResumeAction
@@ -67,4 +67,4 @@ export type ConsultationPatchBody =
   | UpdateTagsAction
   | ExtendAction
 
-export type ConsultationActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'
+export type AppointmentActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'

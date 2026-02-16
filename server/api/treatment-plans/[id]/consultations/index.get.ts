@@ -1,10 +1,7 @@
 import { eq, and, desc, getTableColumns } from 'drizzle-orm'
-import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
-import { requireAuth } from '~~/server/utils/auth'
-import { handleApiError } from '~~/server/utils/error'
-import { consultationQuerySchema } from '~~/shared/types/appointment.type'
+import { appointments, treatmentPlans, rooms } from '~~/server/database/schema'
 
-// GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
+// GET /api/treatment-plans/[id]/appointments - Get appointments for treatment plan
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const treatmentPlanId = getRouterParam(event, 'id')
@@ -20,7 +17,7 @@ export default defineEventHandler(async (event) => {
     const { organizationId } = await requireAuth(event)
 
     // Validate query parameters
-    const validatedQuery = await getValidatedQuery(event, consultationQuerySchema.parse)
+    const validatedQuery = await getValidatedQuery(event, appointmentQuerySchema.parse)
 
     // Verify treatment plan exists and belongs to organization
     const [existingTreatmentPlan] = await db
@@ -38,50 +35,49 @@ export default defineEventHandler(async (event) => {
 
     // Build base query conditions
     const baseConditions = and(
-      eq(consultations.organizationId, organizationId),
-      eq(consultations.treatmentPlanId, treatmentPlanId)
+      eq(appointments.organizationId, organizationId),
+      eq(appointments.treatmentPlanId, treatmentPlanId)
     )
 
     // Apply additional filters
     let whereConditions = baseConditions
 
     if (validatedQuery.status) {
-      whereConditions = and(whereConditions, eq(consultations.status, validatedQuery.status))
+      whereConditions = and(whereConditions, eq(appointments.status, validatedQuery.status))
     }
 
     if (validatedQuery.type) {
-      whereConditions = and(whereConditions, eq(consultations.type, validatedQuery.type))
+      whereConditions = and(whereConditions, eq(appointments.type, validatedQuery.type))
     }
 
     // Execute query with room join
-    const consultationsList = await db
+    const appointmentsList = await db
       .select({
-        ...getTableColumns(consultations),
+        ...getTableColumns(appointments),
         roomName: rooms.name
       })
-      .from(consultations)
-      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
+      .from(appointments)
+      .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .where(whereConditions)
-      .orderBy(desc(consultations.date))
+      .orderBy(desc(appointments.date))
 
     // Calculate progress statistics
-    const totalConsultations = consultationsList.length
-    const completedConsultations = consultationsList.filter((c) => c.status === 'completed').length
-    const progressPercentage =
-      totalConsultations > 0 ? Math.round((completedConsultations / totalConsultations) * 100) : 0
+    const totalAppointments = appointmentsList.length
+    const completedAppointments = appointmentsList.filter((a) => a.status === 'completed').length
+    const progressPercentage = totalAppointments > 0 ? Math.round((completedAppointments / totalAppointments) * 100) : 0
 
     return {
-      data: consultationsList,
+      data: appointmentsList,
       treatmentPlan: existingTreatmentPlan,
       statistics: {
-        total: totalConsultations,
-        completed: completedConsultations,
-        scheduled: consultationsList.filter((c) => c.status === 'scheduled').length,
-        cancelled: consultationsList.filter((c) => c.status === 'cancelled').length,
+        total: totalAppointments,
+        completed: completedAppointments,
+        scheduled: appointmentsList.filter((c) => c.status === 'scheduled').length,
+        cancelled: appointmentsList.filter((c) => c.status === 'cancelled').length,
         progressPercentage
       }
     }
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la récupération des consultations du plan de traitement')
+    handleApiError(error, 'Échec de la récupération des rendez-vous du plan de traitement')
   }
 })

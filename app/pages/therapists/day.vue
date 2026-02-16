@@ -42,36 +42,36 @@
   }
 
   const { user } = await useAuth()
-  const { data: consultations, isPending } = useTherapistConsultations(() => user.value?.id, currentDate)
+  const { data: appointments, isPending } = useTherapistAppointments(() => user.value?.id, currentDate)
 
   const stats = computed(() => {
-    const list = consultations.value || []
-    const completed = list.filter((c) => c.status === 'completed').length
-    const upcoming = list.filter((c) => ['scheduled', 'confirmed'].includes(c.status)).length
-    const cancelled = list.filter((c) => ['cancelled', 'no_show'].includes(c.status)).length
+    const list = appointments.value || []
+    const completed = list.filter((a) => a.status === 'completed').length
+    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status)).length
+    const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length
     return {
       total: list.length,
       completed,
       completedPercentage: list.length ? Math.round((completed / list.length) * 100) : 0,
       upcoming,
-      cancelled
+      cancelled,
     }
   })
 
-  const inProgressConsultations = computed(() => consultations.value?.filter((c) => c.status === 'in_progress'))
-  const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
+  const inProgressAppointments = computed(() => appointments.value?.filter((a) => a.status === 'in_progress'))
+  const upcomingAppointments = computed(() => appointments.value?.filter((a) => a.status !== 'in_progress'))
 
-  const handleStartSession = async (consultation: Consultation) => {
+  const handleStartSession = async (appointment: Appointment) => {
     activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
+      patientId: appointment.patientId,
+      appointmentId: appointment.id
     })
   }
 
-  const handleViewSession = (consultation: Consultation) => {
+  const handleViewSession = (appointment: Appointment) => {
     activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
+      patientId: appointment.patientId,
+      appointmentId: appointment.id
     })
   }
 
@@ -101,7 +101,7 @@
       <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
         <div class="space-y-6 xl:col-span-4">
           <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-            <AppStatCard label="Consultations" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
+            <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
             <AppStatCard
               label="Terminées"
               color="success"
@@ -127,9 +127,9 @@
 
           <div class="space-y-4">
             <LazyAppointmentOnGoingCard
-              v-for="consultation in inProgressConsultations"
-              :key="consultation.id"
-              :consultation
+              v-for="appointment in inProgressAppointments"
+              :key="appointment.id"
+              :appointment
               @view-session="handleViewSession"
               @view-patient="handleViewPatient"
             />
@@ -143,11 +143,11 @@
               </div>
             </template>
             <div class="space-y-4">
-              <div v-if="upcomingConsultations && upcomingConsultations.length > 0" class="space-y-3">
+              <div v-if="upcomingAppointments && upcomingAppointments.length > 0" class="space-y-3">
                 <LazyAppointmentListItem
-                  v-for="consultation in upcomingConsultations"
-                  :key="consultation.id"
-                  :consultation="consultation"
+                  v-for="appointment in upcomingAppointments"
+                  :key="appointment.id"
+                  :appointment="appointment"
                   @start-session="handleStartSession"
                 />
               </div>
@@ -155,8 +155,8 @@
               <UEmpty
                 v-else
                 icon="i-hugeicons-calendar-remove-01"
-                title="Aucune consultation"
-                description="Aucune consultation programmée pour cette journée"
+                title="Aucun RDV"
+                description="Aucun RDV programmé pour cette journée"
               />
             </div>
           </AppCard>

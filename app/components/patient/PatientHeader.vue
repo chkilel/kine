@@ -1,21 +1,20 @@
 <script setup lang="ts">
   import { LazyPatientEditSlideover, LazyTreatmentPlanCreateSlideover } from '#components'
   import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
-  import AppNextAppointmentCard from '@/components/app/AppNextAppointmentCard.vue'
 
   const props = defineProps<{ patient: Patient }>()
 
-  const { data: consultations } = useConsultationsList(() => ({ patientId: props.patient?.id || '' }))
+  const { data: appointment } = useAppointmentsList(() => ({ patientId: props.patient?.id || '' }))
 
   const overlay = useOverlay()
   const patientEditSlideover = overlay.create(LazyPatientEditSlideover)
   const planCreateSlideover = overlay.create(LazyTreatmentPlanCreateSlideover)
 
   const nextAppointment = computed(() => {
-    if (!consultations.value || consultations.value.length === 0) return null
+    if (!appointment.value || appointment.value.length === 0) return null
     const localDate = today(getLocalTimeZone())
 
-    const upcoming = consultations.value.filter((c) => {
+    const upcoming = appointment.value.filter((c) => {
       const consultDate = parseDate(c.date)
       return consultDate.compare(localDate) >= 0
     })

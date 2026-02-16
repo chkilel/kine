@@ -2,23 +2,23 @@
   import type { DropdownMenuItem } from '@nuxt/ui'
 
   const {
-    consultation,
+    appointment,
     canEdit = true,
     canDelete = true
   } = defineProps<{
-    consultation: Consultation
+    appointment: Appointment
     canEdit?: boolean
     canDelete?: boolean
   }>()
 
   const emit = defineEmits<{
-    edit: [consultation: Consultation]
-    delete: [consultation: Consultation]
+    edit: [appointment: Appointment]
+    delete: [appointment: Appointment]
   }>()
 
   const { getTherapistName } = useOrganizationMembers()
 
-  const isIndependent = computed(() => !consultation.treatmentPlanId)
+  const isIndependent = computed(() => !appointment.treatmentPlanId)
 
   const menuItems = computed<DropdownMenuItem[][]>(() => [
     [
@@ -27,14 +27,14 @@
         icon: 'i-hugeicons-pencil-edit-01',
         color: 'info',
         disabled: !canEdit,
-        onSelect: () => canEdit && emit('edit', consultation)
+        onSelect: () => canEdit && emit('edit', appointment)
       },
       {
         label: 'Supprimer',
         icon: 'i-hugeicons-delete-02',
         color: 'error',
         disabled: !canDelete,
-        onSelect: () => canDelete && emit('delete', consultation)
+        onSelect: () => canDelete && emit('delete', appointment)
       }
     ]
   ])
@@ -51,10 +51,10 @@
   >
     <div class="flex flex-1 items-center gap-4">
       <div class="flex">
-        <AppDateBadge :date="consultation.date" variant="solid" color="info" class="rounded-r-none" />
+        <AppDateBadge :date="appointment.date" variant="solid" color="info" class="rounded-r-none" />
         <AppTimeBadge
-          :date="consultation.date"
-          :time="consultation.startTime"
+          :date="appointment.date"
+          :time="appointment.startTime"
           color="info"
           variant="soft"
           class="rounded-l-none"
@@ -63,33 +63,33 @@
 
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <UIcon :name="getLocationIcon(consultation.location || 'clinic')" />
+          <UIcon :name="getLocationIcon(appointment.location || 'clinic')" />
           <p class="text-default truncate font-semibold">
-            {{ getConsultationTypeLabel(consultation.type || 'follow_up') }}
+            {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }}
           </p>
           <UBadge
-            :color="getConsultationStatusColor(consultation.status)"
+            :color="getAppointmentStatusColor(appointment.status)"
             size="sm"
             variant="subtle"
             class="rounded-full"
           >
-            {{ getConsultationStatusLabel(consultation.status) }}
+            {{ getAppointmentStatusLabel(appointment.status) }}
           </UBadge>
         </div>
 
         <div class="text-muted sm:divide-muted mt-1.5 flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
           <div class="flex items-center gap-1 sm:pr-2">
             <UIcon name="i-hugeicons-clock-01" />
-            <p>{{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min</p>
+            <p>{{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min</p>
           </div>
 
-          <div v-if="consultation.roomName" class="flex items-center gap-1 sm:px-2">
+          <div v-if="appointment.roomName" class="flex items-center gap-1 sm:px-2">
             <UIcon name="i-hugeicons-door-01" />
-            <p>{{ consultation.roomName }}</p>
+            <p>{{ appointment.roomName }}</p>
           </div>
-          <div v-if="consultation.therapistId" class="flex items-center gap-1 sm:px-2">
+          <div v-if="appointment.therapistId" class="flex items-center gap-1 sm:px-2">
             <UIcon name="i-hugeicons-user" />
-            <p>{{ getTherapistName(consultation.therapistId) }}</p>
+            <p>{{ getTherapistName(appointment.therapistId) }}</p>
           </div>
         </div>
       </div>

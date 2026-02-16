@@ -6,7 +6,7 @@ import { calendarDateField, creationAndUpdateTimestamps } from './columns.helper
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../../../shared/utils/constants.availability'
-import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.location'
+import { LOCATIONS } from '../../../shared/utils/constants.location'
 
 /**
  * ================================================================
@@ -31,7 +31,7 @@ export const weeklyAvailabilityTemplates = sqliteTable(
     dayOfWeek: text({ enum: VALID_SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
     startTime: text().notNull(), // HH:MM:SS format — e.g., '09:00:00'
     endTime: text().notNull(), // HH:MM:SS format — e.g., '12:00:00'
-    location: text({ enum: VALID_CONSULTATION_LOCATIONS }).notNull(), // Consultation location — e.g., 'clinic'
+    location: text({ enum: LOCATIONS }).notNull(), // Appointment location — e.g., 'clinic'
 
     // Created and Updated timestamp
     ...creationAndUpdateTimestamps

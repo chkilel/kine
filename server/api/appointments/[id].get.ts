@@ -1,5 +1,5 @@
 import { eq, and, getTableColumns } from 'drizzle-orm'
-import { consultations, rooms } from '~~/server/database/schema'
+import { appointments, rooms } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -9,31 +9,31 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'ID de consultation requis'
+        message: 'ID de rendez-vous requis'
       })
     }
 
     const { organizationId } = await requireAuth(event)
 
-    const [consultationData] = await db
+    const [appointmentData] = await db
       .select({
-        ...getTableColumns(consultations),
+        ...getTableColumns(appointments),
         roomName: rooms.name
       })
-      .from(consultations)
-      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
-      .where(and(eq(consultations.organizationId, organizationId), eq(consultations.id, id)))
+      .from(appointments)
+      .leftJoin(rooms, eq(appointments.roomId, rooms.id))
+      .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .limit(1)
 
-    if (!consultationData) {
+    if (!appointmentData) {
       throw createError({
         statusCode: 404,
-        message: 'Consultation introuvable'
+        message: 'Rendez-vous introuvable'  
       })
     }
 
-    return consultationData
+    return appointmentData
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la récupération de la consultation')
+    handleApiError(error, 'Échec de la récupération de la rendez-vous')
   }
 })

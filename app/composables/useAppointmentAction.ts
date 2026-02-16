@@ -1,5 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
-import { CONSULTATION_KEYS } from './useAppointment'
+import { APPOINTMENT_KEYS } from './useAppointment'
 
 type StartParams = { id: string; actualStartTime: string }
 type PauseParams = { id: string; pauseStartTime: string }
@@ -14,15 +14,15 @@ type EndParams = {
 type UpdateTagsParams = { id: string; tags: string[] }
 type ExtendParams = { id: string; extendedDurationMinutes: number }
 
-type ConsultationActionParams = StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams
+type AppointmentActionParams = StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams
 
-const _useConsultationAction = () => {
+const _useAppointmentAction = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   const mutation = useMutation({
-    mutation: async (params: ConsultationActionParams) => {
+    mutation: async (params: AppointmentActionParams) => {
       const { id, ...body } = params
       return requestFetch(`/api/appointments/${id}`, {
         method: 'PATCH',
@@ -32,16 +32,16 @@ const _useConsultationAction = () => {
     onSuccess: (data, { id }) => {
       toast.add({
         title: 'Succès',
-        description: data?.message || 'Consultation mise à jour',
+        description: data?.message || 'Rendez-vous mise à jour',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['consultations', id] })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: ['appointments', id] })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
     },
     onError: (error) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de mettre à jour la consultation').message,
+        description: parseError(error, 'Impossible de mettre à jour le Rendez-vous').message,
         color: 'error'
       })
     }
@@ -64,4 +64,4 @@ const _useConsultationAction = () => {
   }
 }
 
-export const useConsultationAction = createSharedComposable(_useConsultationAction)
+export const useAppointmentAction = createSharedComposable(_useAppointmentAction)

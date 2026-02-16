@@ -1,28 +1,28 @@
 <script setup lang="ts">
-  const { consultation } = defineProps<{
-    consultation: Consultation
+  const { appointment } = defineProps<{
+    appointment: Appointment
   }>()
 
   const emit = defineEmits<{
-    'view-session': [consultation: Consultation]
+    'view-session': [appointment: Appointment]
     'view-patient': [patientId: string]
   }>()
 
   const locationLabel = computed(() => {
-    if (consultation.location === 'clinic') {
-      return consultation.roomName
+    if (appointment.location === 'clinic') {
+      return appointment.roomName
     }
-    return getLocationLabel(consultation.location || 'clinic')
+    return getLocationLabel(appointment.location || 'clinic')
   })
 
   const locationIcon = computed(() => {
-    if (consultation.location === 'clinic') {
+    if (appointment.location === 'clinic') {
       return 'i-hugeicons-door-01'
     }
-    return getLocationIcon(consultation.location || 'clinic')
+    return getLocationIcon(appointment.location || 'clinic')
   })
 
-  const locationColor = computed(() => getLocationColor(consultation.location || 'clinic'))
+  const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
 </script>
 
 <template>
@@ -34,15 +34,15 @@
       <div class="flex gap-4">
         <div class="flex w-14 shrink-0 items-center justify-center rounded-xl bg-white/10 ring ring-white/30">
           <UIcon
-            :name="consultation.pauseStartTime ? 'i-hugeicons-pause' : 'i-hugeicons-play'"
+            :name="appointment.pauseStartTime ? 'i-hugeicons-pause' : 'i-hugeicons-play'"
             class="animate-pulse text-3xl"
           />
         </div>
         <div>
           <div class="flex items-center gap-3">
             <UBadge
-              :label="consultation.pauseStartTime ? 'En pause' : 'En cours'"
-              :color="consultation.pauseStartTime ? 'warning' : 'success'"
+              :label="appointment.pauseStartTime ? 'En pause' : 'En cours'"
+              :color="appointment.pauseStartTime ? 'warning' : 'success'"
               class="animate-pulse rounded-lg py-0.5 text-[10px] font-bold uppercase"
             />
             <UBadge
@@ -55,20 +55,20 @@
               class="rounded-lg uppercase"
             />
           </div>
-          <h3 class="mt-1 text-xl font-bold">{{ consultation.patientName }}</h3>
-          <p v-if="consultation.planTitle" class="mt-0.5 flex items-center gap-1 text-xs text-white/90">
+          <h3 class="mt-1 text-xl font-bold">{{ appointment.patientName }}</h3>
+          <p v-if="appointment.planTitle" class="mt-0.5 flex items-center gap-1 text-xs text-white/90">
             <UIcon name="i-hugeicons-file-01" class="text-sm" />
-            {{ consultation.planTitle }}
+            {{ appointment.planTitle }}
           </p>
           <p class="mt-1 flex items-center gap-1 text-xs text-white/90">
-            <UIcon :name="getConsultationTypeIcon(consultation.type || 'follow_up')" class="size-4 shrink-0" />
-            {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} •
-            {{ formatTimeString(consultation.startTime) }} -
+            <UIcon :name="getAppointmentTypeIcon(appointment.type || 'follow_up')" class="size-4 shrink-0" />
+            {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }} •
+            {{ formatTimeString(appointment.startTime) }} -
             {{
               formatTimeString(
                 addMinutesToTime(
-                  consultation.startTime,
-                  consultation.duration + (consultation.extendedDurationMinutes || 0)
+                  appointment.startTime,
+                  appointment.duration + (appointment.extendedDurationMinutes || 0)
                 )
               )
             }}
@@ -85,7 +85,7 @@
           :ui="{
             leadingIcon: 'animate-pulse'
           }"
-          @click="emit('view-session', consultation)"
+          @click="emit('view-session', appointment)"
         />
         <UButton
           label="Patient"
@@ -93,7 +93,7 @@
           variant="solid"
           color="neutral"
           class="rounded-xl p-2"
-          @click="emit('view-patient', consultation.patientId)"
+          @click="emit('view-patient', appointment.patientId)"
         />
       </div>
     </div>

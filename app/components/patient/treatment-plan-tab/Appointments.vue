@@ -16,25 +16,25 @@
     data: consultations,
     isLoading,
     refetch
-  } = useConsultationsList(() => ({
+  } = useAppointmentsList(() => ({
     patientId: props.patient.id,
     treatmentPlanId: props.treatmentPlan.id
   }))
 
-  const { mutate: deleteConsultation } = useDeleteConsultation()
+  const { mutate: deleteAppointment } = useDeleteAppointment()
 
   // Tab state
   const activeTab = ref<'upcoming' | 'finished'>('upcoming')
 
   // Filter consultations by status
-  const upcomingStatuses: ConsultationStatus[] = ['confirmed', 'scheduled', 'in_progress']
-  const finishedStatuses: ConsultationStatus[] = ['completed', 'cancelled', 'no_show']
+  const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled', 'in_progress']
+  const finishedStatuses: AppointmentStatus[] = ['completed', 'cancelled', 'no_show']
 
-  const upcomingConsultations = computed(
+  const upcomingAppointments = computed(
     () => consultations.value?.filter((c) => upcomingStatuses.includes(c.status)) || []
   )
 
-  const finishedConsultations = computed(
+  const finishedAppointments = computed(
     () => consultations.value?.filter((c) => finishedStatuses.includes(c.status)) || []
   )
 
@@ -44,32 +44,32 @@
       value: 'upcoming',
       slot: 'upcoming',
       icon: 'i-hugeicons-calendar-03',
-      badge: upcomingConsultations.value.length
+      badge: upcomingAppointments.value.length
     },
     {
       label: 'Terminées / Annulées',
       value: 'finished',
       slot: 'finished',
       icon: 'i-hugeicons-checkmark-circle-02',
-      badge: finishedConsultations.value.length
+      badge: finishedAppointments.value.length
     }
   ])
 
   // Refresh consultations data
-  const refreshConsultations = async () => {
+  const refreshAppointments = async () => {
     await refetch()
     toast.add({
-      title: 'Consultations actualisées',
+      title: 'Appointments actualisées',
       description: 'Les consultations ont été rechargées avec succès.',
       color: 'success'
     })
   }
 
-  // Delete consultation function
-  async function handleDeleteConsultation(consultation: Consultation) {
+  // Delete appointment function
+  async function handleDeleteAppointment(appointment: Appointment) {
     const confirmed = await confirmModal.open({
-      title: 'Supprimer la consultation',
-      message: `Êtes-vous sûr de vouloir supprimer cette consultation du ${formatFrenchDate(consultation.date)} ? Cette action est irréversible.`,
+      title: 'Supprimer la séance',
+      message: `Êtes-vous sûr de vouloir supprimer cette séance du ${formatFrenchDate(appointment.date)} ? Cette action est irréversible.`,
       confirmText: 'Supprimer',
       cancelText: 'Annuler',
       confirmColor: 'error',
@@ -77,23 +77,23 @@
     })
 
     if (confirmed) {
-      deleteConsultation({
-        consultationId: consultation.id
+      deleteAppointment({
+        appointmentId: appointment.id
       })
     }
   }
 
-  // Edit consultation function - opens planning slideover with consultation data
-  const editConsultation = (consultation: Consultation) => {
+  // Edit appointment function - opens planning slideover with appointment data
+  const editAppointment = (appointment: Appointment) => {
     sessionPlanningOverlay.open({
       patient: props.patient,
       treatmentPlan: props.treatmentPlan,
-      consultation: consultation
+      appointment
     })
   }
 
   // Function to open session planning with event handlers
-  function openConsultationPlanning() {
+  function openAppointmentPlanning() {
     sessionPlanningOverlay.open({
       patient: props.patient,
       treatmentPlan: props.treatmentPlan
@@ -111,14 +111,14 @@
           color="neutral"
           size="sm"
           :loading="isLoading"
-          @click="refreshConsultations"
+          @click="refreshAppointments"
         />
         <UButton
           icon="i-hugeicons-calendar-add-01"
           color="primary"
           size="sm"
           label="Planifier les séances"
-          @click="openConsultationPlanning"
+          @click="openAppointmentPlanning"
         />
       </div>
     </template>
@@ -128,22 +128,22 @@
           <template #upcoming>
             <div class="mt-4 space-y-2.5">
               <AppointmentCard
-                v-for="consultation in upcomingConsultations"
-                :key="consultation.id"
-                :consultation
-                @edit="editConsultation($event)"
-                @delete="handleDeleteConsultation($event)"
+                v-for="appointment in upcomingAppointments"
+                :key="appointment.id"
+                :appointment
+                @edit="editAppointment($event)"
+                @delete="handleDeleteAppointment($event)"
               />
             </div>
           </template>
           <template #finished>
             <div class="mt-4 space-y-2.5">
               <AppointmentCard
-                v-for="consultation in finishedConsultations"
-                :key="consultation.id"
-                :consultation
-                @edit="editConsultation($event)"
-                @delete="handleDeleteConsultation($event)"
+                v-for="appointment in finishedAppointments"
+                :key="appointment.id"
+                :appointment
+                @edit="editAppointment($event)"
+                @delete="handleDeleteAppointment($event)"
               />
             </div>
           </template>
@@ -161,7 +161,7 @@
             icon: 'i-hugeicons-add-circle',
             label: 'Planifier les séances du plan',
             size: 'md',
-            onClick: openConsultationPlanning
+            onClick: openAppointmentPlanning
           },
           {
             icon: 'i-hugeicons-add-01',

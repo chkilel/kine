@@ -2,40 +2,40 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 
-import { consultations } from '~~/server/database/schema/appointment'
+import { appointments } from '~~/server/database/schema/appointment'
 import {
   calendarDateSchema,
-  consultationTypeSchema,
-  consultationStatusSchema,
+  appointmentTypeSchema,
+  appointmentStatusSchema,
   locationSchema,
-  type ConsultationLocation
+  type Location
 } from './base.types'
 
 z.config(fr())
 
 // =============================================================================
-// Consultation Schemas and Types
+// Appointment Schemas and Types
 // =============================================================================
-export const consultationCreateSchema = createInsertSchema(consultations, {
+export const appointmentCreateSchema = createInsertSchema(appointments, {
   patientId: z.string(),
   organizationId: z.string().min(1),
   therapistId: z.string(),
   roomId: z.uuidv7().optional(),
   date: calendarDateSchema,
   location: locationSchema.default('clinic'),
-  status: consultationStatusSchema.default('scheduled'),
-  type: consultationTypeSchema.optional(),
+  status: appointmentStatusSchema.default('scheduled'),
+  type: appointmentTypeSchema.optional(),
   duration: z.int()
 })
 
-export const consultationUpdateSchema = consultationCreateSchema.partial()
+export const appointmentUpdateSchema = appointmentCreateSchema.partial()
 
-export const consultationSchema = createSelectSchema(consultations, {
+export const appointmentSchema = createSelectSchema(appointments, {
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 })
 
-export const consultationQuerySchema = z.object({
+export const appointmentQuerySchema = z.object({
   therapistId: z.string().optional(),
   patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
@@ -43,8 +43,8 @@ export const consultationQuerySchema = z.object({
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
-  status: consultationStatusSchema.optional(),
-  type: consultationTypeSchema.optional(),
+  status: appointmentStatusSchema.optional(),
+  type: appointmentTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   date: calendarDateSchema.optional(),
@@ -55,20 +55,20 @@ export const consultationQuerySchema = z.object({
   tags: z.string().optional()
 })
 
-export const therapistConsultationsQuerySchema = z.object({
+export const therapistAppointmentsQuerySchema = z.object({
   therapistId: z.string(),
   date: calendarDateSchema
 })
 
 // Type inference
-export type Consultation = z.infer<typeof consultationSchema> & {
+export type Appointment = z.infer<typeof appointmentSchema> & {
   roomName?: string | null
   patientName?: string | null
   planTitle?: string | null
 }
-export type ConsultationCreate = z.infer<typeof consultationCreateSchema>
-export type ConsultationUpdate = z.infer<typeof consultationUpdateSchema>
-export type ConsultationQuery = z.infer<typeof consultationQuerySchema>
+export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
+export type AppointmentUpdate = z.infer<typeof appointmentUpdateSchema>
+export type AppointmentQuery = z.infer<typeof appointmentQuerySchema>
 
 // Planning types
 export interface PlanningSettings {
@@ -77,5 +77,5 @@ export interface PlanningSettings {
   duration: number
   startDate: string
   preferredDays: string[]
-  location: ConsultationLocation
+  location: Location
 }

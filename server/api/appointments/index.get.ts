@@ -1,63 +1,63 @@
 import { eq, and, asc, isNull, gte, lte, getTableColumns } from 'drizzle-orm'
-import { consultations, rooms } from '~~/server/database/schema'
+import { appointments, rooms } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const { organizationId } = await requireAuth(event)
 
   try {
-    const validatedQuery = await getValidatedQuery(event, consultationQuerySchema.parse)
+    const validatedQuery = await getValidatedQuery(event, appointmentQuerySchema.parse)
 
     const conditions = []
 
-    conditions.push(eq(consultations.organizationId, organizationId))
+    conditions.push(eq(appointments.organizationId, organizationId))
 
     if (validatedQuery.therapistId) {
-      conditions.push(eq(consultations.therapistId, validatedQuery.therapistId))
+      conditions.push(eq(appointments.therapistId, validatedQuery.therapistId))
     }
 
     if (validatedQuery.patientId) {
-      conditions.push(eq(consultations.patientId, validatedQuery.patientId))
+      conditions.push(eq(appointments.patientId, validatedQuery.patientId))
     }
 
     if (validatedQuery.treatmentPlanId) {
-      conditions.push(eq(consultations.treatmentPlanId, validatedQuery.treatmentPlanId))
+      conditions.push(eq(appointments.treatmentPlanId, validatedQuery.treatmentPlanId))
     } else if (validatedQuery.onlyIndependent === true) {
-      conditions.push(isNull(consultations.treatmentPlanId))
+      conditions.push(isNull(appointments.treatmentPlanId))
     }
 
     if (validatedQuery.status) {
-      conditions.push(eq(consultations.status, validatedQuery.status))
+      conditions.push(eq(appointments.status, validatedQuery.status))
     }
 
     if (validatedQuery.type) {
-      conditions.push(eq(consultations.type, validatedQuery.type))
+      conditions.push(eq(appointments.type, validatedQuery.type))
     }
 
     if (validatedQuery.date) {
-      conditions.push(eq(consultations.date, validatedQuery.date))
+      conditions.push(eq(appointments.date, validatedQuery.date))
     } else {
       if (validatedQuery.dateFrom) {
-        conditions.push(gte(consultations.date, validatedQuery.dateFrom))
+        conditions.push(gte(appointments.date, validatedQuery.dateFrom))
       }
 
       if (validatedQuery.dateTo) {
-        conditions.push(lte(consultations.date, validatedQuery.dateTo))
+        conditions.push(lte(appointments.date, validatedQuery.dateTo))
       }
     }
 
-    const consultationsList = await db
+    const appointmentsList = await db
       .select({
-        ...getTableColumns(consultations),
+        ...getTableColumns(appointments),
         roomName: rooms.name
       })
-      .from(consultations)
-      .leftJoin(rooms, eq(consultations.roomId, rooms.id))
+      .from(appointments)
+      .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .where(and(...conditions))
-      .orderBy(asc(consultations.date))
+      .orderBy(asc(appointments.date))
 
-    return consultationsList
+    return appointmentsList
   } catch (error: unknown) {
-    handleApiError(error, 'Erreur lors de la récupération des consultations')
+    handleApiError(error, 'Erreur lors de la récupération des rendez-vous')
   }
 })

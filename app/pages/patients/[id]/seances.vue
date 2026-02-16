@@ -2,8 +2,8 @@
   import { LazyAppModalConfirm, LazyAppointmentPlanningSlideover } from '#components'
   import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date'
 
-  const route = useRoute()
-  const router = useRouter()
+const route = useRoute()
+
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
 
   const overlay = useOverlay()
@@ -11,35 +11,35 @@
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
   // Mutating Data
-  const { mutate: deleteConsultation } = useDeleteConsultation()
+  const { mutate: deleteAppointment } = useDeleteAppointment()
 
   const searchQuery = ref('')
-  const statusFilter = ref<ConsultationStatus | 'all'>('all')
+  const statusFilter = ref<AppointmentStatus | 'all'>('all')
   const dateRange = shallowRef<{ start: DateValue | undefined; end: DateValue | undefined }>({
     start: undefined,
     end: undefined
   })
 
   const queryParams = computed(() => {
-    const params: ConsultationQuery = {
+    const params: AppointmentQuery = {
       patientId: route.params.id as string,
       onlyIndependent: true
     }
     return params
   })
 
-  const { data: consultations, isLoading } = useConsultationsList(queryParams)
+  const { data: appointments, isLoading } = useAppointmentsList(queryParams)
 
-  const consultationCount = computed(() => consultations.value?.length || 0)
+  const appointmentCount = computed(() => appointments.value?.length || 0)
 
-  const filteredConsultations = computed(() => {
-    let filtered = consultations.value || []
+  const filteredAppointments = computed(() => {
+    let filtered = appointments.value || []
 
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
       filtered = filtered.filter(
         (c) =>
-          getConsultationTypeLabel(c.type || 'follow_up')
+          getAppointmentTypeLabel(c.type || 'follow_up')
             .toLowerCase()
             .includes(query) ||
           (c.notes && c.notes.toLowerCase().includes(query)) ||
@@ -75,10 +75,10 @@
     navigateTo(`/patients/${route.params.id}/plan`)
   }
 
-  const handleDeleteSession = async (consultation: Consultation) => {
+  const handleDeleteSession = async (appointment: Appointment) => {
     const confirmed = await confirmModal.open({
-      title: 'Supprimer la consultation',
-      message: `Êtes-vous sûr de vouloir supprimer cette consultation du ${formatFrenchDate(consultation.date)} ? Cette action est irréversible.`,
+      title: 'Supprimer la séance',
+      message: `Êtes-vous sûr de vouloir supprimer cette séance du ${formatFrenchDate(appointment.date)} ? Cette action est irréversible.`,
       confirmText: 'Supprimer',
       cancelText: 'Annuler',
       confirmColor: 'error',
@@ -86,18 +86,18 @@
     })
 
     if (confirmed) {
-      deleteConsultation({
+      deleteAppointment({
         patientId: route.params.id as string,
-        consultationId: consultation.id
+        appointmentId: appointment.id
       })
     }
   }
 
-  const handleEditSession = (consultation: Consultation) => {
+  const handleEditSession = (appointment: Appointment) => {
     if (!patient.value) return
     sessionPlanningOverlay.open({
       patient: patient.value,
-      consultation: consultation
+      appointment
     })
   }
 
@@ -113,18 +113,18 @@
   <div v-else-if="patient">
     <AppCard
       icon="hugeicons-folder-details"
-      :description="`${consultationCount} Consultation${consultationCount > 1 ? 's' : ''} indépendante${consultationCount > 1 ? 's' : ''}`"
+      :description="`${appointmentCount} Appointment${appointmentCount > 1 ? 's' : ''} indépendante${appointmentCount > 1 ? 's' : ''}`"
     >
       <!-- Header -->
       <template #title>
-        <span>Consultations Indépendantes</span>
+        <span>Séances Indépendantes</span>
       </template>
       <template #actions>
         <UButton
           icon="i-lucide-plus"
           color="primary"
           size="sm"
-          label="Nouvelle Consultation"
+          label="Nouvelle Séance"
           @click="handleCreateSession"
         />
       </template>
@@ -140,7 +140,7 @@
                 value: 'all',
                 color: 'neutral'
               },
-              ...CONSULTATION_STATUS_OPTIONS
+              ...APPOINTMENT_STATUS_OPTIONS
             ]"
             placeholder="Tous les statuts"
             class="w-full"
@@ -180,11 +180,11 @@
         <UIcon name="i-lucide-loader-2" class="text-muted animate-spin text-4xl" />
       </div>
 
-      <div v-else-if="filteredConsultations.length > 0" class="space-y-3">
+      <div v-else-if="filteredAppointments.length > 0" class="space-y-3">
         <AppointmentCard
-          v-for="consultation in filteredConsultations"
-          :key="consultation.id"
-          :consultation="consultation"
+          v-for="appointment in filteredAppointments"
+          :key="appointment.id"
+          :appointment
           :can-edit="true"
           :can-delete="true"
           @edit="handleEditSession"
@@ -192,7 +192,7 @@
         />
       </div>
 
-      <!-- Empty State for Independent Consultations -->
+      <!-- Empty State for Independent Appointments -->
       <UEmpty
         v-else-if="!searchQuery && statusFilter === 'all' && !dateRange.start && !dateRange.end"
         icon="hugeicons-folder-details"

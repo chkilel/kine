@@ -15,9 +15,9 @@
     duration: 45,
     startDate: new Date(),
     preferredDays: [] as string[],
-    location: 'clinic' as ConsultationLocation,
+    location: 'clinic',
     therapistId: props.treatmentPlan.therapistId,
-    type: 'follow_up' as ConsultationType
+    type: 'follow_up'
   })
   const minDate = computed(() => convertToCalendarDate(new Date()))
   // Computed property for calendar date model
@@ -55,7 +55,7 @@
       <UFormField label="Lieu" class="">
         <UFieldGroup class="flex">
           <UButton
-            v-for="loc in CONSULTATION_LOCATION_OPTIONS"
+            v-for="loc in LOCATION_OPTIONS"
             :key="loc.value"
             :variant="planningSettings.location === loc.value ? 'solid' : 'subtle'"
             :color="planningSettings.location === loc.value ? 'primary' : 'neutral'"
@@ -72,7 +72,7 @@
       <UFormField label="Type de séance">
         <USelect
           v-model="planningSettings.type"
-          :items="CONSULTATION_TYPES_OPTIONS"
+          :items="APPOINTMENT_TYPES_OPTIONS"
           option-attribute="label"
           value-attribute="value"
           class="w-full"

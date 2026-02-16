@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { consultations } from '~~/server/database/schema'
+import { appointments } from '~~/server/database/schema'
+import { appointmentUpdateSchema } from '~~/shared/types/appointment.type'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -9,30 +10,30 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'ID de consultation requis'
+        message: 'ID de rendez-vous requis'
       })
     }
 
     const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, consultationUpdateSchema.parse)
+    const body = await readValidatedBody(event, appointmentUpdateSchema.parse)
 
-    const [existingConsultation] = await db
+    const [existingAppointment] = await db  
       .select()
-      .from(consultations)
-      .where(and(eq(consultations.id, id), eq(consultations.organizationId, organizationId)))
+      .from(appointments)
+      .where(and(eq(appointments.id, id), eq(appointments.organizationId, organizationId)))
       .limit(1)
 
-    if (!existingConsultation) {
+    if (!existingAppointment) {
       throw createError({
         statusCode: 404,
-        message: 'Consultation introuvable'
+        message: 'Rendez-vous introuvable'
       })
     }
 
-    const [updatedConsultation] = await db.update(consultations).set(body).where(eq(consultations.id, id)).returning()
+    const [updatedAppointment] = await db.update(appointments).set(body).where(eq(appointments.id, id)).returning()
 
-    return successResponse(updatedConsultation, 'Consultation mise à jour avec succès')
+    return successResponse(updatedAppointment, 'Rendez-vous mis à jour avec succès')
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la mise à jour de la consultation')
+    handleApiError(error, 'Échec de la mise à jour de la rendez-vous')
   }
 })

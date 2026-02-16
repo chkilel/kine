@@ -1,15 +1,15 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
-export const CONSULTATION_KEYS = {
-  root: ['consultations'] as const,
-  list: (params: ConsultationQuery) => [...CONSULTATION_KEYS.root, params],
-  single: (id: string) => [...CONSULTATION_KEYS.root, id],
-  therapist: (therapistId: string, date: string) => [...CONSULTATION_KEYS.root, 'therapist', therapistId, date],
-  therapistRoot: () => [...CONSULTATION_KEYS.root, 'therapist']
+export const APPOINTMENT_KEYS = {
+  root: ['appointments'] as const,
+  list: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, params],
+  single: (id: string) => [...APPOINTMENT_KEYS.root, id],
+  therapist: (therapistId: string, date: string) => [...APPOINTMENT_KEYS.root, 'therapist', therapistId, date],
+  therapistRoot: () => [...APPOINTMENT_KEYS.root, 'therapist']
 }
 
-const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>) => {
+const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
     key: () => {
@@ -25,7 +25,7 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         dateTo: toValue(queryParamsValue.dateTo),
         date: toValue(queryParamsValue.date)
       }
-      return CONSULTATION_KEYS.list(query as ConsultationQuery)
+      return APPOINTMENT_KEYS.list(query as AppointmentQuery)
     },
     query: async () => {
       const queryParamsValue = toValue(queryParams) || {}
@@ -40,7 +40,7 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
         dateTo: toValue(queryParamsValue.dateTo),
         date: toValue(queryParamsValue.date)
       }
-      const validatedQuery = consultationQuerySchema.parse(query)
+      const validatedQuery = appointmentQuerySchema.parse(query)
       const resp = await requestFetch('/api/appointments', {
         query: Object.fromEntries(
           Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -55,95 +55,95 @@ const _useConsultationsList = (queryParams?: MaybeRefOrGetter<ConsultationQuery>
   })
 }
 
-type CreateConsultationParams = {
-  consultationData: ConsultationCreate
+type CreateAppointmentParams = {
+  appointmentData: AppointmentCreate
   onSuccess?: () => void
 }
 
-const _useCreateConsultation = () => {
+const _useCreateAppointment = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ consultationData }: CreateConsultationParams) =>
+    mutation: async ({ appointmentData }: CreateAppointmentParams) =>
       requestFetch('/api/appointments', {
         method: 'POST',
-        body: consultationData
+        body: appointmentData
       }),
-    onSuccess: (_, { consultationData, onSuccess }) => {
+    onSuccess: (_, { appointmentData, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
-        description: 'Consultation créée avec succès',
+        description: 'Rendez-vous créé avec succès',
         color: 'success'
       })
-      if (consultationData.patientId) {
-        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId: consultationData.patientId }) })
+      if (appointmentData.patientId) {
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.list({ patientId: appointmentData.patientId }) })
       }
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de créer la consultation').message,
+        description: parseError(error, 'Impossible de créer le rendez-vous').message,
         color: 'error'
       })
     }
   })
 }
 
-type UpdateConsultationParams = {
-  consultationId: string
-  consultationData: ConsultationUpdate
+type UpdateAppointmentParams = {
+  appointmentId: string
+  appointmentData: AppointmentUpdate
   patientId?: string
   onSuccess?: () => void
 }
-const _useUpdateConsultation = () => {
+const _useUpdateAppointment = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ consultationId, consultationData }: UpdateConsultationParams) =>
-      requestFetch(`/api/appointments/${consultationId}`, {
+    mutation: async ({ appointmentId, appointmentData }: UpdateAppointmentParams) =>
+      requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'PUT',
-        body: consultationData
+        body: appointmentData
       }),
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
-        description: 'Consultation mise à jour avec succès',
+        description: 'Rendez-vous mis à jour avec succès',
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de mettre à jour la consultation').message,
+        description: parseError(error, 'Impossible de mettre à jour le Rendez-vous').message,
         color: 'error'
       })
     }
   })
 }
 
-const _useConsultation = (consultationId: MaybeRefOrGetter<string>) => {
+const _useAppointment = (appointmentId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
   return useQuery({
     key: () => {
-      const id = toValue(consultationId)
-      return id ? CONSULTATION_KEYS.single(id) : CONSULTATION_KEYS.root
+      const id = toValue(appointmentId)
+      return id ? APPOINTMENT_KEYS.single(id) : APPOINTMENT_KEYS.root
     },
     query: async () => {
-      const data = await requestFetch(`/api/appointments/${toValue(consultationId)}`)
+      const data = await requestFetch(`/api/appointments/${toValue(appointmentId)}`)
       if (!data) return null
 
       return {
@@ -152,80 +152,80 @@ const _useConsultation = (consultationId: MaybeRefOrGetter<string>) => {
         updatedAt: parseISO(data.updatedAt)
       }
     },
-    enabled: () => !!toValue(consultationId)
+    enabled: () => !!toValue(appointmentId)
   })
 }
 
-const _useDeleteConsultation = () => {
+const _useDeleteAppointment = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
     mutation: async ({
-      consultationId,
+      appointmentId,
       patientId
     }: {
-      consultationId: string
+      appointmentId: string
       patientId?: string
       onSuccess?: () => void
     }) =>
-      requestFetch(`/api/appointments/${consultationId}`, {
+      requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'DELETE'
       }),
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
-        description: 'Consultation supprimée avec succès',
+        description: 'Rendez-vous supprimé avec succès',
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de supprimer la consultation').message,
+        description: parseError(error, 'Impossible de supprimer le rendez-vous').message,
         color: 'error'
       })
     }
   })
 }
 
-const _useUpdateConsultationStatus = () => {
+const _useUpdateAppointmentStatus = () => {
   const toast = useToast()
   const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
 
   return useMutation({
     mutation: async ({
-      consultationId,
+      appointmentId,
       patientId,
       status
     }: {
-      consultationId: string
+      appointmentId: string
       patientId?: string
-      status: ConsultationStatus
+      status: AppointmentStatus
     }) =>
-      requestFetch(`/api/appointments/${consultationId}`, {
+      requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'PUT',
         body: { status }
       }),
     onSuccess: (_, { patientId }) => {
       toast.add({
         title: 'Succès',
-        description: 'Statut de la consultation mis à jour',
+        description: 'Statut du rendez-vous mis à jour',
         color: 'success'
       })
       if (patientId) {
-        queryCache.invalidateQueries({ key: CONSULTATION_KEYS.list({ patientId }) })
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.list({ patientId }) })
       }
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.root })
-      queryCache.invalidateQueries({ key: CONSULTATION_KEYS.therapistRoot() })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
     },
     onError: (error: any) => {
       toast.add({
@@ -237,7 +237,7 @@ const _useUpdateConsultationStatus = () => {
   })
 }
 
-const _useTherapistConsultations = (
+const _useTherapistAppointments = (
   therapistId: MaybeRefOrGetter<string | undefined>,
   date: MaybeRefOrGetter<string>
 ) => {
@@ -248,15 +248,15 @@ const _useTherapistConsultations = (
       const therapistIdValue = toValue(therapistId)
       const dateValue = toValue(date)
       return therapistIdValue && dateValue
-        ? CONSULTATION_KEYS.therapist(therapistIdValue, dateValue)
-        : CONSULTATION_KEYS.root
+        ? APPOINTMENT_KEYS.therapist(therapistIdValue, dateValue)
+        : APPOINTMENT_KEYS.root
     },
     query: async () => {
       const query = {
         therapistId: toValue(therapistId),
         date: toValue(date)
       }
-      const validatedQuery = therapistConsultationsQuerySchema.parse(query)
+      const validatedQuery = therapistAppointmentsQuerySchema.parse(query)
       const resp = await requestFetch(`/api/therapists/${validatedQuery.therapistId}/day`, {
         query: { date: validatedQuery.date }
       })
@@ -270,10 +270,10 @@ const _useTherapistConsultations = (
   })
 }
 
-export const useConsultationsList = _useConsultationsList
-export const useConsultation = _useConsultation
-export const useCreateConsultation = createSharedComposable(_useCreateConsultation)
-export const useUpdateConsultation = createSharedComposable(_useUpdateConsultation)
-export const useDeleteConsultation = createSharedComposable(_useDeleteConsultation)
-export const useUpdateConsultationStatus = createSharedComposable(_useUpdateConsultationStatus)
-export const useTherapistConsultations = _useTherapistConsultations
+export const useAppointmentsList = _useAppointmentsList
+export const useAppointment = _useAppointment
+export const useCreateAppointment = createSharedComposable(_useCreateAppointment)
+export const useUpdateAppointment = createSharedComposable(_useUpdateAppointment)
+export const useDeleteAppointment = createSharedComposable(_useDeleteAppointment)
+export const useUpdateAppointmentStatus = createSharedComposable(_useUpdateAppointmentStatus)
+export const useTherapistAppointments = _useTherapistAppointments

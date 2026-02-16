@@ -1,76 +1,76 @@
 <script setup lang="ts">
   const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
-  const deleteConsultationMutation = useDeleteConsultation()
-  const { data: consultationsData } = useConsultationsList(() => ({ patientId: props.patientId }))
+  const deleteAppointmentMutation = useDeleteAppointment()
+  const { data: appointmentsData } = useAppointmentsList(() => ({ patientId: props.patientId }))
 
-  const deleteConsultation = async (consultationId: string) => {
-    await deleteConsultationMutation.mutateAsync({
-      consultationId
+  const deleteAppointment = async (appointmentId: string) => {
+    await deleteAppointmentMutation.mutateAsync({
+      appointmentId
     })
   }
-  const selectedConsultations = ref<string[]>([])
+  const selectedAppointments = ref<string[]>([])
 
-  const toggleConsultationSelection = (consultationId: string) => {
-    const index = selectedConsultations.value.indexOf(consultationId)
+  const toggleAppointmentSelection = (appointmentId: string) => {
+    const index = selectedAppointments.value.indexOf(appointmentId)
     if (index > -1) {
-      selectedConsultations.value.splice(index, 1)
+      selectedAppointments.value.splice(index, 1)
     } else {
-      selectedConsultations.value.push(consultationId)
+      selectedAppointments.value.push(appointmentId)
     }
   }
 
-  const postponeConsultation = () => {}
-  const changeStatusConsultation = () => {}
-  const handleDeleteConsultation = async () => {}
+  const postponeAppointment = () => {}
+  const changeStatusAppointment = () => {}
+  const handleDeleteAppointment = async () => {}
 </script>
 
 <template>
   <AppCard title="Gestion des Séances" icon="i-lucide-list" iconColor="info">
-    <div v-if="consultationsData && consultationsData.length > 0" class="space-y-3">
+    <div v-if="appointmentsData && appointmentsData.length > 0" class="space-y-3">
       <ul class="space-y-2">
         <li
-          v-for="consultation in consultationsData"
-          :key="consultation.id"
+          v-for="appointment in appointmentsData"
+          :key="appointment.id"
           class="bg-muted hover:bg-elevated flex items-center justify-between rounded-lg p-2.5 py-2"
         >
           <div class="flex flex-1 items-center justify-between">
             <div class="flex items-center gap-4">
-              <AppDateBadge :date="consultation.date" color="neutral" variant="subtle" class="bg-default" />
+              <AppDateBadge :date="appointment.date" color="neutral" variant="subtle" class="bg-default" />
               <div>
                 <div class="flex items-center gap-2">
                   <UIcon
-                    v-if="consultation.location"
-                    :name="getLocationIcon(consultation.location)"
+                    v-if="appointment.location"
+                    :name="getLocationIcon(appointment.location)"
                     class="text-muted"
-                    :class="getLocationColor(consultation.location)"
+                    :class="getLocationColor(appointment.location)"
                   />
                   <p class="font-semibold">
-                    {{ formatTimeString(consultation.startTime) }} -
+                    {{ formatTimeString(appointment.startTime) }} -
                     {{
                       formatTimeString(
                         addMinutesToTime(
-                          consultation.startTime,
-                          consultation.duration + (consultation.extendedDurationMinutes || 0)
+                          appointment.startTime,
+                          appointment.duration + (appointment.extendedDurationMinutes || 0)
                         )
                       )
                     }}
                   </p>
                 </div>
                 <div class="text-muted text-xs">
-                  {{ getConsultationTypeLabel(consultation.type || 'follow_up') }} ·
-                  {{ consultation.duration + (consultation.extendedDurationMinutes || 0) }} min
+                  {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }} ·
+                  {{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <UBadge
-                :color="getConsultationStatusColor(consultation.status)"
+                :color="getAppointmentStatusColor(appointment.status)"
                 variant="soft"
                 size="md"
                 class="rounded-full"
               >
-                {{ getConsultationStatusLabel(consultation.status) }}
+                {{ getAppointmentStatusLabel(appointment.status) }}
               </UBadge>
             </div>
           </div>
@@ -83,7 +83,7 @@
               color="error"
               size="sm"
               square
-              @click="deleteConsultation(consultation.id)"
+              @click="deleteAppointment(appointment.id)"
             />
           </div>
         </li>
@@ -94,11 +94,11 @@
       v-else
       icon="i-lucide-calendar-x"
       title="Aucune séance planifiée"
-      description="Aucune consultation n'a été planifiée pour ce patient."
+      description="Aucune séance n'a été planifiée pour ce patient."
     />
     <div class="border-border bg-muted/50 mt-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
       <div class="text-muted-foreground text-sm font-medium">
-        <span class="text-foreground font-bold">{{ selectedConsultations.length }}</span>
+        <span class="text-foreground font-bold">{{ selectedAppointments.length }}</span>
         séances sélectionnées
       </div>
       <div class="flex items-center gap-2">
@@ -107,8 +107,8 @@
           variant="outline"
           color="neutral"
           size="sm"
-          :disabled="selectedConsultations.length === 0"
-          @click="postponeConsultation"
+          :disabled="selectedAppointments.length === 0"
+          @click="postponeAppointment"
         >
           Reporter
         </UButton>
@@ -117,8 +117,8 @@
           variant="outline"
           color="neutral"
           size="sm"
-          :disabled="selectedConsultations.length === 0"
-          @click="changeStatusConsultation"
+          :disabled="selectedAppointments.length === 0"
+          @click="changeStatusAppointment"
         >
           Changer statut
         </UButton>
@@ -127,8 +127,8 @@
           variant="outline"
           color="error"
           size="sm"
-          :disabled="selectedConsultations.length === 0"
-          @click="handleDeleteConsultation"
+          :disabled="selectedAppointments.length === 0"
+          @click="handleDeleteAppointment"
         >
           Supprimer
         </UButton>

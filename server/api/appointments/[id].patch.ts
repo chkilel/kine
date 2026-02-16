@@ -1,8 +1,8 @@
 import { eq, and } from 'drizzle-orm'
-import { consultations } from '~~/server/database/schema'
-import { extendActionSchema } from '~~/shared/types/consultation-action'
+import { appointments } from '~~/server/database/schema'
+import { extendActionSchema } from '~~/shared/types/appointment-action'
 
-function detectActionBySchema(body: ConsultationPatchBody): ConsultationActionType {
+function detectActionBySchema(body: AppointmentPatchBody): AppointmentActionType {
   if (resumeActionSchema.safeParse(body).success) return 'resume'
   if (pauseActionSchema.safeParse(body).success) return 'pause'
   if (endActionSchema.safeParse(body).success) return 'end'
@@ -13,28 +13,28 @@ function detectActionBySchema(body: ConsultationPatchBody): ConsultationActionTy
   throw new Error('No valid action detected')
 }
 
-function validateActionState(action: ConsultationActionType, consultation: Consultation) {
+function validateActionState(action: AppointmentActionType, appointment: Appointment) {
   switch (action) {
     case 'start':
-      if (consultation.status === 'in_progress') throw new Error('La session est déjà en cours')
+      if (appointment.status === 'in_progress') throw new Error('La session est déjà en cours')
       break
     case 'pause':
-      if (consultation.status !== 'in_progress') throw new Error("La session n'est pas en cours")
-      if (consultation.pauseStartTime) throw new Error('La session est déjà en pause')
+      if (appointment.status !== 'in_progress') throw new Error("La session n'est pas en cours")
+      if (appointment.pauseStartTime) throw new Error('La session est déjà en pause')
       break
     case 'resume':
-      if (!consultation.pauseStartTime) throw new Error("La session n'est pas en pause")
+      if (!appointment.pauseStartTime) throw new Error("La session n'est pas en pause")
       break
     case 'end':
-      if (!consultation.actualStartTime) throw new Error("La session n'a pas été démarrée")
+      if (!appointment.actualStartTime) throw new Error("La session n'a pas été démarrée")
       break
     case 'updateTags':
       break
   }
 }
 
-function getSuccessMessage(action: ConsultationActionType) {
-  const messages: Record<ConsultationActionType, string> = {
+function getSuccessMessage(action: AppointmentActionType) {
+  const messages: Record<AppointmentActionType, string> = {
     start: 'Session démarrée avec succès',
     pause: 'Session mise en pause',
     resume: 'Session reprise',
@@ -54,28 +54,28 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({
         statusCode: 400,
-        message: 'ID de consultation requis'
+        message: 'ID de Rendez-vous requis'
       })
     }
 
     const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, consultationPatchSchema.parse)
+    const body = await readValidatedBody(event, appointmentPatchSchema.parse)
 
-    const [consultation] = await db
+    const [appointment] = await db
       .select()
-      .from(consultations)
-      .where(and(eq(consultations.organizationId, organizationId), eq(consultations.id, id)))
+      .from(appointments)
+      .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .limit(1)
 
-    if (!consultation) {
+    if (!appointment) {
       throw createError({
         statusCode: 404,
-        message: 'Consultation introuvable'
+        message: 'Appointment introuvable'
       })
     }
 
     const actionType = detectActionBySchema(body)
-    validateActionState(actionType, consultation)
+    validateActionState(actionType, appointment)
 
     let updateData: any
 
@@ -101,7 +101,7 @@ export default defineEventHandler(async (event) => {
       case 'resume': {
         const validated = resumeActionSchema.parse(body)
         updateData = {
-          totalPausedSeconds: (consultation.totalPausedSeconds || 0) + validated.pauseDurationSeconds,
+          totalPausedSeconds: (appointment.totalPausedSeconds || 0) + validated.pauseDurationSeconds,
           pauseStartTime: null
         }
         break
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
           tags: tagsValue,
           painLevelAfter: validated.painLevelAfter,
           notes: validated.notes,
-          totalPausedSeconds: consultation.totalPausedSeconds,
+          totalPausedSeconds: appointment.totalPausedSeconds,
           pauseStartTime: null
         }
         break
@@ -131,20 +131,20 @@ export default defineEventHandler(async (event) => {
       case 'extend': {
         const validated = extendActionSchema.parse(body)
         updateData = {
-          extendedDurationMinutes: (consultation.extendedDurationMinutes || 0) + validated.extendedDurationMinutes
+          extendedDurationMinutes: (appointment.extendedDurationMinutes || 0) + validated.extendedDurationMinutes
         }
         break
       }
     }
 
     const [updated] = await db
-      .update(consultations)
+      .update(appointments)
       .set(updateData)
-      .where(and(eq(consultations.organizationId, organizationId), eq(consultations.id, id)))
+      .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .returning()
 
     return successResponse(updated, getSuccessMessage(actionType))
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la mise à jour de la consultation')
+    handleApiError(error, 'Échec de la mise à jour du Rendez-vous')
   }
 })

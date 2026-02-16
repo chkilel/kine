@@ -6,22 +6,22 @@
   const props = defineProps<{
     treatmentPlan?: TreatmentPlan | null
     patient: Patient
-    consultation?: Consultation
+    appointment?: Appointment
   }>()
 
   const toast = useToast()
 
   const { therapists } = useOrganizationMembers()
-  const createConsultationMutation = useCreateConsultation()
-  const updateConsultationMutation = useUpdateConsultation()
+  const createAppointmentMutation = useCreateAppointment()
+  const updateAppointmentMutation = useUpdateAppointment()
 
   const overlay = useOverlay()
   const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
 
   const isCreating = ref(false)
-  const isEditMode = computed(() => !!props.consultation)
+  const isEditMode = computed(() => !!props.appointment)
   const isInitialLoad = ref(true)
-  const originalConsultationDetails = ref<ConsultationCreate | null>(null)
+  const originalAppointmentDetails = ref<AppointmentCreate | null>(null)
   const minDate = computed(() => convertToCalendarDate(new Date()))
   const availableSlots = ref<string[]>([])
   const isLoadingSlots = ref(false)
@@ -31,15 +31,15 @@
   const { data: roomsData } = useRoomsList(ref({}))
 
   const selectedDate = computed<CalendarDate | null>({
-    get: () => (consultationDetails.value.date ? parseDate(consultationDetails.value.date) : null),
+    get: () => (appointmentDetails.value.date ? parseDate(appointmentDetails.value.date) : null),
     set: (val) => {
       if (val) {
-        consultationDetails.value.date = val.toString()
+        appointmentDetails.value.date = val.toString()
       }
     }
   })
 
-  const consultationDetails = ref<ConsultationCreate>({
+  const appointmentDetails = ref<AppointmentCreate>({
     patientId: props.patient.id,
     organizationId: props.patient.organizationId,
     treatmentPlanId: props.treatmentPlan?.id || null,
@@ -59,29 +59,29 @@
   })
 
   watch(
-    () => props.consultation,
-    (consultation) => {
-      if (consultation) {
+    () => props.appointment,
+    (appointment) => {
+      if (appointment) {
         const details = {
-          patientId: consultation.patientId,
-          organizationId: consultation.organizationId,
-          treatmentPlanId: consultation.treatmentPlanId || props.treatmentPlan?.id,
-          therapistId: consultation.therapistId,
-          roomId: consultation.roomId || '',
-          date: consultation.date,
-          startTime: consultation.startTime,
-          endTime: consultation.endTime,
-          duration: consultation.duration,
-          type: consultation.type || 'follow_up',
-          location: consultation.location || 'clinic',
-          status: consultation.status,
-          chiefComplaint: consultation.chiefComplaint || '',
-          notes: consultation.notes || '',
-          billed: consultation.billed,
-          insuranceClaimed: consultation.insuranceClaimed
+          patientId: appointment.patientId,
+          organizationId: appointment.organizationId,
+          treatmentPlanId: appointment.treatmentPlanId || props.treatmentPlan?.id,
+          therapistId: appointment.therapistId,
+          roomId: appointment.roomId || '',
+          date: appointment.date,
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          duration: appointment.duration,
+          type: appointment.type || 'follow_up',
+          location: appointment.location || 'clinic',
+          status: appointment.status,
+          chiefComplaint: appointment.chiefComplaint || '',
+          notes: appointment.notes || '',
+          billed: appointment.billed,
+          insuranceClaimed: appointment.insuranceClaimed
         }
-        consultationDetails.value = details
-        originalConsultationDetails.value = { ...details }
+        appointmentDetails.value = details
+        originalAppointmentDetails.value = { ...details }
         isInitialLoad.value = false
         nextTick(() => {
           fetchAvailableSlots()
@@ -91,23 +91,23 @@
     { immediate: true }
   )
 
-  const { data: templatesData } = useAvailabilityTemplatesList(() => consultationDetails.value.therapistId)
-  const { data: exceptionsData } = useAvailabilityExceptionsList(() => consultationDetails.value.therapistId)
+  const { data: templatesData } = useAvailabilityTemplatesList(() => appointmentDetails.value.therapistId)
+  const { data: exceptionsData } = useAvailabilityExceptionsList(() => appointmentDetails.value.therapistId)
 
   const formattedDate = computed(() => {
-    if (!consultationDetails.value.date) return ''
-    const { dayName, day, month } = extractDayAndMonth(consultationDetails.value.date)
+    if (!appointmentDetails.value.date) return ''
+    const { dayName, day, month } = extractDayAndMonth(appointmentDetails.value.date)
     return `${dayName} ${day} ${month}`
   })
 
   watch(
-    () => consultationDetails.value.startTime,
+    () => appointmentDetails.value.startTime,
     (newStartTime) => {
-      const { duration } = consultationDetails.value
+      const { duration } = appointmentDetails.value
       if (newStartTime && duration) {
         try {
           const time = parseTime(newStartTime)
-          consultationDetails.value.endTime = time.add({ minutes: duration }).toString().slice(0, 5)
+          appointmentDetails.value.endTime = time.add({ minutes: duration }).toString().slice(0, 5)
         } catch {
           console.log('Error parsing time')
         }
@@ -119,18 +119,18 @@
     () => props.treatmentPlan?.therapistId,
     (newTherapistId) => {
       const therapist = therapists.value.find((t) => t.id === newTherapistId)
-      if (therapist?.defaultConsultationDuration) {
-        consultationDetails.value.duration = therapist.defaultConsultationDuration
+      if (therapist?.defaultAppointmentDuration) {
+        appointmentDetails.value.duration = therapist.defaultAppointmentDuration
       }
     },
     { immediate: true }
   )
 
   const fetchAvailableSlots = async () => {
-    const therapistId = consultationDetails.value.therapistId
-    const date = consultationDetails.value.date
-    const duration = consultationDetails.value.duration
-    const location = consultationDetails.value.location
+    const therapistId = appointmentDetails.value.therapistId
+    const date = appointmentDetails.value.date
+    const duration = appointmentDetails.value.duration
+    const location = appointmentDetails.value.location
 
     if (!date) {
       availableSlots.value = []
@@ -144,7 +144,7 @@
       let response: any
 
       if (location === 'clinic') {
-        if (!consultationDetails.value.roomId) {
+        if (!appointmentDetails.value.roomId) {
           availableSlots.value = []
           isLoadingSlots.value = false
           return
@@ -152,7 +152,7 @@
 
         const therapistIdParam = showRoomOnlyAvailability.value ? undefined : therapistId
 
-        response = await $fetch(`/api/availability/${consultationDetails.value.roomId}/slots`, {
+        response = await $fetch(`/api/availability/${appointmentDetails.value.roomId}/slots`, {
           method: 'POST',
           body: {
             dates: [date],
@@ -181,8 +181,8 @@
 
       if (dateSlots) {
         availableSlots.value = dateSlots.availableSlots
-        if (isEditMode.value && props.consultation && props.consultation.startTime) {
-          const currentStartTime = props.consultation.startTime
+        if (isEditMode.value && props.appointment && props.appointment.startTime) {
+          const currentStartTime = props.appointment.startTime
           if (!availableSlots.value.includes(currentStartTime)) {
             availableSlots.value = [...availableSlots.value, currentStartTime].sort()
           }
@@ -201,31 +201,31 @@
 
   watch(
     () => [
-      consultationDetails.value.therapistId,
-      consultationDetails.value.date,
-      consultationDetails.value.duration,
-      consultationDetails.value.location,
-      consultationDetails.value.roomId,
+      appointmentDetails.value.therapistId,
+      appointmentDetails.value.date,
+      appointmentDetails.value.duration,
+      appointmentDetails.value.location,
+      appointmentDetails.value.roomId,
       showRoomOnlyAvailability.value
     ],
     () => {
-      if (!isInitialLoad.value && originalConsultationDetails.value) {
+      if (!isInitialLoad.value && originalAppointmentDetails.value) {
         const hasChanged =
-          consultationDetails.value.therapistId !== originalConsultationDetails.value.therapistId ||
-          consultationDetails.value.date !== originalConsultationDetails.value.date ||
-          consultationDetails.value.duration !== originalConsultationDetails.value.duration ||
-          consultationDetails.value.location !== originalConsultationDetails.value.location ||
-          consultationDetails.value.roomId !== originalConsultationDetails.value.roomId
+          appointmentDetails.value.therapistId !== originalAppointmentDetails.value.therapistId ||
+          appointmentDetails.value.date !== originalAppointmentDetails.value.date ||
+          appointmentDetails.value.duration !== originalAppointmentDetails.value.duration ||
+          appointmentDetails.value.location !== originalAppointmentDetails.value.location ||
+          appointmentDetails.value.roomId !== originalAppointmentDetails.value.roomId
 
         if (hasChanged) {
-          consultationDetails.value.startTime = ''
+          appointmentDetails.value.startTime = ''
         } else {
-          consultationDetails.value.startTime = originalConsultationDetails.value.startTime
+          appointmentDetails.value.startTime = originalAppointmentDetails.value.startTime
         }
       }
 
-      if (consultationDetails.value.location === 'clinic') {
-        if (consultationDetails.value.roomId) {
+      if (appointmentDetails.value.location === 'clinic') {
+        if (appointmentDetails.value.roomId) {
           fetchAvailableSlots()
         } else {
           availableSlots.value = []
@@ -238,18 +238,18 @@
   )
 
   const dayTemplatesForDate = computed(() => {
-    if (!consultationDetails.value.date || !templatesData.value) return []
+    if (!appointmentDetails.value.date || !templatesData.value) return []
 
-    const dayOfWeek = getDayOfWeek(consultationDetails.value.date)
-    const location = consultationDetails.value.location
+    const dayOfWeek = getDayOfWeek(appointmentDetails.value.date)
+    const location = appointmentDetails.value.location
 
     return templatesData.value.filter((t) => t.dayOfWeek === dayOfWeek && t.location === location)
   })
 
   const exceptionsForDate = computed(() => {
-    if (!consultationDetails.value.date || !exceptionsData.value) return []
+    if (!appointmentDetails.value.date || !exceptionsData.value) return []
 
-    return exceptionsData.value.filter((e) => e.date === consultationDetails.value.date)
+    return exceptionsData.value.filter((e) => e.date === appointmentDetails.value.date)
   })
 
   const partialDayExceptions = computed(() => {
@@ -260,11 +260,11 @@
     return exceptionsForDate.value.filter((e) => !e.startTime && !e.endTime)
   })
 
-  const addConsultation = async () => {
-    if (consultationDetails.value.location === 'clinic' && !consultationDetails.value.roomId) {
+  const addAppointment = async () => {
+    if (appointmentDetails.value.location === 'clinic' && !appointmentDetails.value.roomId) {
       toast.add({
         title: 'Erreur',
-        description: 'Veuillez sélectionner une salle de consultation',
+        description: 'Veuillez sélectionner une salle du Rendez-vous',
         icon: 'i-lucide-alert-circle',
         color: 'error'
       })
@@ -274,31 +274,31 @@
     isCreating.value = true
 
     try {
-      if (isEditMode.value && props.consultation) {
-        await updateConsultationMutation.mutateAsync({
-          consultationId: props.consultation.id,
-          consultationData: {
-            ...consultationDetails.value,
+      if (isEditMode.value && props.appointment) {
+        await updateAppointmentMutation.mutateAsync({
+          appointmentId: props.appointment.id,
+          appointmentData: {
+            ...appointmentDetails.value,
             roomId:
-              consultationDetails.value.location === 'clinic'
-                ? consultationDetails.value.roomId || undefined
+              appointmentDetails.value.location === 'clinic'
+                ? appointmentDetails.value.roomId || undefined
                 : undefined
           }
         })
       } else {
-        await createConsultationMutation.mutateAsync({
-          consultationData: {
-            ...consultationDetails.value,
+        await createAppointmentMutation.mutateAsync({
+          appointmentData: {
+            ...appointmentDetails.value,
             roomId:
-              consultationDetails.value.location === 'clinic'
-                ? consultationDetails.value.roomId || undefined
+              appointmentDetails.value.location === 'clinic'
+                ? appointmentDetails.value.roomId || undefined
                 : undefined
           }
         })
         await fetchAvailableSlots()
-        consultationDetails.value.startTime = ''
-        if (consultationDetails.value.location === 'clinic') {
-          consultationDetails.value.roomId = ''
+        appointmentDetails.value.startTime = ''
+        if (appointmentDetails.value.location === 'clinic') {
+          appointmentDetails.value.roomId = ''
         }
       }
     } catch (error) {
@@ -306,7 +306,7 @@
         title: 'Erreur',
         description: parseError(
           error,
-          isEditMode.value ? 'Impossible de mettre à jour la consultation' : 'Impossible de créer la consultation'
+          isEditMode.value ? 'Impossible de mettre à jour le Rendez-vous' : 'Impossible de créer le Rendez-vous'
         ).message,
         icon: 'i-lucide-alert-circle',
         color: 'error'
@@ -316,7 +316,7 @@
   }
 
   const selectTime = (time: string) => {
-    consultationDetails.value.startTime = time
+    appointmentDetails.value.startTime = time
   }
 
   const getPeriodLabel = (time: string) => {
@@ -352,9 +352,9 @@
   }
 
   const selectRoom = (roomId: string) => {
-    consultationDetails.value.roomId = roomId
-    consultationDetails.value.startTime = ''
-    if (consultationDetails.value.date && consultationDetails.value.location === 'clinic') {
+    appointmentDetails.value.roomId = roomId
+    appointmentDetails.value.startTime = ''
+    if (appointmentDetails.value.date && appointmentDetails.value.location === 'clinic') {
       fetchAvailableSlots()
     }
   }
@@ -381,8 +381,8 @@
           <div class="space-y-5">
             <UFormField label="Type de séance">
               <USelect
-                v-model="consultationDetails.type"
-                :items="CONSULTATION_TYPES_OPTIONS"
+                v-model="appointmentDetails.type"
+                :items="APPOINTMENT_TYPES_OPTIONS"
                 option-attribute="label"
                 value-attribute="value"
                 placeholder="Sélectionner un type"
@@ -394,19 +394,19 @@
             <div>
               <div class="flex items-center justify-between">
                 <label class="text-muted text-xs font-bold uppercase">Durée</label>
-                <span class="text-primary font-bold">{{ consultationDetails.duration }} min</span>
+                <span class="text-primary font-bold">{{ appointmentDetails.duration }} min</span>
               </div>
               <div class="relative py-2">
                 <USlider
-                  v-model="consultationDetails.duration"
-                  :min="CONSULTATION_DURATIONS[0]"
-                  :max="CONSULTATION_DURATIONS.at(-1)"
+                  v-model="appointmentDetails.duration"
+                  :min="APPOINTMENT_DURATIONS[0]"
+                  :max="APPOINTMENT_DURATIONS.at(-1)"
                   :step="15"
                   size="lg"
                 />
                 <div class="text-muted mt-2 flex justify-between text-xs font-medium">
                   <span
-                    v-for="val in CONSULTATION_DURATIONS"
+                    v-for="val in APPOINTMENT_DURATIONS"
                     :key="val"
                     class="inline-flex w-[3ch] justify-center tabular-nums"
                   >
@@ -421,7 +421,7 @@
         <div class="flex flex-col gap-6">
           <UFormField>
             <USelectMenu
-              v-model="consultationDetails.therapistId"
+              v-model="appointmentDetails.therapistId"
               value-key="id"
               label-key="name"
               :items="therapists"
@@ -434,15 +434,15 @@
           <UFormField label="Lieu">
             <UFieldGroup class="w-full">
               <UButton
-                v-for="loc in CONSULTATION_LOCATION_OPTIONS"
+                v-for="loc in LOCATION_OPTIONS"
                 :key="loc.value"
-                :variant="consultationDetails.location === loc.value ? 'subtle' : 'outline'"
-                :color="consultationDetails.location === loc.value ? 'primary' : 'neutral'"
+                :variant="appointmentDetails.location === loc.value ? 'subtle' : 'outline'"
+                :color="appointmentDetails.location === loc.value ? 'primary' : 'neutral'"
                 :icon="loc.icon"
                 square
                 block
                 class="flex-col"
-                @click="consultationDetails.location = loc.value"
+                @click="appointmentDetails.location = loc.value"
               >
                 {{ loc.label }}
               </UButton>
@@ -450,14 +450,14 @@
           </UFormField>
 
           <div>
-            <div v-if="roomsData && roomsData.length > 0 && consultationDetails.location === 'clinic'">
+            <div v-if="roomsData && roomsData.length > 0 && appointmentDetails.location === 'clinic'">
               <UFormField label="Salle de consultation">
                 <div class="grid grid-cols-4 gap-2">
                   <UButton
                     v-for="room in roomsData"
                     :key="room.id"
-                    :color="consultationDetails.roomId === room.id ? 'primary' : 'neutral'"
-                    :variant="consultationDetails.roomId === room.id ? 'subtle' : 'outline'"
+                    :color="appointmentDetails.roomId === room.id ? 'primary' : 'neutral'"
+                    :variant="appointmentDetails.roomId === room.id ? 'subtle' : 'outline'"
                     class="flex flex-col items-center justify-center"
                     @click="selectRoom(room.id)"
                     :icon="getRoomIcon(room.name)"
@@ -469,7 +469,7 @@
                 </div>
               </UFormField>
 
-              <div v-if="consultationDetails.roomId" class="mt-4">
+              <div v-if="appointmentDetails.roomId" class="mt-4">
                 <UCheckbox
                   v-model="showRoomOnlyAvailability"
                   label="Afficher seulement la dispo salle"
@@ -483,10 +483,10 @@
               </div>
             </div>
 
-            <div v-else-if="consultationDetails.location !== 'clinic'">
+            <div v-else-if="appointmentDetails.location !== 'clinic'">
               <UAlert color="neutral" variant="subtle" icon="i-lucide-info">
                 <template #title>
-                  {{ consultationDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
+                  {{ appointmentDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
                 </template>
                 <p class="text-muted-foreground text-sm">
                   Les créneaux affichés sont basés sur la disponibilité du thérapeute uniquement.
@@ -612,7 +612,7 @@
 
     <div class="flex-1 space-y-4 overflow-y-auto">
       <UAlert
-        v-if="consultationDetails.location === 'clinic' && !consultationDetails.roomId"
+        v-if="appointmentDetails.location === 'clinic' && !appointmentDetails.roomId"
         color="neutral"
         variant="subtle"
         icon="i-lucide-door-closed"
@@ -653,8 +653,8 @@
               <UButton
                 v-for="time in slots"
                 :key="time"
-                :variant="consultationDetails.startTime === time ? 'solid' : 'subtle'"
-                :color="consultationDetails.startTime === time ? 'primary' : 'success'"
+                :variant="appointmentDetails.startTime === time ? 'solid' : 'subtle'"
+                :color="appointmentDetails.startTime === time ? 'primary' : 'success'"
                 size="md"
                 :label="formatTimeString(time)"
                 @click="selectTime(time)"
@@ -674,10 +674,10 @@
         :loading="isCreating"
         :disabled="
           isCreating ||
-          (consultationDetails.location === 'clinic' && !consultationDetails.roomId) ||
-          !consultationDetails.startTime
+          (appointmentDetails.location === 'clinic' && !appointmentDetails.roomId) ||
+          !appointmentDetails.startTime
         "
-        @click="addConsultation"
+        @click="addAppointment"
       >
         {{ isEditMode ? 'Mettre à jour cette séance' : 'Ajouter cette séance au plan' }}
       </UButton>

@@ -1,14 +1,23 @@
 // =================================================================================================
-// Consultation Duration and Status Constants
+// Appointment Duration and Status Constants
 // =================================================================================================
 
-import type { ConsultationStatus, ConsultationType } from '../types/base.types'
+import type { AppointmentStatus, AppointmentType } from '../types/base.types'
 
-// Consultation Slot Increment Options (minutes between possible slot start times)
-export const CONSULTATION_SLOT_INCREMENT_OPTIONS = [5, 10, 15, 20, 30] as const
+// Appointment Duration Options
+export const APPOINTMENT_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120]
 
-// Valid consultation types for patient sessions
-export const VALID_CONSULTATION_TYPES = [
+// Appointment Gap Options (minutes between sessions)
+export const APPOINTMENT_GAP_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60] as const
+
+//FIXME this is not necessary: Minimum Gap Between Appointments in Minutes
+export const MINIMUM_APPOINTMENT_GAP_MINUTES = 15
+
+// Appointment Slot Increment Options (minutes between possible slot start times)
+export const APPOINTMENT_SLOT_INCREMENT_OPTIONS = [5, 10, 15, 20, 30] as const
+
+// Valid appointment types for patient sessions
+export const APPOINTMENT_TYPES = [
   'initial',
   'follow_up',
   'evaluation',
@@ -19,7 +28,7 @@ export const VALID_CONSULTATION_TYPES = [
 ] as const
 
 // Valid status values for appointments
-export const VALID_CONSULTATION_STATUSES = [
+export const APPOINTMENT_STATUSES = [
   'confirmed',
   'scheduled',
   'in_progress',
@@ -28,8 +37,8 @@ export const VALID_CONSULTATION_STATUSES = [
   'no_show'
 ] as const
 
-// Consultation Status Configuration
-export const CONSULTATION_STATUS_CONFIG = {
+// Appointment Status Configuration
+export const APPOINTMENT_STATUS_CONFIG = {
   confirmed: { color: 'success', label: 'Confirmée', icon: 'i-hugeicons-calendar-check-in-01' },
   scheduled: { color: 'info', label: 'À venir', icon: 'i-hugeicons-clock-02' },
   completed: { color: 'success', label: 'Terminée', icon: 'i-hugeicons-checkmark-circle-02' },
@@ -38,16 +47,16 @@ export const CONSULTATION_STATUS_CONFIG = {
   no_show: { color: 'error', label: 'Absence', icon: 'i-hugeicons-user-remove-01' }
 } as const
 
-// Consultation Status Options
-export const CONSULTATION_STATUS_OPTIONS = Object.entries(CONSULTATION_STATUS_CONFIG).map(([key, item]) => ({
+// Appointment Status Options
+export const APPOINTMENT_STATUS_OPTIONS = Object.entries(APPOINTMENT_STATUS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
   color: item.color,
   icon: item.icon
 }))
 
-// Consultation Types Configuration
-export const CONSULTATION_TYPES_CONFIG = {
+// Appointment Types Configuration
+export const APPOINTMENT_TYPES_CONFIG = {
   initial: { label: 'Évaluation initiale', icon: 'i-hugeicons-start-up-02' },
   follow_up: { label: 'Suivi', icon: 'i-hugeicons-calendar-user' },
   evaluation: { label: 'Évaluation', icon: 'i-hugeicons-test-tube-02' },
@@ -57,19 +66,20 @@ export const CONSULTATION_TYPES_CONFIG = {
   reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' }
 } as const
 
-// Consultation Type Options
-export const CONSULTATION_TYPES_OPTIONS = Object.entries(CONSULTATION_TYPES_CONFIG).map(([key, item]) => ({
+// Appointment Type Options
+export const APPOINTMENT_TYPES_OPTIONS = Object.entries(APPOINTMENT_TYPES_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key
 }))
 
-// Consultation Status Helpers
-export const getConsultationStatusLabel = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].label
-export const getConsultationStatusColor = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].color
-export const getConsultationStatusIcon = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status].icon
-export const getConsultationStatusConfig = (status: ConsultationStatus) => CONSULTATION_STATUS_CONFIG[status]
+// Appointment Status Helpers
+export const getAppointmentStatusLabel = (status: AppointmentStatus) => APPOINTMENT_STATUS_CONFIG[status].label
+export const getAppointmentStatusColor = (status: AppointmentStatus) => APPOINTMENT_STATUS_CONFIG[status].color
+export const getAppointmentStatusIcon = (status: AppointmentStatus) => APPOINTMENT_STATUS_CONFIG[status].icon
+export const getAppointmentStatusConfig = (status: AppointmentStatus) => APPOINTMENT_STATUS_CONFIG[status]
 
-// Consultation Type Helpers
-export const getConsultationTypeLabel = (type: ConsultationType) => CONSULTATION_TYPES_CONFIG[type].label
-export const getConsultationTypeIcon = (type: ConsultationType) =>
-  CONSULTATION_TYPES_CONFIG[type]?.icon || 'i-hugeicons-calendar-remove-01'
+// Appointment Type Helpers
+export const getAppointmentTypeLabel = (type: AppointmentType) => APPOINTMENT_TYPES_CONFIG[type].label
+export const getAppointmentTypeIcon = (type: AppointmentType | null) => {
+  return type ? APPOINTMENT_TYPES_CONFIG[type]?.icon : 'i-hugeicons-calendar-remove-01'
+}

@@ -1,49 +1,49 @@
 <script setup lang="ts">
-  const { consultation } = defineProps<{
-    consultation: Consultation
+  const { appointment } = defineProps<{
+    appointment: Appointment
   }>()
 
   const emit = defineEmits<{
-    'start-session': [consultation: Consultation]
+    'start-session': [appointment: Appointment]
     'view-patient': [patientId: string]
-    'view-consultation': [consultation: Consultation]
+    'view-appointment': [appointment: Appointment]
   }>()
 
   // Computed status flags
   const status = computed(() => ({
-    completed: consultation.status === 'completed',
-    scheduled: ['scheduled', 'confirmed'].includes(consultation.status)
+    completed: appointment.status === 'completed',
+    scheduled: ['scheduled', 'confirmed'].includes(appointment.status)
   }))
 
   // Computed text values
-  const timeLabel = computed(() => formatTimeString(consultation.startTime))
+  const timeLabel = computed(() => formatTimeString(appointment.startTime))
 
   const durationLabel = computed(() => {
     const seconds =
-      status.value.completed && consultation.actualDurationSeconds
-        ? consultation.actualDurationSeconds
-        : (consultation.duration + (consultation.extendedDurationMinutes || 0)) * 60
+      status.value.completed && appointment.actualDurationSeconds
+        ? appointment.actualDurationSeconds
+        : (appointment.duration + (appointment.extendedDurationMinutes || 0)) * 60
     return formatSecondsAsDuration(seconds)
   })
 
   const locationLabel = computed(() => {
-    if (consultation.location === 'clinic') {
-      return consultation.roomName
+    if (appointment.location === 'clinic') {
+      return appointment.roomName
     }
-    return getLocationLabel(consultation.location || 'clinic')
+    return getLocationLabel(appointment.location || 'clinic')
   })
 
   const locationIcon = computed(() => {
-    if (consultation.location === 'clinic') {
+    if (appointment.location === 'clinic') {
       return 'i-hugeicons-door-01'
     }
-    return getLocationIcon(consultation.location || 'clinic')
+    return getLocationIcon(appointment.location || 'clinic')
   })
 
-  const locationColor = computed(() => getLocationColor(consultation.location || 'clinic'))
+  const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
 
-  const statusIcon = computed(() => getConsultationStatusIcon(consultation.status))
-  const statusColor = computed(() => getConsultationStatusColor(consultation.status))
+  const statusIcon = computed(() => getAppointmentStatusIcon(appointment.status))
+  const statusColor = computed(() => getAppointmentStatusColor(appointment.status))
 
   // Dropdown menu items - memoized
   const menuItems = computed(() => [
@@ -51,19 +51,19 @@
       {
         label: 'Patient',
         icon: 'i-hugeicons-profile-02',
-        onSelect: () => emit('view-patient', consultation.patientId),
-        to: `/patients/${consultation.patientId}`
+        onSelect: () => emit('view-patient', appointment.patientId),
+        to: `/patients/${appointment.patientId}`
       },
       {
         label: 'RDV',
         icon: 'i-hugeicons-appointment-02',
-        onSelect: () => emit('view-consultation', consultation)
+        onSelect: () => emit('view-appointment', appointment)
       }
     ]
   ])
 
   // Event handlers
-  const handleStartSession = () => emit('start-session', consultation)
+  const handleStartSession = () => emit('start-session', appointment)
 </script>
 
 <template>
@@ -94,7 +94,7 @@
         <h4
           :class="['font-bold', status.completed && 'line-through', status.completed ? 'text-muted' : 'text-default']"
         >
-          {{ consultation.patientName }}
+          {{ appointment.patientName }}
         </h4>
         <UBadge
           v-if="locationLabel"
@@ -108,13 +108,13 @@
       </div>
 
       <div class="mt-1 flex items-center gap-4">
-        <p v-if="consultation.planTitle" class="text-muted flex items-center gap-1 text-xs">
+        <p v-if="appointment.planTitle" class="text-muted flex items-center gap-1 text-xs">
           <UIcon name="i-hugeicons-file-01" class="text-sm" />
-          {{ consultation.planTitle }}
+          {{ appointment.planTitle }}
         </p>
         <p class="text-muted flex items-center gap-1 text-xs">
-          <UIcon :name="getConsultationStatusIcon(consultation.status)" class="text-sm" />
-          {{ getConsultationStatusLabel(consultation.status || 'follow_up') }}
+          <UIcon :name="getAppointmentStatusIcon(appointment.status)" class="text-sm" />
+          {{ getAppointmentStatusLabel(appointment.status || 'follow_up') }}
         </p>
       </div>
     </div>

@@ -108,16 +108,16 @@
             <h3 class="text-foreground text-base font-bold">Lieu</h3>
           </div>
           <div class="space-y-5">
-            <UFormField label="Lieu de consultation" name="location">
+            <UFormField label="Lieu du rendez-vous" name="location">
               <USelect
                 v-model="formState.location"
-                :items="CONSULTATION_LOCATION_OPTIONS"
+                :items="LOCATION_OPTIONS"
                 placeholder="Sélectionner un lieu"
                 class="w-full"
                 size="lg"
               />
               <p class="text-muted-foreground mt-1.5 text-xs">
-                Sélectionnez l'endroit physique ou virtuel de la consultation.
+                Sélectionnez l'endroit physique ou virtuel du rendez-vous.
               </p>
             </UFormField>
           </div>

@@ -1,5 +1,5 @@
 import { eq, and, desc, sql } from 'drizzle-orm'
-import { treatmentPlans, consultations } from '~~/server/database/schema'
+import { treatmentPlans, appointments } from '~~/server/database/schema'
 import { treatmentPlanQuerySchema } from '~~/shared/types/treatment-plan'
 
 // GET /api/treatment-plans - Get treatment plans with optional patient filter and progress
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     // 2. Validate query parameters
     const validatedQuery = await getValidatedQuery(event, treatmentPlanQuerySchema.parse)
 
-    // Get treatment plans with consultation counts for progress calculation
+    // Get treatment plans with appointment counts for progress calculation
     const treatmentPlansData = await db
       .select({
         id: treatmentPlans.id,
@@ -35,8 +35,8 @@ export default defineEventHandler(async (event) => {
         notes: treatmentPlans.notes,
         createdAt: treatmentPlans.createdAt,
         updatedAt: treatmentPlans.updatedAt,
-        // Count completed consultations for each treatment plan
-        completedConsultations: sql<number>`COUNT(CASE WHEN ${consultations.status} = 'completed' THEN ${consultations.id} END)`
+        // Count completed appointments for each treatment plan
+        completedAppointments: sql<number>`COUNT(CASE WHEN ${appointments.status} = 'completed' THEN ${appointments.id} END)`
       })
       .from(treatmentPlans)
       .where(
@@ -46,8 +46,8 @@ export default defineEventHandler(async (event) => {
         )
       )
       .leftJoin(
-        consultations,
-        and(eq(consultations.treatmentPlanId, treatmentPlans.id), eq(consultations.status, 'completed'))
+        appointments,
+        and(eq(appointments.treatmentPlanId, treatmentPlans.id), eq(appointments.status, 'completed'))
       )
       .groupBy(treatmentPlans.id)
       .orderBy(desc(treatmentPlans.createdAt))
@@ -56,9 +56,9 @@ export default defineEventHandler(async (event) => {
       ...plan,
       progress:
         plan.numberOfSessions && plan.numberOfSessions > 0
-          ? Math.round((Number(plan.completedConsultations) / plan.numberOfSessions) * 100)
+          ? Math.round((Number(plan.completedAppointments) / plan.numberOfSessions) * 100)
           : 0,
-      completedConsultations: Number(plan.completedConsultations)
+      completedAppointments: Number(plan.completedAppointments)
     }))
 
     return treatmentPlansWithProgress
