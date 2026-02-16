@@ -2,7 +2,7 @@ import { eq, and, desc, getTableColumns } from 'drizzle-orm'
 import { consultations, treatmentPlans, rooms } from '~~/server/database/schema'
 import { requireAuth } from '~~/server/utils/auth'
 import { handleApiError } from '~~/server/utils/error'
-import { consultationQuerySchema } from '~~/shared/types/consultation.type'
+import { consultationQuerySchema } from '~~/shared/types/appointment.type'
 
 // GET /api/treatment-plans/[id]/consultations - Get consultations for treatment plan
 export default defineEventHandler(async (event) => {
