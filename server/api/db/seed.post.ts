@@ -14,11 +14,8 @@ import {
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
 import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } from '~~/shared/utils/time'
-import {
-  MINIMUM_CONSULTATION_GAP_MINUTES,
-  CONSULTATION_DURATIONS,
-  VALID_CONSULTATION_TYPES
-} from '~~/shared/utils/constants.appointment'
+import { VALID_CONSULTATION_TYPES } from '~~/shared/utils/constants.appointment'
+import { MINIMUM_CONSULTATION_GAP_MINUTES, CONSULTATION_DURATIONS } from '~~/shared/utils/constants.consultation'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
 import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES, VALID_RELATIONSHIP_TYPES } from '~~/shared/utils/constants.patient'
