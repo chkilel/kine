@@ -6,7 +6,7 @@ import { calendarDateField, creationAndUpdateTimestamps } from './columns.helper
 import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
-import { consultations } from './consultation'
+import { consultations } from './appointment'
 import { patientDocuments } from './document'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
 

@@ -2,7 +2,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 
-import { consultations } from '~~/server/database/schema/consultation'
+import { consultations } from '~~/server/database/schema/appointment'
 import {
   calendarDateSchema,
   consultationTypeSchema,

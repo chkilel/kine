@@ -4,7 +4,7 @@ import { relations } from 'drizzle-orm'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { consultations } from './consultation'
+import { consultations } from './appointment'
 import { treatmentPlans } from './treatment-plan'
 import { patientDocuments } from './document'
 import {

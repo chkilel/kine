@@ -1,6 +1,6 @@
 export * from './auth'
 export * from './availability'
-export * from './consultation'
+export * from './appointment'
 export * from './document'
 export * from './organization'
 export * from './patient'
