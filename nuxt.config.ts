@@ -7,11 +7,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     betterAuthSecret: 'your-secret-key-for-better-auth',
     // R2 credentials
-    r2Url: process.env.NUXT_R2_URL,
-    r2BucketName: process.env.NUXT_R2_BUCKET_NAME,
-    r2AccountId: process.env.NUXT_R2_ACCOUNT_ID,
-    r2AccessKey: process.env.NUXT_R2_ACCESSKEY,
-    r2SecretAccessKey: process.env.NUXT_R2_SECRETACCESSKEY,
+    r2Url: '',
+    r2BucketName: '',
+    r2AccountId: '',
+    r2AccessKey: '',
+    r2SecretAccessKey: '',
 
     public: {
       betterAuthUrl: 'http://localhost:3000'
