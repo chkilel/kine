@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm, LazyConsultationActiveConsultationSlideover } from '#components'
+  import { LazyAppModalConfirm, LazyConsultationSlideover } from '#components'
   import { useConsultationAction } from '~/composables/useConsultationAction'
 
   const props = defineProps<{
@@ -12,7 +12,7 @@
   const overlay = useOverlay()
   const toast = useToast()
   const confirmModal = overlay.create(LazyAppModalConfirm)
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
   const { mutate: updateStatus } = useUpdateConsultationStatus()
   const consultationAction = useConsultationAction()
 
@@ -182,7 +182,7 @@
         />
 
         <!-- Planning Tabs -->
-        <ConsultationManualPlanningCard
+        <AppointmentManualPlanningCard
           :treatment-plan="treatmentPlan"
           :patient="patient"
           :consultation="consultation"
@@ -200,7 +200,7 @@
         <!-- > -->
         <!-- Manual Planning Tab -->
         <!-- <template #manual> -->
-        <!-- <ConsultationManualPlanningCard :treatment-plan="treatmentPlan" :therapists="therapists" /> -->
+        <!-- <AppointmentManualPlanningCard :treatment-plan="treatmentPlan" :therapists="therapists" /> -->
         <!-- </template> -->
 
         <!-- Auto Planning Tab -->
@@ -211,7 +211,7 @@
         <!-- </UCard> -->
 
         <!-- Session Management FIXME -->
-        <ConsultationManagement :active-planning-tab="activePlanningTab" :patientId="patient.id" />
+        <AppointmentManagement :active-planning-tab="activePlanningTab" :patientId="patient.id" />
 
         <!-- Communication Settings -->
         <UCard>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import {
-    LazyConsultationActiveConsultationSlideover,
-    LazyConsultationActiveCard,
-    LazyConsultationListItem
+    LazyConsultationSlideover,
+    LazyAppointmentOnGoingCard,
+    LazyAppointmentListItem
   } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
@@ -20,7 +20,7 @@
   const router = useRouter()
   const overlay = useOverlay()
 
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
 
   const currentDate = computed(() => {
     const dateFromQuery = route.query.date as string
@@ -126,7 +126,7 @@
           </div>
 
           <div class="space-y-4">
-            <LazyConsultationActiveCard
+            <LazyAppointmentOnGoingCard
               v-for="consultation in inProgressConsultations"
               :key="consultation.id"
               :consultation
@@ -144,7 +144,7 @@
             </template>
             <div class="space-y-4">
               <div v-if="upcomingConsultations && upcomingConsultations.length > 0" class="space-y-3">
-                <LazyConsultationListItem
+                <LazyAppointmentListItem
                   v-for="consultation in upcomingConsultations"
                   :key="consultation.id"
                   :consultation="consultation"

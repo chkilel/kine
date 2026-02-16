@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyConsultationPlanningSlideover, LazyAppModalConfirm } from '#components'
+  import { LazyAppointmentPlanningSlideover, LazyAppModalConfirm } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -8,7 +8,7 @@
 
   const toast = useToast()
   const overlay = useOverlay()
-  const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
+  const sessionPlanningOverlay = overlay.create(LazyAppointmentPlanningSlideover)
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
   // Fetching/mutating data
@@ -127,7 +127,7 @@
         <UTabs v-model="activeTab" :items="tabs" variant="pill" class="w-full">
           <template #upcoming>
             <div class="mt-4 space-y-2.5">
-              <ConsultationCard
+              <AppointmentCard
                 v-for="consultation in upcomingConsultations"
                 :key="consultation.id"
                 :consultation
@@ -138,7 +138,7 @@
           </template>
           <template #finished>
             <div class="mt-4 space-y-2.5">
-              <ConsultationCard
+              <AppointmentCard
                 v-for="consultation in finishedConsultations"
                 :key="consultation.id"
                 :consultation

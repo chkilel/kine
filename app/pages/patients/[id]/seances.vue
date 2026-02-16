@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm, LazyConsultationPlanningSlideover } from '#components'
+  import { LazyAppModalConfirm, LazyAppointmentPlanningSlideover } from '#components'
   import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date'
 
   const route = useRoute()
@@ -7,7 +7,7 @@
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
 
   const overlay = useOverlay()
-  const sessionPlanningOverlay = overlay.create(LazyConsultationPlanningSlideover)
+  const sessionPlanningOverlay = overlay.create(LazyAppointmentPlanningSlideover)
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
   // Mutating Data
@@ -140,7 +140,7 @@
                 value: 'all',
                 color: 'neutral'
               },
-              ...SESSION_STATUS_OPTIONS
+              ...CONSULTATION_STATUS_OPTIONS
             ]"
             placeholder="Tous les statuts"
             class="w-full"
@@ -181,7 +181,7 @@
       </div>
 
       <div v-else-if="filteredConsultations.length > 0" class="space-y-3">
-        <ConsultationCard
+        <AppointmentCard
           v-for="consultation in filteredConsultations"
           :key="consultation.id"
           :consultation="consultation"
