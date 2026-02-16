@@ -1304,8 +1304,7 @@ function generateAppointments(
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const config = useRuntimeConfig()
-  const isDevelopment = config.env === 'development'
+  const isDevelopment = import.meta.dev
 
   if (!isDevelopment) {
     throw createError({
