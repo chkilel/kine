@@ -7,7 +7,7 @@ import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../utils
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '../utils/constants.location'
 import { VALID_PHONE_CATEGORIES } from '../utils/constants.user'
-import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../utils/constants.consultation'
+import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../utils/constants.appointment'
 
 z.config(fr())
 

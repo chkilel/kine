@@ -1,5 +1,5 @@
 import { addMinutesToTime, compareTimes } from './time'
-import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
+import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.appointment'
 
 export const hasTimeConflict = (
   existingStart: string,

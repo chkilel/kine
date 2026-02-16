@@ -18,7 +18,7 @@ import {
   MINIMUM_CONSULTATION_GAP_MINUTES,
   CONSULTATION_DURATIONS,
   VALID_CONSULTATION_TYPES
-} from '~~/shared/utils/constants.consultation'
+} from '~~/shared/utils/constants.appointment'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
 import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
 import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES, VALID_RELATIONSHIP_TYPES } from '~~/shared/utils/constants.patient'

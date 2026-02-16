@@ -8,7 +8,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
-import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../../../shared/utils/constants.consultation'
+import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../../../shared/utils/constants.appointment'
 import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.location'
 
 /**
