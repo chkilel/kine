@@ -20,11 +20,15 @@ export const APPOINTMENT_SLOT_INCREMENT_OPTIONS = [5, 10, 15, 20, 30] as const
 export const APPOINTMENT_TYPES = [
   'initial',
   'follow_up',
-  'evaluation',
-  'discharge',
+  'treatment',
   'mobilization',
   'reinforcement',
-  'reeducation'
+  'reeducation',
+  'exercise_supervision',
+  'post_op_follow_up',
+  'urgent_visit',
+  'consultation',
+  'discharge'
 ] as const
 
 // Valid status values for appointments
@@ -59,11 +63,15 @@ export const APPOINTMENT_STATUS_OPTIONS = Object.entries(APPOINTMENT_STATUS_CONF
 export const APPOINTMENT_TYPES_CONFIG = {
   initial: { label: 'Évaluation initiale', icon: 'i-hugeicons-start-up-02' },
   follow_up: { label: 'Suivi', icon: 'i-hugeicons-calendar-user' },
-  evaluation: { label: 'Évaluation', icon: 'i-hugeicons-test-tube-02' },
-  discharge: { label: 'Sortie', icon: 'i-hugeicons-square-arrow-left-02' },
+  treatment: { label: 'Séance de traitement', icon: 'i-hugeicons-therapy' },
   mobilization: { label: 'Mobilisation', icon: 'i-hugeicons-account-recovery' },
   reinforcement: { label: 'Renforcement', icon: 'i-hugeicons-body-part-muscle' },
-  reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' }
+  reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' },
+  exercise_supervision: { label: "Supervision d'exercices", icon: 'i-hugeicons-dumbbell' },
+  post_op_follow_up: { label: 'Suivi post-opératoire', icon: 'i-hugeicons-hospital-bed-02' },
+  urgent_visit: { label: 'Consultation urgente', icon: 'i-hugeicons-emergency-cross' },
+  consultation: { label: 'Consultation individuelle', icon: 'i-hugeicons-stethoscope' },
+  discharge: { label: 'Sortie', icon: 'i-hugeicons-square-arrow-left-02' }
 } as const
 
 // Appointment Type Options
