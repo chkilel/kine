@@ -22,7 +22,7 @@
 
   const title = 'Kine - Plateforme de Kinésithérapie'
   const description =
-    'Une plateforme complète de gestion pour kinésithérapeutes, permettant le suivi des patients, la planification des consultations et la gestion des documents de traitement.'
+    'Une plateforme complète de gestion pour kinésithérapeutes, permettant le suivi des patients, la planification des rendez-vous et la gestion des séances et des documents de traitement.'
 
   useSeoMeta({
     title,

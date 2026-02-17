@@ -13,7 +13,7 @@
 
   // Fetching/mutating data
   const {
-    data: consultations,
+    data: appointments,
     isLoading,
     refetch
   } = useAppointmentsList(() => ({
@@ -26,16 +26,16 @@
   // Tab state
   const activeTab = ref<'upcoming' | 'finished'>('upcoming')
 
-  // Filter consultations by status
+  // Filter appointments by status
   const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled', 'in_progress']
   const finishedStatuses: AppointmentStatus[] = ['completed', 'cancelled', 'no_show']
 
   const upcomingAppointments = computed(
-    () => consultations.value?.filter((c) => upcomingStatuses.includes(c.status)) || []
+    () => appointments.value?.filter((c) => upcomingStatuses.includes(c.status)) || []
   )
 
   const finishedAppointments = computed(
-    () => consultations.value?.filter((c) => finishedStatuses.includes(c.status)) || []
+    () => appointments.value?.filter((c) => finishedStatuses.includes(c.status)) || []
   )
 
   const tabs = computed(() => [
@@ -55,12 +55,12 @@
     }
   ])
 
-  // Refresh consultations data
+  // Refresh appointments data
   const refreshAppointments = async () => {
     await refetch()
     toast.add({
       title: 'Appointments actualisées',
-      description: 'Les consultations ont été rechargées avec succès.',
+      description: 'Les rendez-vous ont été rechargées avec succès.',
       color: 'success'
     })
   }
@@ -123,7 +123,7 @@
       </div>
     </template>
     <ClientOnly>
-      <div v-if="consultations?.length && consultations?.length > 0" class="space-y-4">
+      <div v-if="appointments?.length && appointments?.length > 0" class="space-y-4">
         <UTabs v-model="activeTab" :items="tabs" variant="pill" class="w-full">
           <template #upcoming>
             <div class="mt-4 space-y-2.5">
