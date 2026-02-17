@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
@@ -39,7 +39,7 @@ export const weeklyAvailabilityTemplates = sqliteTable(
   (table) => [
     // ---- Unique constraints ----
     // Prevent duplicate templates for same user+org+day+time combination
-    index('idx_weekly_templates_unique').on(
+    uniqueIndex('idx_weekly_templates_unique').on(
       table.organizationId,
       table.userId,
       table.dayOfWeek,
@@ -92,7 +92,7 @@ export const availabilityExceptions = sqliteTable(
   (table) => [
     // ---- Unique constraints ----
     // Prevent duplicate exceptions for the same user+org+date+time combination
-    index('idx_exceptions_unique').on(table.organizationId, table.userId, table.date, table.startTime),
+    uniqueIndex('idx_exceptions_unique').on(table.organizationId, table.userId, table.date, table.startTime),
 
     // ---- Common query patterns (with deletedAt for active exceptions) ----
     // Get all active exceptions for a user in an organization: WHERE organizationId = ? AND userId = ?
