@@ -5,7 +5,6 @@
 
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
-  const createTreatmentSession = useCreateTreatmentSession()
 
   // Get treatment session from appointment relation
   const treatmentSession = computed(() => appointment.treatmentSession)
@@ -71,22 +70,11 @@
   ])
 
   // Event handlers
-  const handleStartSession = async () => {
-    try {
-      const result = await createTreatmentSession.mutateAsync({
-        appointmentId: appointment.id
-      })
-
-      if (result?.data?.id) {
-        activeConsultationOverlay.open({
-          patientId: appointment.patientId,
-          appointmentId: appointment.id,
-          treatmentSessionId: result.data.id
-        })
-      }
-    } catch (error) {
-      console.error('Failed to start session:', error)
-    }
+  const openSessionSlideover = () => {
+    activeConsultationOverlay.open({
+      patientId: appointment.patientId,
+      appointmentId: appointment.id
+    })
   }
 
   const handleContinueSession = () => {
@@ -163,7 +151,7 @@
       variant="solid"
       :ui="{ base: 'rounded-xl' }"
       class="shadow-success/10 shrink-0 font-semibold text-white shadow-lg"
-      @click="handleStartSession"
+      @click="openSessionSlideover"
     />
 
     <UButton

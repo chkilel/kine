@@ -2,7 +2,7 @@
   const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
   const deleteAppointmentMutation = useDeleteAppointment()
-  const { data: appointmentsData } = useAppointmentsList(() => ({ patientId: props.patientId }))
+  const { data: appointmentsData } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId }))
 
   const deleteAppointment = async (appointmentId: string) => {
     await deleteAppointmentMutation.mutateAsync({

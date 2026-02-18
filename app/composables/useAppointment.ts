@@ -1,5 +1,6 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
+import type { AppointmentWithSession } from '~~/shared/types/appointment.type'
 
 export const APPOINTMENT_KEYS = {
   root: ['appointments'] as const,
@@ -36,7 +37,7 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
 
 const _useAppointmentsListWithSessions = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) => {
   const requestFetch = useRequestFetch()
-  return useQuery({
+  return useQuery<AppointmentWithSession[]>({
     key: () => {
       const queryParamsValue = toValue(queryParams) || {}
       return APPOINTMENT_KEYS.listWithSessions(queryParamsValue)
@@ -49,11 +50,13 @@ const _useAppointmentsListWithSessions = (queryParams?: MaybeRefOrGetter<Appoint
           Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
         )
       })
-      return resp?.map((item) => ({
-        ...item,
-        createdAt: parseISO(item.createdAt),
-        updatedAt: parseISO(item.updatedAt)
-      }))
+      return (
+        resp?.map((item) => ({
+          ...item,
+          createdAt: parseISO(item.createdAt),
+          updatedAt: parseISO(item.updatedAt)
+        })) ?? []
+      )
     }
   })
 }

@@ -7,7 +7,7 @@ export const TREATMENT_SESSION_KEYS = {
   single: (id: string) => [...TREATMENT_SESSION_KEYS.root, id]
 }
 
-const _useTreatmentSession = (sessionId: MaybeRefOrGetter<string>) => {
+const _useTreatmentSession = (sessionId: MaybeRefOrGetter<string | undefined>) => {
   const requestFetch = useRequestFetch()
 
   return useQuery({

@@ -1,31 +1,13 @@
 <script setup lang="ts">
+  import { LazyAppModalConfirm } from '#components'
+
   const props = defineProps<{
     patientId: string
     appointmentId: string
     treatmentSessionId?: string
   }>()
 
-  const emit = defineEmits<{
-    close: []
-  }>()
-
-  // Data fetching
-  const { data: patient } = usePatientById(() => props.patientId)
-  const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
-  const { data: allAppointments } = useAppointmentsList(() => ({ patientId: props.patientId }))
-  const { data: appointment, isPending: appointmentLoading } = useAppointment(() => props.appointmentId)
-
-  // Treatment session data
-  const { data: treatmentSession, isPending: sessionLoading } = useTreatmentSession(
-    () => props.treatmentSessionId || ''
-  )
-  const treatmentSessionActions = useTreatmentSessionActions()
-
-  // Form state - now from treatment session
-  const painLevelBefore = ref<number>(0)
-  const painLevelAfter = ref<number | undefined>(undefined)
-  const sessionNotes = ref('')
-  const selectedTags = ref<string[]>([])
+  const emit = defineEmits<{ close: [] }>()
 
   // Constants
   const AVAILABLE_TAGS = [
@@ -38,6 +20,26 @@
   const EVA_MIN = 0
   const EVA_MAX = 10
   const EVA_STEP = 1
+
+  const overlay = useOverlay()
+  const createTreatmentSession = useCreateTreatmentSession()
+  const confirmModal = overlay.create(LazyAppModalConfirm)
+
+  // Data fetching
+  const { data: patient } = usePatientById(() => props.patientId)
+  const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
+  const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
+  const { data: appointment, isLoading: appointmentLoading } = useAppointment(() => props.appointmentId)
+
+  // Treatment session data
+  const { data: treatmentSession, isLoading: sessionLoading } = useTreatmentSession(() => props.treatmentSessionId)
+  const treatmentSessionActions = useTreatmentSessionActions()
+
+  // Form state - now from treatment session
+  const painLevelBefore = ref<number>(0)
+  const painLevelAfter = ref<number | undefined>(undefined)
+  const sessionNotes = ref('')
+  const selectedTags = ref<string[]>([])
 
   // Initialize form from treatment session data when available
   watch(
@@ -138,7 +140,44 @@
 
   const evaScaleNumbers = computed(() => Array.from({ length: EVA_MAX - EVA_MIN + 1 }, (_, i) => i + EVA_MIN))
 
+  // Loading states
+  const isStartingSession = ref(false)
   const isLoading = computed(() => appointmentLoading.value || sessionLoading.value)
+
+  // Check if session hasn't started yet
+  const sessionNotStarted = computed(() => !treatmentSession.value && !sessionLoading.value)
+
+  // Handler to start a new session
+  async function handleStartSession() {
+    if (isStartingSession.value) return
+
+    const confirmed = await confirmModal.open({
+      title: 'Démarrer la consultation',
+      message: 'Confirmer le démarrage de cette séance ?',
+      confirmText: 'Démarrer',
+      cancelText: 'Annuler',
+      confirmColor: 'primary',
+      icon: 'i-hugeicons-play-circle'
+    })
+
+    if (!confirmed) return
+
+    isStartingSession.value = true
+    try {
+      const result = await createTreatmentSession.mutateAsync({
+        appointmentId: props.appointmentId
+      })
+
+      if (result?.data?.id) {
+        // Session created - the component will now have the session data
+        // and the timer will start automatically via the existing watcher
+      }
+    } catch (error) {
+      console.error('Failed to start session:', error)
+    } finally {
+      isStartingSession.value = false
+    }
+  }
 </script>
 
 <template>
@@ -380,6 +419,21 @@
 
         <!-- Right Sidebar - Timer & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
+          <!-- Start Session Button - Only show when no session exists -->
+          <UButton
+            v-if="sessionNotStarted"
+            size="xl"
+            color="primary"
+            variant="solid"
+            block
+            class="rounded-xl text-lg font-bold shadow-lg"
+            icon="i-hugeicons-play-circle"
+            :loading="isStartingSession"
+            @click="handleStartSession"
+          >
+            Démarrer la séance
+          </UButton>
+
           <!-- Timer Card - Now uses treatment session -->
           <ConsultationTimerCard
             v-if="treatmentSession && appointment"
@@ -418,7 +472,7 @@
                         v-if="previous.treatmentSession?.painLevelBefore !== null"
                         class="text-muted bg-muted-100 dark:bg-muted-800 rounded px-2 py-0.5 text-xs"
                       >
-                        EVA {{ previous.treatmentSession.painLevelBefore }}/10
+                        EVA {{ previous.treatmentSession?.painLevelBefore }}/10
                       </span>
                     </div>
                     <p class="text-muted line-clamp-3 text-sm leading-relaxed">

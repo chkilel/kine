@@ -38,7 +38,8 @@ export const appointmentQuerySchema = z.object({
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   date: calendarDateSchema.optional(),
-  include: z.enum(['treatmentSession']).optional()
+  include: z.enum(['treatmentSession']).optional(),
+  limit: z.number().optional()
 })
 
 export const therapistAppointmentsQuerySchema = z.object({
@@ -51,8 +52,15 @@ export type Appointment = z.infer<typeof appointmentSchema> & {
   roomName?: string | null
   patientName?: string | null
   planTitle?: string | null
+}
+
+export type AppointmentWithSession = z.infer<typeof appointmentSchema> & {
+  roomName?: string | null
+  patientName?: string | null
+  planTitle?: string | null
   treatmentSession?: TreatmentSession | null
 }
+
 export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
 export type AppointmentUpdate = z.infer<typeof appointmentUpdateSchema>
 export type AppointmentQuery = z.infer<typeof appointmentQuerySchema>

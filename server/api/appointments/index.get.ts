@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
     const includeTreatmentSession = validatedQuery.include === 'treatmentSession'
 
     if (includeTreatmentSession) {
-      const appointmentsList = await db
+      const query = db
         .select({
           ...getTableColumns(appointments),
           roomName: rooms.name,
@@ -61,10 +61,16 @@ export default defineEventHandler(async (event) => {
         .where(and(...conditions))
         .orderBy(asc(appointments.date))
 
+      if (validatedQuery.limit) {
+        query.limit(validatedQuery.limit)
+      }
+
+      const appointmentsList = await query
+
       return appointmentsList
     }
 
-    const appointmentsList = await db
+    const query = db
       .select({
         ...getTableColumns(appointments),
         roomName: rooms.name
@@ -73,6 +79,12 @@ export default defineEventHandler(async (event) => {
       .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .where(and(...conditions))
       .orderBy(asc(appointments.date))
+
+    if (validatedQuery.limit) {
+      query.limit(validatedQuery.limit)
+    }
+
+    const appointmentsList = await query
 
     return appointmentsList
   } catch (error: unknown) {
