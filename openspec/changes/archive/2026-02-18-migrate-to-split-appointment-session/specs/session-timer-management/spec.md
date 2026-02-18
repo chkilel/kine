@@ -155,16 +155,5 @@ The system SHALL correctly accumulate paused time across multiple pause/resume c
 - **AND** therapist pauses again at "10:30:00" and resumes at "10:35:00" (5 minutes)
 - **AND** therapist pauses again at "10:50:00" and resumes at "10:51:00" (1 minute)
 - **WHEN** session is ended at "11:00:00"
-- **THEN** totalPausedSeconds is 480 (8 minutes total)
-- **AND** actualDurationSeconds is 3120 (52 minutes of therapy)
-
-## REMOVED Requirements
-
-### Requirement: Appointment-Based Session Management
-
-**Reason**: Session state (timer, pause/resume, duration tracking) has been moved from appointments to treatment sessions to separate scheduling from clinical documentation.
-
-- Start session at scheduled time (appointment-based) → Replaced by POST /api/treatment-sessions
-- Start session late (appointment-based) → Replaced by POST /api/treatment-sessions
-- Prevent starting already in-progress session → Now handled by unique constraint on treatmentSessions.appointmentId
-- All pause/resume/end scenarios → Now operate on treatment sessions via PATCH /api/treatment-sessions/[id]
+  - **THEN** totalPausedSeconds is 480 (8 minutes total)
+  - **AND** actualDurationSeconds is 3120 (52 minutes of therapy)

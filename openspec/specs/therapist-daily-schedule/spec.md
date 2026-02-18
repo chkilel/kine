@@ -26,169 +26,106 @@ The system SHALL provide a dedicated page for therapists to view their daily sch
 
 ### Requirement: Daily Summary Statistics
 
-The system SHALL display summary statistics at the top of the therapist's daily schedule page.
+The system SHALL display summary statistics at the top of the therapist's daily schedule page based on treatment sessions.
 
-#### Scenario: Display total consultation count
+#### Scenario: Display completed session count
 
-**Given** a therapist has 8 consultations scheduled for the day
-**When** the therapist views their daily schedule page
-**Then** the summary section shows "Total: 8"
+- **GIVEN** a therapist has 3 treatment sessions with status "completed" for the day
+- **WHEN** the therapist views their daily schedule page
+- **THEN** the summary section shows "Terminées: 3"
+- **AND** this counts treatment sessions, not appointments
 
-#### Scenario: Display completed consultation count
+#### Scenario: Display in-progress session count
 
-**Given** a therapist has 3 consultations with status "completed" for the day
-**When** the therapist views their daily schedule page
-**Then** the summary section shows "Completed: 3"
-
-#### Scenario: Display upcoming consultation count
-
-**Given** a therapist has 4 consultations with status "scheduled" or "confirmed" for the day
-**When** the therapist views their daily schedule page
-**Then** the summary section shows "Upcoming: 4"
-
-#### Scenario: Display cancelled consultation count
-
-**Given** a therapist has 1 consultation with status "cancelled" or "no_show" for the day
-**When** the therapist views their daily schedule page
-**Then** the summary section shows "Cancelled: 1"
+- **GIVEN** a therapist has 2 treatment sessions with status "in_progress" for the day
+- **WHEN** the therapist views their daily schedule page
+- **THEN** the summary section shows "En cours: 2"
+- **AND** this is a new statistic added to the daily view
 
 ### Requirement: Consultation Card Overview
 
-The system SHALL display each consultation as a card with essential information for quick reference.
+The system SHALL display each appointment as a card with essential information and treatment session status when applicable.
 
-#### Scenario: Display consultation time range
+#### Scenario: Display appointment with no treatment session
 
-**Given** a consultation starts at "09:00" and ends at "10:00"
-**When** the consultation card is displayed
-**Then** the card shows "09:00 - 10:00" prominently
+- **GIVEN** an appointment exists with no related treatment session
+- **AND** appointment status is "scheduled"
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows "À venir" status badge
+- **AND** the card shows "Start Session" button
 
-#### Scenario: Display patient name
+#### Scenario: Display appointment with in-progress treatment session
 
-**Given** a consultation is for patient "John Doe"
-**When** the consultation card is displayed
-**Then** the card shows the patient's full name
-**And** the name is clickable to navigate to patient details
+- **GIVEN** an appointment exists with a treatment session
+- **AND** treatment session status is "in_progress"
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows "En cours" status badge (from treatment session)
+- **AND** the card shows timer duration if available
+- **AND** the card shows "Continue Session" button
 
-#### Scenario: Display consultation type
+#### Scenario: Display completed appointment
 
-**Given** a consultation has type "follow_up"
-**When** the consultation card is displayed
-**Then** the card shows "Suivi" (French label for follow_up)
-**And** the type is displayed with appropriate styling
-
-#### Scenario: Display consultation status
-
-**Given** a consultation has status "scheduled"
-**When** the consultation card is displayed
-**Then** the card shows "À venir" (French label for scheduled)
-**And** the status is displayed as a badge with appropriate color
-
-#### Scenario: Display room name
-
-**Given** a consultation is scheduled in room "Room A"
-**When** the consultation card is displayed
-**Then** the card shows "Room A"
-**And** the room name is visible on the card
+- **GIVEN** an appointment exists with status "completed"
+- **WHEN** the appointment card is displayed
+  - **THEN** the card shows "Terminée" status badge
+  - **AND** the card shows actual duration of the session (from treatment session)
+  - **AND** the card shows "View Details" button only
 
 ### Requirement: Session Start from Daily View
 
-The system SHALL allow therapists to start a consultation session directly from the daily schedule view.
+The system SHALL allow therapists to start a consultation session directly from the daily schedule view by creating a treatment session linked to the appointment.
 
-#### Scenario: Show Start Session button for scheduled consultations
+#### Scenario: Show Start Session button for scheduled appointments
 
-**Given** a consultation has status "scheduled"
-**When** the consultation card is displayed
-**Then** the card shows a "Start Session" button
-**And** the button is styled as a primary action
-**And** the button displays a play icon
+- **GIVEN** an appointment has status "scheduled"
+- **AND** no treatment session exists for this appointment
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows a "Démarrer la séance" (Start Session) button
+- **AND** the button is styled as a primary action
+- **AND** the button displays a play icon
 
-#### Scenario: Show Start Session button for confirmed consultations
+#### Scenario: Show Continue Session button for appointments with in-progress treatment session
 
-**Given** a consultation has status "confirmed"
-**When** the consultation card is displayed
-**Then** the card shows a "Start Session" button
-**And** the button is styled as a primary action
+- **GIVEN** an appointment has status "confirmed"
+- **AND** a treatment session exists with status "in_progress"
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows a "Continuer la séance" (Continue Session) button
+- **AND** the button is styled as a primary action
+- **AND** clicking opens the treatment session slideover
 
-#### Scenario: Do not show Start Session button for completed consultations
+#### Scenario: Start session from daily view creates treatment session
 
-**Given** a consultation has status "completed"
-**When** the consultation card is displayed
-**Then** the card does NOT show a "Start Session" button
-**And** the card may show a "View Details" button instead
+- **GIVEN** a therapist is viewing the daily schedule
+- **AND** an appointment has status "scheduled" or "confirmed"
+- **AND** no treatment session exists for this appointment
+- **WHEN** the therapist clicks the "Start Session" button on the appointment card
+- **THEN** the system calls POST /api/treatment-sessions with appointmentId
+- **AND** a treatment session is created with status "in_progress"
+- **AND** the consultation slideover opens with the new treatment session
 
-#### Scenario: Show Complete Session button for in-progress consultations
+#### Scenario: Do not show Start Session button for completed appointments
 
-**Given** a consultation has status "in_progress"
-**When** the consultation card is displayed
-**Then** the card shows a "Complete Session" button
-**And** the button is styled with success color
-**And** the button displays a check icon
-
-#### Scenario: Start session from daily view
-
-**Given** a therapist is viewing the daily schedule
-**And** a consultation has status "scheduled" or "confirmed"
-**When** the therapist clicks the "Start Session" button on the consultation card
-**Then** the system displays a confirmation dialog with patient name and time
-**And** the dialog asks "Démarrer la consultation avec [Patient Name] à [Start Time] ?"
-**And** the dialog has "Annuler" and "Démarrer" buttons
-
-#### Scenario: Confirm session start
-
-**Given** the session start confirmation dialog is displayed
-**When** the therapist clicks the "Démarrer" button
-**Then** the system updates the consultation status to "in_progress"
-**And** the consultation card refreshes to show new status
-**And** the "Start Session" button is replaced with "Complete Session" button
-**And** a success toast notification is displayed
-**And** the consultation list is refreshed
-
-#### Scenario: Cancel session start
-
-**Given** the session start confirmation dialog is displayed
-**When** the therapist clicks the "Annuler" button
-**Then** the confirmation dialog closes
-**And** the consultation status remains unchanged
-**And** the consultation card continues to show "Start Session" button
+- **GIVEN** an appointment has status "completed"
+- **WHEN** the appointment card is displayed
+- **THEN** the card does NOT show a "Start Session" button
+- **AND** the card shows a "View Details" button instead
 
 ### Requirement: Consultation Status Update
 
-The system SHALL use the existing consultation update endpoint to update consultation status.
+The system SHALL support appointment statuses (scheduled, confirmed, cancelled, no_show, completed) separate from treatment session status.
 
-#### Scenario: Update consultation status to in_progress
+#### Scenario: Appointment status flow
 
-**Given** a consultation exists with ID "consultation-123"
-**And** consultation has patientId "patient-456"
-**And** consultation belongs to authenticated therapist's organization
-**When** authenticated user sends `PUT /api/patients/patient-456/consultations/consultation-123` with body `{ status: "in_progress" }`
-**Then** consultation status is updated to "in_progress"
-**And** API returns updated consultation object
-**And** HTTP status is 200 OK
-
-#### Scenario: Update consultation status to completed
-
-**Given** a consultation exists with ID "consultation-123"
-**And** consultation has patientId "patient-456"
-**And** consultation has status "in_progress"
-**When** authenticated user sends `PUT /api/patients/patient-456/consultations/consultation-123` with body `{ status: "completed" }`
-**Then** consultation status is updated to "completed"
-**And** API returns updated consultation object
-
-#### Scenario: Reject invalid status value
-
-**Given** a consultation exists with ID "consultation-123"
-**And** consultation has patientId "patient-456"
-**When** authenticated user sends `PUT /api/patients/patient-456/consultations/consultation-123` with body `{ status: "invalid_status" }`
-**Then** API returns HTTP 400 Bad Request
-**And** error message states validation error
-
-#### Scenario: Prevent status update for unauthorized consultation
-
-**Given** a consultation exists with ID "consultation-123"
-**And** consultation belongs to a different organization
-**When** authenticated user from a different organization attempts to update status
-**Then** API returns HTTP 404 or 403
-**And** consultation status remains unchanged
+- **GIVEN** a new appointment is created
+- **THEN** appointment status is "scheduled"
+- **WHEN** appointment is confirmed
+- **THEN** appointment status becomes "confirmed"
+- **WHEN** a treatment session is created and started
+- **THEN** appointment status remains "confirmed"
+- **AND** treatment session status is "in_progress"
+- **WHEN** the treatment session is marked as "completed"
+- **THEN** appointment status is updated to "completed"
+- **AND** the treatment session status is "completed"
 
 ### Requirement: Session Start from Consultation Details
 
@@ -393,4 +330,54 @@ The system SHALL be usable on mobile devices with appropriate responsive design.
 **And** consultation cards stack vertically
 **And** navigation controls remain accessible
 **And** text is readable without horizontal scrolling
+
+### Requirement: In-Progress Appointments Display
+
+The system SHALL display in-progress treatment sessions prominently at the top of the daily schedule.
+
+#### Scenario: Show in-progress treatment sessions section
+
+- **GIVEN** a therapist has appointments with treatment sessions in "in_progress" status
+- **WHEN** the therapist views their daily schedule
+- **THEN** an "En cours" section appears at the top
+- **AND** it displays all treatment sessions with status "in_progress"
+- **AND** each shows patient name, appointment time, and elapsed time
+- **AND** clicking navigates to the session slideover
+
+### Requirement: Treatment Session Data Display
+
+The system SHALL display treatment session information on appointment cards when a session exists.
+
+#### Scenario: Show pain level on completed session card
+
+- **GIVEN** a treatment session exists with painLevelBefore = 7 and painLevelAfter = 3
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows "Douleur: 7 → 3" or similar indicator
+- **AND** this indicates pain improvement
+
+#### Scenario: Show session tags on card
+
+- **GIVEN** a treatment session has tags ["Douleur Diminuée", "Renforcement"]
+- **WHEN** the appointment card is displayed
+- **THEN** the card shows these tags as badges
+- **AND** tags are displayed in a compact format
+
+### Requirement: Treatment Session Lazy Loading
+
+The system SHALL efficiently load treatment session data only when needed.
+
+#### Scenario: Load appointments without treatment sessions initially
+
+- **GIVEN** the daily schedule page loads
+- **WHEN** appointments are fetched
+- **THEN** the API returns appointments with optional treatmentSession relation
+- **AND** treatment session data is included only if it exists
+- **AND** the UI handles both cases (with and without treatment session)
+
+#### Scenario: Load full treatment session data when opening slideover
+
+- **GIVEN** a therapist clicks to view a treatment session
+- **WHEN** the slideover opens
+- **THEN** the full treatment session is fetched with all details
+- **AND** this includes notes, pain levels, tags, timer state
 

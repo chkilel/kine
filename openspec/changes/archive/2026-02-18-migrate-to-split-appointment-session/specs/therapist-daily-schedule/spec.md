@@ -82,24 +82,11 @@ The system SHALL display each appointment as a card with essential information a
 
 - **GIVEN** an appointment exists with status "completed"
 - **WHEN** the appointment card is displayed
-- **THEN** the card shows "Terminée" status badge
-- **AND** the card shows actual duration of the session (from treatment session)
-- **AND** the card shows "View Details" button only
+  - **THEN** the card shows "Terminée" status badge
+  - **AND** the card shows actual duration of the session (from treatment session)
+  - **AND** the card shows "View Details" button only
 
-### Requirement: In-Progress Appointments Display
-
-The system SHALL display in-progress treatment sessions prominently at the top of the daily schedule.
-
-#### Scenario: Show in-progress treatment sessions section
-
-- **GIVEN** a therapist has appointments with treatment sessions in "in_progress" status
-- **WHEN** the therapist views their daily schedule
-- **THEN** an "En cours" section appears at the top
-- **AND** it displays all treatment sessions with status "in_progress"
-- **AND** each shows patient name, appointment time, and elapsed time
-- **AND** clicking navigates to the session slideover
-
-### Requirement: Appointment Status Update
+### Requirement: Consultation Status Update
 
 The system SHALL support appointment statuses (scheduled, confirmed, cancelled, no_show, completed) separate from treatment session status.
 
@@ -117,6 +104,19 @@ The system SHALL support appointment statuses (scheduled, confirmed, cancelled, 
 - **AND** the treatment session status is "completed"
 
 ## ADDED Requirements
+
+### Requirement: In-Progress Appointments Display
+
+The system SHALL display in-progress treatment sessions prominently at the top of the daily schedule.
+
+#### Scenario: Show in-progress treatment sessions section
+
+- **GIVEN** a therapist has appointments with treatment sessions in "in_progress" status
+- **WHEN** the therapist views their daily schedule
+- **THEN** an "En cours" section appears at the top
+- **AND** it displays all treatment sessions with status "in_progress"
+- **AND** each shows patient name, appointment time, and elapsed time
+- **AND** clicking navigates to the session slideover
 
 ### Requirement: Treatment Session Data Display
 
