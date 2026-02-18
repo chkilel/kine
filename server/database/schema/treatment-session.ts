@@ -49,7 +49,7 @@ export const treatmentSessions = sqliteTable(
     painLevelAfter: integer(),
 
     // ---- Session management ----
-    sessionStep: text({ enum: TREATMENT_SESSION_STEPS }).default('pre-session'),
+    sessionStep: text({ enum: TREATMENT_SESSION_STEPS }).notNull().default('pre-session'),
     status: text({ enum: TREATMENT_SESSION_STATUSES }).notNull().default('in_progress'),
     actualStartTime: text(),
     actualDurationSeconds: integer(),

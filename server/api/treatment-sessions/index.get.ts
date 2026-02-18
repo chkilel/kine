@@ -1,6 +1,5 @@
 import { eq, and, desc, SQL } from 'drizzle-orm'
-import { treatmentSessions, appointments, patients, users, treatmentPlans } from '~~/server/database/schema'
-import { treatmentSessionQuerySchema } from '~~/shared/types/treatment-session'
+import { treatmentSessions, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -31,31 +30,14 @@ export default defineEventHandler(async (event) => {
     }
 
     const results = await db
-      .select({
-        session: treatmentSessions,
-        appointment: appointments,
-        patient: patients,
-        therapist: users,
-        treatmentPlan: treatmentPlans
-      })
+      .select()
       .from(treatmentSessions)
-      .leftJoin(appointments, eq(treatmentSessions.appointmentId, appointments.id))
-      .leftJoin(patients, eq(treatmentSessions.patientId, patients.id))
-      .leftJoin(users, eq(treatmentSessions.therapistId, users.id))
-      .leftJoin(treatmentPlans, eq(treatmentSessions.treatmentPlanId, treatmentPlans.id))
       .where(and(...conditions))
       .orderBy(desc(treatmentSessions.createdAt))
 
     // Map results to include relations
-    const sessions = results.map((result) => ({
-      ...result.session,
-      appointment: result.appointment,
-      patient: result.patient,
-      therapist: result.therapist,
-      treatmentPlan: result.treatmentPlan
-    }))
 
-    return listResponse(sessions)
+    return listResponse(results)
   } catch (error: unknown) {
     handleApiError(error, 'Failed to retrieve treatment sessions')
   }
