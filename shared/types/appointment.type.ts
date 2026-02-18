@@ -37,7 +37,8 @@ export const appointmentQuerySchema = z.object({
   type: appointmentTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
-  date: calendarDateSchema.optional()
+  date: calendarDateSchema.optional(),
+  include: z.enum(['treatmentSession']).optional()
 })
 
 export const therapistAppointmentsQuerySchema = z.object({

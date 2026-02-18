@@ -4,6 +4,7 @@ import { parseISO } from 'date-fns'
 export const APPOINTMENT_KEYS = {
   root: ['appointments'] as const,
   list: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, params],
+  listWithSessions: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, 'with-sessions', params],
   single: (id: string) => [...APPOINTMENT_KEYS.root, id],
   therapist: (therapistId: string, date: string) => [...APPOINTMENT_KEYS.root, 'therapist', therapistId, date],
   therapistRoot: () => [...APPOINTMENT_KEYS.root, 'therapist']
@@ -14,33 +15,35 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
   return useQuery({
     key: () => {
       const queryParamsValue = toValue(queryParams) || {}
-      const query = {
-        therapistId: toValue(queryParamsValue.therapistId),
-        patientId: toValue(queryParamsValue.patientId),
-        treatmentPlanId: toValue(queryParamsValue.treatmentPlanId),
-        onlyIndependent: toValue(queryParamsValue.onlyIndependent),
-        status: toValue(queryParamsValue.status),
-        type: toValue(queryParamsValue.type),
-        dateFrom: toValue(queryParamsValue.dateFrom),
-        dateTo: toValue(queryParamsValue.dateTo),
-        date: toValue(queryParamsValue.date)
-      }
-      return APPOINTMENT_KEYS.list(query as AppointmentQuery)
+      return APPOINTMENT_KEYS.list(queryParamsValue)
     },
     query: async () => {
       const queryParamsValue = toValue(queryParams) || {}
-      const query = {
-        therapistId: toValue(queryParamsValue.therapistId),
-        patientId: toValue(queryParamsValue.patientId),
-        treatmentPlanId: toValue(queryParamsValue.treatmentPlanId),
-        onlyIndependent: toValue(queryParamsValue.onlyIndependent)?.toString(),
-        status: toValue(queryParamsValue.status),
-        type: toValue(queryParamsValue.type),
-        dateFrom: toValue(queryParamsValue.dateFrom),
-        dateTo: toValue(queryParamsValue.dateTo),
-        date: toValue(queryParamsValue.date)
-      }
-      const validatedQuery = appointmentQuerySchema.parse(query)
+      const validatedQuery = appointmentQuerySchema.parse(queryParamsValue)
+      const resp = await requestFetch('/api/appointments', {
+        query: Object.fromEntries(
+          Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
+        )
+      })
+      return resp?.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt)
+      }))
+    }
+  })
+}
+
+const _useAppointmentsListWithSessions = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) => {
+  const requestFetch = useRequestFetch()
+  return useQuery({
+    key: () => {
+      const queryParamsValue = toValue(queryParams) || {}
+      return APPOINTMENT_KEYS.listWithSessions(queryParamsValue)
+    },
+    query: async () => {
+      const queryParamsValue = toValue(queryParams) || {}
+      const validatedQuery = appointmentQuerySchema.parse({ ...queryParamsValue, include: 'treatmentSession' })
       const resp = await requestFetch('/api/appointments', {
         query: Object.fromEntries(
           Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -162,14 +165,7 @@ const _useDeleteAppointment = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({
-      appointmentId,
-      patientId
-    }: {
-      appointmentId: string
-      patientId?: string
-      onSuccess?: () => void
-    }) =>
+    mutation: async ({ appointmentId }: { appointmentId: string; patientId?: string; onSuccess?: () => void }) =>
       requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'DELETE'
       }),
@@ -204,7 +200,6 @@ const _useUpdateAppointmentStatus = () => {
   return useMutation({
     mutation: async ({
       appointmentId,
-      patientId,
       status
     }: {
       appointmentId: string
@@ -271,6 +266,7 @@ const _useTherapistAppointments = (
 }
 
 export const useAppointmentsList = _useAppointmentsList
+export const useAppointmentsListWithSessions = _useAppointmentsListWithSessions
 export const useAppointment = _useAppointment
 export const useCreateAppointment = createSharedComposable(_useCreateAppointment)
 export const useUpdateAppointment = createSharedComposable(_useUpdateAppointment)
