@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyConsultationSlideover, LazyAppointmentOnGoingCard, LazyAppointmentListItem } from '#components'
+  import { LazyAppointmentOnGoingCard } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -13,9 +13,6 @@
   ])
 
   const route = useRoute()
-  const overlay = useOverlay()
-
-  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
 
   const currentDate = computed(() => {
     const dateFromQuery = route.query.date as string
@@ -63,49 +60,6 @@
   const nonInProgressAppointments = computed(() =>
     appointments.value?.filter((a) => a.treatmentSession?.status !== 'in_progress')
   )
-
-  // Create treatment session composable
-  const createTreatmentSession = useCreateTreatmentSession()
-
-  const handleStartSession = async (appointment: Appointment) => {
-    try {
-      // Create treatment session from appointment
-      const result = await createTreatmentSession.mutateAsync({
-        appointmentId: appointment.id
-      })
-
-      // Open consultation slideover with the new treatment session
-      if (result?.data?.id) {
-        activeConsultationOverlay.open({
-          patientId: appointment.patientId,
-          appointmentId: appointment.id,
-          treatmentSessionId: result.data.id
-        })
-      }
-    } catch (error) {
-      console.error('Failed to start session:', error)
-    }
-  }
-
-  const handleContinueSession = (appointment: Appointment, treatmentSessionId?: string) => {
-    activeConsultationOverlay.open({
-      patientId: appointment.patientId,
-      appointmentId: appointment.id,
-      treatmentSessionId
-    })
-  }
-
-  const handleViewSession = (appointment: Appointment, treatmentSessionId?: string) => {
-    activeConsultationOverlay.open({
-      patientId: appointment.patientId,
-      appointmentId: appointment.id,
-      treatmentSessionId
-    })
-  }
-
-  function handleViewPatient(patientId: string) {
-    navigateTo(`/patients/${patientId}`)
-  }
 </script>
 
 <template>
@@ -128,6 +82,7 @@
 
       <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
         <div class="space-y-6 xl:col-span-4">
+          <!-- Day Stats -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
             <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
             <AppStatCard
@@ -160,13 +115,12 @@
             />
           </div>
 
+          <!-- In progress treatment sessions -->
           <div class="space-y-4">
             <LazyAppointmentOnGoingCard
               v-for="appointment in inProgressAppointments"
               :key="appointment.id"
               :appointment
-              @view-session="handleViewSession"
-              @view-patient="handleViewPatient"
             />
           </div>
 
@@ -179,12 +133,10 @@
             </template>
             <div class="space-y-4">
               <div v-if="nonInProgressAppointments && nonInProgressAppointments.length > 0" class="space-y-3">
-                <LazyAppointmentListItem
+                <AppointmentListItem
                   v-for="appointment in nonInProgressAppointments"
                   :key="appointment.id"
                   :appointment="appointment"
-                  @start-session="handleStartSession"
-                  @continue-session="handleContinueSession"
                 />
               </div>
 

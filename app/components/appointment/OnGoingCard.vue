@@ -1,12 +1,10 @@
 <script setup lang="ts">
-  const { appointment } = defineProps<{
-    appointment: Appointment
-  }>()
+  import { LazyConsultationSlideover } from '#components'
 
-  const emit = defineEmits<{
-    'view-session': [appointment: Appointment, treatmentSessionId?: string]
-    'view-patient': [patientId: string]
-  }>()
+  const { appointment } = defineProps<{ appointment: Appointment }>()
+
+  const overlay = useOverlay()
+  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
 
   // Get treatment session from appointment relation
   const treatmentSession = computed(() => appointment.treatmentSession)
@@ -15,22 +13,31 @@
     if (appointment.location === 'clinic') {
       return appointment.roomName
     }
-    return getLocationLabel(appointment.location || 'clinic')
+    return getLocationLabel(appointment.location)
   })
 
   const locationIcon = computed(() => {
     if (appointment.location === 'clinic') {
       return 'i-hugeicons-door-01'
     }
-    return getLocationIcon(appointment.location || 'clinic')
+    return getLocationIcon(appointment.location)
   })
 
-  const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
+  const locationColor = computed(() => getLocationColor(appointment.location))
 
-  const isPaused = computed(
-    () => treatmentSession.value?.pauseStartTime !== null && treatmentSession.value?.pauseStartTime !== undefined
-  )
-  const isInProgress = computed(() => treatmentSession.value?.status === 'in_progress')
+  const isPaused = computed(() => !!treatmentSession.value?.pauseStartTime)
+
+  const handleViewSession = () => {
+    activeConsultationOverlay.open({
+      patientId: appointment.patientId,
+      appointmentId: appointment.id,
+      treatmentSessionId: treatmentSession.value?.id
+    })
+  }
+
+  const handleViewPatient = () => {
+    navigateTo(`/patients/${appointment.patientId}`)
+  }
 </script>
 
 <template>
@@ -90,7 +97,7 @@
           :ui="{
             leadingIcon: 'animate-pulse'
           }"
-          @click="emit('view-session', appointment, treatmentSession?.id)"
+          @click="handleViewSession"
         />
         <UButton
           label="Patient"
@@ -98,7 +105,7 @@
           variant="solid"
           color="neutral"
           class="rounded-xl p-2"
-          @click="emit('view-patient', appointment.patientId)"
+          @click="handleViewPatient"
         />
       </div>
     </div>

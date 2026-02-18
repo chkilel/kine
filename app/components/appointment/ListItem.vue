@@ -1,14 +1,11 @@
 <script setup lang="ts">
-  const { appointment } = defineProps<{
-    appointment: Appointment
-  }>()
+  import { LazyConsultationSlideover } from '#components'
 
-  const emit = defineEmits<{
-    'start-session': [appointment: Appointment]
-    'view-patient': [patientId: string]
-    'view-appointment': [appointment: Appointment]
-    'continue-session': [appointment: Appointment, treatmentSessionId?: string]
-  }>()
+  const { appointment } = defineProps<{ appointment: Appointment }>()
+
+  const overlay = useOverlay()
+  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
+  const createTreatmentSession = useCreateTreatmentSession()
 
   // Get treatment session from appointment relation
   const treatmentSession = computed(() => appointment.treatmentSession)
@@ -35,17 +32,17 @@
     if (appointment.location === 'clinic') {
       return appointment.roomName
     }
-    return getLocationLabel(appointment.location || 'clinic')
+    return getLocationLabel(appointment.location)
   })
 
   const locationIcon = computed(() => {
     if (appointment.location === 'clinic') {
       return 'i-hugeicons-door-01'
     }
-    return getLocationIcon(appointment.location || 'clinic')
+    return getLocationIcon(appointment.location)
   })
 
-  const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
+  const locationColor = computed(() => getLocationColor(appointment.location))
 
   const statusIcon = computed(() => {
     if (status.value.inProgress) return 'i-hugeicons-hourglass'
@@ -63,20 +60,42 @@
       {
         label: 'Patient',
         icon: 'i-hugeicons-profile-02',
-        onSelect: () => emit('view-patient', appointment.patientId),
         to: `/patients/${appointment.patientId}`
       },
       {
         label: 'RDV',
         icon: 'i-hugeicons-appointment-02',
-        onSelect: () => emit('view-appointment', appointment)
+        onSelect: () => console.log('🚀 >>> ', 'RDV')
       }
     ]
   ])
 
   // Event handlers
-  const handleStartSession = () => emit('start-session', appointment)
-  const handleContinueSession = () => emit('continue-session', appointment, treatmentSession.value?.id)
+  const handleStartSession = async () => {
+    try {
+      const result = await createTreatmentSession.mutateAsync({
+        appointmentId: appointment.id
+      })
+
+      if (result?.data?.id) {
+        activeConsultationOverlay.open({
+          patientId: appointment.patientId,
+          appointmentId: appointment.id,
+          treatmentSessionId: result.data.id
+        })
+      }
+    } catch (error) {
+      console.error('Failed to start session:', error)
+    }
+  }
+
+  const handleContinueSession = () => {
+    activeConsultationOverlay.open({
+      patientId: appointment.patientId,
+      appointmentId: appointment.id,
+      treatmentSessionId: treatmentSession.value?.id
+    })
+  }
 </script>
 
 <template>
