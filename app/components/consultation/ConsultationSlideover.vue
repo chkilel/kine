@@ -2,6 +2,7 @@
   const props = defineProps<{
     patientId: string
     appointmentId: string
+    treatmentSessionId?: string
   }>()
 
   const emit = defineEmits<{
@@ -13,12 +14,17 @@
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
   const { data: allAppointments } = useAppointmentsList(() => ({ patientId: props.patientId }))
   const { data: appointment, isPending: appointmentLoading } = useAppointment(() => props.appointmentId)
-  const appointmentAction = useAppointmentAction()
 
-  // Form state
+  // Treatment session data
+  const { data: treatmentSession, isPending: sessionLoading } = useTreatmentSession(
+    () => props.treatmentSessionId || ''
+  )
+  const treatmentSessionActions = useTreatmentSessionActions()
+
+  // Form state - now from treatment session
   const painLevelBefore = ref<number>(0)
   const painLevelAfter = ref<number | undefined>(undefined)
-  const appointmentNotes = ref('')
+  const sessionNotes = ref('')
   const selectedTags = ref<string[]>([])
 
   // Constants
@@ -33,15 +39,15 @@
   const EVA_MAX = 10
   const EVA_STEP = 1
 
-  // Initialize form from appointment data
+  // Initialize form from treatment session data when available
   watch(
-    appointment,
+    treatmentSession,
     (value) => {
       if (!value) return
 
       painLevelBefore.value = value.painLevelBefore ?? 0
       painLevelAfter.value = value.painLevelAfter ?? undefined
-      appointmentNotes.value = value.notes || ''
+      sessionNotes.value = value.treatmentSummary || ''
       selectedTags.value = parseTagsSafely(value.tags)
     },
     { immediate: true }
@@ -58,7 +64,7 @@
   }
 
   async function toggleTag(tag: string) {
-    if (!appointment.value) return
+    if (!treatmentSession.value || !props.treatmentSessionId) return
 
     const previousTags = [...selectedTags.value]
     selectedTags.value = selectedTags.value.includes(tag)
@@ -66,8 +72,9 @@
       : [...selectedTags.value, tag]
 
     try {
-      await appointmentAction.updateTagsAsync({
-        id: appointment.value.id,
+      await treatmentSessionActions.updateTagsAsync({
+        sessionId: props.treatmentSessionId,
+        appointmentId: props.appointmentId,
         tags: selectedTags.value
       })
     } catch (error) {
@@ -115,7 +122,7 @@
   const headerDescription = computed(() => {
     if (!appointment.value) return ''
     const typeLabel = getAppointmentTypeLabel(appointment.value.type || 'follow_up')
-    const totalDuration = appointment.value.duration + (appointment.value.extendedDurationMinutes || 0)
+    const totalDuration = appointment.value.duration + (treatmentSession.value?.extendedDurationMinutes || 0)
     const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
@@ -130,6 +137,8 @@
   )
 
   const evaScaleNumbers = computed(() => Array.from({ length: EVA_MAX - EVA_MIN + 1 }, (_, i) => i + EVA_MIN))
+
+  const isLoading = computed(() => appointmentLoading.value || sessionLoading.value)
 </script>
 
 <template>
@@ -142,7 +151,7 @@
   >
     <template #body>
       <!-- Loading State -->
-      <div v-if="appointmentLoading" class="flex justify-center py-10">
+      <div v-if="isLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
 
@@ -339,7 +348,7 @@
 
             <!-- Textarea -->
             <UTextarea
-              v-model="appointmentNotes"
+              v-model="sessionNotes"
               :rows="12"
               placeholder="Notes de la séance... Décrivez les exercices effectués, les réactions du patient et les progrès observés."
               class="border-none bg-transparent focus:ring-0"
@@ -371,13 +380,14 @@
 
         <!-- Right Sidebar - Timer & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
-          <!-- Timer Card -->
+          <!-- Timer Card - Now uses treatment session -->
           <ConsultationTimerCard
-            v-if="appointment"
+            v-if="treatmentSession && appointment"
+            :treatment-session="treatmentSession"
             :appointment="appointment"
             :selected-tags="selectedTags"
             :pain-level-after="painLevelAfter"
-            :appointment-notes="appointmentNotes"
+            :session-notes="sessionNotes"
             @close="emit('close')"
           />
 
@@ -405,14 +415,14 @@
                     <div class="mb-1 flex items-center justify-between">
                       <span class="text-sm font-bold">{{ formatFrenchDate(previous.date) }}</span>
                       <span
-                        v-if="previous.painLevelBefore !== null"
+                        v-if="previous.treatmentSession?.painLevelBefore !== null"
                         class="text-muted bg-muted-100 dark:bg-muted-800 rounded px-2 py-0.5 text-xs"
                       >
-                        EVA {{ previous.painLevelBefore }}/10
+                        EVA {{ previous.treatmentSession.painLevelBefore }}/10
                       </span>
                     </div>
                     <p class="text-muted line-clamp-3 text-sm leading-relaxed">
-                      {{ previous.notes || 'Aucune note enregistrée pour cette séance.' }}
+                      {{ previous.treatmentSession?.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
                     </p>
                   </div>
                 </div>

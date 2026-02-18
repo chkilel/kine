@@ -1,9 +1,5 @@
 <script setup lang="ts">
-  import {
-    LazyConsultationSlideover,
-    LazyAppointmentOnGoingCard,
-    LazyAppointmentListItem
-  } from '#components'
+  import { LazyConsultationSlideover, LazyAppointmentOnGoingCard, LazyAppointmentListItem } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -17,7 +13,6 @@
   ])
 
   const route = useRoute()
-  const router = useRouter()
   const overlay = useOverlay()
 
   const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
@@ -38,7 +33,7 @@
   })
 
   const selectDate = (date: string) => {
-    router.push({ path: route.path, query: { date } })
+    navigateTo({ path: route.path, query: { date } })
   }
 
   const { user } = await useAuth()
@@ -47,31 +42,64 @@
   const stats = computed(() => {
     const list = appointments.value || []
     const completed = list.filter((a) => a.status === 'completed').length
-    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status)).length
+    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status) && !a.treatmentSession).length
+    const inProgress = list.filter((a) => a.treatmentSession?.status === 'in_progress').length
     const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length
     return {
       total: list.length,
       completed,
       completedPercentage: list.length ? Math.round((completed / list.length) * 100) : 0,
       upcoming,
-      cancelled,
+      inProgress,
+      cancelled
     }
   })
 
-  const inProgressAppointments = computed(() => appointments.value?.filter((a) => a.status === 'in_progress'))
-  const upcomingAppointments = computed(() => appointments.value?.filter((a) => a.status !== 'in_progress'))
+  const inProgressAppointments = computed(() =>
+    appointments.value?.filter((a) => a.treatmentSession?.status === 'in_progress')
+  )
+
+  // Show all appointments except in_progress
+  const nonInProgressAppointments = computed(() =>
+    appointments.value?.filter((a) => a.treatmentSession?.status !== 'in_progress')
+  )
+
+  // Create treatment session composable
+  const createTreatmentSession = useCreateTreatmentSession()
 
   const handleStartSession = async (appointment: Appointment) => {
+    try {
+      // Create treatment session from appointment
+      const result = await createTreatmentSession.mutateAsync({
+        appointmentId: appointment.id
+      })
+
+      // Open consultation slideover with the new treatment session
+      if (result?.data?.id) {
+        activeConsultationOverlay.open({
+          patientId: appointment.patientId,
+          appointmentId: appointment.id,
+          treatmentSessionId: result.data.id
+        })
+      }
+    } catch (error) {
+      console.error('Failed to start session:', error)
+    }
+  }
+
+  const handleContinueSession = (appointment: Appointment, treatmentSessionId?: string) => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
-      appointmentId: appointment.id
+      appointmentId: appointment.id,
+      treatmentSessionId
     })
   }
 
-  const handleViewSession = (appointment: Appointment) => {
+  const handleViewSession = (appointment: Appointment, treatmentSessionId?: string) => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
-      appointmentId: appointment.id
+      appointmentId: appointment.id,
+      treatmentSessionId
     })
   }
 
@@ -100,7 +128,7 @@
 
       <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
         <div class="space-y-6 xl:col-span-4">
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
             <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
             <AppStatCard
               label="Terminées"
@@ -110,10 +138,17 @@
               icon="i-hugeicons-checkmark-circle-02"
             />
             <AppStatCard
+              label="En cours"
+              color="warning"
+              :value="stats.inProgress"
+              unit="séances"
+              icon="i-hugeicons-hourglass"
+            />
+            <AppStatCard
               label="À venir"
               color="primary"
               :value="stats.upcoming"
-              unit="restant"
+              unit="RDVs"
               icon="i-hugeicons-clock-02"
             />
             <AppStatCard
@@ -143,12 +178,13 @@
               </div>
             </template>
             <div class="space-y-4">
-              <div v-if="upcomingAppointments && upcomingAppointments.length > 0" class="space-y-3">
+              <div v-if="nonInProgressAppointments && nonInProgressAppointments.length > 0" class="space-y-3">
                 <LazyAppointmentListItem
-                  v-for="appointment in upcomingAppointments"
+                  v-for="appointment in nonInProgressAppointments"
                   :key="appointment.id"
                   :appointment="appointment"
                   @start-session="handleStartSession"
+                  @continue-session="handleContinueSession"
                 />
               </div>
 

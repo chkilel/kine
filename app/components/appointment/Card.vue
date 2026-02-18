@@ -80,7 +80,7 @@
         <div class="text-muted sm:divide-muted mt-1.5 flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
           <div class="flex items-center gap-1 sm:pr-2">
             <UIcon name="i-hugeicons-clock-01" />
-            <p>{{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min</p>
+            <p>{{ appointment.duration + (appointment.treatmentSession?.extendedDurationMinutes || 0) }} min</p>
           </div>
 
           <div v-if="appointment.roomName" class="flex items-center gap-1 sm:px-2">

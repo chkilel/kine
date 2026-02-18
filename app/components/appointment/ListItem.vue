@@ -7,12 +7,17 @@
     'start-session': [appointment: Appointment]
     'view-patient': [patientId: string]
     'view-appointment': [appointment: Appointment]
+    'continue-session': [appointment: Appointment, treatmentSessionId?: string]
   }>()
+
+  // Get treatment session from appointment relation
+  const treatmentSession = computed(() => appointment.treatmentSession)
 
   // Computed status flags
   const status = computed(() => ({
     completed: appointment.status === 'completed',
-    scheduled: ['scheduled', 'confirmed'].includes(appointment.status)
+    scheduled: ['scheduled', 'confirmed'].includes(appointment.status),
+    inProgress: treatmentSession.value?.status === 'in_progress'
   }))
 
   // Computed text values
@@ -20,9 +25,9 @@
 
   const durationLabel = computed(() => {
     const seconds =
-      status.value.completed && appointment.actualDurationSeconds
-        ? appointment.actualDurationSeconds
-        : (appointment.duration + (appointment.extendedDurationMinutes || 0)) * 60
+      status.value.completed && treatmentSession.value?.actualDurationSeconds
+        ? treatmentSession.value.actualDurationSeconds
+        : (appointment.duration + (treatmentSession.value?.extendedDurationMinutes || 0)) * 60
     return formatSecondsAsDuration(seconds)
   })
 
@@ -42,8 +47,15 @@
 
   const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
 
-  const statusIcon = computed(() => getAppointmentStatusIcon(appointment.status))
-  const statusColor = computed(() => getAppointmentStatusColor(appointment.status))
+  const statusIcon = computed(() => {
+    if (status.value.inProgress) return 'i-hugeicons-hourglass'
+    return getAppointmentStatusIcon(appointment.status)
+  })
+
+  const statusColor = computed(() => {
+    if (status.value.inProgress) return 'warning'
+    return getAppointmentStatusColor(appointment.status)
+  })
 
   // Dropdown menu items - memoized
   const menuItems = computed(() => [
@@ -64,6 +76,7 @@
 
   // Event handlers
   const handleStartSession = () => emit('start-session', appointment)
+  const handleContinueSession = () => emit('continue-session', appointment, treatmentSession.value?.id)
 </script>
 
 <template>
@@ -72,7 +85,9 @@
     :class="[
       status.completed
         ? 'ring-default bg-success/10 opacity-80 shadow-none grayscale-70 hover:shadow-none'
-        : 'ring-info/30 bg-muted'
+        : status.inProgress
+          ? 'ring-warning/30 bg-warning/10'
+          : 'ring-info/30 bg-muted'
     ]"
   >
     <AppIconBox :name="statusIcon" :color="statusColor" size="xl" />
@@ -85,7 +100,7 @@
     <!-- Status Indicator -->
     <div
       class="w-1.5 self-stretch rounded"
-      :class="[status.completed && 'bg-success', status.scheduled && 'bg-info']"
+      :class="[status.completed && 'bg-success', status.scheduled && 'bg-info', status.inProgress && 'bg-warning']"
     />
 
     <!-- Patient Info -->
@@ -113,15 +128,15 @@
           {{ appointment.planTitle }}
         </p>
         <p class="text-muted flex items-center gap-1 text-xs">
-          <UIcon :name="getAppointmentStatusIcon(appointment.status)" class="text-sm" />
-          {{ getAppointmentStatusLabel(appointment.status || 'follow_up') }}
+          <UIcon :name="statusIcon" class="text-sm" />
+          {{ status.inProgress ? 'En cours' : getAppointmentStatusLabel(appointment.status || 'scheduled') }}
         </p>
       </div>
     </div>
 
     <!-- Action Buttons -->
     <UButton
-      v-if="status.scheduled"
+      v-if="status.scheduled && !status.inProgress"
       label="Commencer"
       icon="i-hugeicons-play"
       size="lg"
@@ -130,6 +145,18 @@
       :ui="{ base: 'rounded-xl' }"
       class="shadow-success/10 shrink-0 font-semibold text-white shadow-lg"
       @click="handleStartSession"
+    />
+
+    <UButton
+      v-else-if="status.inProgress"
+      label="Continuer"
+      icon="i-hugeicons-hourglass"
+      size="lg"
+      color="warning"
+      variant="solid"
+      :ui="{ base: 'rounded-xl' }"
+      class="shadow-warning/10 shrink-0 font-semibold text-white shadow-lg"
+      @click="handleContinueSession"
     />
 
     <UBadge

@@ -2,7 +2,7 @@
   import { LazyAppModalConfirm, LazyAppointmentPlanningSlideover } from '#components'
   import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date'
 
-const route = useRoute()
+  const route = useRoute()
 
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
 
@@ -37,14 +37,10 @@ const route = useRoute()
 
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      filtered = filtered.filter(
-        (c) =>
-          getAppointmentTypeLabel(c.type || 'follow_up')
-            .toLowerCase()
-            .includes(query) ||
-          (c.notes && c.notes.toLowerCase().includes(query)) ||
-          (c.treatmentSummary && c.treatmentSummary.toLowerCase().includes(query)) ||
-          formatFrenchDate(c.date).includes(query)
+      filtered = filtered.filter((c) =>
+        getAppointmentTypeLabel(c.type || 'follow_up')
+          .toLowerCase()
+          .includes(query)
       )
     }
 
@@ -120,13 +116,7 @@ const route = useRoute()
         <span>Séances Indépendantes</span>
       </template>
       <template #actions>
-        <UButton
-          icon="i-lucide-plus"
-          color="primary"
-          size="sm"
-          label="Nouvelle Séance"
-          @click="handleCreateSession"
-        />
+        <UButton icon="i-lucide-plus" color="primary" size="sm" label="Nouvelle Séance" @click="handleCreateSession" />
       </template>
 
       <!-- Filter Bar (expandable) -->

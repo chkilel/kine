@@ -1,51 +1,15 @@
 import { eq, and } from 'drizzle-orm'
 import { appointments } from '~~/server/database/schema'
-import { extendActionSchema } from '~~/shared/types/appointment-action'
+import { z } from 'zod'
 
-function detectActionBySchema(body: AppointmentPatchBody): AppointmentActionType {
-  if (resumeActionSchema.safeParse(body).success) return 'resume'
-  if (pauseActionSchema.safeParse(body).success) return 'pause'
-  if (endActionSchema.safeParse(body).success) return 'end'
-  if (startActionSchema.safeParse(body).success) return 'start'
-  if (updateTagsActionSchema.safeParse(body).success) return 'updateTags'
-  if (extendActionSchema.safeParse(body).success) return 'extend'
+// Schema for appointment status updates only
+const appointmentStatusUpdateSchema = z.object({
+  status: z.enum(['scheduled', 'confirmed', 'cancelled', 'no_show', 'completed']).optional(),
+  confirmedAt: z.number().optional(),
+  cancelledAt: z.number().optional(),
+  noShowReason: z.string().optional()
+})
 
-  throw new Error('No valid action detected')
-}
-
-function validateActionState(action: AppointmentActionType, appointment: Appointment) {
-  switch (action) {
-    case 'start':
-      if (appointment.status === 'in_progress') throw new Error('La session est déjà en cours')
-      break
-    case 'pause':
-      if (appointment.status !== 'in_progress') throw new Error("La session n'est pas en cours")
-      if (appointment.pauseStartTime) throw new Error('La session est déjà en pause')
-      break
-    case 'resume':
-      if (!appointment.pauseStartTime) throw new Error("La session n'est pas en pause")
-      break
-    case 'end':
-      if (!appointment.actualStartTime) throw new Error("La session n'a pas été démarrée")
-      break
-    case 'updateTags':
-      break
-  }
-}
-
-function getSuccessMessage(action: AppointmentActionType) {
-  const messages: Record<AppointmentActionType, string> = {
-    start: 'Session démarrée avec succès',
-    pause: 'Session mise en pause',
-    resume: 'Session reprise',
-    end: 'Session terminée avec succès',
-    updateTags: 'Tags mis à jour',
-    extend: 'Durée étendue avec succès'
-  }
-  return messages[action]
-}
-
-// Event handler for PATCH /api/appointment/[id]
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')
@@ -59,7 +23,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const { organizationId } = await requireAuth(event)
-    const body = await readValidatedBody(event, appointmentPatchSchema.parse)
+    const body = await readValidatedBody(event, appointmentStatusUpdateSchema.parse)
 
     const [appointment] = await db
       .select()
@@ -74,67 +38,22 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const actionType = detectActionBySchema(body)
-    validateActionState(actionType, appointment)
+    // Build update data with timestamps based on status
+    const updateData: Partial<typeof appointment> = {}
 
-    let updateData: any
+    if (body.status) {
+      updateData.status = body.status
 
-    switch (actionType) {
-      case 'start': {
-        const validated = startActionSchema.parse(body)
-        updateData = {
-          status: 'in_progress',
-          actualStartTime: validated.actualStartTime,
-          actualDurationSeconds: 0,
-          totalPausedSeconds: 0,
-          pauseStartTime: null
-        }
-        break
+      // Set timestamps based on status changes
+      if (body.status === 'confirmed') {
+        updateData.confirmedAt = Math.floor(Date.now() / 1000)
+      } else if (body.status === 'cancelled') {
+        updateData.cancelledAt = Math.floor(Date.now() / 1000)
       }
-      case 'pause': {
-        const validated = pauseActionSchema.parse(body)
-        updateData = {
-          pauseStartTime: validated.pauseStartTime
-        }
-        break
-      }
-      case 'resume': {
-        const validated = resumeActionSchema.parse(body)
-        updateData = {
-          totalPausedSeconds: (appointment.totalPausedSeconds || 0) + validated.pauseDurationSeconds,
-          pauseStartTime: null
-        }
-        break
-      }
-      case 'end': {
-        const validated = endActionSchema.parse(body)
-        const tagsValue = validated.tags && validated.tags.length > 0 ? JSON.stringify(validated.tags) : null
-        updateData = {
-          status: 'completed',
-          actualDurationSeconds: validated.actualDurationSeconds,
-          tags: tagsValue,
-          painLevelAfter: validated.painLevelAfter,
-          notes: validated.notes,
-          totalPausedSeconds: appointment.totalPausedSeconds,
-          pauseStartTime: null
-        }
-        break
-      }
-      case 'updateTags': {
-        const validated = updateTagsActionSchema.parse(body)
-        const tagsValue = validated.tags && validated.tags.length > 0 ? JSON.stringify(validated.tags) : null
-        updateData = {
-          tags: tagsValue
-        }
-        break
-      }
-      case 'extend': {
-        const validated = extendActionSchema.parse(body)
-        updateData = {
-          extendedDurationMinutes: (appointment.extendedDurationMinutes || 0) + validated.extendedDurationMinutes
-        }
-        break
-      }
+    }
+
+    if (body.noShowReason !== undefined) {
+      updateData.noShowReason = body.noShowReason
     }
 
     const [updated] = await db
@@ -143,7 +62,7 @@ export default defineEventHandler(async (event) => {
       .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .returning()
 
-    return successResponse(updated, getSuccessMessage(actionType))
+    return successResponse(updated, 'Rendez-vous mis à jour avec succès')
   } catch (error: unknown) {
     handleApiError(error, 'Échec de la mise à jour du Rendez-vous')
   }

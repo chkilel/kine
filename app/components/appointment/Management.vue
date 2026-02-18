@@ -51,7 +51,7 @@
                       formatTimeString(
                         addMinutesToTime(
                           appointment.startTime,
-                          appointment.duration + (appointment.extendedDurationMinutes || 0)
+                          appointment.duration + (appointment.treatmentSession?.extendedDurationMinutes || 0)
                         )
                       )
                     }}
@@ -59,7 +59,7 @@
                 </div>
                 <div class="text-muted text-xs">
                   {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }} ·
-                  {{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min
+                  {{ appointment.duration + (appointment.treatmentSession?.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
             </div>

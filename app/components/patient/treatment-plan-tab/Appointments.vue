@@ -27,7 +27,7 @@
   const activeTab = ref<'upcoming' | 'finished'>('upcoming')
 
   // Filter appointments by status
-  const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled', 'in_progress']
+  const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled']
   const finishedStatuses: AppointmentStatus[] = ['completed', 'cancelled', 'no_show']
 
   const upcomingAppointments = computed(

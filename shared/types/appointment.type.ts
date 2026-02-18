@@ -1,17 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { fr } from 'zod/locales'
-
 import { appointments } from '~~/server/database/schema/appointment'
-import {
-  calendarDateSchema,
-  appointmentTypeSchema,
-  appointmentStatusSchema,
-  locationSchema,
-  type Location
-} from './base.types'
-
-z.config(fr())
+import type { TreatmentSession } from '~~/shared/types/treatment-session.type'
 
 // =============================================================================
 // Appointment Schemas and Types
@@ -47,12 +37,7 @@ export const appointmentQuerySchema = z.object({
   type: appointmentTypeSchema.optional(),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
-  date: calendarDateSchema.optional(),
-  actualStartTime: z.string().optional(),
-  actualDurationSeconds: z.number().optional(),
-  totalPausedSeconds: z.number().optional(),
-  pauseStartTime: z.string().optional(),
-  tags: z.string().optional()
+  date: calendarDateSchema.optional()
 })
 
 export const therapistAppointmentsQuerySchema = z.object({
@@ -65,6 +50,7 @@ export type Appointment = z.infer<typeof appointmentSchema> & {
   roomName?: string | null
   patientName?: string | null
   planTitle?: string | null
+  treatmentSession?: TreatmentSession | null
 }
 export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
 export type AppointmentUpdate = z.infer<typeof appointmentUpdateSchema>

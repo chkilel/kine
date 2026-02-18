@@ -12,7 +12,7 @@
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
   const { mutate: updateStatus } = useUpdateAppointmentStatus()
-  const appointmentAction = useAppointmentAction()
+  const createTreatmentSession = useCreateTreatmentSession()
 
   // Tab configuration
   //  const planningTabs = [
@@ -61,7 +61,7 @@
   })
 
   const canCompleteSession = computed(() => {
-    return props.appointment && props.appointment.status === 'in_progress'
+    return props.appointment && props.appointment.treatmentSession?.status === 'in_progress'
   })
 
   const handleStartSession = async () => {
@@ -78,28 +78,22 @@
 
     if (!confirmed) return
 
-    const actualStartTime = (() => {
-      const now = new Date()
-      const hours = String(now.getHours()).padStart(2, '0')
-      const minutes = String(now.getMinutes()).padStart(2, '0')
-      const seconds = String(now.getSeconds()).padStart(2, '0')
-      return `${hours}:${minutes}:${seconds}`
-    })()
-
     try {
-      await appointmentAction.startAsync({
-        id: props.appointment.id,
-        actualStartTime
+      const result = await createTreatmentSession.mutateAsync({
+        appointmentId: props.appointment.id
       })
+
+      if (result?.data?.id) {
+        activeConsultationOverlay.open({
+          patientId: props.patient.id,
+          appointmentId: props.appointment.id,
+          treatmentSessionId: result.data.id
+        })
+      }
     } catch (error) {
       console.error('Failed to start session:', error)
       return
     }
-
-    activeConsultationOverlay.open({
-      patientId: props.patient.id,
-      appointmentId: props.appointment.id
-    })
 
     emit('close')
   }
@@ -180,11 +174,7 @@
         />
 
         <!-- Planning Tabs -->
-        <AppointmentManualPlanningCard
-          :treatment-plan="treatmentPlan"
-          :patient="patient"
-          :appointment="appointment"
-        />
+        <AppointmentManualPlanningCard :treatment-plan="treatmentPlan" :patient="patient" :appointment="appointment" />
 
         <!-- -----------------------------Hiding the tabs witht automatique planning---------------------------------------- -->
         <!-- <UCard class="mt-6"> -->

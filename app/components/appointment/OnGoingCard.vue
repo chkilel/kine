@@ -4,9 +4,12 @@
   }>()
 
   const emit = defineEmits<{
-    'view-session': [appointment: Appointment]
+    'view-session': [appointment: Appointment, treatmentSessionId?: string]
     'view-patient': [patientId: string]
   }>()
+
+  // Get treatment session from appointment relation
+  const treatmentSession = computed(() => appointment.treatmentSession)
 
   const locationLabel = computed(() => {
     if (appointment.location === 'clinic') {
@@ -23,6 +26,11 @@
   })
 
   const locationColor = computed(() => getLocationColor(appointment.location || 'clinic'))
+
+  const isPaused = computed(
+    () => treatmentSession.value?.pauseStartTime !== null && treatmentSession.value?.pauseStartTime !== undefined
+  )
+  const isInProgress = computed(() => treatmentSession.value?.status === 'in_progress')
 </script>
 
 <template>
@@ -33,16 +41,13 @@
     <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
       <div class="flex gap-4">
         <div class="flex w-14 shrink-0 items-center justify-center rounded-xl bg-white/10 ring ring-white/30">
-          <UIcon
-            :name="appointment.pauseStartTime ? 'i-hugeicons-pause' : 'i-hugeicons-play'"
-            class="animate-pulse text-3xl"
-          />
+          <UIcon :name="isPaused ? 'i-hugeicons-pause' : 'i-hugeicons-play'" class="animate-pulse text-3xl" />
         </div>
         <div>
           <div class="flex items-center gap-3">
             <UBadge
-              :label="appointment.pauseStartTime ? 'En pause' : 'En cours'"
-              :color="appointment.pauseStartTime ? 'warning' : 'success'"
+              :label="isPaused ? 'En pause' : 'En cours'"
+              :color="isPaused ? 'warning' : 'success'"
               class="animate-pulse rounded-lg py-0.5 text-[10px] font-bold uppercase"
             />
             <UBadge
@@ -68,7 +73,7 @@
               formatTimeString(
                 addMinutesToTime(
                   appointment.startTime,
-                  appointment.duration + (appointment.extendedDurationMinutes || 0)
+                  appointment.duration + (treatmentSession?.extendedDurationMinutes || 0)
                 )
               )
             }}
@@ -85,7 +90,7 @@
           :ui="{
             leadingIcon: 'animate-pulse'
           }"
-          @click="emit('view-session', appointment)"
+          @click="emit('view-session', appointment, treatmentSession?.id)"
         />
         <UButton
           label="Patient"

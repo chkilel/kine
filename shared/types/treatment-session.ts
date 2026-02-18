@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { timeFormatSchema } from './base.types'
 
+// =============================================================================
+// Treatment Session Action Schemas
+// =============================================================================
+
 export const startActionSchema = z
   .object({
     actualStartTime: timeFormatSchema
@@ -43,7 +47,7 @@ export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
 
-export const appointmentPatchSchema = z.union([
+export const treatmentSessionPatchSchema = z.union([
   startActionSchema,
   pauseActionSchema,
   resumeActionSchema,
@@ -52,14 +56,39 @@ export const appointmentPatchSchema = z.union([
   extendActionSchema
 ])
 
+// =============================================================================
+// Treatment Session Create Schema
+// =============================================================================
+
+export const createTreatmentSessionSchema = z.object({
+  appointmentId: z.string().min(1, 'Appointment ID is required')
+})
+
+// =============================================================================
+// Treatment Session Query Schema
+// =============================================================================
+
+export const treatmentSessionQuerySchema = z.object({
+  patientId: z.string().optional(),
+  therapistId: z.string().optional(),
+  appointmentId: z.string().optional(),
+  date: z.string().optional(),
+  status: z.enum(['in_progress', 'completed']).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20)
+})
+
+// =============================================================================
+// Type Exports
+// =============================================================================
+
 export type StartAction = z.infer<typeof startActionSchema>
 export type PauseAction = z.infer<typeof pauseActionSchema>
 export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
-
-export type AppointmentPatchBody =
+export type TreatmentSessionPatchBody =
   | StartAction
   | PauseAction
   | ResumeAction
@@ -67,4 +96,7 @@ export type AppointmentPatchBody =
   | UpdateTagsAction
   | ExtendAction
 
-export type AppointmentActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'
+export type TreatmentSessionActionType = 'start' | 'pause' | 'resume' | 'end' | 'updateTags' | 'extend'
+
+export type CreateTreatmentSession = z.infer<typeof createTreatmentSessionSchema>
+export type TreatmentSessionQuery = z.infer<typeof treatmentSessionQuerySchema>

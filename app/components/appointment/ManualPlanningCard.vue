@@ -51,11 +51,7 @@
     duration: 45,
     type: 'follow_up',
     location: 'clinic',
-    status: 'scheduled',
-    chiefComplaint: '',
-    notes: '',
-    billed: null,
-    insuranceClaimed: false
+    status: 'scheduled'
   })
 
   watch(
@@ -74,11 +70,7 @@
           duration: appointment.duration,
           type: appointment.type || 'follow_up',
           location: appointment.location || 'clinic',
-          status: appointment.status,
-          chiefComplaint: appointment.chiefComplaint || '',
-          notes: appointment.notes || '',
-          billed: appointment.billed,
-          insuranceClaimed: appointment.insuranceClaimed
+          status: appointment.status
         }
         appointmentDetails.value = details
         originalAppointmentDetails.value = { ...details }
@@ -143,6 +135,13 @@
     try {
       let response: any
 
+      if (!therapistId) {
+        slotsError.value = 'Veuillez sélectionner un thérapeute'
+        availableSlots.value = []
+        isLoadingSlots.value = false
+        return
+      }
+
       if (location === 'clinic') {
         if (!appointmentDetails.value.roomId) {
           availableSlots.value = []
@@ -150,7 +149,7 @@
           return
         }
 
-        const therapistIdParam = showRoomOnlyAvailability.value ? undefined : therapistId
+        const therapistIdParam = !showRoomOnlyAvailability.value ? therapistId : undefined
 
         response = await $fetch(`/api/availability/${appointmentDetails.value.roomId}/slots`, {
           method: 'POST',
@@ -161,12 +160,6 @@
           }
         })
       } else {
-        if (!therapistId) {
-          availableSlots.value = []
-          isLoadingSlots.value = false
-          return
-        }
-
         response = await $fetch(`/api/availability/${therapistId}/slots`, {
           method: 'POST',
           body: {

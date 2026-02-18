@@ -2,10 +2,11 @@
   import { LazyAppModalConfirm } from '#components'
 
   const props = defineProps<{
+    treatmentSession: TreatmentSession
     appointment: Appointment
     selectedTags: string[]
     painLevelAfter: number | undefined
-    appointmentNotes: string
+    sessionNotes: string
   }>()
 
   const emit = defineEmits<{
@@ -13,12 +14,12 @@
     close: []
   }>()
 
-  const consultationAction = useAppointmentAction()
+  const treatmentSessionActions = useTreatmentSessionActions()
   const overlay = useOverlay()
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const queryCache = useQueryCache()
 
-  // Timer state
+  // Timer state - now from treatment session
   const timerSeconds = ref(0)
   const actualStartTime = ref<string | null>(null)
   const pauseStartTime = ref<string | null>(null)
@@ -34,7 +35,7 @@
 
   const consultationDurationSeconds = computed(() => {
     if (!props.appointment?.duration) return 0
-    return (props.appointment.duration + (props.appointment.extendedDurationMinutes || 0)) * 60
+    return (props.appointment.duration + (props.treatmentSession?.extendedDurationMinutes || 0)) * 60
   })
 
   const remainingSeconds = computed(() => {
@@ -49,15 +50,15 @@
 
   const showFiveMinuteWarning = computed(() => {
     return (
-      props.appointment.status === 'in_progress' &&
+      props.treatmentSession.status === 'in_progress' &&
       consultationDurationSeconds.value > 0 &&
       remainingSeconds.value > 0 &&
       remainingSeconds.value <= 300
     )
   })
 
-  const isInProgress = computed(() => props.appointment.status === 'in_progress')
-  const isScheduled = computed(() => ['scheduled', 'confirmed'].includes(props.appointment.status))
+  const isInProgress = computed(() => props.treatmentSession.status === 'in_progress')
+  const isCompleted = computed(() => props.treatmentSession.status === 'completed')
 
   // Timer functions
   function calculateElapsedTime() {
@@ -97,7 +98,7 @@
 
   // Watchers
   watch(
-    () => props.appointment,
+    () => props.treatmentSession,
     (value) => {
       if (!value) return
 
@@ -133,34 +134,24 @@
     }
   })
 
-  // Auto-refresh consultation data
+  // Auto-refresh treatment session data
   const { pause: pauseRefresh } = useIntervalFn(() => {
-    if (props.appointment?.status === 'in_progress') {
-      queryCache.invalidateQueries({ key: ['consultations', props.appointment.id] })
+    if (props.treatmentSession?.status === 'in_progress') {
+      queryCache.invalidateQueries({ key: ['treatment-sessions', props.treatmentSession.id] })
     }
   }, 30000)
 
   onUnmounted(pauseRefresh)
 
   // Actions
-  async function startSession() {
-    try {
-      await consultationAction.startAsync({
-        id: props.appointment.id,
-        actualStartTime: getCurrentTimeHHMMSS()
-      })
-    } catch (error) {
-      console.error('Failed to start session:', error)
-    }
-  }
-
   async function handlePauseTimer() {
-    if (isPausing.value) return
+    if (isPausing.value || !props.treatmentSession) return
 
     isPausing.value = true
     try {
-      await consultationAction.pauseAsync({
-        id: props.appointment.id,
+      await treatmentSessionActions.pauseAsync({
+        sessionId: props.treatmentSession.id,
+        appointmentId: props.treatmentSession.appointmentId,
         pauseStartTime: getCurrentTimeHHMMSS()
       })
     } catch (error) {
@@ -171,14 +162,18 @@
   }
 
   async function handleResumeTimer() {
-    if (!props.appointment.pauseStartTime || isResuming.value) return
+    if (!props.treatmentSession?.pauseStartTime || isResuming.value) return
 
     isResuming.value = true
     try {
-      const pauseDurationSeconds = calculateTimeDifference(props.appointment.pauseStartTime, getCurrentTimeHHMMSS())
+      const pauseDurationSeconds = calculateTimeDifference(
+        props.treatmentSession.pauseStartTime,
+        getCurrentTimeHHMMSS()
+      )
 
-      await consultationAction.resumeAsync({
-        id: props.appointment.id,
+      await treatmentSessionActions.resumeAsync({
+        sessionId: props.treatmentSession.id,
+        appointmentId: props.treatmentSession.appointmentId,
         pauseDurationSeconds
       })
     } catch (error) {
@@ -189,9 +184,12 @@
   }
 
   async function handleExtendFiveMinutes() {
+    if (!props.treatmentSession) return
+
     try {
-      await consultationAction.extendAsync({
-        id: props.appointment.id,
+      await treatmentSessionActions.extendAsync({
+        sessionId: props.treatmentSession.id,
+        appointmentId: props.treatmentSession.appointmentId,
         extendedDurationMinutes: 5
       })
     } catch (error) {
@@ -200,15 +198,18 @@
   }
 
   async function endSession() {
-    const finalDurationSeconds = Math.max(0, timerSeconds.value + totalPausedSeconds.value)
+    if (!props.treatmentSession) return
+
+    const finalDurationSeconds = Math.max(0, timerSeconds.value)
 
     try {
-      await consultationAction.endAsync({
-        id: props.appointment.id,
+      await treatmentSessionActions.endAsync({
+        sessionId: props.treatmentSession.id,
+        appointmentId: props.treatmentSession.appointmentId,
         actualDurationSeconds: finalDurationSeconds,
         tags: props.selectedTags,
         painLevelAfter: props.painLevelAfter,
-        notes: props.appointmentNotes
+        notes: props.sessionNotes
       })
 
       emit('complete')
@@ -236,16 +237,16 @@
 
 <template>
   <UButton
-    v-if="isScheduled"
+    v-if="isCompleted"
     color="success"
     size="xl"
     variant="solid"
     block
     class="rounded-xl text-lg font-bold shadow-lg"
-    icon="i-hugeicons-play-circle"
-    @click="startSession"
+    icon="i-hugeicons-checkmark-circle-02"
+    disabled
   >
-    <span>Démarrer la séance</span>
+    <span>Séance terminée</span>
   </UButton>
 
   <UButton

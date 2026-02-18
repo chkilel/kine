@@ -31,23 +31,15 @@ export const APPOINTMENT_TYPES = [
   'discharge'
 ] as const
 
-// Valid status values for appointments
-export const APPOINTMENT_STATUSES = [
-  'confirmed',
-  'scheduled',
-  'in_progress',
-  'completed',
-  'cancelled',
-  'no_show'
-] as const
+// Valid status values for appointments (scheduling lifecycle only)
+export const APPOINTMENT_STATUSES = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'] as const
 
 // Appointment Status Configuration
 export const APPOINTMENT_STATUS_CONFIG = {
-  confirmed: { color: 'success', label: 'Confirmée', icon: 'i-hugeicons-calendar-check-in-01' },
   scheduled: { color: 'info', label: 'À venir', icon: 'i-hugeicons-clock-02' },
+  confirmed: { color: 'success', label: 'Confirmée', icon: 'i-hugeicons-calendar-check-in-01' },
   completed: { color: 'success', label: 'Terminée', icon: 'i-hugeicons-checkmark-circle-02' },
   cancelled: { color: 'error', label: 'Annulée', icon: 'i-hugeicons-cancel-01' },
-  in_progress: { color: 'warning', label: 'En cours', icon: 'i-hugeicons-hourglass' },
   no_show: { color: 'error', label: 'Absence', icon: 'i-hugeicons-user-remove-01' }
 } as const
 
@@ -67,7 +59,7 @@ export const APPOINTMENT_TYPES_CONFIG = {
   mobilization: { label: 'Mobilisation', icon: 'i-hugeicons-account-recovery' },
   reinforcement: { label: 'Renforcement', icon: 'i-hugeicons-body-part-muscle' },
   reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' },
-  exercise_supervision: { label: "Supervision d'exercices", icon: 'i-hugeicons-dumbbell' },
+  exercise_supervision: { label: "Supervision d'exercices", icon: 'i-hugeicons-dumbbell-01' },
   post_op_follow_up: { label: 'Suivi post-opératoire', icon: 'i-hugeicons-hospital-bed-02' },
   urgent_visit: { label: 'Consultation urgente', icon: 'i-hugeicons-emergency-cross' },
   consultation: { label: 'Consultation individuelle', icon: 'i-hugeicons-stethoscope' },
