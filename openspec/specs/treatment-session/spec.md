@@ -261,3 +261,219 @@ The system SHALL enforce data integrity for treatment sessions.
 - **THEN** all related entities must belong to the same organization
 - **AND** API enforces this validation
 
+### Requirement: Display Treatment Session Timing Information
+
+The system SHALL display comprehensive timing information in the Treatment Session Slideover, including both scheduled appointment times and actual session execution times.
+
+#### Scenario: Display timing for session not started
+
+- **GIVEN** an appointment exists with id "appointment-123"
+- **AND** appointment date is "2026-01-16"
+- **AND** appointment startTime is "10:00:00"
+- **AND** appointment endTime is "11:00:00"
+- **AND** appointment duration is 60 minutes
+- **AND** no treatment session exists for this appointment
+- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
+- **THEN** session timing section displays appointment date: "16/01/2026"
+- **AND** session timing section displays appointment start time: "10:00"
+- **AND** session timing section displays appointment end time: "11:00"
+- **AND** session timing section displays planned duration: "60 min"
+- **AND** session timing section does not show actual start time
+- **AND** session timing section does not show actual end time
+- **AND** session timing section does not show actual duration
+- **AND** session timing section does not show paused time
+
+#### Scenario: Display timing for active session
+
+- **GIVEN** an appointment exists with id "appointment-123"
+- **AND** appointment date is "2026-01-16"
+- **AND** appointment startTime is "10:00:00"
+- **AND** appointment endTime is "11:00:00"
+- **AND** appointment duration is 60 minutes
+- **AND** a treatment session exists for this appointment
+- **AND** treatment session actualStartTime is "10:05:00"
+- **AND** treatment session totalPausedSeconds is 300 (5 minutes)
+- **AND** treatment session status is "in_progress"
+- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
+- **THEN** session timing section displays appointment date: "16/01/2026"
+- **AND** session timing section displays appointment start time: "10:00"
+- **AND** session timing section displays appointment end time: "11:00"
+- **AND** session timing section displays planned duration: "60 min"
+- **AND** session timing section displays actual start time: "10:05"
+- **AND** session timing section displays paused time: "5 min"
+- **AND** session timing section does not show actual end time
+- **AND** session timing section does not show actual duration
+
+#### Scenario: Display timing for completed session
+
+- **GIVEN** an appointment exists with id "appointment-123"
+- **AND** appointment date is "2026-01-16"
+- **AND** appointment startTime is "10:00:00"
+- **AND** appointment endTime is "11:00:00"
+- **AND** appointment duration is 60 minutes
+- **AND** treatmentSession has extendedDurationMinutes of 5
+- **AND** a treatment session exists for this appointment
+- **AND** treatment session actualStartTime is "10:05:00"
+- **AND** treatment session actualDurationSeconds is 3420 (57 minutes)
+- **AND** treatment session totalPausedSeconds is 300 (5 minutes)
+- **AND** treatment session status is "completed"
+- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
+- **THEN** session timing section displays appointment date: "16/01/2026"
+- **AND** session timing section displays appointment start time: "10:00"
+- **AND** session timing section displays appointment end time: "11:00"
+- **AND** session timing section displays planned duration: "65 min" (60 + 5 extended)
+- **AND** session timing section displays actual start time: "10:05"
+- **AND** session timing section displays actual end time: "11:02"
+- **AND** session timing section displays actual duration: "57 min"
+- **AND** session timing section displays paused time: "5 min"
+- **AND** session timing section shows comparison: "57 min / 65 min"
+
+#### Scenario: Display timing for session with no pauses
+
+- **GIVEN** a completed treatment session exists
+- **AND** treatment session actualStartTime is "10:00:00"
+- **AND** treatment session actualDurationSeconds is 1800 (30 minutes)
+- **AND** treatment session totalPausedSeconds is 0
+- **WHEN** therapist opens TreatmentSessionSlideover for this appointment
+- **THEN** session timing section displays actual duration: "30 min"
+- **AND** session timing section does not display paused time
+- **OR** session timing section displays paused time: "0 min"
+
+#### Scenario: Display timing for session with multiple pauses
+
+- **GIVEN** a completed treatment session exists
+- **AND** treatment session actualStartTime is "10:00:00"
+- **AND** treatment session totalPausedSeconds is 900 (15 minutes)
+- **WHEN** therapist opens TreatmentSessionSlideover for this appointment
+- **THEN** session timing section displays paused time: "15 min"
+- **AND** paused time reflects sum of all pause periods
+
+### Requirement: EVA Modal Component
+
+The system SHALL provide a reusable modal component for capturing EVA (pain scale) values with a visual slider.
+
+#### Scenario: Display EVA modal for initial pain level
+
+- **GIVEN** a therapist initiates a new treatment session
+- **WHEN** the EVA modal is displayed
+- **THEN** the modal shows a slider from 0 to 10
+- **AND** the slider has a gradient track from green (0) to red (10)
+- **AND** the modal has a title "Évaluation de la douleur"
+- **AND** the modal has a confirm button labeled "Enregistrer et démarrer"
+- **AND** the modal has a cancel option
+
+#### Scenario: Display EVA modal for end pain level
+
+- **GIVEN** a therapist attempts to end a treatment session
+- **WHEN** the EVA modal is displayed
+- **THEN** the modal shows the same slider interface
+- **AND** the title indicates end of session evaluation
+- **AND** the confirm button is labeled "Enregistrer et terminer"
+
+#### Scenario: Therapist sets EVA value
+
+- **GIVEN** the EVA modal is displayed
+- **WHEN** the therapist moves the slider to value 7
+- **AND** clicks confirm
+- **THEN** the modal emits the value 7
+- **AND** the modal closes
+
+#### Scenario: Therapist cancels EVA modal
+
+- **GIVEN** the EVA modal is displayed
+- **WHEN** the therapist clicks cancel
+- **THEN** the modal emits null
+- **AND** the modal closes
+- **AND** the session does not start (if start modal) or does not end (if end modal)
+
+### Requirement: Mandatory Initial EVA at Session Start
+
+The system SHALL require the therapist to record the patient's initial pain level (EVA) before starting a treatment session.
+
+#### Scenario: Start session with EVA capture
+
+- **GIVEN** an appointment exists with no treatment session
+- **AND** the therapist clicks "Démarrer la séance"
+- **WHEN** the EVA modal is displayed
+- **AND** the therapist sets EVA to 6
+- **AND** confirms
+- **THEN** a treatment session is created
+- **AND** treatment session `painLevelBefore` is set to 6
+- **AND** treatment session status is "in_progress"
+- **AND** the session timer starts
+
+#### Scenario: Cancel session start
+
+- **GIVEN** the therapist clicks "Démarrer la séance"
+- **WHEN** the EVA modal is displayed
+- **AND** the therapist cancels
+- **THEN** no treatment session is created
+- **AND** the session does not start
+
+#### Scenario: Session creation API with painLevelBefore
+
+- **GIVEN** a therapist starts a session via API
+- **WHEN** POST /api/treatment-sessions is called with body { appointmentId: "appointment-123", painLevelBefore: 5 }
+- **THEN** a treatment session is created
+- **AND** `painLevelBefore` is set to 5
+- **AND** HTTP response is 201 Created
+
+### Requirement: EVA Display During Session
+
+The system SHALL display the initial and pending end EVA values during an active session.
+
+#### Scenario: Display initial EVA card during session
+
+- **GIVEN** a treatment session is in progress
+- **AND** `painLevelBefore` is 7
+- **WHEN** the session view is displayed
+- **THEN** a card titled "EVA Initiale" shows the value "7/10"
+- **AND** the card is read-only (not editable)
+
+#### Scenario: Display end EVA placeholder card
+
+- **GIVEN** a treatment session is in progress
+- **WHEN** the session view is displayed
+- **THEN** a card titled "EVA Finale" is shown
+- **AND** the card contains text "Sera demandé avant de terminer la séance"
+- **AND** the card has a placeholder icon
+
+#### Scenario: Hide EVA cards when session not started
+
+- **GIVEN** no treatment session exists for the appointment
+- **WHEN** the appointment view is displayed
+- **THEN** neither initial nor end EVA cards are shown
+- **AND** the original EVA input interface is available for reference only
+
+### Requirement: Mandatory End EVA at Session Completion
+
+The system SHALL require the therapist to record the patient's final pain level (EVA) before completing a treatment session.
+
+#### Scenario: End session with EVA capture
+
+- **GIVEN** a treatment session is in progress
+- **AND** the therapist clicks "Terminer la séance"
+- **WHEN** the EVA modal is displayed
+- **AND** the therapist sets EVA to 3
+- **AND** confirms
+- **THEN** treatment session `painLevelAfter` is set to 3
+- **AND** treatment session status is updated to "completed"
+- **AND** the session ends
+
+#### Scenario: Cancel session end
+
+- **GIVEN** a treatment session is in progress
+- **AND** the therapist clicks "Terminer la séance"
+- **WHEN** the EVA modal is displayed
+- **AND** the therapist cancels
+- **THEN** treatment session status remains "in_progress"
+- **AND** the session continues
+
+#### Scenario: End session API with painLevelAfter
+
+- **GIVEN** a treatment session with id "session-123" is in progress
+- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "end" and painLevelAfter 4
+- **THEN** `painLevelAfter` is set to 4
+- **AND** status is updated to "completed"
+- **AND** HTTP response is 200 OK
+
