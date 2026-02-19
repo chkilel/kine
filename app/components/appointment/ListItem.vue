@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { LazyTreatmentSessionSlideover } from '#components'
 
-  const { appointment } = defineProps<{ appointment: Appointment }>()
+  const { appointment } = defineProps<{ appointment: AppointmentWithSession }>()
 
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
@@ -80,8 +80,7 @@
   const handleContinueSession = () => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
-      appointmentId: appointment.id,
-      treatmentSessionId: treatmentSession.value?.id
+      appointmentId: appointment.id
     })
   }
 </script>
