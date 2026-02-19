@@ -55,7 +55,7 @@ export const APPOINTMENT_STATUS_OPTIONS = Object.entries(APPOINTMENT_STATUS_CONF
 export const APPOINTMENT_TYPES_CONFIG = {
   initial: { label: 'Évaluation initiale', icon: 'i-hugeicons-start-up-02' },
   follow_up: { label: 'Suivi', icon: 'i-hugeicons-calendar-user' },
-  treatment: { label: 'Séance de traitement', icon: 'i-hugeicons-therapy' },
+  treatment: { label: 'Séance de traitement', icon: 'i-hugeicons-patient' },
   mobilization: { label: 'Mobilisation', icon: 'i-hugeicons-account-recovery' },
   reinforcement: { label: 'Renforcement', icon: 'i-hugeicons-body-part-muscle' },
   reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' },

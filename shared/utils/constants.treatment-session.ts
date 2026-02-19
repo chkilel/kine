@@ -35,7 +35,7 @@ export const TREATMENT_SESSION_STEP_CONFIG = {
   },
   'active-session': {
     label: 'Séance active',
-    icon: 'i-hugeicons-therapy',
+    icon: 'i-hugeicons-patient',
     description: 'Séance de traitement en cours'
   },
   'post-session': {
