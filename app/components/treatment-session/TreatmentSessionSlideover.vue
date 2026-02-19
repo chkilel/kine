@@ -134,6 +134,11 @@
   // Check if session is in progress
   const sessionInProgress = computed(() => appointment.value?.treatmentSession?.status === 'in_progress')
 
+  // Check if we should show EVA cards (session in progress OR has pain level data)
+  const shouldShowEVACards = computed(
+    () => sessionInProgress.value || !!appointment.value?.treatmentSession?.painLevelAfter
+  )
+
   // Handler to start a new session
   async function handleStartSession() {
     if (isCreating.value) return
@@ -295,8 +300,8 @@
 
         <!-- Center Column - Main Content -->
         <div class="flex flex-col gap-4 lg:col-span-6">
-          <!-- EVA Cards - Show when session is in progress -->
-          <div v-if="sessionInProgress" class="grid grid-cols-2 gap-4">
+          <!-- EVA Cards - Show when session is in progress or completed -->
+          <div v-if="shouldShowEVACards" class="grid grid-cols-2 gap-4">
             <!-- Initial EVA Card -->
             <UCard>
               <div class="flex items-center gap-3">
@@ -304,21 +309,36 @@
                   <UIcon name="i-hugeicons-straight-edge" class="text-success size-5" />
                 </div>
                 <div>
-                  <p class="text-muted text-xs font-bold uppercase">EVA Initiale</p>
-                  <p class="text-2xl font-bold tabular-nums">{{ painLevelBefore }}/10</p>
+                  <p class="text-muted text-xs font-bold uppercase">Évaluation de la douleur</p>
+                  <p class="text-2xl font-bold tabular-nums">
+                    {{ painLevelBefore }}/10
+                    <span class="text-muted text-xs">Initiale</span>
+                  </p>
                 </div>
               </div>
             </UCard>
 
-            <!-- End EVA Placeholder Card -->
-            <UCard class="border-dashed">
+            <!-- End EVA Card -->
+            <UCard :class="{ 'opacity-60': !painLevelAfter }">
               <div class="flex items-center gap-3">
-                <div class="bg-muted-10 flex size-10 shrink-0 items-center justify-center rounded-full">
-                  <UIcon name="i-hugeicons-clock-01" class="text-muted size-5" />
+                <div
+                  :class="painLevelAfter ? 'bg-success-10' : 'bg-muted-10'"
+                  class="flex size-10 shrink-0 items-center justify-center rounded-full"
+                >
+                  <UIcon
+                    :name="painLevelAfter ? 'i-hugeicons-straight-edge' : 'i-hugeicons-clock-01'"
+                    :class="painLevelAfter ? 'text-success' : 'text-muted'"
+                    class="size-5"
+                  />
                 </div>
                 <div>
-                  <p class="text-muted text-xs font-bold uppercase">EVA Finale</p>
-                  <p class="text-muted text-sm">Sera demandé avant de terminer</p>
+                  <p class="text-muted text-xs font-bold uppercase">Évaluation de la douleur</p>
+                  <p v-if="!!painLevelAfter" class="text-2xl font-bold tabular-nums">
+                    {{ painLevelAfter }}/10
+
+                    <span class="text-muted text-xs">Finale</span>
+                  </p>
+                  <p v-else class="text-muted text-sm">Sera demandé avant de terminer la séance</p>
                 </div>
               </div>
             </UCard>
