@@ -7,20 +7,44 @@ import type { TreatmentSession } from '~~/shared/types/treatment-session.type'
 // Appointment Schemas and Types
 // =============================================================================
 export const appointmentCreateSchema = createInsertSchema(appointments, {
-  patientId: z.string(),
-  organizationId: z.string().min(1),
-  therapistId: z.string(),
-  roomId: z.uuidv7().optional(),
+  organizationId: z.string().min(1, 'Organization ID is required'),
+  patientId: z.string().min(1, 'Patient ID is required'),
+  treatmentPlanId: z.string().nullable().optional(),
+  therapistId: z.string().min(1, 'Therapist ID is required'),
+  roomId: z.string().nullable().optional(),
   date: calendarDateSchema,
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  duration: z.int().min(1, 'Duration must be at least 1 minute'),
+  type: appointmentTypeSchema.optional(),
   location: locationSchema.default('clinic'),
   status: appointmentStatusSchema.default('scheduled'),
-  type: appointmentTypeSchema.optional(),
-  duration: z.int()
+  confirmedAt: z.coerce.date().nullable().optional(),
+  cancelledAt: z.coerce.date().nullable().optional(),
+  noShowReason: z.string().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional()
 })
 
 export const appointmentUpdateSchema = appointmentCreateSchema.partial()
 
 export const appointmentSchema = createSelectSchema(appointments, {
+  id: z.string(),
+  organizationId: z.string(),
+  patientId: z.string(),
+  treatmentPlanId: z.string().nullable(),
+  therapistId: z.string(),
+  roomId: z.string().nullable(),
+  date: calendarDateSchema,
+  startTime: z.string(),
+  endTime: z.string(),
+  duration: z.int(),
+  type: appointmentTypeSchema.nullable(),
+  location: locationSchema,
+  status: appointmentStatusSchema,
+  confirmedAt: z.coerce.date().nullable(),
+  cancelledAt: z.coerce.date().nullable(),
+  noShowReason: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 })

@@ -29,7 +29,10 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
       return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),
-        updatedAt: parseISO(item.updatedAt)
+
+        updatedAt: parseISO(item.updatedAt),
+        confirmedAt: safeParseISODate(item.confirmedAt),
+        cancelledAt: safeParseISODate(item.cancelledAt)
       }))
     }
   })
@@ -54,7 +57,9 @@ const _useAppointmentsListWithSessions = (queryParams?: MaybeRefOrGetter<Appoint
         resp?.map((item) => ({
           ...item,
           createdAt: parseISO(item.createdAt),
-          updatedAt: parseISO(item.updatedAt)
+          updatedAt: parseISO(item.updatedAt),
+          confirmedAt: safeParseISODate(item.confirmedAt),
+          cancelledAt: safeParseISODate(item.cancelledAt)
         })) ?? []
       )
     }
@@ -155,7 +160,9 @@ const _useAppointment = (appointmentId: MaybeRefOrGetter<string>) => {
       return {
         ...data,
         createdAt: parseISO(data.createdAt),
-        updatedAt: parseISO(data.updatedAt)
+        updatedAt: parseISO(data.updatedAt),
+        confirmedAt: safeParseISODate(data.confirmedAt),
+        cancelledAt: safeParseISODate(data.cancelledAt)
       }
     },
     enabled: () => !!toValue(appointmentId)
@@ -261,7 +268,9 @@ const _useTherapistAppointments = (
       return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),
-        updatedAt: parseISO(item.updatedAt)
+        updatedAt: parseISO(item.updatedAt),
+        confirmedAt: safeParseISODate(item.confirmedAt),
+        cancelledAt: safeParseISODate(item.cancelledAt)
       }))
     },
     enabled: () => !!toValue(therapistId) && !!toValue(date)

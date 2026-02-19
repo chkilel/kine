@@ -46,8 +46,8 @@ export const appointments = sqliteTable(
 
     // ---- Appointment status (scheduling lifecycle) ----
     status: text({ enum: APPOINTMENT_STATUSES }).notNull().default('scheduled'),
-    confirmedAt: integer(),
-    cancelledAt: integer(),
+    confirmedAt: integer({ mode: 'timestamp_ms' }),
+    cancelledAt: integer({ mode: 'timestamp_ms' }),
     noShowReason: text(),
 
     // Creation & update timestamps
