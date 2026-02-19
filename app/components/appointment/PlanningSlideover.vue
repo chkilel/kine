@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm, LazyConsultationSlideover } from '#components'
+  import { LazyAppModalConfirm, LazyTreatmentSessionSlideover } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -10,7 +10,7 @@
   const emit = defineEmits<{ close: [data?: any] }>()
   const overlay = useOverlay()
   const confirmModal = overlay.create(LazyAppModalConfirm)
-  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
   const { mutate: updateStatus } = useUpdateAppointmentStatus()
   const createTreatmentSession = useCreateTreatmentSession()
 

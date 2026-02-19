@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  import { LazyConsultationSlideover } from '#components'
+  import { LazyTreatmentSessionSlideover } from '#components'
 
   const { patient } = defineProps<{ patient: Patient }>()
 
   const overlay = useOverlay()
-  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
   const { data: appointments } = useAppointmentsList(() => ({ patientId: patient?.id }))
 

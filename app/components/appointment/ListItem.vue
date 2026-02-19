@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  import { LazyConsultationSlideover } from '#components'
+  import { LazyTreatmentSessionSlideover } from '#components'
 
   const { appointment } = defineProps<{ appointment: Appointment }>()
 
   const overlay = useOverlay()
-  const activeConsultationOverlay = overlay.create(LazyConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
   // Get treatment session from appointment relation
   const treatmentSession = computed(() => appointment.treatmentSession)

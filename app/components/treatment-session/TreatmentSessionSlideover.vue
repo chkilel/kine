@@ -435,7 +435,7 @@
           </UButton>
 
           <!-- Timer Card - Now uses treatment session -->
-          <ConsultationTimerCard
+          <TreatmentSessionTimer
             v-if="treatmentSession && appointment"
             :treatment-session="treatmentSession"
             :appointment="appointment"
