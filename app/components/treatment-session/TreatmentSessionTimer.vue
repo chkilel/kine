@@ -3,7 +3,7 @@
 
   const props = defineProps<{
     treatmentSession?: TreatmentSession | null
-    appointment: Appointment
+    appointment: AppointmentWithSession
     selectedTags: string[]
     painLevelAfter: number | undefined
     sessionNotes: string
@@ -35,7 +35,7 @@
 
   const consultationDurationSeconds = computed(() => {
     if (!props.appointment?.duration) return 0
-    return (props.appointment.duration + (props.treatmentSession?.extendedDurationMinutes || 0)) * 60
+    return (props.appointment.duration + (props.appointment.treatmentSession?.extendedDurationMinutes || 0)) * 60
   })
 
   const remainingSeconds = computed(() => {
@@ -50,15 +50,15 @@
 
   const showFiveMinuteWarning = computed(() => {
     return (
-      props.treatmentSession?.status === 'in_progress' &&
+      props.appointment.treatmentSession?.status === 'in_progress' &&
       consultationDurationSeconds.value > 0 &&
       remainingSeconds.value > 0 &&
       remainingSeconds.value <= 300
     )
   })
 
-  const isInProgress = computed(() => props.treatmentSession?.status === 'in_progress')
-  const isCompleted = computed(() => props.treatmentSession?.status === 'completed')
+  const isInProgress = computed(() => props.appointment.treatmentSession?.status === 'in_progress')
+  const isCompleted = computed(() => props.appointment.treatmentSession?.status === 'completed')
 
   // Timer functions
   function calculateElapsedTime() {
@@ -98,7 +98,7 @@
 
   // Watchers
   watch(
-    () => props.treatmentSession,
+    () => props.appointment.treatmentSession,
     (value) => {
       if (!value) return
 
@@ -136,8 +136,8 @@
 
   // Auto-refresh treatment session data
   const { pause: pauseRefresh } = useIntervalFn(() => {
-    if (props.treatmentSession?.status === 'in_progress') {
-      queryCache.invalidateQueries({ key: ['treatment-sessions', props.treatmentSession.id] })
+    if (props.appointment.treatmentSession?.status === 'in_progress') {
+      queryCache.invalidateQueries({ key: ['treatment-sessions', props.appointment.treatmentSession.id] })
     }
   }, 30000)
 
@@ -145,13 +145,13 @@
 
   // Actions
   async function handlePauseTimer() {
-    if (isPausing.value || !props.treatmentSession) return
+    if (isPausing.value || !props.appointment.treatmentSession) return
 
     isPausing.value = true
     try {
       await treatmentSessionActions.pauseAsync({
-        sessionId: props.treatmentSession.id,
-        appointmentId: props.treatmentSession.appointmentId,
+        sessionId: props.appointment.treatmentSession.id,
+        appointmentId: props.appointment.treatmentSession.appointmentId,
         pauseStartTime: getCurrentTimeHHMMSS()
       })
     } catch (error) {
@@ -162,18 +162,18 @@
   }
 
   async function handleResumeTimer() {
-    if (!props.treatmentSession?.pauseStartTime || isResuming.value) return
+    if (!props.appointment.treatmentSession?.pauseStartTime || isResuming.value) return
 
     isResuming.value = true
     try {
       const pauseDurationSeconds = calculateTimeDifference(
-        props.treatmentSession.pauseStartTime,
+        props.appointment.treatmentSession.pauseStartTime,
         getCurrentTimeHHMMSS()
       )
 
       await treatmentSessionActions.resumeAsync({
-        sessionId: props.treatmentSession.id,
-        appointmentId: props.treatmentSession.appointmentId,
+        sessionId: props.appointment.treatmentSession.id,
+        appointmentId: props.appointment.treatmentSession.appointmentId,
         pauseDurationSeconds
       })
     } catch (error) {
@@ -184,12 +184,12 @@
   }
 
   async function handleExtendFiveMinutes() {
-    if (!props.treatmentSession) return
+    if (!props.appointment.treatmentSession) return
 
     try {
       await treatmentSessionActions.extendAsync({
-        sessionId: props.treatmentSession.id,
-        appointmentId: props.treatmentSession.appointmentId,
+        sessionId: props.appointment.treatmentSession.id,
+        appointmentId: props.appointment.treatmentSession.appointmentId,
         extendedDurationMinutes: 5
       })
     } catch (error) {
@@ -198,14 +198,14 @@
   }
 
   async function endSession() {
-    if (!props.treatmentSession) return
+    if (!props.appointment.treatmentSession) return
 
     const finalDurationSeconds = Math.max(0, timerSeconds.value)
 
     try {
       await treatmentSessionActions.endAsync({
-        sessionId: props.treatmentSession.id,
-        appointmentId: props.treatmentSession.appointmentId,
+        sessionId: props.appointment.treatmentSession.id,
+        appointmentId: props.appointment.treatmentSession.appointmentId,
         actualDurationSeconds: finalDurationSeconds,
         tags: props.selectedTags,
         painLevelAfter: props.painLevelAfter,

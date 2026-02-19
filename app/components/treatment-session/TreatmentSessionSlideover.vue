@@ -4,7 +4,6 @@
   const props = defineProps<{
     patientId: string
     appointmentId: string
-    treatmentSessionId?: string
   }>()
 
   const emit = defineEmits<{ close: [] }>()
@@ -29,10 +28,9 @@
   const { data: patient } = usePatientById(() => props.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => props.patientId)
   const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
-  const { data: appointment, isLoading: appointmentLoading } = useAppointment(() => props.appointmentId)
+  const { data: appointment, isPending: appointmentLoading } = useAppointment(() => props.appointmentId)
 
   // Treatment session data
-  const { data: treatmentSession, isLoading: sessionLoading } = useTreatmentSession(() => props.treatmentSessionId)
   const treatmentSessionActions = useTreatmentSessionActions()
 
   // Form state - now from treatment session
@@ -43,7 +41,7 @@
 
   // Initialize form from treatment session data when available
   watch(
-    treatmentSession,
+    () => appointment.value?.treatmentSession,
     (value) => {
       if (!value) return
 
@@ -66,7 +64,7 @@
   }
 
   async function toggleTag(tag: string) {
-    if (!treatmentSession.value || !props.treatmentSessionId) return
+    if (!appointment.value?.treatmentSession) return
 
     const previousTags = [...selectedTags.value]
     selectedTags.value = selectedTags.value.includes(tag)
@@ -75,7 +73,7 @@
 
     try {
       await treatmentSessionActions.updateTagsAsync({
-        sessionId: props.treatmentSessionId,
+        sessionId: appointment.value.treatmentSession.id,
         appointmentId: props.appointmentId,
         tags: selectedTags.value
       })
@@ -124,7 +122,8 @@
   const headerDescription = computed(() => {
     if (!appointment.value) return ''
     const typeLabel = getAppointmentTypeLabel(appointment.value.type || 'follow_up')
-    const totalDuration = appointment.value.duration + (treatmentSession.value?.extendedDurationMinutes || 0)
+    const totalDuration =
+      appointment.value.duration + (appointment.value?.treatmentSession?.extendedDurationMinutes || 0)
     const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
@@ -142,10 +141,10 @@
 
   // Loading states
   const isStartingSession = ref(false)
-  const isLoading = computed(() => appointmentLoading.value || sessionLoading.value)
+  const isLoading = computed(() => appointmentLoading.value)
 
   // Check if session hasn't started yet
-  const sessionNotStarted = computed(() => !treatmentSession.value && !sessionLoading.value)
+  const sessionNotStarted = computed(() => !appointment.value?.treatmentSession)
 
   // Handler to start a new session
   async function handleStartSession() {
@@ -437,7 +436,6 @@
           <!-- Timer Card - Now uses treatment session -->
           <TreatmentSessionTimer
             v-if="appointment"
-            :treatment-session="treatmentSession"
             :appointment="appointment"
             :selected-tags="selectedTags"
             :pain-level-after="painLevelAfter"

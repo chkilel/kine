@@ -1,5 +1,5 @@
 import { eq, and, getTableColumns } from 'drizzle-orm'
-import { appointments, rooms } from '~~/server/database/schema'
+import { appointments, rooms, treatmentSessions } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -18,17 +18,19 @@ export default defineEventHandler(async (event) => {
     const [appointmentData] = await db
       .select({
         ...getTableColumns(appointments),
-        roomName: rooms.name
+        roomName: rooms.name,
+        treatmentSession: treatmentSessions
       })
       .from(appointments)
       .leftJoin(rooms, eq(appointments.roomId, rooms.id))
+      .leftJoin(treatmentSessions, eq(appointments.id, treatmentSessions.appointmentId))
       .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .limit(1)
 
     if (!appointmentData) {
       throw createError({
         statusCode: 404,
-        message: 'Rendez-vous introuvable'  
+        message: 'Rendez-vous introuvable'
       })
     }
 

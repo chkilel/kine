@@ -1,32 +1,9 @@
 import { createSharedComposable } from '@vueuse/core'
-import { parseISO } from 'date-fns'
 
 export const TREATMENT_SESSION_KEYS = {
   root: ['treatment-sessions'] as const,
   list: (params: TreatmentSessionQuery) => [...TREATMENT_SESSION_KEYS.root, 'list', params],
   single: (id: string) => [...TREATMENT_SESSION_KEYS.root, id]
-}
-
-const _useTreatmentSession = (sessionId: MaybeRefOrGetter<string | undefined>) => {
-  const requestFetch = useRequestFetch()
-
-  return useQuery({
-    key: () => {
-      const id = toValue(sessionId)
-      return id ? TREATMENT_SESSION_KEYS.single(id) : TREATMENT_SESSION_KEYS.root
-    },
-    query: async () => {
-      const data = await requestFetch(`/api/treatment-sessions/${toValue(sessionId)}`)
-      if (!data) return null
-
-      return {
-        ...data,
-        createdAt: parseISO(data.createdAt),
-        updatedAt: parseISO(data.updatedAt)
-      }
-    },
-    enabled: () => !!toValue(sessionId)
-  })
 }
 
 const _useCreateTreatmentSession = () => {
@@ -129,37 +106,5 @@ const _useTreatmentSessionActions = () => {
   }
 }
 
-const _useTreatmentSessionsList = (queryParams?: MaybeRefOrGetter<TreatmentSessionQuery>) => {
-  const requestFetch = useRequestFetch()
-
-  return useQuery({
-    key: () => {
-      const queryParamsValue = toValue(queryParams) || {}
-      return TREATMENT_SESSION_KEYS.list(queryParamsValue as TreatmentSessionQuery)
-    },
-    query: async () => {
-      const queryParamsValue = (toValue(queryParams) || {}) as TreatmentSessionQuery
-      const query: Record<string, string> = {}
-
-      if (queryParamsValue.patientId) query.patientId = queryParamsValue.patientId
-      if (queryParamsValue.therapistId) query.therapistId = queryParamsValue.therapistId
-      if (queryParamsValue.date) query.date = queryParamsValue.date
-      if (queryParamsValue.status) query.status = queryParamsValue.status
-      if (queryParamsValue.page) query.page = queryParamsValue.page.toString()
-      if (queryParamsValue.limit) query.limit = queryParamsValue.limit.toString()
-
-      const resp = await requestFetch('/api/treatment-sessions', { query })
-
-      return resp?.data?.map((item: any) => ({
-        ...item,
-        createdAt: parseISO(item.createdAt),
-        updatedAt: parseISO(item.updatedAt)
-      }))
-    }
-  })
-}
-
-export const useTreatmentSession = _useTreatmentSession
 export const useCreateTreatmentSession = createSharedComposable(_useCreateTreatmentSession)
 export const useTreatmentSessionActions = createSharedComposable(_useTreatmentSessionActions)
-export const useTreatmentSessionsList = _useTreatmentSessionsList
