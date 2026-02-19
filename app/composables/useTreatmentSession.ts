@@ -12,10 +12,10 @@ const _useCreateTreatmentSession = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId }: { appointmentId: string }) =>
+    mutation: async ({ appointmentId, painLevelBefore }: { appointmentId: string; painLevelBefore: number }) =>
       requestFetch('/api/treatment-sessions', {
         method: 'POST',
-        body: { appointmentId }
+        body: { appointmentId, painLevelBefore }
       }),
     onSuccess: (data, { appointmentId }) => {
       const treatmentSessionId = data?.data?.id

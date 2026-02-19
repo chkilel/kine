@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm } from '#components'
+  import { LazyAppModalEVA } from '#components'
 
   const props = defineProps<{
     patientId: string
@@ -16,13 +16,13 @@
     'Cryothérapie',
     'Renforcement'
   ] as const
-  const EVA_MIN = 0
-  const EVA_MAX = 10
-  const EVA_STEP = 1
 
   const overlay = useOverlay()
-  const createTreatmentSession = useCreateTreatmentSession()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
+  const evaModal = overlay.create(LazyAppModalEVA)
+
+  const { mutate: createTreatmentSession, isLoading: isCreating } = useCreateTreatmentSession()
+  const treatmentSessionActions = useTreatmentSessionActions()
+  const isUpdatingTags = computed(() => treatmentSessionActions.isLoading.value)
 
   // Data fetching
   const { data: patient } = usePatientById(() => props.patientId)
@@ -30,11 +30,8 @@
   const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
   const { data: appointment, isPending: appointmentLoading } = useAppointment(() => props.appointmentId)
 
-  // Treatment session data
-  const treatmentSessionActions = useTreatmentSessionActions()
-
-  // Form state - now from treatment session
-  const painLevelBefore = ref<number>(0)
+  // Form state for treatment session
+  const painLevelBefore = ref<number | undefined>(undefined)
   const painLevelAfter = ref<number | undefined>(undefined)
   const sessionNotes = ref('')
   const selectedTags = ref<string[]>([])
@@ -45,7 +42,7 @@
     (value) => {
       if (!value) return
 
-      painLevelBefore.value = value.painLevelBefore ?? 0
+      painLevelBefore.value = value.painLevelBefore ?? undefined
       painLevelAfter.value = value.painLevelAfter ?? undefined
       sessionNotes.value = value.treatmentSummary || ''
       selectedTags.value = parseTagsSafely(value.tags)
@@ -63,24 +60,18 @@
     }
   }
 
-  async function toggleTag(tag: string) {
-    if (!appointment.value?.treatmentSession) return
+  function toggleTag(tag: string) {
+    if (!appointment.value?.treatmentSession || isUpdatingTags.value) return
 
-    const previousTags = [...selectedTags.value]
     selectedTags.value = selectedTags.value.includes(tag)
       ? selectedTags.value.filter((t) => t !== tag)
       : [...selectedTags.value, tag]
 
-    try {
-      await treatmentSessionActions.updateTagsAsync({
-        sessionId: appointment.value.treatmentSession.id,
-        appointmentId: props.appointmentId,
-        tags: selectedTags.value
-      })
-    } catch (error) {
-      console.error('Failed to save tags:', error)
-      selectedTags.value = previousTags
-    }
+    treatmentSessionActions.updateTags({
+      sessionId: appointment.value.treatmentSession.id,
+      appointmentId: props.appointmentId,
+      tags: selectedTags.value
+    })
   }
 
   // Computed values - memoized for performance
@@ -137,45 +128,30 @@
     )
   )
 
-  const evaScaleNumbers = computed(() => Array.from({ length: EVA_MAX - EVA_MIN + 1 }, (_, i) => i + EVA_MIN))
-
-  // Loading states
-  const isStartingSession = ref(false)
-  const isLoading = computed(() => appointmentLoading.value)
-
   // Check if session hasn't started yet
   const sessionNotStarted = computed(() => !appointment.value?.treatmentSession)
 
+  // Check if session is in progress
+  const sessionInProgress = computed(() => appointment.value?.treatmentSession?.status === 'in_progress')
+
   // Handler to start a new session
   async function handleStartSession() {
-    if (isStartingSession.value) return
+    if (isCreating.value) return
 
-    const confirmed = await confirmModal.open({
-      title: 'Démarrer la consultation',
-      message: 'Confirmer le démarrage de cette séance ?',
-      confirmText: 'Démarrer',
+    const evaValue = await evaModal.open({
+      title: 'Évaluation de la douleur initiale',
+      description: 'Veuillez indiquer le niveau de douleur du patient avant la séance',
+      confirmText: 'Enregistrer et démarrer',
       cancelText: 'Annuler',
-      confirmColor: 'primary',
-      icon: 'i-hugeicons-play-circle'
+      initialValue: 0
     })
 
-    if (!confirmed) return
+    if (evaValue === null) return
 
-    isStartingSession.value = true
-    try {
-      const result = await createTreatmentSession.mutateAsync({
-        appointmentId: props.appointmentId
-      })
-
-      if (result?.data?.id) {
-        // Session created - the component will now have the session data
-        // and the timer will start automatically via the existing watcher
-      }
-    } catch (error) {
-      console.error('Failed to start session:', error)
-    } finally {
-      isStartingSession.value = false
-    }
+    createTreatmentSession({
+      appointmentId: props.appointmentId,
+      painLevelBefore: evaValue
+    })
   }
 </script>
 
@@ -189,7 +165,7 @@
   >
     <template #body>
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center py-10">
+      <div v-if="appointmentLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
 
@@ -319,53 +295,34 @@
 
         <!-- Center Column - Main Content -->
         <div class="flex flex-col gap-4 lg:col-span-6">
-          <!-- EVA Pain Scale Card -->
-          <UCard>
-            <div class="mb-6 flex items-center justify-between">
-              <h3 class="flex items-center gap-2 text-base font-bold">
-                <UIcon name="i-hugeicons-straight-edge" class="text-primary text-xl" />
-                Niveau de Douleur (EVA)
-              </h3>
-              <div class="flex items-center gap-4">
-                <span class="text-muted flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase">
-                  <span class="size-2 rounded-full bg-green-500" />
-                  Aucun
-                </span>
-                <span class="text-muted flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase">
-                  <span class="size-2 rounded-full bg-red-600" />
-                  Intense
-                </span>
-                <UBadge variant="subtle" size="xs" class="ml-2">Aujourd'hui</UBadge>
+          <!-- EVA Cards - Show when session is in progress -->
+          <div v-if="sessionInProgress" class="grid grid-cols-2 gap-4">
+            <!-- Initial EVA Card -->
+            <UCard>
+              <div class="flex items-center gap-3">
+                <div class="bg-success-10 flex size-10 shrink-0 items-center justify-center rounded-full">
+                  <UIcon name="i-hugeicons-straight-edge" class="text-success size-5" />
+                </div>
+                <div>
+                  <p class="text-muted text-xs font-bold uppercase">EVA Initiale</p>
+                  <p class="text-2xl font-bold tabular-nums">{{ painLevelBefore }}/10</p>
+                </div>
               </div>
-            </div>
+            </UCard>
 
-            <div class="flex justify-between text-sm">
-              <span
-                v-for="value in evaScaleNumbers"
-                :key="value"
-                :class="[
-                  'inline-flex w-[2ch] justify-center border-t-3 p-0.5 tabular-nums transition-all',
-                  painLevelBefore === value ? 'text-error border-error font-bold' : 'border-transparent'
-                ]"
-              >
-                {{ value.toString().padStart(2, ' ') }}
-              </span>
-            </div>
-
-            <USlider
-              v-model="painLevelBefore"
-              :min="EVA_MIN"
-              :max="EVA_MAX"
-              :step="EVA_STEP"
-              :ui="{
-                root: 'w-full flex-1 mt-2',
-                track: 'bg-linear-to-r from-green-600 via-yellow-400 to-red-500',
-                range: 'bg-transparent',
-                thumb: 'bg-error ring-error focus-visible:outline-error/50'
-              }"
-              class="w-full flex-1"
-            />
-          </UCard>
+            <!-- End EVA Placeholder Card -->
+            <UCard class="border-dashed">
+              <div class="flex items-center gap-3">
+                <div class="bg-muted-10 flex size-10 shrink-0 items-center justify-center rounded-full">
+                  <UIcon name="i-hugeicons-clock-01" class="text-muted size-5" />
+                </div>
+                <div>
+                  <p class="text-muted text-xs font-bold uppercase">EVA Finale</p>
+                  <p class="text-muted text-sm">Sera demandé avant de terminer</p>
+                </div>
+              </div>
+            </UCard>
+          </div>
 
           <!-- Notes Editor Card -->
           <UCard :ui="{ body: 'p-0 sm:p-0 flex flex-col space-y-2 overflow-hidden' }">
@@ -427,7 +384,7 @@
             block
             class="rounded-xl text-lg font-bold shadow-lg"
             icon="i-hugeicons-play-circle"
-            :loading="isStartingSession"
+            :loading="isCreating"
             @click="handleStartSession"
           >
             Démarrer la séance
@@ -438,7 +395,6 @@
             v-if="appointment"
             :appointment="appointment"
             :selected-tags="selectedTags"
-            :pain-level-after="painLevelAfter"
             :session-notes="sessionNotes"
             @close="emit('close')"
           />

@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const body = await readValidatedBody(event, createTreatmentSessionSchema.parse)
-    const { appointmentId } = body
+    const { appointmentId, painLevelBefore } = body
 
     // Fetch the appointment
     const [appointment] = await db
@@ -63,7 +63,8 @@ export default defineEventHandler(async (event) => {
         actualStartTime,
         actualDurationSeconds: 0,
         totalPausedSeconds: 0,
-        extendedDurationMinutes: 0
+        extendedDurationMinutes: 0,
+        painLevelBefore
       })
       .returning()
 

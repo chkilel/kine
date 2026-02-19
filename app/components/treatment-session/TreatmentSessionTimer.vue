@@ -1,11 +1,10 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm } from '#components'
+  import { LazyAppModalEVA } from '#components'
 
   const props = defineProps<{
     treatmentSession?: TreatmentSession | null
     appointment: AppointmentWithSession
     selectedTags: string[]
-    painLevelAfter: number | undefined
     sessionNotes: string
   }>()
 
@@ -16,7 +15,7 @@
 
   const treatmentSessionActions = useTreatmentSessionActions()
   const overlay = useOverlay()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
+  const evaModal = overlay.create(LazyAppModalEVA)
   const queryCache = useQueryCache()
 
   // Timer state - now from treatment session
@@ -25,10 +24,6 @@
   const pauseStartTime = ref<string | null>(null)
   const totalPausedSeconds = ref(0)
   const timeSincePause = ref('')
-
-  // Loading states
-  const isPausing = ref(false)
-  const isResuming = ref(false)
 
   // Computed
   const isPaused = computed(() => pauseStartTime.value !== null)
@@ -59,6 +54,9 @@
 
   const isInProgress = computed(() => props.appointment.treatmentSession?.status === 'in_progress')
   const isCompleted = computed(() => props.appointment.treatmentSession?.status === 'completed')
+
+  const isPausing = computed(() => isPaused.value && treatmentSessionActions.isLoading.value)
+  const isResuming = computed(() => !isPaused.value && treatmentSessionActions.isLoading.value)
 
   // Timer functions
   function calculateElapsedTime() {
@@ -144,92 +142,64 @@
   onUnmounted(pauseRefresh)
 
   // Actions
-  async function handlePauseTimer() {
-    if (isPausing.value || !props.appointment.treatmentSession) return
-
-    isPausing.value = true
-    try {
-      await treatmentSessionActions.pauseAsync({
-        sessionId: props.appointment.treatmentSession.id,
-        appointmentId: props.appointment.treatmentSession.appointmentId,
-        pauseStartTime: getCurrentTimeHHMMSS()
-      })
-    } catch (error) {
-      console.error('Failed to pause session:', error)
-    } finally {
-      isPausing.value = false
-    }
-  }
-
-  async function handleResumeTimer() {
-    if (!props.appointment.treatmentSession?.pauseStartTime || isResuming.value) return
-
-    isResuming.value = true
-    try {
-      const pauseDurationSeconds = calculateTimeDifference(
-        props.appointment.treatmentSession.pauseStartTime,
-        getCurrentTimeHHMMSS()
-      )
-
-      await treatmentSessionActions.resumeAsync({
-        sessionId: props.appointment.treatmentSession.id,
-        appointmentId: props.appointment.treatmentSession.appointmentId,
-        pauseDurationSeconds
-      })
-    } catch (error) {
-      console.error('Failed to resume session:', error)
-    } finally {
-      isResuming.value = false
-    }
-  }
-
-  async function handleExtendFiveMinutes() {
+  function handlePauseTimer() {
     if (!props.appointment.treatmentSession) return
 
-    try {
-      await treatmentSessionActions.extendAsync({
-        sessionId: props.appointment.treatmentSession.id,
-        appointmentId: props.appointment.treatmentSession.appointmentId,
-        extendedDurationMinutes: 5
-      })
-    } catch (error) {
-      console.error('Failed to extend session:', error)
-    }
+    treatmentSessionActions.pause({
+      sessionId: props.appointment.treatmentSession.id,
+      appointmentId: props.appointment.treatmentSession.appointmentId,
+      pauseStartTime: getCurrentTimeHHMMSS()
+    })
   }
 
-  async function endSession() {
+  function handleResumeTimer() {
+    if (!props.appointment.treatmentSession?.pauseStartTime) return
+
+    const pauseDurationSeconds = calculateTimeDifference(
+      props.appointment.treatmentSession.pauseStartTime,
+      getCurrentTimeHHMMSS()
+    )
+
+    treatmentSessionActions.resume({
+      sessionId: props.appointment.treatmentSession.id,
+      appointmentId: props.appointment.treatmentSession.appointmentId,
+      pauseDurationSeconds
+    })
+  }
+
+  function handleExtendFiveMinutes() {
+    if (!props.appointment.treatmentSession) return
+
+    treatmentSessionActions.extend({
+      sessionId: props.appointment.treatmentSession.id,
+      appointmentId: props.appointment.treatmentSession.appointmentId,
+      extendedDurationMinutes: 5
+    })
+  }
+
+  async function handleComplete() {
+    const evaValue = await evaModal.open({
+      title: 'Évaluation de la douleur finale',
+      description: 'Veuillez indiquer le niveau de douleur du patient après la séance',
+      confirmText: 'Enregistrer et terminer',
+      cancelText: 'Annuler',
+      initialValue: 0
+    })
+
+    if (evaValue === null) return
+
     if (!props.appointment.treatmentSession) return
 
     const finalDurationSeconds = Math.max(0, timerSeconds.value)
 
-    try {
-      await treatmentSessionActions.endAsync({
-        sessionId: props.appointment.treatmentSession.id,
-        appointmentId: props.appointment.treatmentSession.appointmentId,
-        actualDurationSeconds: finalDurationSeconds,
-        tags: props.selectedTags,
-        painLevelAfter: props.painLevelAfter,
-        notes: props.sessionNotes
-      })
-
-      emit('complete')
-      emit('close')
-    } catch (error) {
-      console.error('Failed to end session:', error)
-    }
-  }
-
-  async function handleComplete() {
-    const confirmed = await confirmModal.open({
-      title: 'Terminer la consultation',
-      message: 'Confirmer la fin de la séance et enregistrer les données ?',
-      confirmText: 'Terminer',
-      cancelText: 'Annuler',
-      confirmColor: 'success',
-      icon: 'i-hugeicons-checkmark-circle-01'
+    treatmentSessionActions.end({
+      sessionId: props.appointment.treatmentSession.id,
+      appointmentId: props.appointment.treatmentSession.appointmentId,
+      actualDurationSeconds: finalDurationSeconds,
+      tags: props.selectedTags,
+      painLevelAfter: evaValue,
+      notes: props.sessionNotes
     })
-
-    if (confirmed) await endSession()
   }
 
   const togglePause = () => (isPaused.value ? handleResumeTimer() : handlePauseTimer())

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalConfirm, LazyTreatmentSessionSlideover } from '#components'
+  import { LazyAppModalEVA, LazyTreatmentSessionSlideover } from '#components'
 
   const props = defineProps<{
     patient: Patient
@@ -8,30 +8,11 @@
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
+
   const overlay = useOverlay()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
-  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
-  const { mutate: updateStatus } = useUpdateAppointmentStatus()
+  const evaModal = overlay.create(LazyAppModalEVA)
+  const treatmentSesionOverlay = overlay.create(LazyTreatmentSessionSlideover)
   const createTreatmentSession = useCreateTreatmentSession()
-
-  // Tab configuration
-  //  const planningTabs = [
-  //    {
-  //      label: 'Planification manuelle',
-  //      icon: 'i-lucide-calendar-plus',
-  //      slot: 'manual',
-  //      value: 'manual'
-  //    },
-  //    {
-  //      label: 'Planification automatique',
-  //      icon: 'i-lucide-zap',
-  //      slot: 'auto',
-  //      value: 'auto'
-  //    }
-  //  ] satisfies TabsItem[]
-
-  // Tab state
-  const activePlanningTab = ref('manual')
 
   const slideoverTitle = computed(() => (props.appointment ? 'Modifier la séance' : 'Planification des séances'))
 
@@ -60,62 +41,34 @@
     return props.appointment && ['scheduled', 'confirmed'].includes(props.appointment.status)
   })
 
-  const canCompleteSession = computed(() => {
-    return props.appointment && props.appointment.treatmentSession?.status === 'in_progress'
-  })
-
   const handleStartSession = async () => {
-    if (!props.appointment) return
+    if (!props.appointment || createTreatmentSession.isLoading.value) return
 
-    const confirmed = await confirmModal.open({
-      title: 'Démarrer la consultation',
-      message: `Démarrer la consultation avec ${formatFullName(props.patient)} le ${formatFrenchDate(props.appointment.date)} à ${props.appointment.startTime} ?`,
-      confirmText: 'Démarrer',
+    const evaValue = await evaModal.open({
+      title: 'Évaluation de la douleur initiale',
+      description: 'Veuillez indiquer le niveau de douleur du patient avant la séance',
+      confirmText: 'Enregistrer et démarrer',
       cancelText: 'Annuler',
-      confirmColor: 'primary',
-      icon: 'i-hugeicons-play-circle'
+      initialValue: 0
     })
 
-    if (!confirmed) return
+    if (evaValue === null) return
 
     try {
       const result = await createTreatmentSession.mutateAsync({
-        appointmentId: props.appointment.id
+        appointmentId: props.appointment.id,
+        painLevelBefore: evaValue
       })
 
       if (result?.data?.id) {
-        activeConsultationOverlay.open({
+        treatmentSesionOverlay.open({
           patientId: props.patient.id,
-          appointmentId: props.appointment.id,
-          treatmentSessionId: result.data.id
+          appointmentId: props.appointment.id
         })
+        emit('close')
       }
-    } catch (error) {
-      console.error('Failed to start session:', error)
-      return
-    }
-
-    emit('close')
-  }
-
-  const handleCompleteSession = async () => {
-    if (!props.appointment) return
-
-    const confirmed = await confirmModal.open({
-      title: 'Terminer la consultation',
-      message: `Terminer la consultation avec ${formatFullName(props.patient)} ?`,
-      confirmText: 'Terminer',
-      cancelText: 'Annuler',
-      confirmColor: 'success',
-      icon: 'i-hugeicons-checkmark-circle-01'
-    })
-
-    if (confirmed) {
-      updateStatus({
-        patientId: props.patient.id,
-        appointmentId: props.appointment.id,
-        status: 'completed'
-      })
+    } catch {
+      // Error already handled by composable's onError
     }
   }
 </script>
@@ -176,30 +129,8 @@
         <!-- Planning Tabs -->
         <AppointmentManualPlanningCard :treatment-plan="treatmentPlan" :patient="patient" :appointment="appointment" />
 
-        <!-- -----------------------------Hiding the tabs witht automatique planning---------------------------------------- -->
-        <!-- <UCard class="mt-6"> -->
-        <!-- <UTabs -->
-        <!-- v-model="activePlanningTab" -->
-        <!-- :items="planningTabs" -->
-        <!-- variant="pill" -->
-        <!-- size="xl" -->
-        <!-- color="primary" -->
-        <!-- class="w-full" -->
-        <!-- > -->
-        <!-- Manual Planning Tab -->
-        <!-- <template #manual> -->
-        <!-- <AppointmentManualPlanningCard :treatment-plan="treatmentPlan" :therapists="therapists" /> -->
-        <!-- </template> -->
-
-        <!-- Auto Planning Tab -->
-        <!-- <template #auto> -->
-        <!-- <ConsultationAutomaticPlanningCard :therapists="therapists" :treatment-plan="treatmentPlan" /> -->
-        <!-- </template> -->
-        <!-- </UTabs> -->
-        <!-- </UCard> -->
-
         <!-- Session Management FIXME -->
-        <AppointmentManagement :active-planning-tab="activePlanningTab" :patientId="patient.id" />
+        <AppointmentManagement active-planning-tab="manual" :patientId="patient.id" />
 
         <!-- Communication Settings -->
         <UCard>
@@ -231,19 +162,10 @@
             icon="i-hugeicons-play-circle"
             color="primary"
             size="lg"
+            :loading="createTreatmentSession.isLoading.value"
             @click="handleStartSession"
           >
             Démarrer
-          </UButton>
-
-          <UButton
-            v-if="canCompleteSession"
-            icon="i-hugeicons-checkmark-circle-01"
-            color="success"
-            size="lg"
-            @click="handleCompleteSession"
-          >
-            Terminer
           </UButton>
         </div>
 

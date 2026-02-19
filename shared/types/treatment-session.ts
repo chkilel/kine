@@ -22,17 +22,12 @@ export const resumeActionSchema = z.object({
   pauseDurationSeconds: z.number().int().min(0)
 })
 
-export const endActionSchema = z
-  .object({
-    actualDurationSeconds: z.number().int().min(0).optional(),
-    tags: z.array(z.string()).optional(),
-    painLevelAfter: z.number().int().min(0).max(10).optional(),
-    notes: z.string().optional()
-  })
-  .refine(
-    (data) => data.actualDurationSeconds !== undefined || data.painLevelAfter !== undefined || data.notes !== undefined,
-    'End action requires at least one of: actualDurationSeconds, painLevelAfter, notes'
-  )
+export const endActionSchema = z.object({
+  actualDurationSeconds: z.number().int().min(0).optional(),
+  tags: z.array(z.string()).optional(),
+  painLevelAfter: z.number().int().min(0).max(10),
+  notes: z.string().optional()
+})
 
 export const updateTagsActionSchema = z
   .object({
@@ -61,7 +56,8 @@ export const treatmentSessionPatchSchema = z.union([
 // =============================================================================
 
 export const createTreatmentSessionSchema = z.object({
-  appointmentId: z.string().min(1, 'Appointment ID is required')
+  appointmentId: z.string().min(1, 'Appointment ID is required'),
+  painLevelBefore: z.number().int().min(0).max(10)
 })
 
 // =============================================================================
