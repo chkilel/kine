@@ -419,6 +419,9 @@
             @close="emit('close')"
           />
 
+          <!-- Session Timing Information Card -->
+          <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
+
           <!-- Previous Appointments Card -->
           <UCard>
             <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
