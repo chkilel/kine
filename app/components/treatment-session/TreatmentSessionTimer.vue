@@ -2,7 +2,7 @@
   import { LazyAppModalConfirm } from '#components'
 
   const props = defineProps<{
-    treatmentSession: TreatmentSession
+    treatmentSession?: TreatmentSession | null
     appointment: Appointment
     selectedTags: string[]
     painLevelAfter: number | undefined
@@ -50,15 +50,15 @@
 
   const showFiveMinuteWarning = computed(() => {
     return (
-      props.treatmentSession.status === 'in_progress' &&
+      props.treatmentSession?.status === 'in_progress' &&
       consultationDurationSeconds.value > 0 &&
       remainingSeconds.value > 0 &&
       remainingSeconds.value <= 300
     )
   })
 
-  const isInProgress = computed(() => props.treatmentSession.status === 'in_progress')
-  const isCompleted = computed(() => props.treatmentSession.status === 'completed')
+  const isInProgress = computed(() => props.treatmentSession?.status === 'in_progress')
+  const isCompleted = computed(() => props.treatmentSession?.status === 'completed')
 
   // Timer functions
   function calculateElapsedTime() {
@@ -246,7 +246,7 @@
     icon="i-hugeicons-checkmark-circle-02"
     disabled
   >
-    <span>Séance terminée</span>
+    Séance terminée
   </UButton>
 
   <UButton
@@ -259,7 +259,7 @@
     icon="i-hugeicons-checkmark-circle-02"
     @click="handleComplete"
   >
-    <span>Terminer la séance</span>
+    Terminer la séance
   </UButton>
 
   <div class="bg-primary relative flex flex-col overflow-hidden rounded-xl text-white shadow-lg">

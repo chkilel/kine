@@ -269,7 +269,7 @@
                     v-if="patient?.surgeries?.length"
                     title="Chirurgies"
                     :description="patient.surgeries.join(', ')"
-                    icon="i-hugeicons-hospital"
+                    icon="i-hugeicons-hospital-02"
                     color="info"
                     variant="subtle"
                     :ui="{
@@ -436,7 +436,7 @@
 
           <!-- Timer Card - Now uses treatment session -->
           <TreatmentSessionTimer
-            v-if="treatmentSession && appointment"
+            v-if="appointment"
             :treatment-session="treatmentSession"
             :appointment="appointment"
             :selected-tags="selectedTags"
