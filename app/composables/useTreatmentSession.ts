@@ -40,11 +40,14 @@ const _useCreateTreatmentSession = () => {
         method: 'POST',
         body: { appointmentId }
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, { appointmentId }) => {
+      const treatmentSessionId = data?.data?.id
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
       queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
-      if (data?.data?.id) {
-        queryCache.setQueryData(TREATMENT_SESSION_KEYS.single(data.data.id), data.data)
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
+      if (treatmentSessionId) {
+        queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(treatmentSessionId) })
       }
     },
     onError: (error) => {
@@ -89,11 +92,15 @@ const _useTreatmentSessionActions = () => {
         body
       })
     },
-    onSuccess: (data: any, { sessionId, appointmentId }) => {
+    onSuccess: (data, { sessionId }) => {
+      const appointmentId = data?.data?.appointmentId
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(sessionId) })
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
       queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
       queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
+      if (appointmentId) {
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
+      }
     },
     onError: (error: any) => {
       toast.add({
