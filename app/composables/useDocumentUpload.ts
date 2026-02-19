@@ -1,3 +1,5 @@
+import { DOCUMENT_KEYS } from './useDocuments'
+
 interface UploadedFile {
   file: File
   title: string
@@ -178,7 +180,7 @@ export function useDocumentUpload(options: UseDocumentUploadOptions): UseDocumen
 
       if (uploadedDocuments.length > 0) {
         uploadedFiles.value = []
-        queryCache.invalidateQueries({ key: ['documents', pid] })
+        queryCache.invalidateQueries({ key: DOCUMENT_KEYS.byPatient(pid), exact: false })
         onSuccess?.()
 
         toast.add({

@@ -1,6 +1,12 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+export const ROOM_KEYS = {
+  root: ['rooms'] as const,
+  list: (params: RoomQuery) => [...ROOM_KEYS.root, params] as const,
+  single: (id: string) => [...ROOM_KEYS.root, id] as const
+}
+
 /**
  * Query for fetching rooms list with optional filters
  * @param queryParams - Reactive query parameters for pagination and filtering
@@ -9,7 +15,7 @@ import { parseISO } from 'date-fns'
 const _useRoomsList = (queryParams: Ref<RoomQuery>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => ['rooms', queryParams.value],
+    key: () => ROOM_KEYS.list(queryParams.value),
     query: async () => {
       const resp = await requestFetch('/api/rooms', { query: queryParams.value })
       return resp?.map((data) => ({
@@ -45,7 +51,7 @@ const _useCreateRoom = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['rooms'] })
+      queryCache.invalidateQueries({ key: ROOM_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({
@@ -81,8 +87,8 @@ const _useUpdateRoom = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['rooms'] })
-      queryCache.invalidateQueries({ key: ['room', roomId] })
+      queryCache.invalidateQueries({ key: ROOM_KEYS.root, exact: false })
+      queryCache.invalidateQueries({ key: ROOM_KEYS.single(roomId) })
     },
     onError: (error: any) => {
       toast.add({
@@ -116,8 +122,8 @@ const _useDeleteRoom = () => {
         color: 'success'
       })
 
-      queryCache.invalidateQueries({ key: ['rooms'] })
-      queryCache.invalidateQueries({ key: ['room', roomId] })
+      queryCache.invalidateQueries({ key: ROOM_KEYS.root, exact: false })
+      queryCache.invalidateQueries({ key: ROOM_KEYS.single(roomId) })
     },
     onError: (error: any) => {
       toast.add({
