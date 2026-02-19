@@ -1,10 +1,16 @@
 <script setup lang="ts">
-  import { LazyTreatmentSessionSlideover } from '#components'
+  import { LazyTreatmentSessionSlideover, LazyAppointmentPlanningSlideover, LazyAppModalConfirm } from '#components'
 
   const { appointment } = defineProps<{ appointment: AppointmentWithSession }>()
 
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
+  const planningOverlay = overlay.create(LazyAppointmentPlanningSlideover)
+  const confirmModal = overlay.create(LazyAppModalConfirm)
+
+  const { mutate: updateAppointmentStatus } = useUpdateAppointmentStatus()
+  const { data: patient } = usePatientById(() => appointment.patientId)
+  const { treatmentPlans } = usePatientTreatmentPlans(() => appointment.patientId)
 
   // Get treatment session from appointment relation
   const treatmentSession = computed(() => appointment.treatmentSession)
@@ -13,8 +19,14 @@
   const status = computed(() => ({
     completed: appointment.status === 'completed',
     scheduled: ['scheduled', 'confirmed'].includes(appointment.status),
-    inProgress: treatmentSession.value?.status === 'in_progress'
+    inProgress: treatmentSession.value?.status === 'in_progress',
+    cancelled: appointment.status === 'cancelled'
   }))
+
+  // Computed property to determine if appointment has started
+  const appointmentHasStarted = computed(() => {
+    return status.value.inProgress || status.value.completed || !!treatmentSession.value
+  })
 
   // Computed text values
   const timeLabel = computed(() => formatTimeString(appointment.startTime))
@@ -54,26 +66,86 @@
   })
 
   // Dropdown menu items - memoized
-  const menuItems = computed(() => [
-    [
-      {
-        label: 'Patient',
-        icon: 'i-hugeicons-profile-02',
-        to: `/patients/${appointment.patientId}`
-      },
-      {
-        label: 'RDV',
-        icon: 'i-hugeicons-appointment-02',
-        onSelect: () => console.log('🚀 >>> ', 'RDV')
-      }
+  const menuItems = computed(() => {
+    if (appointmentHasStarted.value) {
+      return [
+        [
+          {
+            label: 'Patient',
+            icon: 'i-hugeicons-profile-02',
+            to: `/patients/${appointment.patientId}`
+          },
+          {
+            label: 'Séance',
+            icon: 'i-hugeicons-file-01',
+            onSelect: () => openSessionSlideover()
+          }
+        ]
+      ]
+    }
+
+    return [
+      [
+        {
+          label: 'Patient',
+          icon: 'i-hugeicons-profile-02',
+          to: `/patients/${appointment.patientId}`
+        },
+        {
+          label: 'Annuler',
+          icon: 'i-hugeicons-cancel-circle-half-dot',
+          onSelect: () => handleCancelAppointment()
+        },
+        {
+          label: 'Reporter',
+          icon: 'i-hugeicons-calendar-02',
+          onSelect: () => handlePostponeAppointment()
+        },
+        {
+          label: 'Notes pré-séance',
+          icon: 'i-hugeicons-sticky-note-01',
+          onSelect: () => openSessionSlideover()
+        }
+      ]
     ]
-  ])
+  })
 
   // Event handlers
   const openSessionSlideover = () => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
       appointmentId: appointment.id
+    })
+  }
+
+  const handleCancelAppointment = async () => {
+    const confirmed = await confirmModal.open({
+      title: 'Annuler le rendez-vous',
+      message: 'Êtes-vous sûr de vouloir annuler ce rendez-vous ?',
+      confirmText: 'Confirmer',
+      cancelText: 'Annuler',
+      confirmColor: 'error',
+      icon: 'i-hugeicons-alert-02'
+    })
+
+    if (confirmed) {
+      updateAppointmentStatus({
+        appointmentId: appointment.id,
+        status: 'cancelled',
+        patientId: appointment.patientId
+      })
+    }
+  }
+
+  const handlePostponeAppointment = () => {
+    if (!patient.value) return
+    const treatmentPlan = appointment.treatmentPlanId
+      ? treatmentPlans.value?.find((p) => p.id === appointment.treatmentPlanId)
+      : null
+    planningOverlay.open({
+      patient: patient.value,
+      treatmentPlan: treatmentPlan ? { ...treatmentPlan, notes: [...treatmentPlan.notes] } : null,
+      appointment
     })
   }
 
@@ -135,7 +207,7 @@
         </p>
         <p class="text-muted flex items-center gap-1 text-xs">
           <UIcon :name="statusIcon" class="text-sm" />
-          {{ status.inProgress ? 'En cours' : getAppointmentStatusLabel(appointment.status || 'scheduled') }}
+          {{ status.inProgress ? 'En cours' : getAppointmentStatusLabel(appointment.status) }}
         </p>
       </div>
     </div>
@@ -157,7 +229,7 @@
       v-else-if="status.inProgress"
       label="Continuer"
       icon="i-hugeicons-hourglass"
-      size="lg"
+      size="xl"
       color="warning"
       variant="solid"
       :ui="{ base: 'rounded-xl' }"
@@ -168,12 +240,23 @@
     <UBadge
       v-else-if="status.completed"
       label="Terminée"
-      size="lg"
+      size="xl"
       icon="i-hugeicons-checkmark-circle-02"
       color="success"
       variant="subtle"
       class="shrink-0 rounded-full"
       :ui="{ label: 'text-success-600' }"
+    />
+
+    <UBadge
+      v-else-if="status.cancelled"
+      label="Annulé"
+      size="xl"
+      icon="i-hugeicons-cancel-circle-half-dot"
+      color="error"
+      variant="subtle"
+      class="shrink-0 rounded-full"
+      :ui="{ label: 'text-error-600' }"
     />
 
     <!-- Dropdown Menu -->
