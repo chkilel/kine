@@ -61,7 +61,7 @@ export const APPOINTMENT_TYPES_CONFIG = {
   reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' },
   exercise_supervision: { label: "Supervision d'exercices", icon: 'i-hugeicons-dumbbell-01' },
   post_op_follow_up: { label: 'Suivi post-opératoire', icon: 'i-hugeicons-hospital-bed-02' },
-  urgent_visit: { label: 'Consultation urgente', icon: 'i-hugeicons-emergency-cross' },
+  urgent_visit: { label: 'Consultation urgente', icon: 'i-hugeicons-ambulance' },
   consultation: { label: 'Consultation individuelle', icon: 'i-hugeicons-stethoscope' },
   discharge: { label: 'Sortie', icon: 'i-hugeicons-square-arrow-left-02' }
 } as const
