@@ -20,6 +20,7 @@
     completed: appointment.status === 'completed',
     scheduled: ['scheduled', 'confirmed'].includes(appointment.status),
     inProgress: treatmentSession.value?.status === 'in_progress',
+    preSession: treatmentSession.value?.status === 'pre_session',
     cancelled: appointment.status === 'cancelled'
   }))
 
@@ -214,7 +215,7 @@
 
     <!-- Action Buttons -->
     <UButton
-      v-if="status.scheduled && !status.inProgress"
+      v-if="status.scheduled && !status.inProgress && !status.preSession"
       label="Commencer"
       icon="i-hugeicons-play"
       size="lg"
@@ -223,6 +224,18 @@
       :ui="{ base: 'rounded-xl' }"
       class="shadow-success/10 shrink-0 font-semibold text-white shadow-lg"
       @click="openSessionSlideover"
+    />
+
+    <UButton
+      v-else-if="status.preSession"
+      label="Démarrer"
+      icon="i-hugeicons-play"
+      size="lg"
+      color="warning"
+      variant="solid"
+      :ui="{ base: 'rounded-xl' }"
+      class="shadow-warning/10 shrink-0 font-semibold text-white shadow-lg"
+      @click="handleContinueSession"
     />
 
     <UButton

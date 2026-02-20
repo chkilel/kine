@@ -53,6 +53,7 @@
   })
 
   const isInProgress = computed(() => props.appointment.treatmentSession?.status === 'in_progress')
+  const isFinished = computed(() => props.appointment.treatmentSession?.status === 'finished')
   const isCompleted = computed(() => props.appointment.treatmentSession?.status === 'completed')
 
   const isPausing = computed(() => isPaused.value && treatmentSessionActions.isLoading.value)
@@ -207,7 +208,7 @@
 
 <template>
   <UButton
-    v-if="isCompleted"
+    v-if="isFinished || isCompleted"
     color="success"
     size="xl"
     variant="solid"

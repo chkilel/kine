@@ -12,10 +12,10 @@ const _useCreateTreatmentSession = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId, painLevelBefore }: { appointmentId: string; painLevelBefore: number }) =>
+    mutation: async ({ appointmentId }: { appointmentId: string }) =>
       requestFetch('/api/treatment-sessions', {
         method: 'POST',
-        body: { appointmentId, painLevelBefore }
+        body: { appointmentId }
       }),
     onSuccess: (data, { appointmentId }) => {
       const treatmentSessionId = data?.data?.id
@@ -42,7 +42,7 @@ type SessionActionParams = {
   appointmentId?: string
 }
 
-type StartParams = SessionActionParams & { actualStartTime: string }
+type StartParams = SessionActionParams & { actualStartTime: string; painLevelBefore: number }
 type PauseParams = SessionActionParams & { pauseStartTime: string }
 type ResumeParams = SessionActionParams & { pauseDurationSeconds: number }
 type EndParams = SessionActionParams & {
@@ -53,6 +53,7 @@ type EndParams = SessionActionParams & {
 }
 type UpdateTagsParams = SessionActionParams & { tags: string[] }
 type ExtendParams = SessionActionParams & { extendedDurationMinutes: number }
+type CancelParams = SessionActionParams
 
 const _useTreatmentSessionActions = () => {
   const toast = useToast()
@@ -61,7 +62,7 @@ const _useTreatmentSessionActions = () => {
 
   const mutation = useMutation({
     mutation: async (
-      params: StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams
+      params: StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams | CancelParams
     ) => {
       const { sessionId, appointmentId, ...body } = params
       return requestFetch(`/api/treatment-sessions/${sessionId}`, {
@@ -90,7 +91,6 @@ const _useTreatmentSessionActions = () => {
 
   return {
     ...mutation,
-    // Start is handled by create, but we keep it for consistency
     start: (params: StartParams) => mutation.mutate(params),
     startAsync: (params: StartParams) => mutation.mutateAsync(params),
     pause: (params: PauseParams) => mutation.mutate(params),
@@ -102,7 +102,9 @@ const _useTreatmentSessionActions = () => {
     updateTags: (params: UpdateTagsParams) => mutation.mutate(params),
     updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params),
     extend: (params: ExtendParams) => mutation.mutate(params),
-    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params)
+    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params),
+    cancel: (params: CancelParams) => mutation.mutate(params),
+    cancelAsync: (params: CancelParams) => mutation.mutateAsync(params)
   }
 }
 

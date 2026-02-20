@@ -2,12 +2,6 @@ import { z } from 'zod'
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { treatmentSessions } from '~~/server/database/schema/treatment-session'
 import type { Appointment } from './appointment.type'
-import {
-  treatmentSessionStatusSchema,
-  treatmentSessionStepSchema,
-  calendarDateSchema,
-  timeFormatSchema
-} from './base.types'
 
 // =============================================================================
 // Treatment Session Schemas and Types
@@ -26,7 +20,6 @@ export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessio
   nextSteps: z.string().nullable().optional(),
   painLevelBefore: z.number().int().min(0).max(10).nullable().optional(),
   painLevelAfter: z.number().int().min(0).max(10).nullable().optional(),
-  sessionStep: treatmentSessionStepSchema,
   status: treatmentSessionStatusSchema,
   actualStartTime: timeFormatSchema.nullable().optional(),
   actualDurationSeconds: z.number().int().min(0).nullable().optional(),
@@ -47,8 +40,7 @@ export const treatmentSessionCreateSchema = createInsertSchema(treatmentSessions
   patientId: z.string().min(1),
   therapistId: z.string().min(1),
   treatmentPlanId: z.string().optional(),
-  status: z.enum(['in_progress', 'completed']).default('in_progress'),
-  sessionStep: z.enum(['pre-session', 'active-session', 'post-session', 'summary']).default('pre-session'),
+  status: z.enum(TREATMENT_SESSION_STATUSES).default('pre_session'),
   painLevelBefore: z.number().int().min(0).max(10).optional(),
   painLevelAfter: z.number().int().min(0).max(10).optional(),
   actualDurationSeconds: z.number().int().min(0).optional(),

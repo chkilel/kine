@@ -129,7 +129,9 @@
   )
 
   // Check if session hasn't started yet
-  const sessionNotStarted = computed(() => !appointment.value?.treatmentSession)
+  const sessionNotStarted = computed(
+    () => !appointment.value?.treatmentSession || appointment.value?.treatmentSession?.status === 'pre_session'
+  )
 
   // Check if session is in progress
   const sessionInProgress = computed(() => appointment.value?.treatmentSession?.status === 'in_progress')
@@ -154,8 +156,7 @@
     if (evaValue === null) return
 
     createTreatmentSession({
-      appointmentId: props.appointmentId,
-      painLevelBefore: evaValue
+      appointmentId: props.appointmentId
     })
   }
 </script>

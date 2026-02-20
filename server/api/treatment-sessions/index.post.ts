@@ -1,7 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { appointments, treatmentSessions } from '~~/server/database/schema'
-import { createTreatmentSessionSchema } from '~~/shared/types/treatment-session'
-import { getCurrentTimeHHMMSS } from '~~/shared/utils/time'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -9,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const body = await readValidatedBody(event, createTreatmentSessionSchema.parse)
-    const { appointmentId, painLevelBefore } = body
+    const { appointmentId } = body
 
     // Fetch the appointment
     const [appointment] = await db
@@ -48,8 +46,6 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create treatment session
-    const actualStartTime = getCurrentTimeHHMMSS()
-
     const [treatmentSession] = await db
       .insert(treatmentSessions)
       .values({
@@ -58,13 +54,7 @@ export default defineEventHandler(async (event) => {
         patientId: appointment.patientId,
         therapistId: appointment.therapistId,
         treatmentPlanId: appointment.treatmentPlanId,
-        status: 'in_progress',
-        sessionStep: 'pre-session',
-        actualStartTime,
-        actualDurationSeconds: 0,
-        totalPausedSeconds: 0,
-        extendedDurationMinutes: 0,
-        painLevelBefore
+        status: 'pre_session'
       })
       .returning()
 

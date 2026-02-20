@@ -8,7 +8,7 @@ import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../utils/co
 import { LOCATIONS } from '../utils/constants.location'
 import { VALID_PHONE_CATEGORIES } from '../utils/constants.user'
 import { APPOINTMENT_STATUSES, APPOINTMENT_TYPES } from '../utils/constants.appointment'
-import { TREATMENT_SESSION_STATUSES, TREATMENT_SESSION_STEPS } from '../utils/constants.treatment-session'
+import { TREATMENT_SESSION_STATUSES } from '../utils/constants.treatment-session'
 
 z.config(fr())
 
@@ -81,9 +81,6 @@ export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
 
 export const treatmentSessionStatusSchema = z.enum(TREATMENT_SESSION_STATUSES)
 export type TreatmentSessionStatus = z.infer<typeof treatmentSessionStatusSchema>
-
-export const treatmentSessionStepSchema = z.enum(TREATMENT_SESSION_STEPS)
-export type TreatmentSessionStep = z.infer<typeof treatmentSessionStepSchema>
 
 export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
 export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>

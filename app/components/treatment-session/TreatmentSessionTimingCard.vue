@@ -4,13 +4,14 @@
   const timingInfo = computed(() => {
     const apt = props.appointment
     const session = apt.treatmentSession
+    const isSessionFinished = session?.status === 'finished' || session?.status === 'completed'
     return {
       appointmentDate: formatFrenchDate(apt.date),
       appointmentStartTime: formatTimeString(apt.startTime),
       appointmentEndTime: formatTimeString(apt.endTime),
       actualStartTime: session?.actualStartTime ? formatTimeString(session.actualStartTime) : null,
       actualEndTime:
-        session?.status === 'completed' && session.actualStartTime && session.actualDurationSeconds
+        isSessionFinished && session.actualStartTime && session.actualDurationSeconds
           ? formatTimeString(addMinutesToTime(session.actualStartTime, Math.floor(session.actualDurationSeconds / 60)))
           : null,
       plannedDurationMinutes: apt.duration,

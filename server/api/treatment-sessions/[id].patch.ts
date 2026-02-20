@@ -1,17 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { treatmentSessions, appointments } from '~~/server/database/schema'
-import {
-  treatmentSessionPatchSchema,
-  startActionSchema,
-  pauseActionSchema,
-  resumeActionSchema,
-  endActionSchema,
-  updateTagsActionSchema,
-  extendActionSchema
-} from '~~/shared/types/treatment-session'
-import type { TreatmentSessionActionType } from '~~/shared/types/treatment-session'
-import type { TreatmentSession } from '~~/shared/types/treatment-session.type'
-import { getCurrentTimeHHMMSS, calculateTimeDifference } from '~~/shared/utils/time'
 
 function detectActionBySchema(body: unknown): TreatmentSessionActionType {
   if (resumeActionSchema.safeParse(body).success) return 'resume'
@@ -20,6 +8,7 @@ function detectActionBySchema(body: unknown): TreatmentSessionActionType {
   if (startActionSchema.safeParse(body).success) return 'start'
   if (updateTagsActionSchema.safeParse(body).success) return 'updateTags'
   if (extendActionSchema.safeParse(body).success) return 'extend'
+  if (cancelActionSchema.safeParse(body).success) return 'cancel'
 
   throw createError({
     statusCode: 400,
@@ -30,10 +19,10 @@ function detectActionBySchema(body: unknown): TreatmentSessionActionType {
 function validateActionState(action: TreatmentSessionActionType, session: TreatmentSession) {
   switch (action) {
     case 'start':
-      if (session.status !== 'in_progress') {
+      if (session.status !== 'pre_session') {
         throw createError({
           statusCode: 400,
-          message: 'Treatment session is not in progress'
+          message: 'Can only start a session from pre_session status'
         })
       }
       break
@@ -41,7 +30,7 @@ function validateActionState(action: TreatmentSessionActionType, session: Treatm
       if (session.status !== 'in_progress') {
         throw createError({
           statusCode: 400,
-          message: 'Treatment session is not in progress'
+          message: 'Cannot pause session - session is not in progress'
         })
       }
       if (session.pauseStartTime) {
@@ -60,10 +49,24 @@ function validateActionState(action: TreatmentSessionActionType, session: Treatm
       }
       break
     case 'end':
-      if (session.status === 'completed') {
+      if (session.status !== 'in_progress') {
         throw createError({
           statusCode: 400,
-          message: 'Treatment session is already completed'
+          message: 'Session is already finished or completed'
+        })
+      }
+      break
+    case 'cancel':
+      if (session.status === 'finished' || session.status === 'completed') {
+        throw createError({
+          statusCode: 400,
+          message: 'Cannot cancel a finished or completed session'
+        })
+      }
+      if (session.status === 'canceled') {
+        throw createError({
+          statusCode: 400,
+          message: 'Session is already canceled'
         })
       }
       break
@@ -81,7 +84,8 @@ function getSuccessMessage(action: TreatmentSessionActionType): string {
     resume: 'Session reprise',
     end: 'Session terminée avec succès',
     updateTags: 'Tags mis à jour',
-    extend: 'Durée étendue avec succès'
+    extend: 'Durée étendue avec succès',
+    cancel: 'Session annulée'
   }
   return messages[action]
 }
@@ -124,7 +128,9 @@ export default defineEventHandler(async (event) => {
       case 'start': {
         const validated = startActionSchema.parse(body)
         updateData = {
+          status: 'in_progress',
           actualStartTime: validated.actualStartTime,
+          painLevelBefore: validated.painLevelBefore,
           actualDurationSeconds: 0,
           totalPausedSeconds: 0,
           pauseStartTime: null
@@ -167,14 +173,13 @@ export default defineEventHandler(async (event) => {
         }
 
         updateData = {
-          status: 'completed',
+          status: 'finished',
           actualDurationSeconds: finalDurationSeconds,
           tags: tagsValue,
           painLevelAfter: validated.painLevelAfter,
           treatmentSummary: validated.notes,
           totalPausedSeconds: session.totalPausedSeconds,
-          pauseStartTime: null,
-          sessionStep: 'post-session'
+          pauseStartTime: null
         }
         break
       }
@@ -193,6 +198,13 @@ export default defineEventHandler(async (event) => {
         }
         break
       }
+      case 'cancel': {
+        updateData = {
+          status: 'canceled',
+          pauseStartTime: null
+        }
+        break
+      }
     }
 
     const [updated] = await db
@@ -201,7 +213,33 @@ export default defineEventHandler(async (event) => {
       .where(and(eq(treatmentSessions.organizationId, organizationId), eq(treatmentSessions.id, id)))
       .returning()
 
-    // If session was completed, update appointment status as well
+    if (!updated) {
+      throw createError({
+        statusCode: 404,
+        message: 'Failed to update treatment session'
+      })
+    }
+
+    // Auto-transition from finished to completed when billed field is set
+    if (updated.status === 'finished' && updated.billed) {
+      const [transitioned] = await db
+        .update(treatmentSessions)
+        .set({ status: 'completed' })
+        .where(and(eq(treatmentSessions.organizationId, organizationId), eq(treatmentSessions.id, id)))
+        .returning()
+
+      // If session was ended, update appointment status as well
+      if (actionType === 'end') {
+        await db
+          .update(appointments)
+          .set({ status: 'completed' })
+          .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, session.appointmentId)))
+      }
+
+      return successResponse(transitioned, getSuccessMessage(actionType))
+    }
+
+    // If session was ended, update appointment status as well
     if (actionType === 'end') {
       await db
         .update(appointments)
