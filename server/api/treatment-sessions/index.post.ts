@@ -6,8 +6,10 @@ export default defineEventHandler(async (event) => {
   const { organizationId } = await requireAuth(event)
 
   try {
-    const body = await readValidatedBody(event, createTreatmentSessionSchema.parse)
-    const { appointmentId } = body
+    const { appointmentId, primaryConcern, treatmentSummary } = await readValidatedBody(
+      event,
+      createTreatmentSessionSchema.parse
+    )
 
     // Fetch the appointment
     const [appointment] = await db
@@ -54,6 +56,8 @@ export default defineEventHandler(async (event) => {
         patientId: appointment.patientId,
         therapistId: appointment.therapistId,
         treatmentPlanId: appointment.treatmentPlanId,
+        primaryConcern,
+        treatmentSummary,
         status: 'pre_session'
       })
       .returning()

@@ -13,8 +13,8 @@ export const appointmentCreateSchema = createInsertSchema(appointments, {
   therapistId: z.string().min(1, 'Therapist ID is required'),
   roomId: z.string().nullable().optional(),
   date: calendarDateSchema,
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
+  startTime: z.string(),
+  endTime: z.string(),
   duration: z.int().min(1, 'Duration must be at least 1 minute'),
   type: appointmentTypeSchema.optional(),
   location: locationSchema.default('clinic'),
@@ -27,6 +27,13 @@ export const appointmentCreateSchema = createInsertSchema(appointments, {
 })
 
 export const appointmentUpdateSchema = appointmentCreateSchema.partial()
+
+export const appointmentStatusUpdateSchema = z.object({
+  status: appointmentStatusSchema.optional(),
+  confirmedAt: z.coerce.date().optional(),
+  cancelledAt: z.coerce.date().optional(),
+  noShowReason: z.string().optional()
+})
 
 export const appointmentSchema = createSelectSchema(appointments, {
   id: z.string(),
@@ -88,6 +95,7 @@ export type AppointmentWithSession = z.infer<typeof appointmentSchema> & {
 export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
 export type AppointmentUpdate = z.infer<typeof appointmentUpdateSchema>
 export type AppointmentQuery = z.infer<typeof appointmentQuerySchema>
+export type AppointmentStatusUpdate = z.infer<typeof appointmentStatusUpdateSchema>
 
 // Planning types
 export interface PlanningSettings {

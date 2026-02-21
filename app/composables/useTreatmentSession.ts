@@ -12,10 +12,10 @@ const _useCreateTreatmentSession = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId }: { appointmentId: string }) =>
+    mutation: async ({ appointmentId, primaryConcern, treatmentSummary }: CreateTreatmentSession) =>
       requestFetch('/api/treatment-sessions', {
         method: 'POST',
-        body: { appointmentId }
+        body: { appointmentId, primaryConcern, treatmentSummary }
       }),
     onSuccess: (data, { appointmentId }) => {
       const treatmentSessionId = data?.data?.id
@@ -28,9 +28,11 @@ const _useCreateTreatmentSession = () => {
       }
     },
     onError: (error) => {
+      const parsedError = parseError(error, 'Impossible de créer la séance de traitement')
+      if (parsedError.statusCode === 409) return
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de créer la séance de traitement').message,
+        description: parsedError.message,
         color: 'error'
       })
     }
@@ -42,18 +44,14 @@ type SessionActionParams = {
   appointmentId?: string
 }
 
-type StartParams = SessionActionParams & { actualStartTime: string; painLevelBefore: number }
-type PauseParams = SessionActionParams & { pauseStartTime: string }
-type ResumeParams = SessionActionParams & { pauseDurationSeconds: number }
-type EndParams = SessionActionParams & {
-  actualDurationSeconds?: number
-  tags?: string[]
-  painLevelAfter?: number
-  notes?: string
-}
-type UpdateTagsParams = SessionActionParams & { tags: string[] }
-type ExtendParams = SessionActionParams & { extendedDurationMinutes: number }
-type CancelParams = SessionActionParams
+type StartParams = SessionActionParams & StartAction
+type PauseParams = SessionActionParams & PauseAction
+type ResumeParams = SessionActionParams & ResumeAction
+type EndParams = SessionActionParams & EndAction
+type UpdateTagsParams = SessionActionParams & UpdateTagsAction
+type ExtendParams = SessionActionParams & ExtendAction
+type CancelParams = SessionActionParams & CancelAction
+type UpdateClinicalNotesParams = SessionActionParams & UpdateClinicalNotesAction
 
 const _useTreatmentSessionActions = () => {
   const toast = useToast()
@@ -62,7 +60,15 @@ const _useTreatmentSessionActions = () => {
 
   const mutation = useMutation({
     mutation: async (
-      params: StartParams | PauseParams | ResumeParams | EndParams | UpdateTagsParams | ExtendParams | CancelParams
+      params:
+        | StartParams
+        | PauseParams
+        | ResumeParams
+        | EndParams
+        | UpdateTagsParams
+        | ExtendParams
+        | CancelParams
+        | UpdateClinicalNotesParams
     ) => {
       const { sessionId, appointmentId, ...body } = params
       return requestFetch(`/api/treatment-sessions/${sessionId}`, {
@@ -103,8 +109,10 @@ const _useTreatmentSessionActions = () => {
     updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params),
     extend: (params: ExtendParams) => mutation.mutate(params),
     extendAsync: (params: ExtendParams) => mutation.mutateAsync(params),
-    cancel: (params: CancelParams) => mutation.mutate(params),
-    cancelAsync: (params: CancelParams) => mutation.mutateAsync(params)
+    cancel: (params: CancelParams) => mutation.mutate({ ...params, action: 'cancel' }),
+    cancelAsync: (params: CancelParams) => mutation.mutateAsync({ ...params, action: 'cancel' }),
+    updateClinicalNotes: (params: UpdateClinicalNotesParams) => mutation.mutate(params),
+    updateClinicalNotesAsync: (params: UpdateClinicalNotesParams) => mutation.mutateAsync(params)
   }
 }
 

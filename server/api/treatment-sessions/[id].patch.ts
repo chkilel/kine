@@ -8,6 +8,13 @@ function detectActionBySchema(body: unknown): TreatmentSessionActionType {
   if (startActionSchema.safeParse(body).success) return 'start'
   if (updateTagsActionSchema.safeParse(body).success) return 'updateTags'
   if (extendActionSchema.safeParse(body).success) return 'extend'
+  if (
+    updateClinicalNotesActionSchema.safeParse(body).success &&
+    Object.keys(body as object).some((k) =>
+      ['primaryConcern', 'treatmentSummary', 'observations', 'nextSteps'].includes(k)
+    )
+  )
+    return 'updateClinicalNotes'
   if (cancelActionSchema.safeParse(body).success) return 'cancel'
 
   throw createError({
@@ -19,7 +26,7 @@ function detectActionBySchema(body: unknown): TreatmentSessionActionType {
 function validateActionState(action: TreatmentSessionActionType, session: TreatmentSession) {
   switch (action) {
     case 'start':
-      if (session.status !== 'pre_session') {
+      if (session.status && session.status !== 'pre_session') {
         throw createError({
           statusCode: 400,
           message: 'Can only start a session from pre_session status'
@@ -72,6 +79,7 @@ function validateActionState(action: TreatmentSessionActionType, session: Treatm
       break
     case 'updateTags':
     case 'extend':
+    case 'updateClinicalNotes':
       // No state validation needed for these actions
       break
   }
@@ -85,7 +93,8 @@ function getSuccessMessage(action: TreatmentSessionActionType): string {
     end: 'Session terminée avec succès',
     updateTags: 'Tags mis à jour',
     extend: 'Durée étendue avec succès',
-    cancel: 'Session annulée'
+    cancel: 'Session annulée',
+    updateClinicalNotes: 'Notes cliniques mises à jour'
   }
   return messages[action]
 }
@@ -131,9 +140,6 @@ export default defineEventHandler(async (event) => {
           status: 'in_progress',
           actualStartTime: validated.actualStartTime,
           painLevelBefore: validated.painLevelBefore,
-          actualDurationSeconds: 0,
-          totalPausedSeconds: 0,
-          pauseStartTime: null
         }
         break
       }
@@ -154,7 +160,6 @@ export default defineEventHandler(async (event) => {
       }
       case 'end': {
         const validated = endActionSchema.parse(body)
-        const tagsValue = validated.tags && validated.tags.length > 0 ? JSON.stringify(validated.tags) : null
 
         // Calculate final duration if not provided
         let finalDurationSeconds = validated.actualDurationSeconds
@@ -175,9 +180,7 @@ export default defineEventHandler(async (event) => {
         updateData = {
           status: 'finished',
           actualDurationSeconds: finalDurationSeconds,
-          tags: tagsValue,
           painLevelAfter: validated.painLevelAfter,
-          treatmentSummary: validated.notes,
           totalPausedSeconds: session.totalPausedSeconds,
           pauseStartTime: null
         }
@@ -198,10 +201,54 @@ export default defineEventHandler(async (event) => {
         }
         break
       }
+      case 'updateClinicalNotes': {
+        const validated = updateClinicalNotesActionSchema.parse(body)
+
+        // 1.1 Prevent updating observations in pre_session status
+        if (session.status === 'pre_session' && validated.observations !== undefined) {
+          throw createError({
+            statusCode: 400,
+            message: 'Cannot update observations in pre_session status'
+          })
+        }
+
+        // 1.2 Prevent updating nextSteps before finished status
+        if (
+          (session.status === 'pre_session' || session.status === 'in_progress') &&
+          validated.nextSteps !== undefined
+        ) {
+          throw createError({
+            statusCode: 400,
+            message: 'Cannot update next steps before session is finished'
+          })
+        }
+
+        updateData = {
+          ...(validated.primaryConcern !== undefined && { primaryConcern: validated.primaryConcern }),
+          ...(validated.treatmentSummary !== undefined && { treatmentSummary: validated.treatmentSummary }),
+          ...(validated.observations !== undefined && { observations: validated.observations }),
+          ...(validated.nextSteps !== undefined && { nextSteps: validated.nextSteps })
+        }
+        break
+      }
       case 'cancel': {
         updateData = {
           status: 'canceled',
-          pauseStartTime: null
+          primaryConcern: null,
+          treatmentSummary: null,
+          observations: null,
+          nextSteps: null,
+          painLevelBefore: null,
+          painLevelAfter: null,
+          actualStartTime: null,
+          actualDurationSeconds: null,
+          totalPausedSeconds: null,
+          pauseStartTime: null,
+          extendedDurationMinutes: 0,
+          tags: null,
+          billed: null,
+          insuranceClaimed: false,
+          cost: null
         }
         break
       }

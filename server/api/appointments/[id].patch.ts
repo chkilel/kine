@@ -1,14 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { appointments } from '~~/server/database/schema'
-import { z } from 'zod'
-
-// Schema for appointment status updates only
-const appointmentStatusUpdateSchema = z.object({
-  status: z.enum(['scheduled', 'confirmed', 'cancelled', 'no_show', 'completed']).optional(),
-  confirmedAt: z.number().optional(),
-  cancelledAt: z.number().optional(),
-  noShowReason: z.string().optional()
-})
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -39,16 +30,16 @@ export default defineEventHandler(async (event) => {
     }
 
     // Build update data with timestamps based on status
-    const updateData: Partial<typeof appointment> = {}
+    const updateData: AppointmentStatusUpdate = {}
 
     if (body.status) {
       updateData.status = body.status
 
       // Set timestamps based on status changes
       if (body.status === 'confirmed') {
-        updateData.confirmedAt = Math.floor(Date.now() / 1000)
+        updateData.confirmedAt = new Date()
       } else if (body.status === 'cancelled') {
-        updateData.cancelledAt = Math.floor(Date.now() / 1000)
+        updateData.cancelledAt = new Date()
       }
     }
 

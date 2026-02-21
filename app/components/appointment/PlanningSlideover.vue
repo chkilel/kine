@@ -4,7 +4,7 @@
   const props = defineProps<{
     patient: Patient
     treatmentPlan?: TreatmentPlanWithProgress | null
-    appointment?: Appointment
+    appointment?: AppointmentWithSession
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
@@ -44,6 +44,15 @@
   const handleStartSession = async () => {
     if (!props.appointment || createTreatmentSession.isLoading.value) return
 
+    if (props.appointment.treatmentSession?.id) {
+      treatmentSesionOverlay.open({
+        patientId: props.patient.id,
+        appointmentId: props.appointment.id
+      })
+      emit('close')
+      return
+    }
+
     const evaValue = await evaModal.open({
       title: 'Évaluation de la douleur initiale',
       description: 'Veuillez indiquer le niveau de douleur du patient avant la séance',
@@ -56,8 +65,7 @@
 
     try {
       const result = await createTreatmentSession.mutateAsync({
-        appointmentId: props.appointment.id,
-        painLevelBefore: evaValue
+        appointmentId: props.appointment.id
       })
 
       if (result?.data?.id) {
@@ -67,8 +75,15 @@
         })
         emit('close')
       }
-    } catch {
-      // Error already handled by composable's onError
+    } catch (error) {
+      const parsedError = parseError(error, 'Impossible de créer la séance de traitement')
+      if (parsedError.statusCode === 409) {
+        treatmentSesionOverlay.open({
+          patientId: props.patient.id,
+          appointmentId: props.appointment.id
+        })
+        emit('close')
+      }
     }
   }
 </script>
