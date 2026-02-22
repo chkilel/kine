@@ -1,9 +1,22 @@
 installation:
-  version: 6.0.0-alpha.21
-  installDate: 2025-12-27T23:03:54.223Z
-  lastUpdated: 2025-12-27T23:03:54.223Z
+  version: 6.0.1
+  installDate: 2026-02-22T14:52:44.890Z
+  lastUpdated: 2026-02-22T14:52:44.890Z
 modules:
-  - core
-  - bmm
+  - name: core
+    version: 6.0.1
+    installDate: 2026-02-22T14:52:44.890Z
+    lastUpdated: 2026-02-22T14:52:44.890Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmm
+    version: 6.0.1
+    installDate: 2026-02-22T14:52:44.871Z
+    lastUpdated: 2026-02-22T14:52:44.890Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
 ides:
   - opencode
+  - trae
