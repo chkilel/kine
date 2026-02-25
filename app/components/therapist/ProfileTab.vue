@@ -14,8 +14,8 @@
     lastName: user.value?.lastName || '',
     specialization: user.value?.specialization,
     licenseNumber: user.value?.licenseNumber,
-    defaultConsultationDuration: user.value?.defaultConsultationDuration || undefined,
-    consultationGapMinutes: user.value?.consultationGapMinutes ?? 15,
+    defaultAppointmentDuration: user.value?.defaultAppointmentDuration || undefined,
+    appointmentGapMinutes: user.value?.appointmentGapMinutes ?? 15,
     slotIncrementMinutes: user.value?.slotIncrementMinutes ?? 15,
     phoneNumbers: user.value?.phoneNumbers
   })
@@ -47,8 +47,8 @@
         lastName: profile.lastName,
         specialization: profile.specialization,
         licenseNumber: profile.licenseNumber,
-        defaultConsultationDuration: profile.defaultConsultationDuration,
-        consultationGapMinutes: profile.consultationGapMinutes,
+        defaultAppointmentDuration: profile.defaultAppointmentDuration,
+        appointmentGapMinutes: profile.appointmentGapMinutes,
         slotIncrementMinutes: profile.slotIncrementMinutes,
         phoneNumbers: profile.phoneNumbers
       })
@@ -122,12 +122,12 @@
 
           <USeparator />
 
-          <UFormField name="defaultConsultationDuration" label="Durée par défaut de la séance">
+          <UFormField name="defaultAppointmentDuration" label="Durée par défaut de la séance">
             <ClientOnly>
               <template #fallback>
                 <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
                   <USkeleton
-                    v-for="duration in CONSULTATION_DURATIONS"
+                    v-for="duration in APPOINTMENT_DURATIONS"
                     :key="duration"
                     class="border-default h-9 rounded-lg border"
                   />
@@ -135,13 +135,13 @@
               </template>
               <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
                 <UButton
-                  v-for="duration in CONSULTATION_DURATIONS"
+                  v-for="duration in APPOINTMENT_DURATIONS"
                   :key="duration"
-                  :variant="profile.defaultConsultationDuration === duration ? 'solid' : 'outline'"
-                  :color="profile.defaultConsultationDuration === duration ? 'primary' : 'neutral'"
+                  :variant="profile.defaultAppointmentDuration === duration ? 'solid' : 'outline'"
+                  :color="profile.defaultAppointmentDuration === duration ? 'primary' : 'neutral'"
                   size="lg"
                   block
-                  @click="profile.defaultConsultationDuration = duration"
+                  @click="profile.defaultAppointmentDuration = duration"
                 >
                   {{ duration }} min
                 </UButton>
@@ -151,13 +151,13 @@
 
           <USeparator />
 
-          <UFormField name="consultationGapMinutes" label="Intervalle entre séances">
-            <template #hint>Temps minimum entre deux consultations consécutives</template>
+          <UFormField name="AppointmentGapMinutes" label="Intervalle entre séances">
+            <template #hint>Temps minimum entre deux Appointments consécutives</template>
             <ClientOnly>
               <template #fallback>
                 <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
                   <USkeleton
-                    v-for="gap in CONSULTATION_GAP_OPTIONS"
+                    v-for="gap in APPOINTMENT_GAP_OPTIONS"
                     :key="gap"
                     class="border-default h-9 rounded-lg border"
                   />
@@ -165,13 +165,13 @@
               </template>
               <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
                 <UButton
-                  v-for="gap in CONSULTATION_GAP_OPTIONS"
+                  v-for="gap in APPOINTMENT_GAP_OPTIONS"
                   :key="gap"
-                  :variant="profile.consultationGapMinutes === gap ? 'solid' : 'outline'"
-                  :color="profile.consultationGapMinutes === gap ? 'primary' : 'neutral'"
+                  :variant="profile.appointmentGapMinutes === gap ? 'solid' : 'outline'"
+                  :color="profile.appointmentGapMinutes === gap ? 'primary' : 'neutral'"
                   size="lg"
                   block
-                  @click="profile.consultationGapMinutes = gap"
+                  @click="profile.appointmentGapMinutes = gap"
                 >
                   {{ gap === 0 ? 'Aucun' : `${gap} min` }}
                 </UButton>
@@ -187,7 +187,7 @@
               <template #fallback>
                 <div class="grid w-full grid-cols-5 gap-2">
                   <USkeleton
-                    v-for="increment in CONSULTATION_SLOT_INCREMENT_OPTIONS"
+                    v-for="increment in APPOINTMENT_SLOT_INCREMENT_OPTIONS"
                     :key="increment"
                     class="border-default h-9 rounded-lg border"
                   />
@@ -195,7 +195,7 @@
               </template>
               <div class="grid grid-cols-5 gap-2">
                 <UButton
-                  v-for="increment in CONSULTATION_SLOT_INCREMENT_OPTIONS"
+                  v-for="increment in APPOINTMENT_SLOT_INCREMENT_OPTIONS"
                   :key="increment"
                   :variant="profile.slotIncrementMinutes === increment ? 'solid' : 'outline'"
                   :color="profile.slotIncrementMinutes === increment ? 'primary' : 'neutral'"

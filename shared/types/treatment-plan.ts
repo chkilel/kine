@@ -30,8 +30,8 @@ export const treatmentPlanSchema = createSelectSchema(treatmentPlans, {
   coverageStatus: z.enum(VALID_COVERAGE_STATUSES).nullable(),
   insuranceInfo: z.string().nullable(),
   notes: z.array(noteSchema),
-  createdAt: z.string(),
-  updatedAt: z.string()
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
 })
 
 export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
@@ -78,5 +78,5 @@ export type TreatmentPlanQuery = z.infer<typeof treatmentPlanQuerySchema>
 // Extended types/interfaces
 export type TreatmentPlanWithProgress = TreatmentPlan & {
   progress: number
-  completedConsultations: number
+  completedAppointments: number
 }

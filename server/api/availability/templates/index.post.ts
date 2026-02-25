@@ -32,12 +32,12 @@ export default defineEventHandler(async (event) => {
           existingTemplate.endTime,
           body.startTime,
           body.endTime,
-          MINIMUM_CONSULTATION_GAP_MINUTES
+          MINIMUM_APPOINTMENT_GAP_MINUTES
         )
       ) {
         throw createError({
           statusCode: 400,
-          message: `Conflit d'horaire avec un modèle existant le ${body.dayOfWeek}. Veuillez respecter un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes entre les plages horaires.`,
+          message: `Conflit d'horaire avec un modèle existant le ${body.dayOfWeek}. Veuillez respecter un écart minimum de ${MINIMUM_APPOINTMENT_GAP_MINUTES} minutes entre les plages horaires.`,
           data: {
             conflict: {
               existingTemplate: {

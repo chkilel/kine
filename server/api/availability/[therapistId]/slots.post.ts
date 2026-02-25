@@ -1,5 +1,5 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
-import { availabilityExceptions, consultations, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
+import { availabilityExceptions, appointments, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
 
 interface SlotsResponse {
   slots: Record<string, { availableSlots: string[]; unavailable: boolean }>
@@ -19,15 +19,15 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle(event)
 
-  // Fetch therapist's consultation gap and slot increment settings
+  // Fetch therapist's appointment gap and slot increment settings
   const [therapist] = await db
-    .select({ consultationGapMinutes: users.consultationGapMinutes, slotIncrementMinutes: users.slotIncrementMinutes })
+    .select({ appointmentGapMinutes: users.appointmentGapMinutes, slotIncrementMinutes: users.slotIncrementMinutes })
     .from(users)
     .where(eq(users.id, therapistId))
     .limit(1)
 
   // Default to 15 minutes gap if not set
-  const gapMinutes = therapist?.consultationGapMinutes || 15
+  const gapMinutes = therapist?.appointmentGapMinutes || 15
   // Default to 15 minutes slot increment if not set
   const slotIncrementMinutes = therapist?.slotIncrementMinutes || 15
 
@@ -45,32 +45,22 @@ export default defineEventHandler(async (event) => {
     .from(availabilityExceptions)
     .where(and(eq(availabilityExceptions.userId, therapistId), inArray(availabilityExceptions.date, body.dates)))
 
-  // Fetch existing consultations for the requested dates (excluding cancelled ones)
-  const existingConsultations = await db
+  // Fetch existing appointments for the requested dates (excluding cancelled ones)
+  const existingAppointments = await db
     .select({
-      id: consultations.id,
-      date: consultations.date,
-      startTime: consultations.startTime,
-      endTime: consultations.endTime
+      id: appointments.id,
+      date: appointments.date,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime
     })
-    .from(consultations)
+    .from(appointments)
     .where(
       and(
-        eq(consultations.therapistId, therapistId),
-        inArray(consultations.date, body.dates),
-        ne(consultations.status, 'cancelled')
+        eq(appointments.therapistId, therapistId),
+        inArray(appointments.date, body.dates),
+        ne(appointments.status, 'cancelled')
       )
     )
-
-  console.log(
-    '🚀 >>> =========================================================================================================\n',
-    ': ',
-    {
-      templates,
-      exceptions,
-      existingConsultations
-    }
-  )
 
   // Initialize response object with empty slots object
   const slotsResponse: SlotsResponse = {
@@ -103,14 +93,14 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    // Filter consultations for this specific date
-    const dayConsultations = existingConsultations.filter((c: any) => c.date === date)
+    // Filter appointments for this specific date
+    const dayAppointments = existingAppointments.filter((a: any) => a.date === date)
 
-    // Map consultations to booked periods format
-    const bookedPeriods: BookedPeriod[] = dayConsultations.map((c: any) => ({
-      start: c.startTime || '',
-      end: c.endTime || '',
-      sessionId: c.id
+    // Map appointments to booked periods format
+    const bookedPeriods: BookedPeriod[] = dayAppointments.map((a: any) => ({
+      start: a.startTime || '',
+      end: a.endTime || '',
+      sessionId: a.id
     }))
 
     // Start with calculated availability as initial available ranges

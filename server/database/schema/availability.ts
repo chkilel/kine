@@ -1,12 +1,12 @@
 import { v7 as uuidv7 } from 'uuid'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../../../shared/utils/constants.availability'
-import { VALID_CONSULTATION_LOCATIONS } from '../../../shared/utils/constants.location'
+import { LOCATIONS } from '../../../shared/utils/constants.location'
 
 /**
  * ================================================================
@@ -31,7 +31,7 @@ export const weeklyAvailabilityTemplates = sqliteTable(
     dayOfWeek: text({ enum: VALID_SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
     startTime: text().notNull(), // HH:MM:SS format — e.g., '09:00:00'
     endTime: text().notNull(), // HH:MM:SS format — e.g., '12:00:00'
-    location: text({ enum: VALID_CONSULTATION_LOCATIONS }).notNull(), // Consultation location — e.g., 'clinic'
+    location: text({ enum: LOCATIONS }).notNull(), // Appointment location — e.g., 'clinic'
 
     // Created and Updated timestamp
     ...creationAndUpdateTimestamps
@@ -39,7 +39,7 @@ export const weeklyAvailabilityTemplates = sqliteTable(
   (table) => [
     // ---- Unique constraints ----
     // Prevent duplicate templates for same user+org+day+time combination
-    index('idx_weekly_templates_unique').on(
+    uniqueIndex('idx_weekly_templates_unique').on(
       table.organizationId,
       table.userId,
       table.dayOfWeek,
@@ -92,7 +92,7 @@ export const availabilityExceptions = sqliteTable(
   (table) => [
     // ---- Unique constraints ----
     // Prevent duplicate exceptions for the same user+org+date+time combination
-    index('idx_exceptions_unique').on(table.organizationId, table.userId, table.date, table.startTime),
+    uniqueIndex('idx_exceptions_unique').on(table.organizationId, table.userId, table.date, table.startTime),
 
     // ---- Common query patterns (with deletedAt for active exceptions) ----
     // Get all active exceptions for a user in an organization: WHERE organizationId = ? AND userId = ?

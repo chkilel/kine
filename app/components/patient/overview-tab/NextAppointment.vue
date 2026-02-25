@@ -1,19 +1,19 @@
 <script setup lang="ts">
-  import { LazyConsultationActiveConsultationSlideover } from '#components'
+  import { LazyTreatmentSessionSlideover } from '#components'
 
   const { patient } = defineProps<{ patient: Patient }>()
 
   const overlay = useOverlay()
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
+  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
-  const { data: consultations } = useConsultationsList(() => ({ patientId: patient?.id }))
+  const { data: appointments } = useAppointmentsList(() => ({ patientId: patient?.id }))
 
-  const nextConsultation = computed(() => {
-    if (!consultations.value) return null
-    const upcoming = consultations.value
-      .filter((c) => {
-        const consultDate = new Date(c.date)
-        return !isDateDisabled(consultDate)
+  const nextAppointment = computed(() => {
+    if (!appointments.value) return null
+    const upcoming = appointments.value
+      .filter((a) => {
+        const appointmentDate = new Date(a.date)
+        return !isDateDisabled(appointmentDate)
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     return upcoming[0] || null
@@ -28,36 +28,36 @@
     }
   }
 
-  function openConsultationSlideover(consultation: Consultation) {
+  function openAppointmentSlideover(appointment: Appointment) {
     activeConsultationOverlay.open({
       patientId: patient.id,
-      consultationId: consultation.id
+      appointmentId: appointment.id
     })
   }
 </script>
 
 <template>
   <AppCard title="Prochaine Séance">
-    <div v-if="nextConsultation" class="flex flex-col gap-4">
+    <div v-if="nextAppointment" class="flex flex-col gap-4">
       <div
         class="group border-default bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border p-3 transition-colors hover:shadow-md"
-        @click="openConsultationSlideover(nextConsultation)"
+        @click="openAppointmentSlideover(nextAppointment)"
       >
-        <AppDateBadge :date="nextConsultation.date" color="info" variant="soft" size="lg" />
+        <AppDateBadge :date="nextAppointment.date" color="info" variant="soft" size="lg" />
 
         <div class="min-w-0 flex-1">
           <p class="text-default truncate font-semibold">
-            {{ getConsultationTypeLabel(nextConsultation.type || 'follow_up') }}
+            {{ getAppointmentTypeLabel(nextAppointment.type || 'follow_up') }}
           </p>
           <p class="text-muted text-sm">
             <span class="font-medium capitalize">
-              {{ extractDayAndMonth(nextConsultation.date).dayNameShort }}
+              {{ extractDayAndMonth(nextAppointment.date).dayNameShort }} {{ extractDayAndMonth(nextAppointment.date).month }}
             </span>
             à
             <span class="font-semibold">
-              {{ formatTimeString(nextConsultation.startTime) }}
+              {{ formatTimeString(nextAppointment.startTime) }}
             </span>
-            - {{ nextConsultation.duration }} min
+            - {{ nextAppointment.duration }} min
           </p>
         </div>
         <UIcon
@@ -73,7 +73,7 @@
         trailing-icon="hugeicons-arrow-right-02"
         label="Voir toutes les séances"
         class="justify-center"
-        @click="navigateToPlan(nextConsultation.treatmentPlanId || undefined)"
+        @click="navigateToPlan(nextAppointment.treatmentPlanId || undefined)"
       />
     </div>
 

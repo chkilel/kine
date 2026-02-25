@@ -1,6 +1,12 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+export const TREATMENT_PLAN_KEYS = {
+  root: ['treatment-plans'] as const,
+  byPatient: (patientId: string) => [...TREATMENT_PLAN_KEYS.root, { patientId }] as const,
+  single: (id: string) => [...TREATMENT_PLAN_KEYS.root, id] as const
+}
+
 /**
  * Query for fetching treatment plans for a patient
  * @param patientId - Patient ID to fetch treatment plans for
@@ -15,7 +21,7 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
     error,
     refetch: refetchTreatmentPlans
   } = useQuery({
-    key: () => ['treatment-plans', { patientId: toValue(patientId) }],
+    key: () => TREATMENT_PLAN_KEYS.byPatient(toValue(patientId)),
     query: async () => {
       const data = await requestFetch(`/api/treatment-plans?patientId=${toValue(patientId)}`)
       return data?.map((plan) => ({
@@ -119,7 +125,10 @@ const _useCreateTreatmentPlan = () => {
         description: 'Plan de traitement créé avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans'] })
+      if (data.patientId) {
+        queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.byPatient(data.patientId) })
+      }
+      queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({
@@ -151,14 +160,15 @@ const _useUpdateTreatmentPlan = () => {
         method: 'PUT',
         body: data
       }),
-    onSuccess: (_, { onSuccess }) => {
+    onSuccess: (_, { planId, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Plan de traitement mis à jour avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans'] })
+      queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.single(planId) })
+      queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({
@@ -184,14 +194,15 @@ const _useDeleteTreatmentPlan = () => {
       requestFetch(`/api/treatment-plans/${planId}`, {
         method: 'DELETE'
       }),
-    onSuccess: (_, { onSuccess }) => {
+    onSuccess: (_, { planId, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Plan de traitement supprimé avec succès',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['treatment-plans'] })
+      queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.single(planId) })
+      queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({

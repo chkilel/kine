@@ -1,8 +1,15 @@
+export const DOCUMENT_KEYS = {
+  root: ['documents'] as const,
+  byPatient: (patientId: string, treatmentPlanId?: string) =>
+    [...DOCUMENT_KEYS.root, patientId, treatmentPlanId || 'all'] as const,
+  downloadUrl: (patientId: string, documentId: string) => ['document-download-url', patientId, documentId] as const
+}
+
 const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
 
   return useQuery({
-    key: () => ['documents', toValue(patientId), toValue(treatmentPlanId) || 'all'],
+    key: () => DOCUMENT_KEYS.byPatient(toValue(patientId), toValue(treatmentPlanId)),
     query: async () => {
       const params = toValue(treatmentPlanId) ? `?treatmentPlanId=${toValue(treatmentPlanId)}` : ''
       return requestFetch<PatientDocument[]>(`/api/patients/${toValue(patientId)}/documents${params}`)
@@ -15,7 +22,7 @@ const _useDocumentDownloadUrl = (patientId: MaybeRefOrGetter<string>, documentId
   const requestFetch = useRequestFetch()
 
   return useQuery({
-    key: () => ['document-download-url', toValue(patientId), toValue(documentId)],
+    key: () => DOCUMENT_KEYS.downloadUrl(toValue(patientId), toValue(documentId)),
     query: async () => {
       return requestFetch<{ downloadUrl: string }>(
         `/api/patients/${toValue(patientId)}/documents/${toValue(documentId)}`
@@ -45,7 +52,7 @@ const _useUpdateDocument = () => {
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       queryCache.invalidateQueries({
-        key: ['documents', patientId],
+        key: DOCUMENT_KEYS.byPatient(patientId),
         exact: false
       })
       toast.add({
@@ -80,7 +87,7 @@ const _useDeleteDocument = () => {
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       queryCache.invalidateQueries({
-        key: ['documents', patientId],
+        key: DOCUMENT_KEYS.byPatient(patientId),
         exact: false
       })
       toast.add({

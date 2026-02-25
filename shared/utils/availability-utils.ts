@@ -1,12 +1,12 @@
 import { addMinutesToTime, compareTimes } from './time'
-import { MINIMUM_CONSULTATION_GAP_MINUTES } from './constants.consultation'
+import { MINIMUM_APPOINTMENT_GAP_MINUTES } from './constants.appointment'
 
 export const hasTimeConflict = (
   existingStart: string,
   existingEnd: string,
   newStart: string,
   newEnd: string,
-  minGap: number = MINIMUM_CONSULTATION_GAP_MINUTES
+  minGap: number = MINIMUM_APPOINTMENT_GAP_MINUTES
 ): boolean => {
   console.log('🚀 Time conflict check:', {
     existing: { start: existingStart, end: existingEnd },

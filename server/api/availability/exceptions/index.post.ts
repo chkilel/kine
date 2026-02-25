@@ -92,14 +92,14 @@ function validateTimeOverlaps(
         existing.endTime,
         body.startTime,
         body.endTime,
-        MINIMUM_CONSULTATION_GAP_MINUTES
+        MINIMUM_APPOINTMENT_GAP_MINUTES
       )
     ) {
       throw createError({
         statusCode: 409,
         message: "Conflit d'horaire détecté",
         data: {
-          message: `Un écart minimum de ${MINIMUM_CONSULTATION_GAP_MINUTES} minutes est requis entre les plages horaires.`,
+          message: `Un écart minimum de ${MINIMUM_APPOINTMENT_GAP_MINUTES} minutes est requis entre les plages horaires.`,
           conflict: {
             existing: {
               date: existing.date,

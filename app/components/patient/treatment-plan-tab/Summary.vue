@@ -109,11 +109,11 @@
         />
         <div class="mt-1.5 flex justify-between text-[11px] font-medium text-gray-400">
           <span>
-            {{ treatmentPlan.completedConsultations || 0 }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
+            {{ treatmentPlan.completedAppointments || 0 }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
           </span>
           <span>
             Reste:
-            {{ (treatmentPlan.numberOfSessions || 0) - (treatmentPlan.completedConsultations || 0) }}
+            {{ (treatmentPlan.numberOfSessions || 0) - (treatmentPlan.completedAppointments || 0) }}
           </span>
         </div>
       </div>

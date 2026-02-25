@@ -5,9 +5,10 @@ import { VALID_DOCUMENT_TYPES } from '../utils/constants.document'
 import { VALID_PATIENT_STATUSES, VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '../utils/constants.patient'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../utils/constants.treatement-plan'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../utils/constants.availability'
-import { VALID_CONSULTATION_LOCATIONS } from '../utils/constants.location'
+import { LOCATIONS } from '../utils/constants.location'
 import { VALID_PHONE_CATEGORIES } from '../utils/constants.user'
-import { VALID_CONSULTATION_STATUSES, VALID_CONSULTATION_TYPES } from '../utils/constants.consultation'
+import { APPOINTMENT_STATUSES, APPOINTMENT_TYPES } from '../utils/constants.appointment'
+import { TREATMENT_SESSION_STATUSES } from '../utils/constants.treatment-session'
 
 z.config(fr())
 
@@ -63,8 +64,8 @@ export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
 export const dayOfWeekSchema = z.enum(VALID_SCHEDULE_DAYS)
 export type DayOfWeek = z.infer<typeof dayOfWeekSchema>
 
-export const locationSchema = z.enum(VALID_CONSULTATION_LOCATIONS)
-export type ConsultationLocation = z.infer<typeof locationSchema>
+export const locationSchema = z.enum(LOCATIONS)
+export type Location = z.infer<typeof locationSchema>
 
 export const timeFormatSchema = z.string().regex(TIME_FORMAT_REGEX, "Format d'heure invalide (HH:MM:SS)")
 export type TimeFormat = z.infer<typeof timeFormatSchema>
@@ -72,11 +73,14 @@ export type TimeFormat = z.infer<typeof timeFormatSchema>
 export const reasonSchema = z.enum(VALID_SCHEDULE_EXCEPTION_TYPES)
 export type Reason = z.infer<typeof reasonSchema>
 
-export const consultationTypeSchema = z.enum(VALID_CONSULTATION_TYPES)
-export type ConsultationType = z.infer<typeof consultationTypeSchema>
+export const appointmentTypeSchema = z.enum(APPOINTMENT_TYPES)
+export type AppointmentType = z.infer<typeof appointmentTypeSchema>
 
-export const consultationStatusSchema = z.enum(VALID_CONSULTATION_STATUSES)
-export type ConsultationStatus = z.infer<typeof consultationStatusSchema>
+export const appointmentStatusSchema = z.enum(APPOINTMENT_STATUSES)
+export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
+
+export const treatmentSessionStatusSchema = z.enum(TREATMENT_SESSION_STATUSES)
+export type TreatmentSessionStatus = z.infer<typeof treatmentSessionStatusSchema>
 
 export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
 export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>

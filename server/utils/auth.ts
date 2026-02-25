@@ -7,6 +7,7 @@ import { createError, getHeaders, getRequestURL } from 'h3'
 
 import { useDrizzle } from './database'
 import * as schemas from '~~/server/database/schema'
+import type { Session } from '~~/shared/types/auth.types'
 
 export const additionalFields = {
   firstName: {
@@ -31,12 +32,12 @@ export const additionalFields = {
     required: true,
     input: true
   },
-  defaultConsultationDuration: {
+  defaultAppointmentDuration: {
     type: 'number',
     required: false,
     input: true
   },
-  consultationGapMinutes: {
+  appointmentGapMinutes: {
     type: 'number',
     required: false,
     input: true

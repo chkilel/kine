@@ -1,6 +1,6 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { rooms } from '~~/server/database/schema/rooms'
-import { availabilityExceptions, consultations, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
+import { availabilityExceptions, appointments, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const roomId = getRouterParam(event, 'roomId')
@@ -38,14 +38,14 @@ export default defineEventHandler(async (event) => {
   if (body.therapistId) {
     const therapistData = await db
       .select({
-        consultationGapMinutes: users.consultationGapMinutes,
+        appointmentGapMinutes: users.appointmentGapMinutes,
         slotIncrementMinutes: users.slotIncrementMinutes
       })
       .from(users)
       .where(eq(users.id, body.therapistId))
       .limit(1)
 
-    gapMinutes = therapistData[0]?.consultationGapMinutes || 15
+    gapMinutes = therapistData[0]?.appointmentGapMinutes || 15
     slotIncrementMinutes = therapistData[0]?.slotIncrementMinutes || 15
 
     templates = await db
@@ -64,28 +64,24 @@ export default defineEventHandler(async (event) => {
       .where(and(eq(availabilityExceptions.userId, body.therapistId), inArray(availabilityExceptions.date, body.dates)))
   }
 
-  const consultationQuery = body.therapistId
+  const appointmentQuery = body.therapistId
     ? and(
-        eq(consultations.roomId, roomId),
-        eq(consultations.therapistId, body.therapistId),
-        inArray(consultations.date, body.dates),
-        ne(consultations.status, 'cancelled')
+        eq(appointments.roomId, roomId),
+        eq(appointments.therapistId, body.therapistId),
+        inArray(appointments.date, body.dates),
+        ne(appointments.status, 'cancelled')
       )
-    : and(
-        eq(consultations.roomId, roomId),
-        inArray(consultations.date, body.dates),
-        ne(consultations.status, 'cancelled')
-      )
+    : and(eq(appointments.roomId, roomId), inArray(appointments.date, body.dates), ne(appointments.status, 'cancelled'))
 
-  const existingConsultations = await db
+  const existingAppointments = await db
     .select({
-      id: consultations.id,
-      date: consultations.date,
-      startTime: consultations.startTime,
-      endTime: consultations.endTime
+      id: appointments.id,
+      date: appointments.date,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime
     })
-    .from(consultations)
-    .where(consultationQuery)
+    .from(appointments)
+    .where(appointmentQuery)
 
   const slotsResponse = {
     slots: {} as Record<string, { availableSlots: string[]; unavailable: boolean }>
@@ -124,12 +120,12 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    const dayConsultations = existingConsultations.filter((c) => c.date === date)
+    const dayAppointments = existingAppointments.filter((a) => a.date === date)
 
-    const bookedPeriods: BookedPeriod[] = dayConsultations.map((c: any) => ({
-      start: c.startTime || '',
-      end: c.endTime || '',
-      sessionId: c.id
+    const bookedPeriods: BookedPeriod[] = dayAppointments.map((a: any) => ({
+      start: a.startTime || '',
+      end: a.endTime || '',
+      sessionId: a.id
     }))
 
     let availableRanges: TimeRange[] = availability

@@ -1,9 +1,5 @@
 <script setup lang="ts">
-  import {
-    LazyConsultationActiveConsultationSlideover,
-    LazyConsultationActiveCard,
-    LazyConsultationListItem
-  } from '#components'
+  import { LazyAppointmentOnGoingCard } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -17,10 +13,6 @@
   ])
 
   const route = useRoute()
-  const router = useRouter()
-  const overlay = useOverlay()
-
-  const activeConsultationOverlay = overlay.create(LazyConsultationActiveConsultationSlideover)
 
   const currentDate = computed(() => {
     const dateFromQuery = route.query.date as string
@@ -38,46 +30,36 @@
   })
 
   const selectDate = (date: string) => {
-    router.push({ path: route.path, query: { date } })
+    navigateTo({ path: route.path, query: { date } })
   }
 
   const { user } = await useAuth()
-  const { data: consultations, isPending } = useTherapistConsultations(() => user.value?.id, currentDate)
+  const { data: appointments, isPending } = useTherapistAppointments(() => user.value?.id, currentDate)
 
   const stats = computed(() => {
-    const list = consultations.value || []
-    const completed = list.filter((c) => c.status === 'completed').length
-    const upcoming = list.filter((c) => ['scheduled', 'confirmed'].includes(c.status)).length
-    const cancelled = list.filter((c) => ['cancelled', 'no_show'].includes(c.status)).length
+    const list = appointments.value || []
+    const completed = list.filter((a) => a.status === 'completed').length
+    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status) && !a.treatmentSession).length
+    const inProgress = list.filter((a) => a.treatmentSession?.status === 'in_progress').length
+    const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length
     return {
       total: list.length,
       completed,
       completedPercentage: list.length ? Math.round((completed / list.length) * 100) : 0,
       upcoming,
+      inProgress,
       cancelled
     }
   })
 
-  const inProgressConsultations = computed(() => consultations.value?.filter((c) => c.status === 'in_progress'))
-  const upcomingConsultations = computed(() => consultations.value?.filter((c) => c.status !== 'in_progress'))
+  const inProgressAppointments = computed(() =>
+    appointments.value?.filter((a) => a.treatmentSession?.status === 'in_progress')
+  )
 
-  const handleStartSession = async (consultation: Consultation) => {
-    activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
-    })
-  }
-
-  const handleViewSession = (consultation: Consultation) => {
-    activeConsultationOverlay.open({
-      patientId: consultation.patientId,
-      consultationId: consultation.id
-    })
-  }
-
-  function handleViewPatient(patientId: string) {
-    navigateTo(`/patients/${patientId}`)
-  }
+  // Show all appointments except in_progress
+  const nonInProgressAppointments = computed(() =>
+    appointments.value?.filter((a) => a.treatmentSession?.status !== 'in_progress')
+  )
 </script>
 
 <template>
@@ -100,8 +82,9 @@
 
       <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
         <div class="space-y-6 xl:col-span-4">
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-            <AppStatCard label="Consultations" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
+          <!-- Day Stats -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
+            <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
             <AppStatCard
               label="Terminées"
               color="success"
@@ -110,10 +93,17 @@
               icon="i-hugeicons-checkmark-circle-02"
             />
             <AppStatCard
+              label="En cours"
+              color="warning"
+              :value="stats.inProgress"
+              unit="séances"
+              icon="i-hugeicons-hourglass"
+            />
+            <AppStatCard
               label="À venir"
               color="primary"
               :value="stats.upcoming"
-              unit="restant"
+              unit="RDVs"
               icon="i-hugeicons-clock-02"
             />
             <AppStatCard
@@ -125,13 +115,12 @@
             />
           </div>
 
+          <!-- In progress treatment sessions -->
           <div class="space-y-4">
-            <LazyConsultationActiveCard
-              v-for="consultation in inProgressConsultations"
-              :key="consultation.id"
-              :consultation
-              @view-session="handleViewSession"
-              @view-patient="handleViewPatient"
+            <LazyAppointmentOnGoingCard
+              v-for="appointment in inProgressAppointments"
+              :key="appointment.id"
+              :appointment
             />
           </div>
 
@@ -143,20 +132,19 @@
               </div>
             </template>
             <div class="space-y-4">
-              <div v-if="upcomingConsultations && upcomingConsultations.length > 0" class="space-y-3">
-                <LazyConsultationListItem
-                  v-for="consultation in upcomingConsultations"
-                  :key="consultation.id"
-                  :consultation="consultation"
-                  @start-session="handleStartSession"
+              <div v-if="nonInProgressAppointments && nonInProgressAppointments.length > 0" class="space-y-3">
+                <AppointmentListItem
+                  v-for="appointment in nonInProgressAppointments"
+                  :key="appointment.id"
+                  :appointment="appointment"
                 />
               </div>
 
               <UEmpty
                 v-else
                 icon="i-hugeicons-calendar-remove-01"
-                title="Aucune consultation"
-                description="Aucune consultation programmée pour cette journée"
+                title="Aucun RDV"
+                description="Aucun RDV programmé pour cette journée"
               />
             </div>
           </AppCard>

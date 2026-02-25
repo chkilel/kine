@@ -8,19 +8,16 @@ import {
   treatmentPlans,
   weeklyAvailabilityTemplates,
   availabilityExceptions,
-  consultations,
+  appointments,
   rooms
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
 import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } from '~~/shared/utils/time'
-import {
-  MINIMUM_CONSULTATION_GAP_MINUTES,
-  CONSULTATION_DURATIONS,
-  VALID_CONSULTATION_TYPES
-} from '~~/shared/utils/constants.consultation'
+import { APPOINTMENT_TYPES } from '~~/shared/utils/constants.appointment'
+import { MINIMUM_APPOINTMENT_GAP_MINUTES, APPOINTMENT_DURATIONS } from '~~/shared/utils/constants.appointment'
 import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
-import { VALID_CONSULTATION_LOCATIONS } from '~~/shared/utils/constants.location'
+import { LOCATIONS } from '~~/shared/utils/constants.location'
 import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES, VALID_RELATIONSHIP_TYPES } from '~~/shared/utils/constants.patient'
 import { VALID_PHONE_CATEGORIES } from '~~/shared/utils/constants.user'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/utils/constants.treatement-plan'
@@ -40,7 +37,7 @@ type SeedResults = {
     weeklyTemplates: number
     availabilityExceptions: number
     rooms: number
-    consultations: number
+    appointments: number
   }
   errors: Array<{ type: string; message: string; details?: any }>
 }
@@ -75,7 +72,7 @@ const SEED_CONFIG = {
   rooms: {
     countPerOrg: 5
   },
-  consultations: {
+  appointments: {
     minPerPatient: 5,
     maxPerPatient: 30,
     dateRangeDays: 90,
@@ -497,7 +494,7 @@ const treatmentPlanTitles = [
   'Programme de stabilisation spinale pour problèmes lombaires chroniques'
 ]
 
-const locations = VALID_CONSULTATION_LOCATIONS
+const locations = LOCATIONS
 const exceptionReasons = VALID_SCHEDULE_EXCEPTION_TYPES
 
 const roomEquipment = [
@@ -546,7 +543,7 @@ function randomItem<T>(array: readonly T[]): T | undefined {
   return array[Math.floor(Math.random() * array.length)]
 }
 
-function getWeightedLocation(): (typeof VALID_CONSULTATION_LOCATIONS)[number] {
+function getWeightedLocation(): (typeof LOCATIONS)[number] {
   const roll = Math.random()
   if (roll < 0.8) return 'clinic'
   if (roll < 0.9) return 'home'
@@ -599,7 +596,7 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
 }
 
 async function resetDatabase(db: DrizzleDB): Promise<void> {
-  await db.delete(consultations)
+  await db.delete(appointments)
   await db.delete(rooms)
   await db.delete(treatmentPlans)
   await db.delete(patients)
@@ -727,7 +724,7 @@ function validateTemplateConflict(existingTemplates: any[], newTemplate: any): b
           existing.endTime,
           newTemplate.startTime,
           newTemplate.endTime,
-          MINIMUM_CONSULTATION_GAP_MINUTES
+          MINIMUM_APPOINTMENT_GAP_MINUTES
         )
       ) {
         return false
@@ -780,7 +777,7 @@ function validateExceptionConflict(existingExceptions: any[], newException: any)
           existing.endTime || '23:59:00',
           newException.startTime || '00:00:00',
           newException.endTime || '23:59:00',
-          MINIMUM_CONSULTATION_GAP_MINUTES
+          MINIMUM_APPOINTMENT_GAP_MINUTES
         )
       ) {
         return false
@@ -902,7 +899,7 @@ function generateRooms(organizationId: string): any[] {
   return roomsData
 }
 
-function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
+function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
   if (isToday) {
     return 'scheduled'
   }
@@ -918,7 +915,7 @@ function getConsultationStatus(isPastDate: boolean, isToday: boolean): string {
   return Math.random() > 0.3 ? 'confirmed' : 'scheduled'
 }
 
-function generateConsultations(
+function generateAppointments(
   patientId: string,
   organizationId: string,
   therapistId: string,
@@ -932,12 +929,12 @@ function generateConsultations(
     treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
   )
 
-  const minPerPatient = SEED_CONFIG.consultations.minPerPatient
+  const minPerPatient = SEED_CONFIG.appointments.minPerPatient
   const requiredForPlans = activePlanIds.size * 5
-  const effectiveMin = Math.min(SEED_CONFIG.consultations.maxPerPatient, Math.max(minPerPatient, requiredForPlans))
+  const effectiveMin = Math.min(SEED_CONFIG.appointments.maxPerPatient, Math.max(minPerPatient, requiredForPlans))
 
-  const count = randomInt(effectiveMin, SEED_CONFIG.consultations.maxPerPatient)
-  const consultationsData: any[] = []
+  const count = randomInt(effectiveMin, SEED_CONFIG.appointments.maxPerPatient)
+  const appointmentsData: any[] = []
   const therapistDayBookings: Record<string, { start: string; end: string }[]> = {}
 
   const indices = Array.from({ length: count }, (_, index) => index)
@@ -981,14 +978,14 @@ function generateConsultations(
       if (linkedPlan?.status === 'ongoing') {
         wantsPast = false
         forceMinDaysOffset = 0
-        forceMaxDaysOffset = SEED_CONFIG.consultations.dateRangeDays
+        forceMaxDaysOffset = SEED_CONFIG.appointments.dateRangeDays
       } else {
         wantsPast = true
-        forceMinDaysOffset = -SEED_CONFIG.consultations.dateRangeDays
+        forceMinDaysOffset = -SEED_CONFIG.appointments.dateRangeDays
         forceMaxDaysOffset = -1
       }
     } else {
-      wantsPast = Math.random() < SEED_CONFIG.consultations.pastPercentage
+      wantsPast = Math.random() < SEED_CONFIG.appointments.pastPercentage
     }
 
     let attempts = 0
@@ -1001,13 +998,13 @@ function generateConsultations(
         const daysOffset =
           forceMinDaysOffset !== null && forceMaxDaysOffset !== null
             ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
-            : -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
+            : -randomInt(1, SEED_CONFIG.appointments.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       } else {
         const daysOffset =
           forceMinDaysOffset !== null && forceMaxDaysOffset !== null
             ? randomInt(forceMinDaysOffset, forceMaxDaysOffset)
-            : randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+            : randomInt(0, SEED_CONFIG.appointments.dateRangeDays)
         candidateDate = format(addDays(new Date(), daysOffset), 'yyyy-MM-dd')
       }
 
@@ -1019,7 +1016,7 @@ function generateConsultations(
       const selectedRange = randomItem(availabilityRanges)
       if (!selectedRange) continue
 
-      const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+      const candidateDuration = randomItem(APPOINTMENT_DURATIONS)
       if (!candidateDuration) continue
 
       const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
@@ -1035,7 +1032,7 @@ function generateConsultations(
         const candidateEnd = calculateEndTime(candidateStart, candidateDuration)
         const dayBookings = therapistDayBookings[candidateDate] || []
         const hasConflictWithTherapist = dayBookings.some((booking) =>
-          hasTimeConflict(booking.start, booking.end, candidateStart, candidateEnd, MINIMUM_CONSULTATION_GAP_MINUTES)
+          hasTimeConflict(booking.start, booking.end, candidateStart, candidateEnd, MINIMUM_APPOINTMENT_GAP_MINUTES)
         )
 
         if (!hasConflictWithTherapist) {
@@ -1065,13 +1062,13 @@ function generateConsultations(
 
     if (!date || !startTime || !endTime || !duration) {
       const fallbackOffset = wantsPast
-        ? -randomInt(1, SEED_CONFIG.consultations.dateRangeDays)
-        : randomInt(0, SEED_CONFIG.consultations.dateRangeDays)
+        ? -randomInt(1, SEED_CONFIG.appointments.dateRangeDays)
+        : randomInt(0, SEED_CONFIG.appointments.dateRangeDays)
       const fallbackDate = format(addDays(new Date(), fallbackOffset), 'yyyy-MM-dd')
       const timeRange = generateTimeRange(9, 16)
       date = fallbackDate
       startTime = timeRange.startTime
-      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      const fallbackDuration = randomItem(APPOINTMENT_DURATIONS)
       if (fallbackDuration) {
         duration = fallbackDuration
         endTime = calculateEndTime(startTime, duration)
@@ -1080,8 +1077,8 @@ function generateConsultations(
 
     const isPast = date < today
     const isToday = date === today
-    const status = getConsultationStatus(isPast, isToday)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
+    const status = getAppointmentStatus(isPast, isToday)
+    const location = randomItem(LOCATIONS) || 'clinic'
 
     let roomId: string | null = null
     if (location === 'clinic' && availableRoomIds.length > 0 && Math.random() > 0.3) {
@@ -1096,7 +1093,7 @@ function generateConsultations(
       }
     }
 
-    const consultation: any = {
+    const appointment: any = {
       organizationId,
       patientId,
       therapistId,
@@ -1106,7 +1103,7 @@ function generateConsultations(
       startTime,
       endTime,
       duration,
-      type: randomItem(VALID_CONSULTATION_TYPES) || 'follow_up',
+      type: randomItem(APPOINTMENT_TYPES) || 'follow_up',
       status,
       location,
       billed: isPast && status === 'completed' ? date : null,
@@ -1127,9 +1124,9 @@ function generateConsultations(
 
     if (status === 'completed') {
       const painBefore = randomInt(3, 8)
-      consultation.painLevelBefore = painBefore
-      consultation.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
-      consultation.observations = randomItem([
+      appointment.painLevelBefore = painBefore
+      appointment.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
+      appointment.observations = randomItem([
         'Bonne réponse au traitement',
         'Amélioration de la mobilité',
         'Patient motivé',
@@ -1137,12 +1134,12 @@ function generateConsultations(
       ])
     }
 
-    consultationsData.push(consultation)
+    appointmentsData.push(appointment)
   }
 
-  const hasTodayConsultation = consultationsData.some((consultation) => consultation.date === today)
+  const hasTodayAppointment = appointmentsData.some((appointment) => appointment.date === today)
 
-  if (!hasTodayConsultation) {
+  if (!hasTodayAppointment) {
     const date = today
     let startTime: string | null = null
     let endTime: string | null = null
@@ -1152,7 +1149,7 @@ function generateConsultations(
     if (availabilityRanges && availabilityRanges.length > 0) {
       const selectedRange = randomItem(availabilityRanges)
       if (selectedRange) {
-        const candidateDuration = randomItem(CONSULTATION_DURATIONS)
+        const candidateDuration = randomItem(APPOINTMENT_DURATIONS)
         if (candidateDuration) {
           const rangeDuration = calculateTimeDifference(selectedRange.start, selectedRange.end) / 60
           if (rangeDuration >= candidateDuration) {
@@ -1173,7 +1170,7 @@ function generateConsultations(
                   booking.end,
                   candidateStart,
                   candidateEnd,
-                  MINIMUM_CONSULTATION_GAP_MINUTES
+                  MINIMUM_APPOINTMENT_GAP_MINUTES
                 )
               )
 
@@ -1200,7 +1197,7 @@ function generateConsultations(
     if (!startTime || !endTime || !duration) {
       const timeRange = generateTimeRange(9, 16)
       startTime = timeRange.startTime
-      const fallbackDuration = randomItem(CONSULTATION_DURATIONS)
+      const fallbackDuration = randomItem(APPOINTMENT_DURATIONS)
       if (fallbackDuration) {
         duration = fallbackDuration
         if (startTime && duration) {
@@ -1211,8 +1208,8 @@ function generateConsultations(
 
     const isPast = false
     const isToday = true
-    const status = getConsultationStatus(isPast, isToday)
-    const location = randomItem(VALID_CONSULTATION_LOCATIONS) || 'clinic'
+    const status = getAppointmentStatus(isPast, isToday)
+    const location = randomItem(LOCATIONS) || 'clinic'
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
@@ -1240,7 +1237,7 @@ function generateConsultations(
 
     const durationValue = duration as number
 
-    const consultation: any = {
+    const appointment: any = {
       organizationId,
       patientId,
       therapistId,
@@ -1250,7 +1247,7 @@ function generateConsultations(
       startTime,
       endTime,
       duration: durationValue,
-      type: randomItem(VALID_CONSULTATION_TYPES),
+      type: randomItem(APPOINTMENT_TYPES),
       status,
       location,
       billed: null,
@@ -1261,7 +1258,7 @@ function generateConsultations(
       treatmentSummary: null
     }
 
-    consultationsData.push(consultation)
+    appointmentsData.push(appointment)
 
     if (startTime && endTime) {
       if (!therapistDayBookings[date]) {
@@ -1273,13 +1270,13 @@ function generateConsultations(
 
   if (activePlanIds.size > 0) {
     const countsByPlan: Record<string, number> = {}
-    for (const consultation of consultationsData) {
-      if (consultation.treatmentPlanId && activePlanIds.has(consultation.treatmentPlanId)) {
-        countsByPlan[consultation.treatmentPlanId] = (countsByPlan[consultation.treatmentPlanId] ?? 0) + 1
+    for (const appointment of appointmentsData) {
+      if (appointment.treatmentPlanId && activePlanIds.has(appointment.treatmentPlanId)) {
+        countsByPlan[appointment.treatmentPlanId] = (countsByPlan[appointment.treatmentPlanId] ?? 0) + 1
       }
     }
 
-    const unlinked = consultationsData.filter((consultation) => !consultation.treatmentPlanId)
+    const unlinked = appointmentsData.filter((appointment) => !appointment.treatmentPlanId)
 
     for (const plan of treatmentPlansMeta) {
       if (!activePlanIds.has(plan.id)) continue
@@ -1288,9 +1285,9 @@ function generateConsultations(
       let safety = 0
 
       while (countForPlan < 5 && unlinked.length > 0 && safety < 50) {
-        const consultation = unlinked.pop()
-        if (!consultation) break
-        consultation.treatmentPlanId = plan.id
+        const appointment = unlinked.pop()
+        if (!appointment) break
+        appointment.treatmentPlanId = plan.id
         countForPlan++
         countsByPlan[plan.id] = countForPlan
         safety++
@@ -1298,17 +1295,16 @@ function generateConsultations(
     }
   }
 
-  consultationsData.sort((a, b) => {
+  appointmentsData.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date)
     return a.startTime.localeCompare(b.startTime)
   })
 
-  return consultationsData
+  return appointmentsData
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const config = useRuntimeConfig()
-  const isDevelopment = config.env === 'development' || process.env.NODE_ENV === 'development'
+  const isDevelopment = import.meta.dev
 
   if (!isDevelopment) {
     throw createError({
@@ -1327,7 +1323,7 @@ export default defineEventHandler(async (event: H3Event) => {
       weeklyTemplates: 0,
       availabilityExceptions: 0,
       rooms: 0,
-      consultations: 0
+      appointments: 0
     },
     errors: []
   }
@@ -1595,7 +1591,7 @@ export default defineEventHandler(async (event: H3Event) => {
     try {
       const therapistTemplates = templatesByUserId[therapistId] || []
       const therapistExceptions = exceptionsByUserId[therapistId] || []
-      const consultationsData = generateConsultations(
+      const appointmentsData = generateAppointments(
         patientRecord.id,
         patientOrgId,
         therapistId,
@@ -1605,26 +1601,26 @@ export default defineEventHandler(async (event: H3Event) => {
         therapistTemplates,
         therapistExceptions
       )
-      if (consultationsData.length > 0) {
-        for (const consultation of consultationsData) {
+      if (appointmentsData.length > 0) {
+        for (const appointment of appointmentsData) {
           try {
-            await db.insert(consultations).values(consultation)
-            results.success.consultations++
+            await db.insert(appointments).values(appointment)
+            results.success.appointments++
           } catch (err) {
             results.errors.push({
-              type: 'consultation',
-              message: `Failed to create consultation for patient ${patient.firstName} ${patient.lastName}`,
+              type: 'appointment',
+              message: `Failed to create appointment for patient ${patient.firstName} ${patient.lastName}`,
               details: {
                 error: err instanceof Error ? err.message : String(err),
-                consultation: {
-                  id: consultation.id,
-                  date: consultation.date,
-                  startTime: consultation.startTime,
-                  endTime: consultation.endTime,
-                  duration: consultation.duration,
-                  status: consultation.status,
-                  location: consultation.location,
-                  roomId: consultation.roomId
+                appointment: {
+                  id: appointment.id,
+                  date: appointment.date,
+                  startTime: appointment.startTime,
+                  endTime: appointment.endTime,
+                  duration: appointment.duration,
+                  status: appointment.status,
+                  location: appointment.location,
+                  roomId: appointment.roomId
                 }
               }
             })
@@ -1633,8 +1629,8 @@ export default defineEventHandler(async (event: H3Event) => {
       }
     } catch (error) {
       results.errors.push({
-        type: 'consultation',
-        message: `Failed to generate consultations for patient ${patient.firstName} ${patient.lastName}`,
+        type: 'appointment',
+        message: `Failed to generate appointments for patient ${patient.firstName} ${patient.lastName}`,
         details: error instanceof Error ? error.message : String(error)
       })
     }

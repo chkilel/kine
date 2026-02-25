@@ -22,7 +22,7 @@ const sessionDurationSchema = z
   .min(15, 'La durée minimale de session est de 15 minutes')
   .max(180, 'La durée maximale de session est de 180 minutes')
 
-const consultationGapMinutesSchema = z
+const appointmentGapMinutesSchema = z
   .number("L'intervalle doit être un nombre")
   .int("L'intervalle doit être un nombre entier")
   .min(0, "L'intervalle minimum est de 0 minute")
@@ -45,8 +45,8 @@ export const signUpSchema = z
     email: emailSchema,
     specialization: specializationSchema.optional(),
     licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
-    defaultConsultationDuration: sessionDurationSchema.default(60).optional(),
-    consultationGapMinutes: consultationGapMinutesSchema.default(5).optional(),
+    defaultAppointmentDuration: sessionDurationSchema.default(60).optional(),
+    appointmentGapMinutes: appointmentGapMinutesSchema.default(5).optional(),
     slotIncrementMinutes: slotIncrementMinutesSchema.default(15).optional(),
     phoneNumbers: z
       .array(phoneEntrySchema)
@@ -98,8 +98,8 @@ export const userUpdateSchema = createUpdateSchema(users, {
   lastName: nameSchema,
   specialization: specializationSchema.optional(),
   licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
-  defaultConsultationDuration: sessionDurationSchema.optional(),
-  consultationGapMinutes: consultationGapMinutesSchema.optional(),
+  defaultAppointmentDuration: sessionDurationSchema.optional(),
+  appointmentGapMinutes: appointmentGapMinutesSchema.optional(),
   slotIncrementMinutes: slotIncrementMinutesSchema.optional(),
   phoneNumbers: z
     .array(phoneEntrySchema)
@@ -159,7 +159,7 @@ export type SignUpSchema = z.output<typeof signUpSchema>
 export type LoginSchema = z.output<typeof loginSchema>
 export type UpdateUser = z.output<typeof userUpdateSchema>
 export type UpdatePassword = z.output<typeof updatePasswordSchema>
-export type ConsultationGapMinutes = z.output<typeof consultationGapMinutesSchema>
+export type AppointmentGapMinutes = z.output<typeof appointmentGapMinutesSchema>
 export type SlotIncrementMinutes = z.output<typeof slotIncrementMinutesSchema>
 
 // User Type

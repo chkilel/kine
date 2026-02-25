@@ -4,7 +4,7 @@ import { relations } from 'drizzle-orm'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { consultations } from './consultation'
+import { appointments } from './appointment'
 import { treatmentPlans } from './treatment-plan'
 import { patientDocuments } from './document'
 import {
@@ -100,7 +100,7 @@ export const patients = sqliteTable(
 // ----------------------
 
 export const patientsRelations = relations(patients, ({ many }) => ({
-  consultations: many(consultations),
+  appointments: many(appointments),
   treatmentPlans: many(treatmentPlans),
   documents: many(patientDocuments)
 }))

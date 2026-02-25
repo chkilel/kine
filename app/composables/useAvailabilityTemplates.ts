@@ -1,6 +1,12 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
 
+export const AVAILABILITY_TEMPLATE_KEYS = {
+  root: ['availability-templates'] as const,
+  byTherapist: (therapistId: string) => [...AVAILABILITY_TEMPLATE_KEYS.root, therapistId] as const,
+  single: (id: string) => [...AVAILABILITY_TEMPLATE_KEYS.root, id] as const
+}
+
 /**
  * Query for fetching availability templates
  * @param therapistId - The therapist's ID to fetch templates for
@@ -17,7 +23,7 @@ const _useAvailabilityTemplatesList = (therapistId: MaybeRefOrGetter<string | un
   return useQuery({
     key: () => {
       const id = toValue(therapistId)
-      return id ? ['availability-templates', id] : ['availability-templates']
+      return id ? AVAILABILITY_TEMPLATE_KEYS.byTherapist(id) : AVAILABILITY_TEMPLATE_KEYS.root
     },
     query: async () => {
       const resp = await requestFetch('/api/availability/templates', {
@@ -55,7 +61,7 @@ const _useCreateAvailabilityTemplate = () => {
         description: 'Modèle de disponibilité créé',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      queryCache.invalidateQueries({ key: AVAILABILITY_TEMPLATE_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({
@@ -88,14 +94,15 @@ const _useUpdateAvailabilityTemplate = () => {
         method: 'PUT',
         body: data
       }),
-    onSuccess: (_, { onSuccess }) => {
+    onSuccess: (_, { id, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Modèle mis à jour',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      queryCache.invalidateQueries({ key: AVAILABILITY_TEMPLATE_KEYS.single(id) })
+      queryCache.invalidateQueries({ key: AVAILABILITY_TEMPLATE_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({
@@ -121,14 +128,15 @@ const _useDeleteAvailabilityTemplate = () => {
       requestFetch(`/api/availability/templates/${id}`, {
         method: 'DELETE'
       }),
-    onSuccess: (_, { onSuccess }) => {
+    onSuccess: (_, { id, onSuccess }) => {
       onSuccess?.()
       toast.add({
         title: 'Succès',
         description: 'Modèle supprimé',
         color: 'success'
       })
-      queryCache.invalidateQueries({ key: ['availability-templates'] })
+      queryCache.invalidateQueries({ key: AVAILABILITY_TEMPLATE_KEYS.single(id) })
+      queryCache.invalidateQueries({ key: AVAILABILITY_TEMPLATE_KEYS.root, exact: false })
     },
     onError: (error: any) => {
       toast.add({

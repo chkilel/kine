@@ -113,8 +113,8 @@
 
           <!-- Right Column -->
           <div class="flex flex-col gap-6 lg:col-span-3">
-            <!-- Consultations -->
-            <PatientTreatmentPlanTabConsultations :patient="patient" :treatment-plan="selectedTreatmentPlan" />
+            <!-- Appointments -->
+            <PatientTreatmentPlanTabAppointments :patient="patient" :treatment-plan="selectedTreatmentPlan" />
 
             <PatientTreatmentPlanTabNotes :patient="patient" :treatment-plan="selectedTreatmentPlan" />
           </div>
