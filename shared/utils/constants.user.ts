@@ -6,12 +6,14 @@ import type { PhoneCategory } from '../types/base.types'
 // =================================================================================================
 
 // Valid phone number categories for practitioners
-export const VALID_PHONE_CATEGORIES = ['personal', 'cabinet', 'emergency'] as const
+export const VALID_PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
 
 export const PHONE_CATEGORIES_CONFIG = {
   personal: { label: 'Personnel' },
-  cabinet: { label: 'Cabinet' },
-  emergency: { label: 'Urgence' }
+  clinic: { label: 'Cabinet' },
+  emergency: { label: 'Urgence' },
+  mobile: { label: 'Mobile' },
+  whatsapp: { label: 'WhatsApp' }
 } as const
 
 // Phone Categories Options

@@ -54,6 +54,99 @@ export const additionalFields = {
   }
 } as const satisfies Record<string, DBFieldAttribute<DBFieldType>>
 
+export const organizationAdditionalFields = {
+  type: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  description: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  status: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  timezone: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  contact: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  address: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  legalRepresentative: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  fiscal: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  banking: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  pricing: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  scheduling: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  clinical: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  notifications: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  intake: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  branding: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  }
+} as const satisfies Record<string, DBFieldAttribute<DBFieldType>>
+
 /**
  * Creates Better Auth instance configured for the current Cloudflare request context.
  */
@@ -103,6 +196,9 @@ function createAuthInstance(event: H3Event) {
         schema: {
           member: {
             additionalFields
+          },
+          organization: {
+            additionalFields: organizationAdditionalFields
           }
         },
         allowUserToCreateOrganization: async () => {

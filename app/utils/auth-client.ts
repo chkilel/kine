@@ -1,7 +1,7 @@
 import { inferAdditionalFields, organizationClient } from 'better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/vue'
 
-import { additionalFields } from '~~/server/utils/auth'
+import { additionalFields, organizationAdditionalFields } from '~~/server/utils/auth'
 
 export const authClient = createAuthClient({
   plugins: [
@@ -9,6 +9,9 @@ export const authClient = createAuthClient({
       schema: {
         member: {
           additionalFields
+        },
+        organization: {
+          additionalFields: organizationAdditionalFields
         }
       }
     }),
