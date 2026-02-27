@@ -1,10 +1,26 @@
-import { createInsertSchema, createUpdateSchema, createSelectSchema } from 'drizzle-zod'
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 import { organizations } from '~~/server/database/schema'
-import { ORGANIZATION_TYPES, LEGAL_FORMS, PAYMENT_METHODS, PAYMENT_DELAYS } from '~~/shared/utils/constants.location'
+import {
+  ORGANIZATION_TYPES,
+  LEGAL_FORMS,
+  PAYMENT_METHODS,
+  PAYMENT_DELAYS,
+  ORGANIZATION_STATUS
+} from '~~/shared/utils/constants.location'
 
 z.config(fr())
+
+const orgNameSchema = z
+  .string()
+  .min(5, 'Le nom doit avoir au moins 5 caractères')
+  .max(100, 'Le nom ne peut pas dépasser 100 caractères')
+const OrgSlugSchema = z
+  .string()
+  .min(5, 'Le slug doit avoir au moins 5 caractères')
+  .max(50, 'Le slug ne peut pas dépasser 50 caractères')
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (seulement lettres minuscules, chiffres et tirets)')
 
 export const organizationTypeSchema = z.enum(ORGANIZATION_TYPES, { message: "Type d'établissement invalide" })
 export type OrganizationType = z.infer<typeof organizationTypeSchema>
@@ -156,18 +172,33 @@ export const orgBrandingSchema = z.object({
 })
 export type OrgBranding = z.infer<typeof orgBrandingSchema>
 
-z.config(fr())
+// ---------------------------------------- Org --------------------------------------
+export const organizationResponseSchema = createSelectSchema(organizations, {
+  id: z.string(),
+  name: orgNameSchema,
+  slug: OrgSlugSchema,
+  type: organizationTypeSchema.optional(),
+  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
+  logo: z.string().nullable().optional(),
+  contact: orgContactSchema,
+  address: orgAddressSchema,
+  legalRepresentative: orgLegalRepSchema.optional(),
+  fiscal: orgFiscalSchema.optional(),
+  banking: orgBankingSchema.optional(),
+  pricing: orgPricingSchema.optional(),
+  scheduling: orgSchedulingSchema.optional(),
+  clinical: orgClinicalSchema.optional(),
+  notifications: orgNotificationsSchema.optional(),
+  intake: orgIntakeSchema.optional(),
+  branding: orgBrandingSchema.optional(),
+  status: z.enum(ORGANIZATION_STATUS).optional(),
+  timezone: z.string().default('Africa/Casablanca').optional(),
+  metadata: z.any().optional()
+})
 
 export const organizationInsertSchema = createInsertSchema(organizations, {
-  name: z
-    .string()
-    .min(5, 'Le nom doit avoir au moins 5 caractères')
-    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
-  slug: z
-    .string()
-    .min(5, 'Le slug doit avoir au moins 5 caractères')
-    .max(50, 'Le slug ne peut pas dépasser 50 caractères')
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (seulement lettres minuscules, chiffres et tirets)'),
+  name: orgNameSchema,
+  slug: OrgSlugSchema,
   type: organizationTypeSchema.optional(),
   description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
   logo: z.string().nullable(),
@@ -181,7 +212,10 @@ export const organizationInsertSchema = createInsertSchema(organizations, {
   clinical: orgClinicalSchema.optional(),
   notifications: orgNotificationsSchema.optional(),
   intake: orgIntakeSchema.optional(),
-  branding: orgBrandingSchema.optional()
+  branding: orgBrandingSchema.optional(),
+  status: z.enum(['active', 'inactive', 'suspended']).default('active'),
+  timezone: z.string().default('Africa/Casablanca'),
+  metadata: z.any().optional()
 }).extend({
   logoFile: z
     .any()
@@ -205,27 +239,6 @@ export const organizationInsertSchema = createInsertSchema(organizations, {
     .optional()
 })
 
-export const updateOrganizationSchema = createUpdateSchema(organizations, {
-  name: z.string().min(1, "Le nom de l'organisation est requis").max(100),
-  slug: z.string().min(1, "Le slug de l'organisation est requis").max(50),
-  type: organizationTypeSchema.optional(),
-  description: z.string().max(500).optional(),
-  contact: orgContactSchema.optional(),
-  address: orgAddressSchema.optional(),
-  legalRepresentative: orgLegalRepSchema.optional(),
-  fiscal: orgFiscalSchema.optional(),
-  banking: orgBankingSchema.optional(),
-  pricing: orgPricingSchema.optional(),
-  scheduling: orgSchedulingSchema.optional(),
-  clinical: orgClinicalSchema.optional(),
-  notifications: orgNotificationsSchema.optional(),
-  intake: orgIntakeSchema.optional(),
-  branding: orgBrandingSchema.optional()
-})
+export const updateOrganizationSchema = organizationInsertSchema.partial()
 
-export const organizationSelectSchema = createSelectSchema(organizations)
-
-export type OrganizationSchema = Omit<z.output<typeof organizationSelectSchema>, 'createdAt' | 'updatedAt'>
-export type OrganizationInsertSchema = z.output<typeof organizationInsertSchema>
-export type OrganizationSelectSchema = z.output<typeof organizationSelectSchema>
-export type UpdateOrganizationSchema = z.output<typeof updateOrganizationSchema>
+export type Organization = z.output<typeof organizationResponseSchema>
