@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
-import type { TreatmentSession } from '~~/shared/types/treatment-session.type'
+import type { TreatmentSession } from '../types/treatment-session.type'
 
 // =============================================================================
 // Appointment Schemas and Types
@@ -21,9 +21,7 @@ export const appointmentCreateSchema = createInsertSchema(appointments, {
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
   cancelledAt: z.coerce.date().nullable().optional(),
-  noShowReason: z.string().nullable().optional(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional()
+  noShowReason: z.string().nullable().optional()
 })
 
 export const appointmentUpdateSchema = appointmentCreateSchema.partial()

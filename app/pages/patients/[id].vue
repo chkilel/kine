@@ -71,6 +71,8 @@
 
   // Handle error after the query
   watchEffect(() => {
+    console.log('🚀 >>> ', 'patient', ': ', patient)
+
     if (error.value) {
       const err = error.value as any
       throw createError({

@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { weeklyAvailabilityTemplates, availabilityExceptions } from '~~/server/database/schema/availability'
-import { calendarDateSchema, dayOfWeekSchema, locationSchema, reasonSchema, timeFormatSchema } from './base.types'
 
 z.config(fr())
 

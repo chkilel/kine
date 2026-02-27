@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { appointments } from '~~/server/database/schema'
-import { appointmentUpdateSchema } from '~~/shared/types/appointment.type'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -17,7 +16,7 @@ export default defineEventHandler(async (event) => {
     const { organizationId } = await requireAuth(event)
     const body = await readValidatedBody(event, appointmentUpdateSchema.parse)
 
-    const [existingAppointment] = await db  
+    const [existingAppointment] = await db
       .select()
       .from(appointments)
       .where(and(eq(appointments.id, id), eq(appointments.organizationId, organizationId)))

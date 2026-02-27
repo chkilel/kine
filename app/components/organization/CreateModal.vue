@@ -9,15 +9,50 @@
   const { uploadFile } = useUploads()
   const { createOrganization, checkSlug } = useOrganization()
 
-  // ✅ Unified reactive form state
   const form = reactive<OrganizationInsertSchema>({
     name: '',
     slug: '',
+    type: 'cabinet',
     logo: '',
     logoFile: undefined as File | undefined,
+    contact: {
+      email: '',
+      website: '',
+      phones: [{ id: crypto.randomUUID(), category: 'clinic', number: '' }]
+    },
+    address: {
+      street: '',
+      postalCode: '',
+      city: '',
+      country: 'Maroc'
+    },
+    fiscal: {
+      ice: '',
+      rc: '',
+      legalForm: 'liberal-profession',
+      vatRate: 20,
+      vatSubject: true,
+      paymentDelay: '30',
+      paymentMethod: 'cash',
+      currency: 'MAD (Dirham Marocain)'
+    },
+    pricing: {
+      sessionRates: {
+        cabinet: null,
+        domicile: null,
+        teleconsultation: null
+      }
+    },
     metadata: {} as Record<string, any>,
     metadataText: ''
   })
+
+  const typeOptions = [
+    { label: 'Cabinet', value: 'cabinet' },
+    { label: 'Centre médical', value: 'medical-center' },
+    { label: 'Clinique', value: 'clinic' },
+    { label: 'Centre de rééducation', value: 'rehabilitation-center' }
+  ]
 
   const isCreating = ref(false)
   // Cache for slug availability to avoid redundant checks
@@ -53,7 +88,7 @@
   watch(
     () => form.name,
     (newName, oldName) => {
-      if (newName != oldName) {
+      if (newName !== oldName) {
         form.slug = slugify(newName)
       }
     }
@@ -158,6 +193,18 @@
 
           <UFormField name="slug" label="Slug" description="Identifiant unique de votre organisation">
             <UInput v-model="form.slug" placeholder="acme-corporation" :disabled="isCreating" required class="w-full" />
+          </UFormField>
+
+          <UFormField name="type" label="Type d'établissement">
+            <USelect v-model="form.type" :items="typeOptions" :disabled="isCreating" class="w-full" />
+          </UFormField>
+
+          <UFormField name="contact.email" label="Email">
+            <UInput v-model="form.contact.email" type="email" :disabled="isCreating" class="w-full" />
+          </UFormField>
+
+          <UFormField name="address.city" label="Ville">
+            <UInput v-model="form.address.city" :disabled="isCreating" class="w-full" />
           </UFormField>
 
           <UFormField name="logoFile" label="Logo" description="Image du logo (optionnel)">

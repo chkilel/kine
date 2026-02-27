@@ -215,6 +215,119 @@ function createAuthInstance(event: H3Event) {
     ],
 
     databaseHooks: {
+      organization: {
+        create: {
+          before: async (organization) => {
+            // Convert stringified JSON to objects for Drizzle
+            const jsonFields = [
+              'contact',
+              'address',
+              'legalRepresentative',
+              'fiscal',
+              'banking',
+              'pricing',
+              'scheduling',
+              'clinical',
+              'notifications',
+              'intake',
+              'branding'
+            ]
+
+            for (const field of jsonFields) {
+              if (organization[field] && typeof organization[field] === 'string') {
+                try {
+                  organization[field] = JSON.parse(organization[field])
+                } catch (error) {
+                  console.warn(`Failed to parse JSON field ${field}:`, error)
+                }
+              }
+            }
+
+            return { data: organization }
+          },
+          after: async (organization) => {
+            // Convert objects back to stringified JSON for Better Auth
+            const jsonFields = [
+              'contact',
+              'address',
+              'legalRepresentative',
+              'fiscal',
+              'banking',
+              'pricing',
+              'scheduling',
+              'clinical',
+              'notifications',
+              'intake',
+              'branding'
+            ]
+
+            for (const field of jsonFields) {
+              if (organization[field] && typeof organization[field] === 'object') {
+                organization[field] = JSON.stringify(organization[field])
+              }
+            }
+
+            return { data: organization }
+          }
+        },
+        update: {
+          before: async (organization) => {
+            // Same transformation as create.before
+            const jsonFields = [
+              'contact',
+              'address',
+              'legalRepresentative',
+              'fiscal',
+              'banking',
+              'pricing',
+              'scheduling',
+              'clinical',
+              'notifications',
+              'intake',
+              'branding'
+            ]
+
+            for (const field of jsonFields) {
+              if (organization[field] && typeof organization[field] === 'string') {
+                try {
+                  organization[field] = JSON.parse(organization[field])
+                } catch (error) {
+                  console.warn(`Failed to parse JSON field ${field}:`, error)
+                }
+              }
+            }
+
+            return { data: organization }
+          },
+          after: async (organization) => {
+            // Same transformation as create.after
+            const jsonFields = [
+              'contact',
+              'address',
+              'legalRepresentative',
+              'fiscal',
+              'banking',
+              'pricing',
+              'scheduling',
+              'clinical',
+              'notifications',
+              'intake',
+              'branding'
+            ]
+
+            for (const field of jsonFields) {
+              if (organization[field] && typeof organization[field] === 'object') {
+                organization[field] = JSON.stringify(organization[field])
+              }
+            }
+
+            return { data: organization }
+          }
+        }
+      }
+    },
+
+    databaseHooks: {
       session: {
         create: {
           before: async (session) => {

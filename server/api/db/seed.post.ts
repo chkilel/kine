@@ -49,10 +49,24 @@ const SEED_CONFIG = {
     adminEmail: 'admin@seed.local'
   },
   organizations: {
-    count: 1,
+    count: 2,
     names: [
-      { name: 'Kine Clinic A', slug: 'kine-clinic-a' },
-      { name: 'Kine Clinic B', slug: 'kine-clinic-b' }
+      {
+        name: 'Kine Clinic A',
+        slug: 'kine-clinic-a',
+        type: 'clinic',
+        description: 'Clinique de kinésithérapie spécialisée en rééducation fonctionnelle et sportive',
+        status: 'active',
+        timezone: 'Africa/Casablanca'
+      },
+      {
+        name: 'Kine Clinic B',
+        slug: 'kine-clinic-b',
+        type: 'medical-center',
+        description: 'Centre médical intégré avec services de physiothérapie',
+        status: 'active',
+        timezone: 'Africa/Casablanca'
+      }
     ],
     userDistribution: [5, 4]
   },
@@ -494,7 +508,6 @@ const treatmentPlanTitles = [
   'Programme de stabilisation spinale pour problèmes lombaires chroniques'
 ]
 
-const locations = LOCATIONS
 const exceptionReasons = VALID_SCHEDULE_EXCEPTION_TYPES
 
 const roomEquipment = [
@@ -550,20 +563,6 @@ function getWeightedLocation(): (typeof LOCATIONS)[number] {
   return 'telehealth'
 }
 
-function generateTime(startHour: number, endHour: number): string {
-  const startTime = `${String(startHour).padStart(2, '0')}:00:00`
-  const endTime = `${String(endHour).padStart(2, '0')}:00:00`
-
-  const availableSlots = generateTimeSeriesInRange(startTime, endTime, 30)
-
-  if (availableSlots.length === 0) {
-    return '00:00:00'
-  }
-
-  const selectedTime = randomItem(availableSlots)
-  return selectedTime || '00:00:00'
-}
-
 function generateTimeRange(startHour: number, endHour: number): { startTime: string; endTime: string } {
   const startTime = `${String(startHour).padStart(2, '0')}:00:00`
   const endTime = `${String(endHour).padStart(2, '0')}:00:00`
@@ -608,7 +607,14 @@ async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(organizations)
 }
 
-async function createOrganization(event: H3Event, name: string, slug: string, userId: string): Promise<string | null> {
+async function createOrganization(
+  event: H3Event,
+  name: string,
+  slug: string,
+  userId: string,
+  type: string = 'clinic',
+  description: string = ''
+): Promise<string | null> {
   try {
     const db = useDrizzle(event)
     const existing = await db
@@ -627,13 +633,210 @@ async function createOrganization(event: H3Event, name: string, slug: string, us
       return orgId
     }
 
+    const isClinicA = slug === 'kine-clinic-a'
+
+    const contactData = isClinicA
+      ? {
+          email: 'contact@kine.clinic.a.ma',
+          website: 'https://kine.clinic.a.ma',
+          phones: [
+            { id: crypto.randomUUID(), category: 'clinic', number: '+212 5 22 11 22 33' },
+            { id: crypto.randomUUID(), category: 'personal', number: '+212 6 11 11 11 11' }
+          ] as PhoneEntry[]
+        }
+      : {
+          email: 'contact@kine.clinic.b.ma',
+          website: 'https://kine.clinic.b.ma',
+          phones: [
+            { id: crypto.randomUUID(), category: 'clinic', number: '+212 5 22 44 55 66' },
+            { id: crypto.randomUUID(), category: 'personal', number: '+212 6 22 22 22 22' }
+          ] as PhoneEntry[]
+        }
+
+    const addressData = isClinicA
+      ? {
+          street: '45 Avenue Hassan II',
+          postalCode: '20250',
+          city: 'Casablanca',
+          sector: 'Maârif',
+          country: 'Maroc'
+        }
+      : {
+          street: '12 Boulevard Zerktouni',
+          postalCode: '20100',
+          city: 'Casablanca',
+          sector: 'Gauthier',
+          country: 'Maroc'
+        }
+
+    const legalRepData = isClinicA
+      ? {
+          name: 'Dr. Ahmed Benali',
+          title: 'Directeur Médical',
+          email: 'director@kine.clinic.a.ma',
+          phone: '+212 6 11 22 33 44',
+          idNumber: 'AB123456'
+        }
+      : {
+          name: 'Dr. Fatima El Idrissi',
+          title: 'Directrice Médicale',
+          email: 'director@kine.clinic.b.ma',
+          phone: '+212 6 55 66 77 88',
+          idNumber: 'FI987654'
+        }
+
+    const fiscalData = isClinicA
+      ? {
+          ice: '883 291 000 00024',
+          rc: 'CASABLANCA 12345',
+          if: '12345678',
+          legalForm: 'liberal-profession',
+          creationDate: '2015-03-15',
+          vatRate: 20,
+          vatSubject: true,
+          paymentDelay: '30',
+          paymentMethod: 'wire-transfer',
+          currency: 'MAD (Dirham Marocain)'
+        }
+      : {
+          ice: '002 847 100 00018',
+          rc: 'CASABLANCA 67890',
+          if: '87654321',
+          legalForm: 'sarl',
+          creationDate: '2018-07-20',
+          vatRate: 20,
+          vatSubject: true,
+          paymentDelay: '45',
+          paymentMethod: 'bank-transfer',
+          currency: 'MAD (Dirham Marocain)'
+        }
+
+    const bankingData = isClinicA
+      ? {
+          bankName: 'Banque Populaire du Maroc',
+          iban: 'MA840102000000000000000000',
+          rib: '011780000001234567890123',
+          agency: 'Agence Maârif',
+          accountHolder: 'Kine Clinic A'
+        }
+      : {
+          bankName: 'Attijariwafa Bank',
+          iban: 'MA640110000000000000000012',
+          rib: '230780000009876543210987',
+          agency: 'Agence Gauthier',
+          accountHolder: 'Kine Clinic B'
+        }
+
+    const pricingData = isClinicA
+      ? {
+          sessionRates: {
+            cabinet: 200,
+            domicile: 250,
+            teleconsultation: 150
+          }
+        }
+      : {
+          sessionRates: {
+            cabinet: 180,
+            domicile: 230,
+            teleconsultation: 140
+          }
+        }
+
+    const schedulingData = isClinicA
+      ? {
+          bookingWindowDays: 30,
+          cancellationHours: 24,
+          allowSameDay: false,
+          requirePaymentUpfront: false,
+          remindersEnabled: true,
+          reminderIntervals: [24, 48]
+        }
+      : {
+          bookingWindowDays: 45,
+          cancellationHours: 12,
+          allowSameDay: true,
+          requirePaymentUpfront: true,
+          remindersEnabled: true,
+          reminderIntervals: [12, 24]
+        }
+
+    const clinicalData = isClinicA
+      ? {
+          defaultDurationMinutes: 30,
+          requirePainAssessment: true,
+          requireGoals: true,
+          requireNextSteps: true,
+          noteTemplates: [
+            'Évaluation initiale - mobilité et douleur',
+            'Séance de renforcement musculaire - exercices progressifs',
+            'Séance de mobilisation articulaire - techniques manuelles'
+          ]
+        }
+      : {
+          defaultDurationMinutes: 45,
+          requirePainAssessment: true,
+          requireGoals: false,
+          requireNextSteps: true,
+          noteTemplates: [
+            'Bilan initial complet',
+            'Suivi thérapeutique et progression',
+            'Séance de rééducation avancée'
+          ]
+        }
+
+    const brandingData = isClinicA
+      ? {
+          primaryColor: '#3B82F6',
+          accentColor: '#10B981',
+          customDomain: null
+        }
+      : {
+          primaryColor: '#8B5CF6',
+          accentColor: '#F59E0B',
+          customDomain: null
+        }
+
     const orgRecord = await db
       .insert(organizations)
       .values({
         name,
         slug,
+        type,
+        description,
+        status: 'active',
+        timezone: 'Africa/Casablanca',
+        contact: contactData,
+        address: addressData,
+        legalRepresentative: legalRepData,
+        fiscal: fiscalData,
+        banking: bankingData,
+        pricing: pricingData,
+        scheduling: schedulingData,
+        clinical: clinicalData,
+        notifications: {
+          patient: {
+            appointmentConfirmation: true,
+            appointmentReminder: true,
+            paymentReminder: true
+          },
+          staff: {
+            newAppointment: true,
+            cancellation: true
+          }
+        },
+        intake: {
+          requiredFields: ['firstName', 'lastName', 'dateOfBirth', 'phone', 'email', 'address'],
+          consents: {
+            privacy: true,
+            treatment: true,
+            financial: true,
+            telehealth: false
+          }
+        },
+        branding: brandingData,
         metadata: {}
-      })
+      } as any)
       .returning()
       .then((rows) => rows[0])
 
@@ -1369,7 +1572,14 @@ export default defineEventHandler(async (event: H3Event) => {
 
   for (const org of SEED_CONFIG.organizations.names) {
     try {
-      const orgId = await createOrganization(event, org.name, org.slug, adminUserId)
+      const orgId = await createOrganization(
+        event,
+        org.name,
+        org.slug,
+        adminUserId,
+        (org as any).type || 'clinic',
+        (org as any).description || ''
+      )
 
       if (orgId) {
         organizationIds.push(orgId)

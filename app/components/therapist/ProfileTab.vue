@@ -40,6 +40,7 @@
 
   // Update profile function
   async function updateProfile() {
+    const authClient = useAuthClient()
     try {
       const result = await authClient.updateUser({
         name: `${profile.firstName} ${profile.lastName}`,
