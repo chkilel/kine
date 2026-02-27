@@ -28,6 +28,8 @@ export const getLocationVariant = (location: Location) => LOCATIONS_CONFIG[locat
 
 //---------------------------------  Organization ------------------------------------
 
+export const ORGANIZATION_STATUS = ['active', 'inactive', 'suspended'] as const
+
 export const ORGANIZATION_TYPES = ['cabinet', 'medical-center', 'clinic', 'rehabilitation-center'] as const
 
 export const ORGANIZATION_TYPES_CONFIG = {
