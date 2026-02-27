@@ -4,7 +4,6 @@ import { fr } from 'zod/locales'
 
 import { authClient } from '~~/app/utils/auth-client'
 import { users } from '~~/server/database/schema'
-import { emailSchema, nameSchema, passwordSchema, phoneEntrySchema } from './base.types'
 
 z.config(fr())
 
