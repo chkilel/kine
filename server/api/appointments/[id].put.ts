@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { appointments } from '~~/server/database/schema'
-import { appointmentUpdateSchema } from '~~/shared/types/appointment.type'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)

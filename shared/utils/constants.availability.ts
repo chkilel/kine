@@ -2,8 +2,6 @@
 // Availability Exception Types Constants
 // =================================================================================================
 
-import type { Reason } from '../types/base.types'
-
 // Valid days of the week for scheduling
 export const VALID_SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
