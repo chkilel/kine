@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 import { organizations } from '~~/server/database/schema'
+import { phoneEntrySchema } from '~~/shared/types/base.types'
 import {
   ORGANIZATION_TYPES,
   LEGAL_FORMS,
@@ -87,9 +88,9 @@ export type OrgBanking = z.infer<typeof orgBankingSchema>
 
 export const orgPricingSchema = z.object({
   sessionRates: z.object({
-    cabinet: z.number().nullable().optional(),
-    domicile: z.number().nullable().optional(),
-    teleconsultation: z.number().nullable().optional()
+    cabinet: z.number().optional(),
+    domicile: z.number().optional(),
+    teleconsultation: z.number().optional()
   }),
   packages: z
     .array(
@@ -99,7 +100,7 @@ export const orgPricingSchema = z.object({
         price: z.number()
       })
     )
-    .optional()
+    .default([])
 })
 export type OrgPricing = z.infer<typeof orgPricingSchema>
 
@@ -241,4 +242,56 @@ export const organizationInsertSchema = createInsertSchema(organizations, {
 
 export const updateOrganizationSchema = organizationInsertSchema.partial()
 
+export const orgGeneralesSchema = z.object({
+  name: orgNameSchema.optional(),
+  slug: OrgSlugSchema.optional(),
+  type: organizationTypeSchema.optional(),
+  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
+  contact: orgContactSchema.optional(),
+  address: orgAddressSchema.optional(),
+  legalRepresentative: orgLegalRepSchema.optional()
+})
+export type OrgGenerales = z.infer<typeof orgGeneralesSchema>
+
+export const orgLegalSchema = z.object({
+  fiscal: orgFiscalSchema,
+  banking: orgBankingSchema
+})
+export type OrgLegal = z.infer<typeof orgLegalSchema>
+
+export const orgPricingSchedulingSchema = z.object({
+  pricing: orgPricingSchema,
+  scheduling: orgSchedulingSchema
+})
+export type OrgPricingScheduling = z.infer<typeof orgPricingSchedulingSchema>
+
+export const orgClinicalIntakeNotificationsSchema = z.object({
+  clinical: orgClinicalSchema,
+  intake: orgIntakeSchema,
+  notifications: orgNotificationsSchema
+})
+export type OrgClinicalIntakeNotifications = z.infer<typeof orgClinicalIntakeNotificationsSchema>
+
+export const orgBrandingOnlySchema = z.object({
+  branding: orgBrandingSchema
+})
+export type OrgBrandingOnly = z.infer<typeof orgBrandingOnlySchema>
+
+export const orgMetadataSchema = z.object({
+  metadataText: z.string().refine(
+    (val) => {
+      if (!val.trim()) return true
+      try {
+        JSON.parse(val)
+        return true
+      } catch {
+        return false
+      }
+    },
+    { message: 'Métadonnées JSON invalide' }
+  )
+})
+export type OrgMetadata = z.infer<typeof orgMetadataSchema>
+
 export type Organization = z.output<typeof organizationResponseSchema>
+export type UpdateOrganization = z.input<typeof updateOrganizationSchema>
