@@ -243,13 +243,13 @@ export const organizationInsertSchema = createInsertSchema(organizations, {
 export const updateOrganizationSchema = organizationInsertSchema.partial()
 
 export const orgGeneralesSchema = z.object({
-  name: orgNameSchema.optional(),
-  slug: OrgSlugSchema.optional(),
+  name: orgNameSchema,
+  slug: OrgSlugSchema,
   type: organizationTypeSchema.optional(),
   description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
-  contact: orgContactSchema.optional(),
-  address: orgAddressSchema.optional(),
-  legalRepresentative: orgLegalRepSchema.optional()
+  contact: orgContactSchema,
+  address: orgAddressSchema,
+  legalRepresentative: orgLegalRepSchema
 })
 export type OrgGenerales = z.infer<typeof orgGeneralesSchema>
 
