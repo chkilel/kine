@@ -266,7 +266,9 @@ function getBaseURL(event: H3Event) {
   return baseURL
 }
 
-export async function requireAuth(event: H3Event) {
+export async function requireAuth(event: H3Event, options?: { requireOrganization?: boolean }) {
+  const requireOrganization = options ? options?.requireOrganization : true
+
   const auth = createAuth(event)
   const session = await auth.api.getSession({
     headers: getHeaders(event) as any
@@ -277,6 +279,12 @@ export async function requireAuth(event: H3Event) {
       statusCode: 401,
       message: 'Non autorisé'
     })
+  }
+
+  if (!requireOrganization) {
+    return {
+      userId: session.user.id
+    }
   }
 
   const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
