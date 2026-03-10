@@ -17,7 +17,8 @@ const orgNameSchema = z
   .string()
   .min(5, 'Le nom doit avoir au moins 5 caractères')
   .max(100, 'Le nom ne peut pas dépasser 100 caractères')
-const OrgSlugSchema = z
+
+const orgSlugSchema = z
   .string()
   .min(5, 'Le slug doit avoir au moins 5 caractères')
   .max(50, 'Le slug ne peut pas dépasser 50 caractères')
@@ -177,29 +178,29 @@ export type OrgBranding = z.infer<typeof orgBrandingSchema>
 export const organizationResponseSchema = createSelectSchema(organizations, {
   id: z.string(),
   name: orgNameSchema,
-  slug: OrgSlugSchema,
-  type: organizationTypeSchema.optional(),
-  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
-  logo: z.string().nullable().optional(),
-  contact: orgContactSchema,
-  address: orgAddressSchema,
-  legalRepresentative: orgLegalRepSchema.optional(),
-  fiscal: orgFiscalSchema.optional(),
-  banking: orgBankingSchema.optional(),
-  pricing: orgPricingSchema.optional(),
-  scheduling: orgSchedulingSchema.optional(),
-  clinical: orgClinicalSchema.optional(),
-  notifications: orgNotificationsSchema.optional(),
-  intake: orgIntakeSchema.optional(),
-  branding: orgBrandingSchema.optional(),
-  status: z.enum(ORGANIZATION_STATUS).optional(),
-  timezone: z.string().default('Africa/Casablanca').optional(),
-  metadata: z.any().optional()
+  slug: orgSlugSchema,
+  type: organizationTypeSchema,
+  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères'),
+  logo: z.string().nullable(),
+  contact: orgContactSchema.nullable(),
+  address: orgAddressSchema.nullable(),
+  legalRepresentative: orgLegalRepSchema.nullable(),
+  fiscal: orgFiscalSchema.nullable(),
+  banking: orgBankingSchema.nullable(),
+  pricing: orgPricingSchema.nullable(),
+  scheduling: orgSchedulingSchema.nullable(),
+  clinical: orgClinicalSchema.nullable(),
+  notifications: orgNotificationsSchema.nullable(),
+  intake: orgIntakeSchema.nullable(),
+  branding: orgBrandingSchema.nullable(),
+  status: z.enum(ORGANIZATION_STATUS).nullable(),
+  timezone: z.string(),
+  metadata: z.any()
 })
 
 export const organizationInsertSchema = createInsertSchema(organizations, {
   name: orgNameSchema,
-  slug: OrgSlugSchema,
+  slug: orgSlugSchema,
   type: organizationTypeSchema.optional(),
   description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
   logo: z.string().nullable(),
@@ -244,7 +245,7 @@ export const updateOrganizationSchema = organizationInsertSchema.partial()
 
 export const orgGeneralesSchema = z.object({
   name: orgNameSchema,
-  slug: OrgSlugSchema,
+  slug: orgSlugSchema,
   type: organizationTypeSchema.optional(),
   description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').optional(),
   contact: orgContactSchema,
