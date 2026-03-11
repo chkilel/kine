@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0af44455-3bfc-476e-92f0-8ad5ff345a21",
+  "id": "a0937eeb-e534-4c01-9e54-b2283dc30eb8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "appointments": {
@@ -451,6 +451,13 @@
         },
         "activeOrganizationId": {
           "name": "activeOrganizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activeOrganizationSlug": {
+          "name": "activeOrganizationSlug",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
