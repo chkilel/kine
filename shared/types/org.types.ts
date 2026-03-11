@@ -292,7 +292,57 @@ export const orgMetadataSchema = z.object({
     { message: 'Métadonnées JSON invalide' }
   )
 })
-export type OrgMetadata = z.infer<typeof orgMetadataSchema>
 
-export type Organization = z.output<typeof organizationResponseSchema>
+//---------------------------- Onboarding --------------------------
+const onboardingSessionRatesSchema = z.object({
+  cabinet: z.number().min(1, 'Le tarif doit être positif').default(0),
+  domicile: z.number().min(1, 'Le tarif doit être positif').default(0),
+  teleconsultation: z.number().min(1, 'Le tarif doit être positif').default(0)
+})
+
+export const stepSchemas = [
+  // Step 0 — Identité
+  z.object({
+    name: orgNameSchema,
+    slug: orgSlugSchema
+  }),
+  // Step 1 — Contact
+  z.object({
+    contact: orgContactSchema
+  }),
+  // Step 2 — Adresse
+  z.object({
+    address: orgAddressSchema
+  }),
+  // Step 3 — Tarifs (all optional, no blocking validation)
+  z.object({
+    sessionRates: onboardingSessionRatesSchema
+  })
+]
+
+export const onboardingSchema = z.object({
+  name: orgNameSchema,
+  slug: orgSlugSchema,
+  contact: z.object({
+    email: z.email('Adresse email invalide'),
+    phones: z.array(phoneEntrySchema).min(1, 'Au moins un numéro de téléphone requis')
+  }),
+  address: orgAddressSchema,
+  sessionRates: onboardingSessionRatesSchema
+})
+
+export function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
+export type OnboardingData = z.infer<typeof onboardingSchema>
+export type OrgMetadata = z.infer<typeof orgMetadataSchema>
+export type Organization = Omit<z.output<typeof organizationResponseSchema>, 'updatedAt'>
 export type UpdateOrganization = z.input<typeof updateOrganizationSchema>
