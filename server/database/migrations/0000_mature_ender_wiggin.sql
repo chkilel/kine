@@ -58,6 +58,7 @@ CREATE TABLE `sessions` (
 	`userAgent` text,
 	`userId` text NOT NULL,
 	`activeOrganizationId` text,
+	`activeOrganizationSlug` text,
 	`activeTeamId` text,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
