@@ -55,28 +55,6 @@
     }
   ] satisfies StepperItem[]
 
-  // FIXME replace with LOCATION_OPTIONS
-  const LOCATIONS = [
-    {
-      key: 'cabinet',
-      label: 'Au cabinet',
-      icon: 'i-hugeicons-hospital-01',
-      desc: 'Consultation en présentiel'
-    },
-    {
-      key: 'domicile',
-      label: 'À domicile',
-      icon: 'i-hugeicons-home-03',
-      desc: 'Déplacement chez le patient'
-    },
-    {
-      key: 'teleconsultation',
-      label: 'Téléconsultation',
-      icon: 'i-hugeicons-video-02',
-      desc: 'Consultation à distance'
-    }
-  ]
-
   const onboardingData = ref<OnboardingData>({
     name: '',
     slug: '',
@@ -91,9 +69,9 @@
       country: 'Maroc'
     },
     sessionRates: {
-      cabinet: 150,
-      domicile: 300,
-      teleconsultation: 120
+      clinic: 150,
+      home: 300,
+      telehealth: 120
     }
   })
 
@@ -359,8 +337,8 @@
 
                 <div class="grid grid-cols-1 gap-3">
                   <div
-                    v-for="location in LOCATIONS"
-                    :key="location.key"
+                    v-for="location in LOCATION_OPTIONS"
+                    :key="location.value"
                     class="border-border/60 bg-muted/30 hover:bg-muted/60 flex items-center gap-4 rounded-xl border p-4 transition-colors"
                   >
                     <div class="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
@@ -370,9 +348,9 @@
                       <p class="text-sm font-medium">{{ location.label }}</p>
                       <p class="text-muted-foreground text-xs">{{ location.desc }}</p>
                     </div>
-                    <UFormField :name="`sessionRates.${location.key}`" class="w-28 shrink-0">
+                    <UFormField :name="`sessionRates.${location.value}`" class="w-28 shrink-0">
                       <UInput
-                        v-model.number="(onboardingData.sessionRates as any)[location.key]"
+                        v-model.number="(onboardingData.sessionRates as any)[location.value]"
                         type="number"
                         size="md"
                         class="w-full"

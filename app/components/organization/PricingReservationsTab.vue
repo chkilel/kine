@@ -7,9 +7,9 @@
   const defaultForm = (org?: Organization) => ({
     pricing: {
       sessionRates: {
-        cabinet: org?.pricing?.sessionRates?.cabinet,
-        domicile: org?.pricing?.sessionRates?.domicile,
-        teleconsultation: org?.pricing?.sessionRates?.teleconsultation
+        clinic: org?.pricing?.sessionRates?.clinic,
+        home: org?.pricing?.sessionRates?.home,
+        telehealth: org?.pricing?.sessionRates?.telehealth
       },
       packages: org?.pricing?.packages ?? []
     },
@@ -89,17 +89,17 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <UFormField label="Cabinet (MAD)" name="pricing.sessionRates.cabinet">
-                <UInput v-model.number="state.pricing.sessionRates.cabinet" type="number" class="w-full" />
+                <UInput v-model.number="state.pricing.sessionRates.clinic" type="number" class="w-full" />
               </UFormField>
             </div>
             <div>
               <UFormField label="Domicile (MAD)" name="pricing.sessionRates.domicile">
-                <UInput v-model.number="state.pricing.sessionRates.domicile" type="number" class="w-full" />
+                <UInput v-model.number="state.pricing.sessionRates.home" type="number" class="w-full" />
               </UFormField>
             </div>
             <div>
               <UFormField label="Téléconsultation (MAD)" name="pricing.sessionRates.teleconsultation">
-                <UInput v-model.number="state.pricing.sessionRates.teleconsultation" type="number" class="w-full" />
+                <UInput v-model.number="state.pricing.sessionRates.telehealth" type="number" class="w-full" />
               </UFormField>
             </div>
           </div>

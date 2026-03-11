@@ -89,9 +89,9 @@ export type OrgBanking = z.infer<typeof orgBankingSchema>
 
 export const orgPricingSchema = z.object({
   sessionRates: z.object({
-    cabinet: z.number().optional(),
-    domicile: z.number().optional(),
-    teleconsultation: z.number().optional()
+    clinic: z.number().optional(),
+    home: z.number().optional(),
+    telehealth: z.number().optional()
   }),
   packages: z
     .array(
@@ -295,9 +295,9 @@ export const orgMetadataSchema = z.object({
 
 //---------------------------- Onboarding --------------------------
 const onboardingSessionRatesSchema = z.object({
-  cabinet: z.number().min(1, 'Le tarif doit être positif').default(0),
-  domicile: z.number().min(1, 'Le tarif doit être positif').default(0),
-  teleconsultation: z.number().min(1, 'Le tarif doit être positif').default(0)
+  clinic: z.number().min(1, 'Le tarif doit être positif'),
+  home: z.number().min(1, 'Le tarif doit être positif'),
+  telehealth: z.number().min(1, 'Le tarif doit être positif')
 })
 
 export const stepSchemas = [

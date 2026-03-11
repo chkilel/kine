@@ -8,17 +8,36 @@ import type { Location } from '../types/base.types'
 export const LOCATIONS = ['clinic', 'home', 'telehealth'] as const
 
 export const LOCATIONS_CONFIG = {
-  clinic: { label: 'Cabinet', icon: 'i-hugeicons-hospital-01', color: 'success', variant: 'subtle' },
-  home: { label: 'Domicile', icon: 'i-hugeicons-home-03', color: 'warning', variant: 'subtle' },
-  telehealth: { label: 'Téléconsultation', icon: 'i-hugeicons-video-02', color: 'info', variant: 'subtle' }
+  clinic: {
+    label: 'Cabinet',
+    icon: 'i-hugeicons-hospital-01',
+    color: 'success',
+    variant: 'subtle',
+    desc: 'Consultation en présentiel'
+  },
+  home: {
+    label: 'Domicile',
+    icon: 'i-hugeicons-home-03',
+    color: 'warning',
+    variant: 'subtle',
+    desc: 'Déplacement chez le patient'
+  },
+  telehealth: {
+    label: 'Téléconsultation',
+    icon: 'i-hugeicons-video-02',
+    color: 'info',
+    variant: 'subtle',
+    desc: 'Consultation à distance'
+  }
 } as const
 
 // Appointment Location Options
 export const LOCATION_OPTIONS = Object.entries(LOCATIONS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
-  icon: item.icon
-})) as { label: string; value: Location; icon: string }[]
+  icon: item.icon,
+  desc: item.desc
+})) as { label: string; value: Location; icon: string; desc: string }[]
 
 // Location Helpers
 export const getLocationLabel = (location: Location) => LOCATIONS_CONFIG[location]?.label || location
