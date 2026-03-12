@@ -97,6 +97,7 @@ export type Note = z.infer<typeof noteSchema>
 export const phoneNumberSchema = z
   .string()
   .min(1, 'Le numéro est requis')
+  .min(10, 'Le numéro doit avoir au moin 10 chiffres')
   .regex(
     PHONE_REGEX,
     'Format de numéro de téléphone invalide. \n Entrez un numéro de téléphone avec ou sans indicatif international, les espaces et tirets sont autorisés.'

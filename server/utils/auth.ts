@@ -54,6 +54,99 @@ export const additionalFields = {
   }
 } as const satisfies Record<string, DBFieldAttribute<DBFieldType>>
 
+export const organizationAdditionalFields = {
+  type: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  description: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  status: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  timezone: {
+    type: 'string',
+    required: false,
+    input: true,
+    returned: true
+  },
+  contact: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  address: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  legalRepresentative: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  fiscal: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  banking: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  pricing: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  scheduling: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  clinical: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  notifications: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  intake: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  },
+  branding: {
+    type: 'json',
+    required: false,
+    input: true,
+    returned: true
+  }
+} as const satisfies Record<string, DBFieldAttribute<DBFieldType>>
+
 /**
  * Creates Better Auth instance configured for the current Cloudflare request context.
  */
@@ -103,6 +196,9 @@ function createAuthInstance(event: H3Event) {
         schema: {
           member: {
             additionalFields
+          },
+          organization: {
+            additionalFields: organizationAdditionalFields
           }
         },
         allowUserToCreateOrganization: async () => {
@@ -170,7 +266,9 @@ function getBaseURL(event: H3Event) {
   return baseURL
 }
 
-export async function requireAuth(event: H3Event) {
+export async function requireAuth(event: H3Event, options?: { requireOrganization?: boolean }) {
+  const requireOrganization = options ? options?.requireOrganization : true
+
   const auth = createAuth(event)
   const session = await auth.api.getSession({
     headers: getHeaders(event) as any
@@ -181,6 +279,12 @@ export async function requireAuth(event: H3Event) {
       statusCode: 401,
       message: 'Non autorisé'
     })
+  }
+
+  if (!requireOrganization) {
+    return {
+      userId: session.user.id
+    }
   }
 
   const activeOrganizationId = (session as Session)?.session?.activeOrganizationId

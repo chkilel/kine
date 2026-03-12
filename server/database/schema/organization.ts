@@ -3,6 +3,19 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { users } from './auth'
+import type {
+  OrgContact,
+  OrgAddress,
+  OrgLegalRep,
+  OrgFiscal,
+  OrgBanking,
+  OrgPricing,
+  OrgScheduling,
+  OrgClinical,
+  OrgNotifications,
+  OrgIntake,
+  OrgBranding
+} from '~~/shared/types/org.types'
 
 /** ================================================================
  * ORGANIZATION SCHEMA
@@ -16,6 +29,21 @@ export const organizations = sqliteTable('organizations', {
   name: text().notNull(),
   slug: text().notNull().unique(),
   logo: text(),
+  type: text(),
+  description: text(),
+  status: text().default('active'),
+  timezone: text().default('Africa/Casablanca'),
+  contact: text({ mode: 'json' }).$type<OrgContact>(),
+  address: text({ mode: 'json' }).$type<OrgAddress>(),
+  legalRepresentative: text({ mode: 'json' }).$type<OrgLegalRep>(),
+  fiscal: text({ mode: 'json' }).$type<OrgFiscal>(),
+  banking: text({ mode: 'json' }).$type<OrgBanking>(),
+  pricing: text({ mode: 'json' }).$type<OrgPricing>(),
+  scheduling: text({ mode: 'json' }).$type<OrgScheduling>(),
+  clinical: text({ mode: 'json' }).$type<OrgClinical>(),
+  notifications: text({ mode: 'json' }).$type<OrgNotifications>(),
+  intake: text({ mode: 'json' }).$type<OrgIntake>(),
+  branding: text({ mode: 'json' }).$type<OrgBranding>(),
   metadata: text({ mode: 'json' }),
   ...creationAndUpdateTimestamps
 })

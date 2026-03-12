@@ -2,7 +2,6 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 
-import { calendarDateSchema, noteSchema, treatmentPlanStatusSchema } from './base.types'
 import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
 import { VALID_COVERAGE_STATUSES } from '~~/shared/utils/constants.treatement-plan'
 

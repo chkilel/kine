@@ -1,6 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
-import type { AppointmentWithSession } from '~~/shared/types/appointment.type'
 
 export const APPOINTMENT_KEYS = {
   root: ['appointments'] as const,

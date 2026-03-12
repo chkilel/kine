@@ -3,15 +3,6 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { patients } from '~~/server/database/schema'
-import {
-  calendarDateSchema,
-  emergencyContactSchema,
-  genderSchema,
-  nameSchema,
-  noteSchema,
-  patientStatusSchema,
-  phoneNumberSchema
-} from './base.types'
 
 z.config(fr())
 

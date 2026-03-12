@@ -21,17 +21,18 @@
     "typecheck": "nuxi typecheck"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.997.0",
-    "@aws-sdk/s3-request-presigner": "^3.997.0",
-    "@internationalized/date": "^3.11.0",
-    "@pinia/colada": "^0.21.5",
+    "@aws-sdk/client-s3": "^3.1003.0",
+    "@aws-sdk/s3-request-presigner": "^3.1003.0",
+    "@internationalized/date": "^3.12.0",
+    "@pinia/colada": "^0.21.7",
     "@pinia/colada-nuxt": "0.3.1",
     "@pinia/nuxt": "0.11.3",
     "@unovis/ts": "^1.6.4",
     "@unovis/vue": "^1.6.4",
+    "@vueuse/core": "^14.2.1",
     "@vueuse/nuxt": "^14.2.1",
     "@vueuse/router": "^14.2.1",
-    "better-auth": "^1.4.19",
+    "better-auth": "^1.5.4",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
@@ -44,10 +45,10 @@
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.23",
-    "@iconify-json/lucide": "^1.2.94",
-    "@iconify-json/simple-icons": "^1.2.71",
-    "@nuxt/ui": "^4.5.0",
-    "@pinia/colada-devtools": "^0.4.3",
+    "@iconify-json/lucide": "^1.2.95",
+    "@iconify-json/simple-icons": "^1.2.72",
+    "@nuxt/ui": "^4.5.1",
+    "@pinia/colada-devtools": "^0.4.4",
     "@vitest/coverage-v8": "^4.0.18",
     "drizzle-kit": "^0.31.9",
     "nitro-cloudflare-dev": "^0.2.2",
@@ -57,15 +58,17 @@
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
-    "wrangler": "^4.68.1"
+    "wrangler": "^4.71.0"
   },
-  "packageManager": "pnpm@10.29.1",
+  "packageManager": "pnpm@10.30.3",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
+      "@prisma/engines",
       "@tailwindcss/oxide",
       "esbuild",
       "maplibre-gl",
+      "prisma",
       "sharp",
       "vue-demi",
       "workerd"
