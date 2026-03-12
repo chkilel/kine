@@ -30,13 +30,12 @@
   const handleViewSession = () => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
-      appointmentId: appointment.id,
-      treatmentSessionId: treatmentSession.value?.id
+      appointmentId: appointment.id
     })
   }
 
-  const handleViewPatient = () => {
-    navigateTo(`/patients/${appointment.patientId}`)
+  const handleViewPatient = async () => {
+    await navigateTo(`/patients/${appointment.patientId}`)
   }
 </script>
 

@@ -51,7 +51,7 @@ const _useCreatePatient = () => {
         method: 'POST',
         body: patientData
       }),
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast.add({
         title: 'Succès',
         description: `Nouveau patient ${variables.firstName} ${variables.lastName} ajouté`,
@@ -59,7 +59,7 @@ const _useCreatePatient = () => {
       })
 
       queryCache.invalidateQueries({ key: PATIENT_KEYS.root })
-      navigateTo('/patients')
+      await navigateTo('/patients')
     },
     onError: (error: any) => {
       toast.add({

@@ -21,8 +21,8 @@
 
       return routePlanId ?? latestActiveTreatmentPlan.value?.id ?? ''
     },
-    set: (id) => {
-      navigateTo({
+    set: async (id) => {
+      await navigateTo({
         path: route.path,
         query: { ...route.query, planId: id || undefined }
       })
