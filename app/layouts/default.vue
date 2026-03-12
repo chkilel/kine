@@ -1,14 +1,17 @@
 <script setup lang="ts">
-  import type { NavigationMenuItem } from '@nuxt/ui'
+  import type { CommandPaletteGroup, CommandPaletteItem, NavigationMenuItem } from '@nuxt/ui'
 
-  const open = ref(false)
+  const open = ref(true)
+  const { orgPath, getOrgSlug } = await useOrgRoute()
 
-  const links = [
+  const hasOrgSlug = computed(() => !!getOrgSlug())
+
+  const links = computed<NavigationMenuItem[][]>(() => [
     [
       {
         label: 'Accueil',
         icon: 'i-lucide-house',
-        to: '/',
+        to: orgPath('/'),
         onSelect: () => {
           open.value = false
         }
@@ -16,7 +19,7 @@
       {
         label: 'Messagerie',
         icon: 'i-lucide-message-square',
-        to: '/inbox',
+        to: orgPath('inbox'),
         badge: '4',
         onSelect: () => {
           open.value = false
@@ -25,7 +28,7 @@
       {
         label: 'Patients',
         icon: 'i-lucide-users',
-        to: '/patients',
+        to: orgPath('/patients'),
         onSelect: () => {
           open.value = false
         }
@@ -33,7 +36,7 @@
       {
         label: 'Planning quotidien',
         icon: 'i-lucide-calendar',
-        to: '/therapists/day',
+        to: orgPath('/therapists/day'),
         onSelect: () => {
           open.value = false
         }
@@ -48,14 +51,14 @@
       },
       {
         label: 'Paramètres',
-        to: '/settings',
+        to: orgPath('/settings'),
         icon: 'i-lucide-settings',
         defaultOpen: true,
         type: 'trigger',
         children: [
           {
             label: 'Général',
-            to: '/settings',
+            to: orgPath('/settings'),
             exact: true,
             onSelect: () => {
               open.value = false
@@ -63,21 +66,21 @@
           },
           {
             label: 'Membres',
-            to: '/settings/members',
+            to: orgPath('/settings/members'),
             onSelect: () => {
               open.value = false
             }
           },
           {
             label: 'Notifications',
-            to: '/settings/notifications',
+            to: orgPath('/settings/notifications'),
             onSelect: () => {
               open.value = false
             }
           },
           {
             label: 'Sécurité',
-            to: '/settings/security',
+            to: orgPath('/settings/security'),
             onSelect: () => {
               open.value = false
             }
@@ -93,13 +96,13 @@
         target: '_blank'
       }
     ]
-  ] satisfies NavigationMenuItem[][]
+  ])
 
-  const groups = computed(() => [
+  const groups = computed<CommandPaletteGroup[]>(() => [
     {
       id: 'navigation',
       label: 'Navigation',
-      items: links.flat()
+      items: (links.value.flat() as CommandPaletteItem[]) || []
     },
     {
       id: 'help',
@@ -121,9 +124,9 @@
   <UDashboardGroup unit="rem">
     <UDashboardSidebar
       id="default"
-      v-model:open="open"
       collapsible
       resizable
+      default-open
       class="bg-elevated/25"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
@@ -134,9 +137,15 @@
       <template #default="{ collapsed }">
         <UDashboardSearchButton :collapsed="collapsed" class="ring-default bg-transparent" />
 
-        <UNavigationMenu :collapsed="collapsed" :items="links[0]" orientation="vertical" tooltip popover />
+        <UNavigationMenu :collapsed="collapsed" :items="links[0] || []" orientation="vertical" tooltip popover />
 
-        <UNavigationMenu :collapsed="collapsed" :items="links[1]" orientation="vertical" tooltip class="mt-auto" />
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="links[1] || []"
+          orientation="vertical"
+          tooltip
+          class="mt-auto"
+        />
       </template>
 
       <template #footer="{ collapsed }">
@@ -144,7 +153,7 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+    <UDashboardSearch v-if="hasOrgSlug" :groups="groups" />
 
     <slot />
 

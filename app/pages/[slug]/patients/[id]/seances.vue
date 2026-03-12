@@ -3,6 +3,7 @@
   import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date'
 
   const route = useRoute()
+  const { orgNavigateTo } = await useOrgRoute()
 
   const { data: patient, isPending } = usePatientById(() => route.params.id as string)
 
@@ -68,7 +69,7 @@
   }
 
   const navigateToPlans = () => {
-    navigateTo(`/patients/${route.params.id}/plan`)
+    orgNavigateTo(`/patients/${route.params.id}/plan`)
   }
 
   const handleDeleteSession = async (appointment: Appointment) => {

@@ -30,8 +30,16 @@
     })
 
     // Add "Create Organization" option if user has no organizations
-    const createOrgItem = { label: 'Créer une équipe', icon: 'i-lucide-circle-plus' }
-    const manageOrgItem = { label: 'Gérer les équipes', icon: 'i-lucide-cog' }
+    const createOrgItem = {
+      label: 'Créer une équipe',
+      icon: 'i-lucide-circle-plus',
+      to: '/organizations/create'
+    }
+    const manageOrgItem = {
+      label: 'Gérer les équipes',
+      icon: 'i-lucide-cog',
+      to: '/organizations'
+    }
 
     if (organizations.value.data.length === 0) {
       return [items, [createOrgItem, manageOrgItem]]
@@ -79,7 +87,7 @@
   // Switch organization using Better Auth
   async function switchOrganization(organizationId: string) {
     try {
-      const { error } = await setActiveOrganization({ organizationId })
+      const { data, error } = await setActiveOrganization({ organizationId })
       if (error) {
         console.error('Failed to switch organization:', error)
         toast.add({
@@ -93,6 +101,11 @@
           description: 'Organisation changée avec succès',
           color: 'success'
         })
+
+        // Refresh session
+        await authClient.getSession()
+        // Navigate to the new organization's home page
+        await navigateTo(`/${data.slug}`)
       }
     } catch (error) {
       console.error('Failed to switch organization:', error)
@@ -104,7 +117,7 @@
     }
   }
 
-  // TODO: Create organization using the same approach as in the organisation page
+  // TODO: Create organization using same approach as in organisation page
 </script>
 
 <template>

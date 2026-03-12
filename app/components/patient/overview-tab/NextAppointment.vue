@@ -4,6 +4,7 @@
   const { patient } = defineProps<{ patient: Patient }>()
 
   const overlay = useOverlay()
+  const { orgNavigateTo } = await useOrgRoute()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
   const { data: appointments } = useAppointmentsList(() => ({ patientId: patient?.id }))
@@ -22,9 +23,9 @@
   function navigateToPlan(planId?: string) {
     const path = `/patients/${patient.id}/plan`
     if (planId) {
-      navigateTo({ path, query: { planId } })
+      orgNavigateTo({ path, query: { planId } })
     } else {
-      navigateTo(path)
+      orgNavigateTo(path)
     }
   }
 
@@ -51,7 +52,8 @@
           </p>
           <p class="text-muted text-sm">
             <span class="font-medium capitalize">
-              {{ extractDayAndMonth(nextAppointment.date).dayNameShort }} {{ extractDayAndMonth(nextAppointment.date).month }}
+              {{ extractDayAndMonth(nextAppointment.date).dayNameShort }}
+              {{ extractDayAndMonth(nextAppointment.date).month }}
             </span>
             à
             <span class="font-semibold">

@@ -8,6 +8,8 @@
   const planningOverlay = overlay.create(LazyAppointmentPlanningSlideover)
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
+  const { orgPath } = await useOrgRoute()
+
   const { mutate: updateAppointmentStatus } = useUpdateAppointmentStatus()
   const { data: patient } = usePatientById(() => appointment.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => appointment.patientId)
@@ -74,7 +76,7 @@
           {
             label: 'Patient',
             icon: 'i-hugeicons-profile-02',
-            to: `/patients/${appointment.patientId}`
+            to: orgPath(`/patients/${appointment.patientId}`)
           },
           {
             label: 'Séance',
@@ -90,7 +92,7 @@
         {
           label: 'Patient',
           icon: 'i-hugeicons-profile-02',
-          to: `/patients/${appointment.patientId}`
+          to: orgPath(`/patients/${appointment.patientId}`)
         },
         {
           label: 'Annuler',

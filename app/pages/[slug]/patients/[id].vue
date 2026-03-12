@@ -2,12 +2,13 @@
   import type { BreadcrumbItem, TabsItem } from '@nuxt/ui'
 
   const route = useRoute()
+  const { orgPath, orgNavigateTo } = await useOrgRoute()
 
   const { data: patient, error, isPending } = usePatientById(() => route.params.id as string)
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' },
-    { label: 'Patients', to: '/patients' },
+    { label: 'Accueil', icon: 'i-hugeicons-home-01', to: orgPath('/') },
+    { label: 'Patients', to: orgPath('/patients') },
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
@@ -45,7 +46,7 @@
   const activeTab = computed({
     get() {
       const path = route.path
-      const basePath = `/patients/${route.params.id}`
+      const basePath = orgPath(`/patients/${route.params.id}`)
 
       if (path === basePath) return 'overview'
       if (path === `${basePath}/plan`) return 'plan'
@@ -65,7 +66,7 @@
       else if (tab === 'documents') path = `${basePath}/documents`
       else if (tab === 'facturation') path = `${basePath}/facturation`
 
-      navigateTo(path)
+      orgNavigateTo(path)
     }
   })
 

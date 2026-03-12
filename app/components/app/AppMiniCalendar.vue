@@ -4,7 +4,6 @@
     addWeeks,
     format,
     isSameDay,
-    isBefore,
     startOfWeek,
     eachDayOfInterval,
     startOfDay,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-  const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-hugeicons-home-01', to: '/' }, { label: 'Patients' }]
+  const { orgPath, orgNavigateTo } = await useOrgRoute()
+  const BREADCRUMBS = [{ label: 'Accueil', icon: 'i-hugeicons-home-01', to: orgPath('/') }, { label: 'Patients' }]
 
   const page = useRouteQuery('page', 1, { transform: Number })
   const limit = useRouteQuery('limit', 10, { transform: Number })
@@ -65,7 +66,7 @@
           icon: 'i-hugeicons-plus-sign',
           label: 'Ajouter un patient',
           variant: 'subtle' as const,
-          onClick: () => navigateTo('/patients/new')
+          onClick: () => orgNavigateTo('/patients/new')
         }
       ]
     }
@@ -84,13 +85,13 @@
   }
 
   const handlePatientClick = (patient: Patient) => {
-    navigateTo(`/patients/${patient.id}`)
+    orgNavigateTo(`/patients/${patient.id}`)
   }
 
   const handlePatientKeydown = (event: KeyboardEvent, patient: Patient) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      navigateTo(`/patients/${patient.id}`)
+      orgNavigateTo(`/patients/${patient.id}`)
     }
   }
 
@@ -148,14 +149,14 @@
             icon="i-hugeicons-plus-sign"
             label="Ajouter un patient"
             size="lg"
-            @click="navigateTo('/patients/new')"
+            @click="orgNavigateTo('/patients/new')"
             class="hidden sm:flex"
           />
           <UButton
             icon="i-hugeicons-plus-sign"
             block
             label="Patient"
-            @click="navigateTo('/patients/new')"
+            @click="orgNavigateTo('/patients/new')"
             class="sm:hidden"
           />
         </div>

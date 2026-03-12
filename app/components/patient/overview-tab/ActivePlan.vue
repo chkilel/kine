@@ -4,8 +4,8 @@
   const { patient } = defineProps<{ patient: Patient }>()
 
   const overlay = useOverlay()
+  const { orgNavigateTo } = await useOrgRoute()
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
-  const router = useRouter()
 
   const { activeTreatmentPlans, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => patient?.id)
 
@@ -35,9 +35,9 @@
 
   function navigateToTreatmentPlan(planId?: string) {
     if (planId) {
-      router.push(`/patients/${patient.id}/plan?planId=${planId}`)
+      orgNavigateTo(`/patients/${patient.id}/plan?planId=${planId}`)
     } else {
-      router.push(`/patients/${patient.id}/plan`)
+      orgNavigateTo(`/patients/${patient.id}/plan`)
     }
   }
 </script>

@@ -4,9 +4,11 @@
   import { fr } from 'date-fns/locale'
   import { getLocalTimeZone, parseDate } from '@internationalized/date'
 
+  const { orgPath } = await useOrgRoute()
+
   const breadcrumbItems = [
-    { label: 'Dashboard', to: '/' },
-    { label: 'Patients', to: '/patients' },
+    { label: 'Dashboard', to: orgPath('/') },
+    { label: 'Patients', to: orgPath('/patients') },
     { label: 'Nouvelle fiche patient' }
   ] as BreadcrumbItem[]
 
@@ -350,7 +352,7 @@
     <template #footer>
       <div class="bg-default py-2 backdrop-blur-sm">
         <div class="flex items-center justify-end gap-3">
-          <UButton label="Annuler" color="neutral" variant="subtle" to="/patients" />
+          <UButton label="Annuler" color="neutral" variant="subtle" :to="orgPath('/patients')" />
           <UButton
             @click="formRef?.submit()"
             :loading="isLoading"

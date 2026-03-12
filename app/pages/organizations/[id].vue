@@ -1,8 +1,10 @@
 <script setup lang="ts">
   import type { BreadcrumbItem, TabsItem } from '@nuxt/ui'
 
+  const { orgPath } = await useOrgRoute()
+
   const breadcrumbItems: BreadcrumbItem[] = [
-    { label: 'Accueil', icon: 'i-lucide-home', to: '/' },
+    { label: 'Accueil', icon: 'i-lucide-home', to: orgPath('/') },
     { label: 'Cabinets', to: '/organizations' },
     { label: 'Profil' }
   ]

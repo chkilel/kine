@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const { patient } = defineProps<{ patient: Patient }>()
 
-  const router = useRouter()
+  const { orgNavigateTo } = await useOrgRoute()
 
   const { archivedTreatmentPlans, loading } = usePatientTreatmentPlans(() => patient?.id)
 
@@ -25,9 +25,9 @@
 
   function navigateToPlan(planId?: string) {
     if (planId) {
-      router.push(`/patients/${patient.id}/plan?planId=${planId}`)
+      orgNavigateTo(`/patients/${patient.id}/plan?planId=${planId}`)
     } else {
-      router.push(`/patients/${patient.id}/plan`)
+      orgNavigateTo(`/patients/${patient.id}/plan`)
     }
   }
 </script>

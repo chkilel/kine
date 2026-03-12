@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { Period, Range, Stat } from '~/types'
+  const { orgPath } = await useOrgRoute()
 
   const props = defineProps<{
     period: Period
@@ -79,7 +80,7 @@
       :key="index"
       :icon="stat.icon"
       :title="stat.title"
-      to="/patients"
+      :to="orgPath('/patients')"
       variant="subtle"
       :ui="{
         container: 'gap-y-1.5',

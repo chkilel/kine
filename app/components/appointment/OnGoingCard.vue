@@ -4,6 +4,7 @@
   const { appointment } = defineProps<{ appointment: Appointment }>()
 
   const overlay = useOverlay()
+  const { orgNavigateTo } = await useOrgRoute()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
   // Get treatment session from appointment relation
@@ -36,7 +37,7 @@
   }
 
   const handleViewPatient = () => {
-    navigateTo(`/patients/${appointment.patientId}`)
+    orgNavigateTo(`/patients/${appointment.patientId}`)
   }
 </script>
 
