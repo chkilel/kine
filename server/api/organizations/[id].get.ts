@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. Require current user and organization from session
-    await requireAuth(event)
+    await requireAuthWithOrg(event)
 
     // 3. Fetch organization
     const [organization] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1)

@@ -1,8 +1,5 @@
 import { eq, and } from 'drizzle-orm'
 import { patientDocuments } from '~~/server/database/schema'
-import { requireAuth } from '~~/server/utils/auth'
-import { handleApiError } from '~~/server/utils/error'
-import { deletedResponse } from '~~/server/utils/response'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -17,7 +14,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     const [document] = await db
       .select()

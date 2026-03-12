@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
   try {
-    await requireAuth(event)
+    await requireAuthWithOrg(event)
 
     if (!id) {
       throw createError({

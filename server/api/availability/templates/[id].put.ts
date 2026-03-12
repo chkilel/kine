@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const body = await readValidatedBody(event, weeklyAvailabilityTemplateUpdateSchema.parse)
 
     // 3. Require current user and organization from session
-    const { userId, organizationId } = await requireAuth(event)
+    const { userId, organizationId } = await requireAuthWithOrg(event)
 
     // 4. First, check if template exists and belongs to current user
     const [existingTemplate] = await db

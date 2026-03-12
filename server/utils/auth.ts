@@ -301,48 +301,48 @@ function getBaseURL(event: H3Event) {
     try {
       baseURL = getRequestURL(event).origin
     } catch (e) {
-      throw createError({
-        statusCode: 500,
-        message: 'Could not determine baseURL.'
-      })
+      throw createError({ statusCode: 500, message: 'Could not determine baseURL.' })
     }
   }
   return baseURL
 }
 
-export async function requireAuth(event: H3Event, options?: { requireOrganization?: boolean }) {
-  const requireOrganization = options ? options?.requireOrganization : true
-
+// Require Auth and active Organization
+export async function requireAuthWithOrg(event: H3Event) {
   const auth = createAuth(event)
-  const session = await auth.api.getSession({
+  const sessionData = await auth.api.getSession({
     headers: getHeaders(event) as any
   })
 
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Non autorisé'
-    })
+  if (!sessionData?.user.id) {
+    throw createError({ statusCode: 401, message: 'Non autorisé' })
   }
 
-  if (!requireOrganization) {
-    return {
-      userId: session.user.id
-    }
-  }
-
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
+  const activeOrganizationId = sessionData?.session?.activeOrganizationId
 
   if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Aucune organisation active'
-    })
+    throw createError({ statusCode: 403, message: 'Aucune organisation active' })
   }
 
   return {
-    userId: session.user.id,
+    userId: sessionData.user.id,
     organizationId: activeOrganizationId
+  }
+}
+
+// Require Auth
+export async function requireAuth(event: H3Event) {
+  const auth = createAuth(event)
+  const sessionData = await auth.api.getSession({
+    headers: getHeaders(event) as any
+  })
+
+  if (!sessionData?.user.id) {
+    throw createError({ statusCode: 401, message: 'Non autorisé' })
+  }
+
+  return {
+    userId: sessionData.user.id
   }
 }
 

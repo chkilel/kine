@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
     // 2. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 3. Verify patient exists and belongs to the organization
     const [patient] = await db

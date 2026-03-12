@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 1. Require current user and organization from session
-    const { userId, organizationId } = await requireAuth(event)
+    const { userId, organizationId } = await requireAuthWithOrg(event)
 
     // 2. Get active organization context
     const body = await readValidatedBody(event, weeklyAvailabilityTemplateCreateSchema.parse)

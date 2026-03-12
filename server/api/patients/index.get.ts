@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 1. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 2. Validate query parameters
     const validatedQuery = await getValidatedQuery(event, patientQuerySchema.parse)

@@ -101,7 +101,7 @@ function getSuccessMessage(action: TreatmentSessionActionType): string {
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const { organizationId } = await requireAuth(event)
+  const { organizationId } = await requireAuthWithOrg(event)
   const id = getRouterParam(event, 'id')
 
   try {

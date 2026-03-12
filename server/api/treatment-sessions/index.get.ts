@@ -3,7 +3,7 @@ import { treatmentSessions, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const { organizationId } = await requireAuth(event)
+  const { organizationId } = await requireAuthWithOrg(event)
 
   try {
     const query = await getValidatedQuery(event, treatmentSessionQuerySchema.parse)

@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     const body = await readValidatedBody(event, patientCreateSchema.parse)
 
     // 2. Require current user and organization from session
-    await requireAuth(event)
+    await requireAuthWithOrg(event)
 
     // 3. Insert new patient record
     const [newPatient] = await db.insert(patients).values(body).returning()

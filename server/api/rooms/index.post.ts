@@ -5,8 +5,8 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readValidatedBody(event, roomCreateSchema.parse)
 
-    await requireAuth(event)
-    const { organizationId } = await requireAuth(event)
+    await requireAuthWithOrg(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     const [newRoom] = await db
       .insert(rooms)
