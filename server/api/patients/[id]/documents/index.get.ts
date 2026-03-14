@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     const query = await getValidatedQuery(event, patientDocumentQuerySchema.parse)
 
     // 3. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // Build filters
     const filters = [eq(patientDocuments.organizationId, organizationId), eq(patientDocuments.patientId, patientId)]
