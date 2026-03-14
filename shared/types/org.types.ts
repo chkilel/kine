@@ -87,12 +87,15 @@ export const orgBankingSchema = z.object({
 })
 export type OrgBanking = z.infer<typeof orgBankingSchema>
 
+export const sessionRatesSchema = z.object({
+  clinic: z.number().min(1, 'Le tarif doit être positif'),
+  home: z.number().min(1, 'Le tarif doit être positif'),
+  telehealth: z.number().min(1, 'Le tarif doit être positif')
+})
+export type SessionRates = z.infer<typeof sessionRatesSchema>
+
 export const orgPricingSchema = z.object({
-  sessionRates: z.object({
-    clinic: z.number().optional(),
-    home: z.number().optional(),
-    telehealth: z.number().optional()
-  }),
+  sessionRates: sessionRatesSchema,
   packages: z
     .array(
       z.object({
@@ -294,11 +297,6 @@ export const orgMetadataSchema = z.object({
 })
 
 //---------------------------- Onboarding --------------------------
-const onboardingSessionRatesSchema = z.object({
-  clinic: z.number().min(1, 'Le tarif doit être positif'),
-  home: z.number().min(1, 'Le tarif doit être positif'),
-  telehealth: z.number().min(1, 'Le tarif doit être positif')
-})
 
 export const stepSchemas = [
   // Step 0 — Identité
@@ -316,7 +314,7 @@ export const stepSchemas = [
   }),
   // Step 3 — Tarifs (all optional, no blocking validation)
   z.object({
-    sessionRates: onboardingSessionRatesSchema
+    sessionRates: sessionRatesSchema
   })
 ]
 
@@ -328,7 +326,7 @@ export const onboardingSchema = z.object({
     phones: z.array(phoneEntrySchema).min(1, 'Au moins un numéro de téléphone requis')
   }),
   address: orgAddressSchema,
-  sessionRates: onboardingSessionRatesSchema
+  sessionRates: sessionRatesSchema
 })
 
 export function generateSlug(name: string): string {
