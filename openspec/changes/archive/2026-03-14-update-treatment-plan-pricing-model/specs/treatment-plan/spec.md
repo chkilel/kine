@@ -1,8 +1,10 @@
-# treatment-plan Specification
+## RENAMED Requirements
 
-## Purpose
-TBD - created by archiving change add-invoicing-and-session-pricing. Update Purpose after archive.
-## Requirements
+- FROM: `### Requirement: Treatment Plan Pricing Overrides`
+- TO: `### Requirement: Treatment Plan Pricing`
+
+## MODIFIED Requirements
+
 ### Requirement: Treatment Plan Pricing
 
 The system SHALL store pricing for each treatment plan as a single pricing JSON object. When a treatment plan is created, pricing SHALL be automatically inherited from organization's default session rates. The plan's pricing can be overridden at any time using the standard update endpoint, and changes to organization pricing SHALL NOT affect existing treatment plans.
@@ -124,4 +126,3 @@ All fields are required and must be numbers >= 100 representing cost in cents (m
 - **THEN** HTTP response is 201 Created
 - **AND** treatment plan has complete pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
 - **AND** missing home pricing is populated with a sensible default value
-
