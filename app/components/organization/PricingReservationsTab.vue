@@ -7,11 +7,17 @@
   const defaultForm = (org?: Organization) => ({
     pricing: {
       sessionRates: {
-        clinic: org?.pricing?.sessionRates?.clinic,
-        home: org?.pricing?.sessionRates?.home,
+        clinic: org?.pricing?.sessionRates?.clinic ? centsToCurrency(org.pricing.sessionRates.clinic) : undefined,
+        home: org?.pricing?.sessionRates?.home ? centsToCurrency(org.pricing.sessionRates.home) : undefined,
         telehealth: org?.pricing?.sessionRates?.telehealth
+          ? centsToCurrency(org.pricing.sessionRates.telehealth)
+          : undefined
       },
-      packages: org?.pricing?.packages ?? []
+      packages:
+        org?.pricing?.packages?.map((pkg: any) => ({
+          ...pkg,
+          price: pkg.price ? centsToCurrency(pkg.price) : undefined
+        })) ?? []
     },
     scheduling: {
       bookingWindowDays: org?.scheduling?.bookingWindowDays ?? 30,

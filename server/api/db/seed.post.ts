@@ -730,16 +730,16 @@ async function createOrganization(
     const pricingData = isClinicA
       ? {
           sessionRates: {
-            clinic: 200,
-            home: 250,
-            telehealth: 150
+            clinic: 14400,
+            home: 25000,
+            telehealth: 11100
           }
         }
       : {
           sessionRates: {
-            clinic: 180,
-            home: 230,
-            telehealth: 140
+            clinic: 13300,
+            home: 23000,
+            telehealth: 113000
           }
         }
 
