@@ -1,8 +1,5 @@
-# organization Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-invoicing-and-session-pricing. Update Purpose after archive.
-## Requirements
 ### Requirement: Organization Pricing Configuration
 
 The system SHALL allow organizations to configure default session costs for different location types (cabinet, domicile, téléconsultation) and package pricing. Prices SHALL be stored as integer cents in the database but displayed as currency units (MAD/DH) in the user interface. All API responses SHALL return pricing values in cents.
@@ -100,4 +97,3 @@ The system SHALL allow organizations to configure default session costs for diff
   }
 - **THEN** HTTP response is 404 Not Found
 - **AND** error message states "Organization not found"
-

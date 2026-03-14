@@ -122,13 +122,21 @@ The system SHALL validate all required fields before allowing organization creat
 
 ### Requirement: Create Organization on Form Submission
 
-The system SHALL create the organization and establish membership when the user submits valid onboarding data.
+The system SHALL create organization and establish membership when the user submits valid onboarding data, converting pricing to cents before storage.
 
-#### Scenario: Successful organization creation
+#### Scenario: Successful organization creation with pricing in cents
 
-- **GIVEN** a user has filled all required fields with valid data
+- **GIVEN** a user has filled all required fields with valid data including:
+  - Organization name: "Cabinet Kine Paris"
+  - Session rate - cabinet: 150 MAD
+  - Session rate - domicile: 200 MAD
+  - Session rate - téléconsultation: 120 MAD
 - **WHEN** the user submits the onboarding form
 - **THEN** the organization is created via Better Auth organization plugin
+- **AND** the pricing.sessionRates values are stored as cents:
+  - clinic: 15000 (150 MAD × 100)
+  - home: 20000 (200 MAD × 100)
+  - telehealth: 12000 (120 MAD × 100)
 - **AND** the user becomes a member of the organization
 - **AND** the organization is set as the active organization
 - **AND** the user is redirected to the dashboard (`/`)
@@ -140,7 +148,7 @@ The system SHALL create the organization and establish membership when the user 
 - **WHEN** the organization creation fails due to slug collision
 - **THEN** an error message is displayed indicating the slug is already taken
 - **AND** the user remains on the onboarding page
-- **AND** the form data is preserved
+- **AND** the form data is preserved including pricing values
 - **AND** the user can modify the slug and resubmit
 
 #### Scenario: Display loading state during submission
