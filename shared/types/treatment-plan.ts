@@ -52,7 +52,7 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   insuranceInfo: z.string().optional(),
   coverageStatus: z.enum(VALID_COVERAGE_STATUSES).optional(),
   pricing: sessionRatesSchema,
-  notes: z.array(noteSchema).nullable()
+  notes: z.array(noteSchema).optional()
 }).omit({
   id: true,
   createdAt: true,
