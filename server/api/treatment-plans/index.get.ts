@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
         prescriptionDate: treatmentPlans.prescriptionDate,
         coverageStatus: treatmentPlans.coverageStatus,
         insuranceInfo: treatmentPlans.insuranceInfo,
+        pricing: treatmentPlans.pricing,
         notes: treatmentPlans.notes,
         createdAt: treatmentPlans.createdAt,
         updatedAt: treatmentPlans.updatedAt,
