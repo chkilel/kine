@@ -1076,6 +1076,11 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       prescriptionDate: startDate,
       coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
       insuranceInfo: 'Insurance Co. Ltd.',
+      pricing: {
+        clinic: randomInt(10000, 15000),
+        home: randomInt(20000, 30000),
+        telehealth: randomInt(10000, 12000)
+      },
       notes: []
     }
   })

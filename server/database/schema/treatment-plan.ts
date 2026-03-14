@@ -51,6 +51,8 @@ export const treatmentPlans = sqliteTable(
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
     insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
 
+    // Pricing for sessions (inherited from org at creation, can be overridden)
+    pricing: text({ mode: 'json' }).$type<{ clinic: number; home: number; telehealth: number }>().notNull(),
     notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
 
     // CreatedAt, UpdatedAt
