@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
 import type { TreatmentSession } from '../types/treatment-session.type'
+import type { TreatmentPlan } from '../types/treatment-plan'
 
 // =============================================================================
 // Appointment Schemas and Types
@@ -88,6 +89,11 @@ export type AppointmentWithSession = z.infer<typeof appointmentSchema> & {
   patientName?: string | null
   planTitle?: string | null
   treatmentSession?: TreatmentSession | null
+  treatmentPlan?: {
+    id: string
+    title: string
+    pricing: { clinic: number; home: number; telehealth: number }
+  } | null
 }
 
 export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>

@@ -19,12 +19,12 @@
     return upcoming[0] || null
   })
 
-  function navigateToPlan(planId?: string) {
+  async function navigateToPlan(planId?: string) {
     const path = `/patients/${patient.id}/plan`
     if (planId) {
-      navigateTo({ path, query: { planId } })
+      await navigateTo({ path, query: { planId } })
     } else {
-      navigateTo(path)
+      await navigateTo(path)
     }
   }
 
@@ -51,7 +51,8 @@
           </p>
           <p class="text-muted text-sm">
             <span class="font-medium capitalize">
-              {{ extractDayAndMonth(nextAppointment.date).dayNameShort }} {{ extractDayAndMonth(nextAppointment.date).month }}
+              {{ extractDayAndMonth(nextAppointment.date).dayNameShort }}
+              {{ extractDayAndMonth(nextAppointment.date).month }}
             </span>
             à
             <span class="font-semibold">

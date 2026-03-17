@@ -180,6 +180,7 @@ export interface Session {
   }
   session: {
     activeOrganizationId?: string
+    activeOrganizationSlug?: string
     activeTeamId?: string
   }
 }

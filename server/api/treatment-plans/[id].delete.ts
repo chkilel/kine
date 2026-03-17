@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 3. Check if plan exists and belongs to organization
     const [existingPlan] = await db

@@ -74,8 +74,8 @@
         onResponse: () => {
           pending.value = false
         },
-        onSuccess: () => {
-          navigateTo('/')
+        onSuccess: async () => {
+          await navigateTo('/')
         },
         onError: (errorContext) => {
           toast.add({

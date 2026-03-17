@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0af44455-3bfc-476e-92f0-8ad5ff345a21",
+  "id": "4a6d7c8f-1135-4f52-a49e-e6a8dd77ce33",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "appointments": {
@@ -451,6 +451,13 @@
         },
         "activeOrganizationId": {
           "name": "activeOrganizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activeOrganizationSlug": {
+          "name": "activeOrganizationSlug",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1473,14 +1480,21 @@
           "name": "contact",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "address": {
           "name": "address",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pricing": {
+          "name": "pricing",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "legalRepresentative": {
@@ -1499,13 +1513,6 @@
         },
         "banking": {
           "name": "banking",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "pricing": {
-          "name": "pricing",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -2242,6 +2249,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "pricing": {
+          "name": "pricing",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "notes": {

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const { name, slug, contact, address, sessionRates } = await readValidatedBody(event, onboardingSchema.parse)
   const db = useDrizzle(event)
 
-  const { userId } = await requireAuth(event, { requireOrganization: false })
+  const { userId } = await requireAuth(event)
 
   const existingOrg = await db
     .select({ id: organizations.id })
@@ -28,7 +28,11 @@ export default defineEventHandler(async (event) => {
       contact,
       address,
       pricing: {
-        sessionRates,
+        sessionRates: {
+          clinic: sessionRates.clinic ? currencyToCents(sessionRates.clinic) : undefined,
+          home: sessionRates.home ? currencyToCents(sessionRates.home) : undefined,
+          telehealth: sessionRates.telehealth ? currencyToCents(sessionRates.telehealth) : undefined
+        },
         packages: []
       },
       status: 'active',

@@ -93,6 +93,10 @@
           description: 'Organisation changée avec succès',
           color: 'success'
         })
+
+        // refresh the session
+        await authClient.getSession()
+        await navigateTo('/')
       }
     } catch (error) {
       console.error('Failed to switch organization:', error)

@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
     const body = await readValidatedBody(event, roomUpdateSchema.parse)
 
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     const updateData: any = { ...body }
 

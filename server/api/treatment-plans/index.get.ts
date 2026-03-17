@@ -1,6 +1,5 @@
 import { eq, and, desc, sql } from 'drizzle-orm'
 import { treatmentPlans, appointments } from '~~/server/database/schema'
-import { treatmentPlanQuerySchema } from '~~/shared/types/treatment-plan'
 
 // GET /api/treatment-plans - Get treatment plans with optional patient filter and progress
 export default defineEventHandler(async (event) => {
@@ -8,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 1. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 2. Validate query parameters
     const validatedQuery = await getValidatedQuery(event, treatmentPlanQuerySchema.parse)
@@ -32,6 +31,7 @@ export default defineEventHandler(async (event) => {
         prescriptionDate: treatmentPlans.prescriptionDate,
         coverageStatus: treatmentPlans.coverageStatus,
         insuranceInfo: treatmentPlans.insuranceInfo,
+        pricing: treatmentPlans.pricing,
         notes: treatmentPlans.notes,
         createdAt: treatmentPlans.createdAt,
         updatedAt: treatmentPlans.updatedAt,

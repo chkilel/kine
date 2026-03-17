@@ -730,16 +730,16 @@ async function createOrganization(
     const pricingData = isClinicA
       ? {
           sessionRates: {
-            clinic: 200,
-            home: 250,
-            telehealth: 150
+            clinic: 14400,
+            home: 25000,
+            telehealth: 11100
           }
         }
       : {
           sessionRates: {
-            clinic: 180,
-            home: 230,
-            telehealth: 140
+            clinic: 13300,
+            home: 23000,
+            telehealth: 113000
           }
         }
 
@@ -1076,6 +1076,11 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       prescriptionDate: startDate,
       coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
       insuranceInfo: 'Insurance Co. Ltd.',
+      pricing: {
+        clinic: randomInt(10000, 15000),
+        home: randomInt(20000, 30000),
+        telehealth: randomInt(10000, 12000)
+      },
       notes: []
     }
   })

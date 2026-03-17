@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
     const body = await readValidatedBody(event, appointmentStatusUpdateSchema.parse)
 
     const [appointment] = await db

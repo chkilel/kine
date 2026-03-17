@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     const validatedQuery = await getValidatedQuery(event, availabilityTemplateQuerySchema.parse)
 
     // 2. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 3. Validate therapist exists and belongs to the same organization
     const [therapistMember] = await db

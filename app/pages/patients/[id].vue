@@ -55,7 +55,7 @@
 
       return 'overview'
     },
-    set(tab: string) {
+    async set(tab: string) {
       const basePath = `/patients/${route.params.id}`
       let path = basePath
 
@@ -65,7 +65,7 @@
       else if (tab === 'documents') path = `${basePath}/documents`
       else if (tab === 'facturation') path = `${basePath}/facturation`
 
-      navigateTo(path)
+      await navigateTo(path)
     }
   })
 

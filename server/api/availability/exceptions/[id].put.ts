@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. Require current user and organization from session
-    const { userId, organizationId } = await requireAuth(event)
+    const { userId, organizationId } = await requireAuthWithOrg(event)
 
     // 3. Validate request body
     const body = await readValidatedBody(event, availabilityExceptionUpdateSchema.parse)

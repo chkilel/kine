@@ -17,7 +17,16 @@ export const authClient = createAuthClient({
     }),
     inferAdditionalFields({
       // Additional fields to be inferred from user object
-      user: additionalFields
+      user: additionalFields,
+      // Add session additional fields at root level
+      session: {
+        activeOrganizationSlug: {
+          type: 'string',
+          required: false,
+          input: false,
+          returned: true
+        }
+      }
     })
   ]
 })

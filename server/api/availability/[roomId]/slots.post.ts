@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle(event)
 
-  const { organizationId } = await requireAuth(event)
+  const { organizationId } = await requireAuthWithOrg(event)
 
   const [room] = await db
     .select()

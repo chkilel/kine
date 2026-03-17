@@ -65,7 +65,7 @@
           icon: 'i-hugeicons-plus-sign',
           label: 'Ajouter un patient',
           variant: 'subtle' as const,
-          onClick: () => navigateTo('/patients/new')
+          onClick: async () => await navigateTo('/patients/new')
         }
       ]
     }
@@ -83,14 +83,14 @@
     page.value = 1
   }
 
-  const handlePatientClick = (patient: Patient) => {
-    navigateTo(`/patients/${patient.id}`)
+  const handlePatientClick = async (patient: Patient) => {
+    await navigateTo(`/patients/${patient.id}`)
   }
 
-  const handlePatientKeydown = (event: KeyboardEvent, patient: Patient) => {
+  const handlePatientKeydown = async (event: KeyboardEvent, patient: Patient) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      navigateTo(`/patients/${patient.id}`)
+      await navigateTo(`/patients/${patient.id}`)
     }
   }
 

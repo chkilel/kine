@@ -12,12 +12,13 @@ const _useCreateTreatmentSession = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId, primaryConcern, treatmentSummary }: CreateTreatmentSession) =>
+    mutation: async ({ appointmentId, primaryConcern, treatmentSummary }: WithOnSuccess<CreateTreatmentSession>) =>
       requestFetch('/api/treatment-sessions', {
         method: 'POST',
         body: { appointmentId, primaryConcern, treatmentSummary }
       }),
-    onSuccess: (data, { appointmentId }) => {
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
       const treatmentSessionId = data?.data?.id
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
       queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
@@ -44,14 +45,15 @@ type SessionActionParams = {
   appointmentId?: string
 }
 
-type StartParams = SessionActionParams & StartAction
-type PauseParams = SessionActionParams & PauseAction
-type ResumeParams = SessionActionParams & ResumeAction
-type EndParams = SessionActionParams & EndAction
-type UpdateTagsParams = SessionActionParams & UpdateTagsAction
-type ExtendParams = SessionActionParams & ExtendAction
-type CancelParams = SessionActionParams & CancelAction
-type UpdateClinicalNotesParams = SessionActionParams & UpdateClinicalNotesAction
+type StartParams = WithOnSuccess<SessionActionParams> & StartAction
+type PauseParams = WithOnSuccess<SessionActionParams> & PauseAction
+type ResumeParams = WithOnSuccess<SessionActionParams> & ResumeAction
+type EndParams = WithOnSuccess<SessionActionParams> & EndAction
+type UpdateTagsParams = WithOnSuccess<SessionActionParams> & UpdateTagsAction
+type ExtendParams = WithOnSuccess<SessionActionParams> & ExtendAction
+type CancelParams = WithOnSuccess<SessionActionParams> & CancelAction
+type UpdateClinicalNotesParams = WithOnSuccess<SessionActionParams> & UpdateClinicalNotesAction
+type UpdateCostParams = WithOnSuccess<SessionActionParams> & UpdateCostAction
 
 const _useTreatmentSessionActions = () => {
   const toast = useToast()
@@ -69,6 +71,7 @@ const _useTreatmentSessionActions = () => {
         | ExtendParams
         | CancelParams
         | UpdateClinicalNotesParams
+        | UpdateCostParams
     ) => {
       const { sessionId, appointmentId, ...body } = params
       return requestFetch(`/api/treatment-sessions/${sessionId}`, {
@@ -76,7 +79,8 @@ const _useTreatmentSessionActions = () => {
         body
       })
     },
-    onSuccess: (data, { sessionId }) => {
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
       const appointmentId = data?.data?.appointmentId
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(sessionId) })
       queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
@@ -112,7 +116,9 @@ const _useTreatmentSessionActions = () => {
     cancel: (params: CancelParams) => mutation.mutate({ ...params, action: 'cancel' }),
     cancelAsync: (params: CancelParams) => mutation.mutateAsync({ ...params, action: 'cancel' }),
     updateClinicalNotes: (params: UpdateClinicalNotesParams) => mutation.mutate(params),
-    updateClinicalNotesAsync: (params: UpdateClinicalNotesParams) => mutation.mutateAsync(params)
+    updateClinicalNotesAsync: (params: UpdateClinicalNotesParams) => mutation.mutateAsync(params),
+    updateCost: (params: UpdateCostParams) => mutation.mutate(params),
+    updateCostAsync: (params: UpdateCostParams) => mutation.mutateAsync(params)
   }
 }
 

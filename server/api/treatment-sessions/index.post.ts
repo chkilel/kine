@@ -1,9 +1,9 @@
 import { eq, and } from 'drizzle-orm'
-import { appointments, treatmentSessions } from '~~/server/database/schema'
+import { appointments, treatmentSessions, organizations, treatmentPlans } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const { organizationId } = await requireAuth(event)
+  const { organizationId } = await requireAuthWithOrg(event)
 
   try {
     const { appointmentId, primaryConcern, treatmentSummary } = await readValidatedBody(
@@ -47,6 +47,39 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Fetch organization with pricing
+    const [organization] = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)
+
+    if (!organization) {
+      throw createError({
+        statusCode: 404,
+        message: 'Organization not found'
+      })
+    }
+
+    // Fetch treatment plan with pricing if it exists
+    let treatmentPlan = null
+    if (appointment.treatmentPlanId) {
+      const [plan] = await db
+        .select()
+        .from(treatmentPlans)
+        .where(eq(treatmentPlans.id, appointment.treatmentPlanId))
+        .limit(1)
+      if (plan) {
+        treatmentPlan = {
+          ...plan,
+          notes: plan.notes || []
+        }
+      }
+    }
+
+    // Calculate inherited price
+    const cost = calculateInheritedPrice({
+      appointment,
+      treatmentPlan,
+      organization: organization as any
+    })
+
     // Create treatment session
     const [treatmentSession] = await db
       .insert(treatmentSessions)
@@ -58,7 +91,8 @@ export default defineEventHandler(async (event) => {
         treatmentPlanId: appointment.treatmentPlanId,
         primaryConcern,
         treatmentSummary,
-        status: 'pre_session'
+        status: 'pre_session',
+        cost
       })
       .returning()
 

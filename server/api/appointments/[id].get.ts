@@ -1,5 +1,5 @@
 import { eq, and, getTableColumns } from 'drizzle-orm'
-import { appointments, rooms, treatmentSessions } from '~~/server/database/schema'
+import { appointments, rooms, treatmentSessions, treatmentPlans } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -13,17 +13,23 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     const [appointmentData] = await db
       .select({
         ...getTableColumns(appointments),
         roomName: rooms.name,
-        treatmentSession: treatmentSessions
+        treatmentSession: treatmentSessions,
+        treatmentPlan: {
+          id: treatmentPlans.id,
+          title: treatmentPlans.title,
+          pricing: treatmentPlans.pricing
+        }
       })
       .from(appointments)
       .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .leftJoin(treatmentSessions, eq(appointments.id, treatmentSessions.appointmentId))
+      .leftJoin(treatmentPlans, eq(appointments.treatmentPlanId, treatmentPlans.id))
       .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
       .limit(1)
 

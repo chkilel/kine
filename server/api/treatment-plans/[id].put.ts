@@ -1,8 +1,5 @@
-import { treatmentPlans, patients } from '~~/server/database/schema'
+import { treatmentPlans } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { requireAuth } from '~~/server/utils/auth'
-import { handleApiError } from '~~/server/utils/error'
-import { successResponse } from '~~/server/utils/response'
 
 // PUT /api/treatment-plans/[id] - Update existing treatment plan
 export default defineEventHandler(async (event) => {
@@ -17,7 +14,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // Verify treatment plan exists and belongs to organization
     const [existingPlan] = await db

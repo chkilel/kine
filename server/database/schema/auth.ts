@@ -38,6 +38,7 @@ export const sessions = sqliteTable('sessions', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   activeOrganizationId: text().references(() => organizations.id, { onDelete: 'cascade' }),
+  activeOrganizationSlug: text(), // Cannot reference non-primary key (slug is unique, not primary)
   activeTeamId: text().references(() => teams.id, { onDelete: 'cascade' }),
   ...creationAndUpdateTimestamps
 })

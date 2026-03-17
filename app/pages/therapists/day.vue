@@ -29,8 +29,8 @@
     return distance
   })
 
-  const selectDate = (date: string) => {
-    navigateTo({ path: route.path, query: { date } })
+  const selectDate = async (date: string) => {
+    await navigateTo({ path: route.path, query: { date } })
   }
 
   const { user } = await useAuth()

@@ -1,4 +1,4 @@
-import { treatmentPlans, patients } from '~~/server/database/schema'
+import { treatmentPlans, patients, organizations } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
 // POST /api/treatment-plans - Create new treatment plan
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
     // 2. Require current user and organization from session
-    const { organizationId } = await requireAuth(event)
+    const { organizationId } = await requireAuthWithOrg(event)
 
     // 3. Verify patient exists and belongs to the organization
     const [patient] = await db
@@ -28,10 +28,28 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    let pricing: SessionRates
+
+    // 4. Determine pricing: use provided pricing or fall back to org defaults
+    if (body.pricing) {
+      pricing = body.pricing
+    } else {
+      const [organization] = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)
+
+      if (!organization) {
+        throw createError({
+          statusCode: 404,
+          message: 'Organisation introuvable'
+        })
+      }
+      pricing = organization.pricing.sessionRates
+    }
+
     // Use org ID from request body or fallback to session
     const validatedData = {
       ...body,
-      organizationId
+      organizationId,
+      pricing
     }
 
     // Create treatment plan

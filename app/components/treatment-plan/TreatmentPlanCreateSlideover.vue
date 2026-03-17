@@ -8,6 +8,10 @@
   }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  type TreatmentPlanFormType = typeof props.treatmentPlan extends TreatmentPlan
+    ? TreatmentPlanUpdate
+    : TreatmentPlanCreate
+
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'long' })
 
@@ -19,9 +23,20 @@
 
   const loading = ref(false)
   const isEditMode = computed(() => !!props.treatmentPlan)
+  const formSchema = computed(() => (isEditMode.value ? treatmentPlanUpdateSchema : treatmentPlanCreateSchema))
 
-  // Initialize form based on mode
-  const formState = reactive<TreatmentPlanCreate>({
+  // Get default pricing from organization (in DH for display)
+  const getDefaultPricing = () => {
+    const pricing = activeOrganization.value.data?.pricing?.sessionRates
+    return {
+      clinic: pricing?.clinic ? centsToCurrency(pricing.clinic) : 1,
+      home: pricing?.home ? centsToCurrency(pricing.home) : 1,
+      telehealth: pricing?.telehealth ? centsToCurrency(pricing.telehealth) : 1
+    }
+  }
+
+  const formState = reactive<TreatmentPlanFormType>({
+    // Form state with pricing in DH for user-friendly display
     patientId: props.patient.id!,
     therapistId: props.treatmentPlan?.therapistId || user.value!.id,
     organizationId: activeOrganization.value.data!.id,
@@ -37,41 +52,68 @@
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
     coverageStatus: props.treatmentPlan?.coverageStatus || 'not_required',
     insuranceInfo: props.treatmentPlan?.insuranceInfo || '',
-    notes: props.treatmentPlan?.notes || null
+    pricing: props.treatmentPlan?.pricing
+      ? {
+          clinic: centsToCurrency(props.treatmentPlan.pricing.clinic),
+          home: centsToCurrency(props.treatmentPlan.pricing.home),
+          telehealth: centsToCurrency(props.treatmentPlan.pricing.telehealth)
+        }
+      : getDefaultPricing(),
+    notes: props.treatmentPlan?.notes
   })
 
   // Calendar model for date picker
   const startDateModel = computed({
     get: () => (formState.startDate ? parseDate(formState.startDate) : null),
-    set: (val) => (formState.startDate = val ? val.toString() : today(getLocalTimeZone()).toString())
+    set: (val) => {
+      formState.startDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+    }
   })
 
   const endDateModel = computed({
     get: () => (formState.endDate ? parseDate(formState.endDate) : null),
-    set: (val) => (formState.endDate = val ? val.toString() : today(getLocalTimeZone()).toString())
+    set: (val) => {
+      formState.endDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+    }
   })
 
   const prescriptionDateModel = computed({
     get: () => (formState.prescriptionDate ? parseDate(formState.prescriptionDate) : null),
-    set: (val) => (formState.prescriptionDate = val ? val.toString() : today(getLocalTimeZone()).toString())
+    set: (val) => {
+      formState.prescriptionDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+    }
   })
 
-  async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate>) {
+  async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate | TreatmentPlanUpdate>) {
     loading.value = true
 
     try {
+      const data = event.data
+
+      // Convert pricing from DH to cents before submitting
+      const dataWithCents = {
+        ...data,
+        pricing: {
+          clinic: currencyToCents(formState.pricing.clinic),
+          home: currencyToCents(formState.pricing.home),
+          telehealth: currencyToCents(formState.pricing.telehealth)
+        }
+      }
+
       if (isEditMode.value) {
+        // Edit
         updateTreatmentPlan({
           planId: props.treatmentPlan!.id,
-          data: event.data,
+          data: dataWithCents as TreatmentPlanUpdate,
           onSuccess: () => {
             emit('close')
             resetForm()
           }
         })
       } else {
+        // Create
         createTreatmentPlan({
-          data: event.data,
+          data: dataWithCents as TreatmentPlanCreate,
           onSuccess: () => {
             emit('close')
             resetForm()
@@ -101,6 +143,7 @@
       sessionFrequency: undefined,
       coverageStatus: 'not_required',
       insuranceInfo: '',
+      pricing: getDefaultPricing(),
       notes: undefined
     })
 
@@ -132,13 +175,7 @@
     :ui="{ content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated' }"
   >
     <template #body>
-      <UForm
-        ref="newPlanRef"
-        :schema="treatmentPlanCreateSchema"
-        :state="formState"
-        class="space-y-6"
-        @submit="handleSubmit"
-      >
+      <UForm ref="newPlanRef" :schema="formSchema" :state="formState" class="space-y-6" @submit="handleSubmit">
         <div class="space-y-6">
           <!-- Medical Data and Insurance -->
           <UCard variant="outline">
@@ -236,6 +273,22 @@
                     <UCalendar v-model="startDateModel" class="p-2" />
                   </template>
                 </UPopover>
+              </UFormField>
+            </div>
+          </UCard>
+
+          <!-- Pricing -->
+          <UCard variant="outline">
+            <h3 class="text-highlighted mb-4 text-base font-bold">Tarifs des séances</h3>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <UFormField label="Clinique (DH)" name="pricing.clinic" required>
+                <UInputNumber v-model="formState.pricing.clinic" :min="1" class="w-full" />
+              </UFormField>
+              <UFormField label="Domicile (DH)" name="pricing.home" required>
+                <UInputNumber v-model="formState.pricing.home" :min="1" class="w-full" />
+              </UFormField>
+              <UFormField label="Téléconsultation (DH)" name="pricing.telehealth" required>
+                <UInputNumber v-model="formState.pricing.telehealth" :min="1" class="w-full" />
               </UFormField>
             </div>
           </UCard>

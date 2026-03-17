@@ -108,6 +108,27 @@ export const updateClinicalNotesActionSchema = z.object({
   nextSteps: z.string().optional()
 })
 
+export const updateCostActionSchema = z.object({
+  cost: z.number().int().min(1)
+})
+
+// =============================================================================
+// Treatment Session Action Schemas
+// =============================================================================
+// IMPORTANT: Union Schema Ordering
+// When using z.union(), schemas are tried in order. Schemas with ALL OPTIONAL fields
+// will match any object and should be placed LAST in the union to prevent them from
+// "stealing" matches from more specific schemas.
+//
+// Example problem:
+//   updateClinicalNotesActionSchema = z.object({ field: z.string().optional(), ... })
+//   updateCostActionSchema = z.object({ cost: z.number().int().min(1) })
+//
+// With wrong order: { cost: 10950 } matches updateClinicalNotesActionSchema first → returns {}
+// With correct order: { cost: 10950 } matches updateCostActionSchema first → returns { cost: 10950 }
+//
+// Rule of thumb: Order schemas from MOST specific to LEAST specific (all-optional schemas last)
+
 export const treatmentSessionPatchSchema = z.union([
   startActionSchema,
   pauseActionSchema,
@@ -116,7 +137,8 @@ export const treatmentSessionPatchSchema = z.union([
   updateTagsActionSchema,
   extendActionSchema,
   cancelActionSchema,
-  updateClinicalNotesActionSchema
+  updateCostActionSchema, // Specific schema (has required fields) - placed before all-optional schemas
+  updateClinicalNotesActionSchema // All-optional schema - MUST be LAST to avoid matching other action bodies
 ])
 
 // =============================================================================
@@ -155,6 +177,7 @@ export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
 export type CancelAction = z.infer<typeof cancelActionSchema>
 export type UpdateClinicalNotesAction = z.infer<typeof updateClinicalNotesActionSchema>
+export type UpdateCostAction = z.infer<typeof updateCostActionSchema>
 
 export type TreatmentSessionPatchBody =
   | StartAction
@@ -164,6 +187,7 @@ export type TreatmentSessionPatchBody =
   | UpdateTagsAction
   | ExtendAction
   | CancelAction
+  | UpdateCostAction
   | UpdateClinicalNotesAction
 
 export type TreatmentSessionActionType =
@@ -174,6 +198,7 @@ export type TreatmentSessionActionType =
   | 'updateTags'
   | 'extend'
   | 'cancel'
+  | 'updateCost'
   | 'updateClinicalNotes'
 
 export type CreateTreatmentSession = z.infer<typeof createTreatmentSessionSchema>

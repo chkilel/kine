@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { betterAuth, type DBFieldAttribute, type DBFieldType } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { customSession, organization } from 'better-auth/plugins'
+import { organization } from 'better-auth/plugins'
 import { eq } from 'drizzle-orm'
 import { createError, getHeaders, getRequestURL } from 'h3'
 
@@ -69,7 +69,7 @@ export const organizationAdditionalFields = {
   },
   status: {
     type: 'string',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
@@ -81,13 +81,13 @@ export const organizationAdditionalFields = {
   },
   contact: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
   address: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
@@ -111,7 +111,7 @@ export const organizationAdditionalFields = {
   },
   pricing: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
@@ -185,6 +185,18 @@ function createAuthInstance(event: H3Event) {
       additionalFields
     },
 
+    // Add session additional fields at root level
+    session: {
+      additionalFields: {
+        activeOrganizationSlug: {
+          type: 'string',
+          required: false,
+          input: false,
+          returned: true
+        }
+      }
+    },
+
     advanced: {
       database: {
         generateId: false // Prevents Better Auth from sending its own ID
@@ -205,12 +217,6 @@ function createAuthInstance(event: H3Event) {
           return true
         },
         organizationLimit: 2
-      }),
-      customSession(async ({ user, session }, _ctx) => {
-        return {
-          user,
-          session
-        }
       })
     ],
 
@@ -218,20 +224,58 @@ function createAuthInstance(event: H3Event) {
       session: {
         create: {
           before: async (session) => {
+            // Query user organizations with correct column selection
             const userOrganizations = await db
               .select({
-                organization: schemas.organizations
+                id: schemas.organizations.id,
+                slug: schemas.organizations.slug
               })
               .from(schemas.members)
               .innerJoin(schemas.organizations, eq(schemas.members.organizationId, schemas.organizations.id))
               .where(eq(schemas.members.userId, session.userId))
               .limit(1)
 
-            if (userOrganizations.length > 0) {
+            if (userOrganizations.length > 0 && userOrganizations[0]) {
               return {
                 data: {
                   ...session,
-                  activeOrganizationId: userOrganizations[0]?.organization.id
+                  activeOrganizationId: userOrganizations[0].id,
+                  activeOrganizationSlug: userOrganizations[0].slug
+                }
+              }
+            }
+
+            return { data: session }
+          }
+        },
+        update: {
+          before: async (session) => {
+            // When activeOrganizationId is being set, also set activeOrganizationSlug
+            if (session.activeOrganizationId) {
+              const organization = await db
+                .select({
+                  slug: schemas.organizations.slug
+                })
+                .from(schemas.organizations)
+                .where(eq(schemas.organizations.id, session.activeOrganizationId as string))
+                .limit(1)
+
+              if (organization.length > 0 && organization[0]) {
+                return {
+                  data: {
+                    ...session,
+                    activeOrganizationSlug: organization[0].slug
+                  }
+                }
+              }
+            }
+
+            // If activeOrganizationId is being cleared (set to null), also clear slug
+            if (session.activeOrganizationId === null) {
+              return {
+                data: {
+                  ...session,
+                  activeOrganizationSlug: null
                 }
               }
             }
@@ -257,48 +301,48 @@ function getBaseURL(event: H3Event) {
     try {
       baseURL = getRequestURL(event).origin
     } catch (e) {
-      throw createError({
-        statusCode: 500,
-        message: 'Could not determine baseURL.'
-      })
+      throw createError({ statusCode: 500, message: 'Could not determine baseURL.' })
     }
   }
   return baseURL
 }
 
-export async function requireAuth(event: H3Event, options?: { requireOrganization?: boolean }) {
-  const requireOrganization = options ? options?.requireOrganization : true
-
+// Require Auth and active Organization
+export async function requireAuthWithOrg(event: H3Event) {
   const auth = createAuth(event)
-  const session = await auth.api.getSession({
+  const sessionData = await auth.api.getSession({
     headers: getHeaders(event) as any
   })
 
-  if (!session?.user?.id) {
-    throw createError({
-      statusCode: 401,
-      message: 'Non autorisé'
-    })
+  if (!sessionData?.user.id) {
+    throw createError({ statusCode: 401, message: 'Non autorisé' })
   }
 
-  if (!requireOrganization) {
-    return {
-      userId: session.user.id
-    }
-  }
-
-  const activeOrganizationId = (session as Session)?.session?.activeOrganizationId
+  const activeOrganizationId = sessionData?.session?.activeOrganizationId
 
   if (!activeOrganizationId) {
-    throw createError({
-      statusCode: 403,
-      message: 'Aucune organisation active'
-    })
+    throw createError({ statusCode: 403, message: 'Aucune organisation active' })
   }
 
   return {
-    userId: session.user.id,
+    userId: sessionData.user.id,
     organizationId: activeOrganizationId
+  }
+}
+
+// Require Auth
+export async function requireAuth(event: H3Event) {
+  const auth = createAuth(event)
+  const sessionData = await auth.api.getSession({
+    headers: getHeaders(event) as any
+  })
+
+  if (!sessionData?.user.id) {
+    throw createError({ statusCode: 401, message: 'Non autorisé' })
+  }
+
+  return {
+    userId: sessionData.user.id
   }
 }
 

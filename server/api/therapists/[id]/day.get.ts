@@ -4,7 +4,6 @@ import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
-  const { organizationId } = await requireAuth(event)
   const therapistId = getRouterParam(event, 'id')
 
   if (!therapistId) {
@@ -15,6 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const { organizationId } = await requireAuthWithOrg(event)
     const { date } = await getValidatedQuery(event, z.object({ date: calendarDateSchema }).parse)
 
     const appointmentsList = await db

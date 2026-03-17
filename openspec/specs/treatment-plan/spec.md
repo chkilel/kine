@@ -3,82 +3,110 @@
 ## Purpose
 TBD - created by archiving change add-invoicing-and-session-pricing. Update Purpose after archive.
 ## Requirements
-### Requirement: Treatment Plan Pricing Overrides
+### Requirement: Treatment Plan Pricing
 
-The system SHALL allow treatment plans to override organization default pricing for different location types. When a session belongs to a treatment plan with location-specific overrides, the plan's override takes precedence over the organization default.
+The system SHALL store pricing for each treatment plan as a single pricing JSON object. When a treatment plan is created, pricing SHALL be automatically inherited from organization's default session rates. The plan's pricing can be overridden at any time using the standard update endpoint, and changes to organization pricing SHALL NOT affect existing treatment plans.
 
-#### Scenario: Set pricing override for all locations in treatment plan
+The pricing object SHALL have following structure:
 
-- **GIVEN** a treatment plan exists with id "plan-123"
-- **AND** organization default prices are: clinic 5000, home 6500, telehealth 4000
-- **WHEN** PATCH /api/treatment-plans/plan-123/pricing is called with body {
-  sessionCostClinicOverride: 5500,
-  sessionCostHomeOverride: 7000,
-  sessionCostTelehealthOverride: 4500
+```json
+{
+  "clinic": number,
+  "home": number,
+  "telehealth": number
+}
+```
+
+All fields are required and must be numbers >= 100 representing cost in cents (minimum 100 cents = 1 DH, cannot be 0).
+
+#### Scenario: Treatment plan inherits org pricing on creation
+
+- **GIVEN** an organization exists with pricing.sessionRates: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **WHEN** POST /api/treatment-plans is called to create a new treatment plan
+- **THEN** HTTP response is 201 Created
+- **AND** new treatment plan has pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **AND** pricing matches the organization's default rates at creation time
+
+#### Scenario: Treatment plan pricing can be updated via standard update endpoint
+
+- **GIVEN** a treatment plan exists with pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **WHEN** PATCH /api/treatment-plans/plan-123 is called with body {
+  pricing: {
+  clinic: 5500,
+  home: 7000,
+  telehealth: 4500
+  }
   }
 - **THEN** HTTP response is 200 OK
-- **AND** treatment plan overrides are set
-- **AND** sessions in this plan will use these overridden costs instead of org defaults
+- **AND** treatment plan pricing is updated
+- **AND** sessions in this plan will use these new costs
 
-#### Scenario: Set pricing override for specific location only
+#### Scenario: Treatment plan pricing can be partially updated
 
-- **GIVEN** a treatment plan exists
-- **AND** therapist wants to override home visit cost only
-- **WHEN** PATCH /api/treatment-plans/plan-123/pricing is called with body {
-  sessionCostHomeOverride: 7000
+- **GIVEN** a treatment plan exists with pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **WHEN** PATCH /api/treatment-plans/plan-123 is called with body {
+  pricing: {
+  home: 7000,
+  telehealth: 4500
+  }
   }
 - **THEN** HTTP response is 200 OK
-- **AND** sessionCostHomeOverride is set to 7000
-- **AND** other override fields remain null
-- **AND** clinic and telehealth sessions will still use organization defaults
+- **AND** pricing.home is updated to 7000
+- **AND** pricing.telehealth is updated to 4500
+- **AND** pricing.clinic remains 5000 (unchanged)
 
-#### Scenario: Remove pricing override
-
-- **GIVEN** a treatment plan has sessionCostClinicOverride 5500
-- **WHEN** PATCH /api/treatment-plans/plan-123/pricing is called with body {
-  sessionCostClinicOverride: null
-  }
-- **THEN** HTTP response is 200 OK
-- **AND** sessionCostClinicOverride is set to null
-- **AND** clinic sessions will revert to using organization default
-
-#### Scenario: Retrieve treatment plan pricing overrides
-
-- **GIVEN** a treatment plan has configured pricing overrides
-- **WHEN** GET /api/treatment-plans/plan-123/pricing is called
-- **THEN** HTTP response is 200 OK
-- **AND** response includes: {
-  sessionCostClinicOverride: 5500,
-  sessionCostHomeOverride: 7000,
-  sessionCostTelehealthOverride: null
-  }
-
-#### Scenario: Prevent setting override for non-existent treatment plan
+#### Scenario: Prevent updating pricing for non-existent treatment plan
 
 - **GIVEN** no treatment plan exists with id "nonexistent-plan"
-- **WHEN** PATCH /api/treatment-plans/nonexistent-plan/pricing is called with body {
-  sessionCostClinicOverride: 5500
+- **WHEN** PATCH /api/treatment-plans/nonexistent-plan is called with body {
+  pricing: { clinic: 5500, home: 6500, telehealth: 4000 }
   }
 - **THEN** HTTP response is 404 Not Found
 - **AND** error message states "Treatment plan not found"
 
-#### Scenario: Calculate session cost with treatment plan override
+#### Scenario: Validate pricing values must be >= 100
+
+- **GIVEN** a treatment plan exists
+- **WHEN** PATCH /api/treatment-plans/plan-123 is called with body {
+  pricing: { clinic: 0, home: 6500, telehealth: 4000 }
+  }
+- **THEN** HTTP response is 400 Bad Request
+- **AND** error message states that pricing values must be >= 100 (minimum 1 DH)
+
+#### Scenario: Validate pricing values cannot be negative
+
+- **GIVEN** a treatment plan exists
+- **WHEN** PATCH /api/treatment-plans/plan-123 is called with body {
+  pricing: { clinic: -100, home: 6500, telehealth: 4000 }
+  }
+- **THEN** HTTP response is 400 Bad Request
+- **AND** error message states that pricing values must be >= 100 (minimum 1 DH)
+
+#### Scenario: Calculate session cost using treatment plan pricing
 
 - **GIVEN** a treatment session exists with appointment.location "home"
-- **AND** session belongs to treatment plan with sessionCostHomeOverride 7000
+- **AND** session belongs to treatment plan with pricing: { clinic: 5000, home: 7000, telehealth: 4000 }
 - **AND** organization default for home is 6500
 - **WHEN** session cost is calculated
-- **THEN** final cost is 7000 (treatment plan override)
-- **AND** inheritance chain shows plan override was used
+- **THEN** final cost is 7000 (treatment plan pricing)
+- **AND** system uses only plan pricing, no fallback to org pricing
 
-#### Scenario: Calculate session cost without treatment plan override
+#### Scenario: Organization pricing changes don't affect existing plans
 
-- **GIVEN** a treatment session exists with appointment.location "clinic"
-- **AND** session belongs to treatment plan with no clinic override
-- **AND** organization default for clinic is 5000
-- **WHEN** session cost is calculated
-- **THEN** final cost is 5000 (organization default)
-- **AND** inheritance chain shows org default was used
+- **GIVEN** an organization has pricing.sessionRates: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **AND** a treatment plan exists with pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **WHEN** organization pricing is updated to { clinic: 5500, home: 7000, telehealth: 4500 }
+- **AND** an existing treatment session cost is calculated for old plan
+- **THEN** session cost uses old plan pricing: 6500 for home
+- **AND** session cost does NOT use new organization pricing: 7000
+
+#### Scenario: New plan inherits updated organization pricing
+
+- **GIVEN** an organization has pricing.sessionRates: { clinic: 5500, home: 7000, telehealth: 4500 }
+- **WHEN** POST /api/treatment-plans is called to create a new treatment plan
+- **THEN** HTTP response is 201 Created
+- **AND** new treatment plan has pricing: { clinic: 5500, home: 7000, telehealth: 4500 }
+- **AND** pricing matches the organization's current rates
 
 #### Scenario: Calculate session cost for independent appointment
 
@@ -86,6 +114,14 @@ The system SHALL allow treatment plans to override organization default pricing 
 - **AND** session has no treatmentPlanId (independent appointment)
 - **AND** organization default for home is 6500
 - **WHEN** session cost is calculated
-- **THEN** final cost is 6500 (organization default only)
-- **AND** inheritance chain shows org default, no plan override
+- **THEN** final cost is 6500 (organization default)
+- **AND** system falls back to org pricing since no plan exists
+
+#### Scenario: Handle incomplete organization pricing during plan creation
+
+- **GIVEN** an organization has incomplete pricing: { clinic: 5000, home: null, telehealth: 4000 }
+- **WHEN** POST /api/treatment-plans is called to create a new treatment plan
+- **THEN** HTTP response is 201 Created
+- **AND** treatment plan has complete pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
+- **AND** missing home pricing is populated with a sensible default value
 
