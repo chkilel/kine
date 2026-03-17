@@ -69,7 +69,7 @@ export const organizationAdditionalFields = {
   },
   status: {
     type: 'string',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
@@ -81,13 +81,13 @@ export const organizationAdditionalFields = {
   },
   contact: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
   address: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
@@ -111,7 +111,7 @@ export const organizationAdditionalFields = {
   },
   pricing: {
     type: 'json',
-    required: false,
+    required: true,
     input: true,
     returned: true
   },
