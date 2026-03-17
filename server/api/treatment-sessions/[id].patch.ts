@@ -2,12 +2,14 @@ import { eq, and } from 'drizzle-orm'
 import { treatmentSessions, appointments } from '~~/server/database/schema'
 
 function detectActionBySchema(body: unknown): TreatmentSessionActionType {
+  if (body && typeof (body as any).cost !== 'undefined') return 'updateCost'
   if (resumeActionSchema.safeParse(body).success) return 'resume'
   if (pauseActionSchema.safeParse(body).success) return 'pause'
   if (endActionSchema.safeParse(body).success) return 'end'
   if (startActionSchema.safeParse(body).success) return 'start'
   if (updateTagsActionSchema.safeParse(body).success) return 'updateTags'
   if (extendActionSchema.safeParse(body).success) return 'extend'
+  if (updateCostActionSchema.safeParse(body).success) return 'updateCost'
   if (
     updateClinicalNotesActionSchema.safeParse(body).success &&
     Object.keys(body as object).some((k) =>
@@ -94,6 +96,7 @@ function getSuccessMessage(action: TreatmentSessionActionType): string {
     updateTags: 'Tags mis à jour',
     extend: 'Durée étendue avec succès',
     cancel: 'Session annulée',
+    updateCost: 'Prix mis à jour avec succès',
     updateClinicalNotes: 'Notes cliniques mises à jour'
   }
   return messages[action]
@@ -139,7 +142,7 @@ export default defineEventHandler(async (event) => {
         updateData = {
           status: 'in_progress',
           actualStartTime: validated.actualStartTime,
-          painLevelBefore: validated.painLevelBefore,
+          painLevelBefore: validated.painLevelBefore
         }
         break
       }
@@ -228,6 +231,13 @@ export default defineEventHandler(async (event) => {
           ...(validated.treatmentSummary !== undefined && { treatmentSummary: validated.treatmentSummary }),
           ...(validated.observations !== undefined && { observations: validated.observations }),
           ...(validated.nextSteps !== undefined && { nextSteps: validated.nextSteps })
+        }
+        break
+      }
+      case 'updateCost': {
+        const validated = updateCostActionSchema.parse(body)
+        updateData = {
+          cost: validated.cost
         }
         break
       }
