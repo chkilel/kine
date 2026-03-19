@@ -25,10 +25,9 @@
 
   // --- Composables ---
 
-  const { mutate: createTreatmentSession, isLoading: isCreatingSession } = useCreateTreatmentSession()
-  const { updateClinicalNotes, updateTags, isLoading: isUpdating } = useTreatmentSessionActions()
-  const { activeOrganization } = useOrganization()
-  const organization = computed(() => (activeOrganization.value?.data as Organization | null) ?? null)
+  const { mutate: createTreatmentSession } = useCreateTreatmentSession()
+  const { mutateAsync: updateTagsAsync, isLoading: isUpdatingTags } = useUpdateSessionTags()
+  const { mutate: updateClinicalNotes, isLoading: isUpdatingClinicalNotes } = useUpdateClinicalNotes()
 
   // --- Reactive state ---
 
@@ -40,19 +39,19 @@
   const nextSteps = ref('')
   const selectedTags = ref<string[]>([])
 
-  // Track saving state per field (a Set) so concurrent saves don't
-  // cross-contaminate spinners. Use reassignment to the ref to ensure
-  // Vue reactivity picks up Set changes.
-  const savingFields = ref(new Set<ClinicalNoteField>())
+  // --- Derived state ---
 
-  function isSaving(field: ClinicalNoteField) {
-    return savingFields.value.has(field)
-  }
+  const sessionStatus = computed(() => appointment.treatmentSession?.status)
+  const showPrimaryConcern = computed(() => !appointment.treatmentPlanId)
+  const showObservations = computed(() => ['in_progress', 'finished', 'completed'].includes(sessionStatus.value ?? ''))
+  const showNextSteps = computed(() => ['finished', 'completed'].includes(sessionStatus.value ?? ''))
+  const isObservationsEditable = computed(() => sessionStatus.value === 'in_progress')
+  const isNextStepsEditable = computed(() => sessionStatus.value === 'finished')
+  const sessionInProgress = computed(() => sessionStatus.value === 'in_progress')
+  const shouldShowEVACards = computed(() => sessionInProgress.value || !!appointment.treatmentSession?.painLevelAfter)
 
   // --- Watchers ---
 
-  // Added `deep: true` — nested property mutations (cost, status, etc.)
-  // now correctly re-sync local state after mutation cache updates.
   watch(
     () => appointment.treatmentSession,
     (session) => {
@@ -65,19 +64,8 @@
       nextSteps.value = session.nextSteps || ''
       selectedTags.value = parseTagsSafely(session.tags)
     },
-    { immediate: true, deep: true }
+    { immediate: true }
   )
-
-  // --- Derived state ---
-
-  const sessionStatus = computed(() => appointment.treatmentSession?.status)
-  const showPrimaryConcern = computed(() => !appointment.treatmentPlanId)
-  const showObservations = computed(() => ['in_progress', 'finished', 'completed'].includes(sessionStatus.value ?? ''))
-  const showNextSteps = computed(() => ['finished', 'completed'].includes(sessionStatus.value ?? ''))
-  const isObservationsEditable = computed(() => sessionStatus.value === 'in_progress')
-  const isNextStepsEditable = computed(() => sessionStatus.value === 'finished')
-  const sessionInProgress = computed(() => sessionStatus.value === 'in_progress')
-  const shouldShowEVACards = computed(() => sessionInProgress.value || !!appointment.treatmentSession?.painLevelAfter)
 
   // --- Handlers ---
 
@@ -96,65 +84,44 @@
       // Other fields silently fail without a session — now we guard explicitly.
       if (field !== 'primaryConcern' && field !== 'treatmentSummary') return
 
-      // Add field in a way that triggers reactivity
-      savingFields.value = new Set([...savingFields.value, field])
-
       createTreatmentSession({
         appointmentId: appointment.id,
         primaryConcern: fieldValues.primaryConcern,
-        treatmentSummary: fieldValues.treatmentSummary,
-        onSuccess: () => {
-          // reset the savingFields
-          savingFields.value = new Set([...savingFields.value].filter((f) => f !== field))
-        }
+        treatmentSummary: fieldValues.treatmentSummary
       })
       return
     }
 
-    // Add field in a way that triggers reactivity
-    savingFields.value = new Set([...savingFields.value, field])
-
     updateClinicalNotes({
       sessionId,
-      appointmentId: appointment.id,
-      [field]: fieldValues[field],
-      onSuccess: () => {
-        // reset the savingFields
-        savingFields.value = new Set([...savingFields.value].filter((f) => f !== field))
-      }
+      [field]: fieldValues[field]
     })
   }
 
-  function toggleTag(tag: string) {
-    if (!appointment.treatmentSession || isUpdating.value) return
+  async function toggleTag(tag: string) {
+    if (!appointment.treatmentSession || isUpdatingTags.value) return
 
-    const previous = [...selectedTags.value]
+    const initialSelectedTags = selectedTags.value
 
     // Optimistic update
     selectedTags.value = selectedTags.value.includes(tag)
       ? selectedTags.value.filter((t) => t !== tag)
       : [...selectedTags.value, tag]
 
-    updateTags({
-      sessionId: appointment.treatmentSession.id,
-      appointmentId: appointment.id,
-      tags: selectedTags.value
-    })
-  }
-
-  // Fallback: some mutation helpers return void (mutate) and don't expose
-  // a Promise. Watch the mutation loading flags and clear any remaining
-  // saving flags when all mutation activity finishes.
-  watch([isCreatingSession, isUpdating], ([creating, updating]) => {
-    if (!creating && !updating) {
-      savingFields.value = new Set()
+    try {
+      await updateTagsAsync({
+        sessionId: appointment.treatmentSession.id,
+        tags: selectedTags.value
+      })
+    } catch {
+      selectedTags.value = initialSelectedTags
     }
-  })
+  }
 </script>
 
 <template>
   <div class="flex flex-col gap-4 lg:col-span-6">
-    <TreatmentSessionPrice :appointment="appointment" :organization="organization" />
+    <TreatmentSessionPrice :appointment="appointment" />
 
     <div v-if="shouldShowEVACards" class="grid grid-cols-2 gap-4">
       <UCard>
@@ -205,7 +172,7 @@
             color="primary"
             variant="ghost"
             icon="i-hugeicons-floppy-disk"
-            :loading="isSaving('primaryConcern')"
+            :loading="isUpdatingClinicalNotes"
             @click="handleSaveClinicalNotes('primaryConcern')"
           >
             Enregistrer
@@ -228,7 +195,7 @@
             color="primary"
             variant="ghost"
             icon="i-hugeicons-floppy-disk"
-            :loading="isSaving('treatmentSummary')"
+            :loading="isUpdatingClinicalNotes"
             @click="handleSaveClinicalNotes('treatmentSummary')"
           >
             Enregistrer
@@ -271,7 +238,7 @@
             color="primary"
             variant="ghost"
             icon="i-hugeicons-floppy-disk"
-            :loading="isSaving('observations')"
+            :loading="isUpdatingClinicalNotes"
             @click="handleSaveClinicalNotes('observations')"
           >
             Enregistrer
@@ -296,7 +263,7 @@
             color="primary"
             variant="ghost"
             icon="i-hugeicons-floppy-disk"
-            :loading="isSaving('nextSteps')"
+            :loading="isUpdatingClinicalNotes"
             @click="handleSaveClinicalNotes('nextSteps')"
           >
             Enregistrer

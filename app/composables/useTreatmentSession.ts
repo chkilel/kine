@@ -6,121 +6,264 @@ export const TREATMENT_SESSION_KEYS = {
   single: (id: string) => [...TREATMENT_SESSION_KEYS.root, id]
 }
 
+type SessionActionParams = {
+  sessionId: string
+}
+
+type StartParams = SessionActionParams & StartAction
+type PauseParams = SessionActionParams & PauseAction
+type ResumeParams = SessionActionParams & ResumeAction
+type EndParams = SessionActionParams & EndAction
+type UpdateTagsParams = SessionActionParams & UpdateTagsAction
+type ExtendParams = SessionActionParams & ExtendAction
+type CancelParams = SessionActionParams
+type UpdateClinicalNotesParams = SessionActionParams & UpdateClinicalNotesAction
+type UpdateCostParams = SessionActionParams & UpdateCostAction
+
+function useSessionInvalidation() {
+  const queryCache = useQueryCache()
+
+  return (sessionId?: string, appointmentId?: string) => {
+    queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
+    queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+    queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
+    if (sessionId) {
+      queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(sessionId) })
+    }
+    if (appointmentId) {
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
+    }
+  }
+}
+
 const _useCreateTreatmentSession = () => {
   const toast = useToast()
-  const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
 
   return useMutation({
-    mutation: async ({ appointmentId, primaryConcern, treatmentSummary }: WithOnSuccess<CreateTreatmentSession>) =>
+    mutation: ({ appointmentId, primaryConcern, treatmentSummary }: WithOnSuccess<CreateTreatmentSession>) =>
       requestFetch('/api/treatment-sessions', {
         method: 'POST',
         body: { appointmentId, primaryConcern, treatmentSummary }
       }),
     onSuccess: (data, { appointmentId, onSuccess }) => {
       onSuccess?.()
-      const treatmentSessionId = data?.data?.id
-      queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
-      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
-      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
-      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
-      if (treatmentSessionId) {
-        queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(treatmentSessionId) })
-      }
+      invalidate(data?.data?.id, appointmentId)
     },
-    onError: (error) => {
-      const parsedError = parseError(error, 'Impossible de créer la séance de traitement')
-      if (parsedError.statusCode === 409) return
-      toast.add({
-        title: 'Erreur',
-        description: parsedError.message,
-        color: 'error'
-      })
+    onError: (error: unknown) => {
+      const parsed = parseError(error, 'Impossible de créer la séance de traitement')
+      if (parsed.statusCode === 409) return
+      toast.add({ title: 'Erreur', description: parsed.message, color: 'error' })
     }
   })
 }
 
-type SessionActionParams = {
-  sessionId: string
-  appointmentId?: string
-}
-
-type StartParams = WithOnSuccess<SessionActionParams> & StartAction
-type PauseParams = WithOnSuccess<SessionActionParams> & PauseAction
-type ResumeParams = WithOnSuccess<SessionActionParams> & ResumeAction
-type EndParams = WithOnSuccess<SessionActionParams> & EndAction
-type UpdateTagsParams = WithOnSuccess<SessionActionParams> & UpdateTagsAction
-type ExtendParams = WithOnSuccess<SessionActionParams> & ExtendAction
-type CancelParams = WithOnSuccess<SessionActionParams> & CancelAction
-type UpdateClinicalNotesParams = WithOnSuccess<SessionActionParams> & UpdateClinicalNotesAction
-type UpdateCostParams = WithOnSuccess<SessionActionParams> & UpdateCostAction
-
-const _useTreatmentSessionActions = () => {
+const _useStartTreatmentSession = () => {
   const toast = useToast()
-  const queryCache = useQueryCache()
   const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
 
-  const mutation = useMutation({
-    mutation: async (
-      params:
-        | StartParams
-        | PauseParams
-        | ResumeParams
-        | EndParams
-        | UpdateTagsParams
-        | ExtendParams
-        | CancelParams
-        | UpdateClinicalNotesParams
-        | UpdateCostParams
-    ) => {
-      const { sessionId, appointmentId, ...body } = params
-      return requestFetch(`/api/treatment-sessions/${sessionId}`, {
-        method: 'PATCH',
-        body
-      })
-    },
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<StartParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/start`, { method: 'POST', body }),
     onSuccess: (data, { sessionId, onSuccess }) => {
       onSuccess?.()
-      const appointmentId = data?.data?.appointmentId
-      queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.single(sessionId) })
-      queryCache.invalidateQueries({ key: TREATMENT_SESSION_KEYS.root })
-      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
-      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
-      if (appointmentId) {
-        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
-      }
+      invalidate(sessionId, data?.data?.appointmentId)
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.add({
         title: 'Erreur',
-        description: parseError(error, 'Impossible de mettre à jour la séance').message,
+        description: parseError(error, 'Impossible de démarrer la séance').message,
         color: 'error'
       })
     }
   })
+}
 
-  return {
-    ...mutation,
-    start: (params: StartParams) => mutation.mutate(params),
-    startAsync: (params: StartParams) => mutation.mutateAsync(params),
-    pause: (params: PauseParams) => mutation.mutate(params),
-    pauseAsync: (params: PauseParams) => mutation.mutateAsync(params),
-    resume: (params: ResumeParams) => mutation.mutate(params),
-    resumeAsync: (params: ResumeParams) => mutation.mutateAsync(params),
-    end: (params: EndParams) => mutation.mutate(params),
-    endAsync: (params: EndParams) => mutation.mutateAsync(params),
-    updateTags: (params: UpdateTagsParams) => mutation.mutate(params),
-    updateTagsAsync: (params: UpdateTagsParams) => mutation.mutateAsync(params),
-    extend: (params: ExtendParams) => mutation.mutate(params),
-    extendAsync: (params: ExtendParams) => mutation.mutateAsync(params),
-    cancel: (params: CancelParams) => mutation.mutate({ ...params, action: 'cancel' }),
-    cancelAsync: (params: CancelParams) => mutation.mutateAsync({ ...params, action: 'cancel' }),
-    updateClinicalNotes: (params: UpdateClinicalNotesParams) => mutation.mutate(params),
-    updateClinicalNotesAsync: (params: UpdateClinicalNotesParams) => mutation.mutateAsync(params),
-    updateCost: (params: UpdateCostParams) => mutation.mutate(params),
-    updateCostAsync: (params: UpdateCostParams) => mutation.mutateAsync(params)
-  }
+const _usePauseTreatmentSession = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<PauseParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/pause`, { method: 'POST', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre la séance en pause').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useResumeTreatmentSession = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<ResumeParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/resume`, { method: 'POST', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de reprendre la séance').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useEndTreatmentSession = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<EndParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/end`, { method: 'POST', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de terminer la séance').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useCancelTreatmentSession = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId }: WithOnSuccess<CancelParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/cancel`, { method: 'POST' }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, "Impossible d'annuler la séance").message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateSessionTags = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<UpdateTagsParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/tags`, { method: 'PATCH', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour les tags').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useExtendSession = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<ExtendParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/extend`, { method: 'PATCH', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, "Impossible d'étendre la durée").message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateSessionCost = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<UpdateCostParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/cost`, { method: 'PATCH', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour le prix').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateClinicalNotes = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useSessionInvalidation()
+
+  return useMutation({
+    mutation: ({ sessionId, ...body }: WithOnSuccess<UpdateClinicalNotesParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/clinical-notes`, { method: 'PATCH', body }),
+    onSuccess: (data, { sessionId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(sessionId, data?.data?.appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour les notes cliniques').message,
+        color: 'error'
+      })
+    }
+  })
 }
 
 export const useCreateTreatmentSession = createSharedComposable(_useCreateTreatmentSession)
-export const useTreatmentSessionActions = createSharedComposable(_useTreatmentSessionActions)
+export const useStartTreatmentSession = createSharedComposable(_useStartTreatmentSession)
+export const usePauseTreatmentSession = createSharedComposable(_usePauseTreatmentSession)
+export const useResumeTreatmentSession = createSharedComposable(_useResumeTreatmentSession)
+export const useEndTreatmentSession = createSharedComposable(_useEndTreatmentSession)
+export const useCancelTreatmentSession = createSharedComposable(_useCancelTreatmentSession)
+export const useUpdateSessionTags = createSharedComposable(_useUpdateSessionTags)
+export const useExtendSession = createSharedComposable(_useExtendSession)
+export const useUpdateSessionCost = createSharedComposable(_useUpdateSessionCost)
+export const useUpdateClinicalNotes = createSharedComposable(_useUpdateClinicalNotes)

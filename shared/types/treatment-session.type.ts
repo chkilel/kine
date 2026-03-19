@@ -81,26 +81,6 @@ export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
 
-export const cancelActionSchema = z
-  .object({
-    action: z.literal('cancel')
-  })
-  .refine(
-    (data) =>
-      !(
-        'actualStartTime' in data ||
-        'painLevelBefore' in data ||
-        'pauseStartTime' in data ||
-        'pauseDurationSeconds' in data ||
-        'actualDurationSeconds' in data ||
-        'painLevelAfter' in data ||
-        'notes' in data ||
-        'tags' in data ||
-        'extendedDurationMinutes' in data
-      ),
-    'Cancel action should not include other fields'
-  )
-
 export const updateClinicalNotesActionSchema = z.object({
   primaryConcern: z.string().optional(),
   treatmentSummary: z.string().optional(),
@@ -111,35 +91,6 @@ export const updateClinicalNotesActionSchema = z.object({
 export const updateCostActionSchema = z.object({
   cost: z.number().int().min(1)
 })
-
-// =============================================================================
-// Treatment Session Action Schemas
-// =============================================================================
-// IMPORTANT: Union Schema Ordering
-// When using z.union(), schemas are tried in order. Schemas with ALL OPTIONAL fields
-// will match any object and should be placed LAST in the union to prevent them from
-// "stealing" matches from more specific schemas.
-//
-// Example problem:
-//   updateClinicalNotesActionSchema = z.object({ field: z.string().optional(), ... })
-//   updateCostActionSchema = z.object({ cost: z.number().int().min(1) })
-//
-// With wrong order: { cost: 10950 } matches updateClinicalNotesActionSchema first → returns {}
-// With correct order: { cost: 10950 } matches updateCostActionSchema first → returns { cost: 10950 }
-//
-// Rule of thumb: Order schemas from MOST specific to LEAST specific (all-optional schemas last)
-
-export const treatmentSessionPatchSchema = z.union([
-  startActionSchema,
-  pauseActionSchema,
-  resumeActionSchema,
-  endActionSchema,
-  updateTagsActionSchema,
-  extendActionSchema,
-  cancelActionSchema,
-  updateCostActionSchema, // Specific schema (has required fields) - placed before all-optional schemas
-  updateClinicalNotesActionSchema // All-optional schema - MUST be LAST to avoid matching other action bodies
-])
 
 // =============================================================================
 // Treatment Session Create Schema
@@ -175,31 +126,8 @@ export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
-export type CancelAction = z.infer<typeof cancelActionSchema>
 export type UpdateClinicalNotesAction = z.infer<typeof updateClinicalNotesActionSchema>
 export type UpdateCostAction = z.infer<typeof updateCostActionSchema>
-
-export type TreatmentSessionPatchBody =
-  | StartAction
-  | PauseAction
-  | ResumeAction
-  | EndAction
-  | UpdateTagsAction
-  | ExtendAction
-  | CancelAction
-  | UpdateCostAction
-  | UpdateClinicalNotesAction
-
-export type TreatmentSessionActionType =
-  | 'start'
-  | 'pause'
-  | 'resume'
-  | 'end'
-  | 'updateTags'
-  | 'extend'
-  | 'cancel'
-  | 'updateCost'
-  | 'updateClinicalNotes'
 
 export type CreateTreatmentSession = z.infer<typeof createTreatmentSessionSchema>
 export type TreatmentSessionQuery = z.infer<typeof treatmentSessionQuerySchema>

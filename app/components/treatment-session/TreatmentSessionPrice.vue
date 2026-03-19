@@ -1,9 +1,19 @@
 <script setup lang="ts">
-  import { nextTick, ref, computed } from 'vue'
-
   const props = defineProps<{ appointment: AppointmentWithSession }>()
 
+  // --- Composables ---
+
   const activeOrganization = authClient.useActiveOrganization()
+  const { mutate: updateCost, isLoading: isUpdating } = useUpdateSessionCost()
+
+  // --- Reactive state ---
+
+  const isEditingPrice = ref(false)
+  const priceInputRaw = ref(100)
+  const inputRef = ref<HTMLInputElement | null>(null)
+
+  // --- Derived state ---
+
   const organization = computed(() => activeOrganization.value.data)
 
   const treatmentPlan = computed(() => {
@@ -11,16 +21,10 @@
     return props.appointment.treatmentPlan
   })
 
-  const { updateCost, isLoading: isUpdating } = useTreatmentSessionActions()
-
-  const isEditingPrice = ref(false)
-  const priceInputRaw = ref(100)
-  const inputRef = ref<HTMLInputElement | null>(null)
-
   const inheritedPrice = computed(() => {
     const location = props.appointment.location
 
-    if (treatmentPlan.value?.pricing?.[location]) {
+    if (treatmentPlan.value?.pricing[location]) {
       return treatmentPlan.value.pricing[location]
     }
 
@@ -44,8 +48,10 @@
 
   const isValidInput = computed(() => {
     const parsed = priceInputRaw.value
-    return !isNaN(parsed) && parsed >= 0
+    return !isNaN(parsed) && parsed > 0
   })
+
+  // --- Handlers ---
 
   async function handleStartPriceEdit() {
     const currentPrice = props.appointment.treatmentSession?.cost ?? inheritedPrice.value
@@ -62,14 +68,8 @@
 
     updateCost({
       sessionId: props.appointment.treatmentSession.id,
-      appointmentId: props.appointment.id,
       cost: priceInCents
     })
-    //console.log('🚀 ~ handleSavePrice ~ :', {
-    //sessionId: props.appointment.treatmentSession.id,
-    //appointmentId: props.appointment.id,
-    //cost: priceInCents
-    //})
     isEditingPrice.value = false
   }
 
@@ -78,7 +78,6 @@
 
     updateCost({
       sessionId: props.appointment.treatmentSession.id,
-      appointmentId: props.appointment.id,
       cost: inheritedPrice.value
     })
     isEditingPrice.value = false
@@ -118,43 +117,51 @@
 
     <div v-if="appointment.treatmentSession && isEditingPrice" class="mt-4 space-y-2">
       <div class="flex gap-2">
-        <div class="flex-1">
-          <UInput
+        <UFieldGroup>
+          <UInputNumber
             ref="inputRef"
-            v-model.number="priceInputRaw"
-            type="number"
+            v-model="priceInputRaw"
             inputmode="decimal"
-            step="10"
-            min="1"
+            :step="10"
+            :min="10"
             placeholder="Prix personnalisé (en Dh)"
             :color="priceInputRaw && !isValidInput ? 'error' : undefined"
-            class="w-full"
+            class="iiw-full"
             @keydown="handleKeydown"
           />
-        </div>
-        <UButton
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          icon="i-hugeicons-cancel-01"
-          @click="handleCancelPriceEdit"
-        />
-        <UButton
-          size="xs"
-          color="primary"
-          icon="i-hugeicons-checkmark-circle-01"
-          :loading="isUpdating"
-          :disabled="!isValidInput"
-          @click="handleSavePrice"
-        />
+          <UButton
+            size="sm"
+            color="neutral"
+            variant="outline"
+            icon="i-hugeicons-cancel-01"
+            class="w-12"
+            block
+            @click="handleCancelPriceEdit"
+          />
+          <UButton
+            color="primary"
+            icon="i-hugeicons-tick-02"
+            :loading="isUpdating"
+            :disabled="!isValidInput"
+            class="w-12"
+            block
+            @click="handleSavePrice"
+          />
+        </UFieldGroup>
       </div>
 
       <!-- Hint: inherited fallback price -->
       <p v-if="inheritedPrice !== null" class="text-muted text-xs">
         Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
-        <button v-if="hasCustomCost" class="text-primary ml-1 underline underline-offset-2" @click="handleResetPrice">
+        <UButton
+          v-if="hasCustomCost"
+          size="xs"
+          variant="link"
+          class="text-primary ml-1 underline underline-offset-2"
+          @click="handleResetPrice"
+        >
           Réinitialiser
-        </button>
+        </UButton>
       </p>
     </div>
   </UCard>

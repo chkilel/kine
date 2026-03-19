@@ -2,7 +2,6 @@
   import { LazyAppModalEVA } from '#components'
 
   const props = defineProps<{
-    treatmentSession?: TreatmentSession | null
     appointment: AppointmentWithSession
   }>()
 
@@ -11,9 +10,12 @@
     close: []
   }>()
 
-  const treatmentSessionActions = useTreatmentSessionActions()
-  const overlay = useOverlay()
-  const evaModal = overlay.create(LazyAppModalEVA)
+  // ─── Composable ─────────────────────────────────────────────────────────────
+  const { mutate: pauseSession, isLoading: isPausing } = usePauseTreatmentSession()
+  const { mutate: resumeSession, isLoading: isResuming } = useResumeTreatmentSession()
+  const { mutate: extendSession } = useExtendSession()
+  const { mutate: endSession } = useEndTreatmentSession()
+  const evaModal = useOverlay().create(LazyAppModalEVA)
   const queryCache = useQueryCache()
 
   // ─── Timer state (derived from treatment session) ──────────────────────────
@@ -25,28 +27,10 @@
 
   // ─── Derived state ─────────────────────────────────────────────────────────
   const session = computed(() => props.appointment.treatmentSession)
-
-  const isPaused = computed(() => pauseStartTime.value !== null)
-
   const sessionStatus = computed(() => session.value?.status)
+  const isPaused = computed(() => pauseStartTime.value !== null)
   const isInProgress = computed(() => sessionStatus.value === 'in_progress')
-  const isFinished = computed(() => sessionStatus.value === 'finished')
-  const isCompleted = computed(() => sessionStatus.value === 'completed')
-  const isEnded = computed(() => isFinished.value || isCompleted.value)
-
-  // All actions share a single useMutation instance, so isLoading alone can't
-  // distinguish which action is in flight. Track it explicitly instead.
-  const pendingAction = ref<'pause' | 'resume' | null>(null)
-
-  watch(
-    () => treatmentSessionActions.isLoading.value,
-    (loading) => {
-      if (!loading) pendingAction.value = null
-    }
-  )
-
-  const isPausing = computed(() => pendingAction.value === 'pause' && treatmentSessionActions.isLoading.value)
-  const isResuming = computed(() => pendingAction.value === 'resume' && treatmentSessionActions.isLoading.value)
+  const isEnded = computed(() => sessionStatus.value === 'finished' || sessionStatus.value === 'completed')
 
   const consultationDurationSeconds = computed(() => {
     const base = props.appointment.duration ?? 0
@@ -108,13 +92,11 @@
   })
 
   // Auto-refresh session data every 30s
-  const { pause: stopRefresh } = useIntervalFn(() => {
+  useIntervalFn(() => {
     if (session.value?.status === 'in_progress') {
       queryCache.invalidateQueries({ key: ['treatment-sessions', session.value.id] })
     }
   }, 30_000)
-
-  onUnmounted(stopRefresh)
 
   // ─── Sync local timer state from session prop ──────────────────────────────
   watch(
@@ -161,30 +143,25 @@
   // ─── Actions ───────────────────────────────────────────────────────────────
   function handlePauseTimer() {
     if (!session.value) return
-    pendingAction.value = 'pause'
-    treatmentSessionActions.pause({
+    pauseSession({
       sessionId: session.value.id,
-      appointmentId: session.value.appointmentId,
       pauseStartTime: getCurrentTimeHHMMSS()
     })
   }
 
   function handleResumeTimer() {
     if (!session.value?.pauseStartTime) return
-    pendingAction.value = 'resume'
     const pauseDurationSeconds = calculateTimeDifference(session.value.pauseStartTime, getCurrentTimeHHMMSS())
-    treatmentSessionActions.resume({
+    resumeSession({
       sessionId: session.value.id,
-      appointmentId: session.value.appointmentId,
       pauseDurationSeconds
     })
   }
 
   function handleExtendFiveMinutes() {
     if (!session.value) return
-    treatmentSessionActions.extend({
+    extendSession({
       sessionId: session.value.id,
-      appointmentId: session.value.appointmentId,
       extendedDurationMinutes: 5
     })
   }
@@ -200,9 +177,8 @@
 
     if (evaValue === null || !session.value) return
 
-    treatmentSessionActions.end({
+    endSession({
       sessionId: session.value.id,
-      appointmentId: session.value.appointmentId,
       actualDurationSeconds: Math.max(0, timerSeconds.value),
       painLevelAfter: evaValue
     })
