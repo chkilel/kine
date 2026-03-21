@@ -4,7 +4,7 @@
   // --- Composables ---
 
   const activeOrganization = authClient.useActiveOrganization()
-  const { mutate: updateCost, isLoading: isUpdating } = useUpdateSessionCost()
+  const { mutate: updatePrice, isLoading: isUpdating } = useUpdateSessionPrice()
 
   // --- Reactive state ---
 
@@ -32,12 +32,12 @@
   })
 
   const hasCustomCost = computed(() => {
-    const cost = props.appointment.treatmentSession?.cost
-    return cost !== null && cost !== undefined
+    const priceCent = props.appointment.treatmentSession?.priceCent
+    return priceCent !== null && priceCent !== undefined
   })
 
   const displayPrice = computed(() =>
-    hasCustomCost.value ? props.appointment.treatmentSession!.cost : inheritedPrice.value
+    hasCustomCost.value ? props.appointment.treatmentSession!.priceCent : inheritedPrice.value
   )
 
   const displayPriceFormatted = computed(() =>
@@ -54,7 +54,7 @@
   // --- Handlers ---
 
   async function handleStartPriceEdit() {
-    const currentPrice = props.appointment.treatmentSession?.cost ?? inheritedPrice.value
+    const currentPrice = props.appointment.treatmentSession?.priceCent ?? inheritedPrice.value
     priceInputRaw.value = currentPrice !== null && currentPrice !== undefined ? centsToCurrency(currentPrice) : 1
     isEditingPrice.value = true
     await nextTick()
@@ -66,9 +66,9 @@
 
     const priceInCents = currencyToCents(priceInputRaw.value)
 
-    updateCost({
+    updatePrice({
       sessionId: props.appointment.treatmentSession.id,
-      cost: priceInCents
+      priceCent: priceInCents
     })
     isEditingPrice.value = false
   }
@@ -76,9 +76,9 @@
   function handleResetPrice() {
     if (!props.appointment.treatmentSession) return
 
-    updateCost({
+    updatePrice({
       sessionId: props.appointment.treatmentSession.id,
-      cost: inheritedPrice.value
+      priceCent: inheritedPrice.value
     })
     isEditingPrice.value = false
   }

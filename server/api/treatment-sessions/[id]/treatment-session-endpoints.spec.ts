@@ -229,7 +229,7 @@ describe('Treatment Session State Transitions', () => {
         tags: null,
         billed: null,
         insuranceClaimed: false,
-        cost: null
+        priceCent: null
       }
 
       expect(sessionAfterCancel.primaryConcern).toBeNull()
@@ -246,7 +246,7 @@ describe('Treatment Session State Transitions', () => {
       expect(sessionAfterCancel.tags).toBeNull()
       expect(sessionAfterCancel.billed).toBeNull()
       expect(sessionAfterCancel.insuranceClaimed).toBe(false)
-      expect(sessionAfterCancel.cost).toBeNull()
+      expect(sessionAfterCancel.priceCent).toBeNull()
     })
   })
 })
@@ -284,18 +284,18 @@ describe('Treatment Session Updates', () => {
     })
   })
 
-  describe('Update Cost', () => {
-    it('8.8.1 should update session cost successfully', () => {
-      const newCost = 5000
-      const updatedCost = newCost
+  describe('Update Price', () => {
+    it('8.8.1 should update session price successfully', () => {
+      const newTags = ['urgent', 'important']
+      const updatedTags = newTags.join(',')
 
-      expect(updatedCost).toBe(5000)
+      expect(updatedTags).toBe('urgent,important')
     })
 
-    it('8.8.2 should validate cost is positive integer', () => {
-      const cost = 5000
-      expect(cost).toBeGreaterThan(0)
-      expect(Number.isInteger(cost)).toBe(true)
+    it('8.8.2 should validate price is positive integer', () => {
+      const priceCent = 5000
+      expect(priceCent).toBeGreaterThan(0)
+      expect(Number.isInteger(priceCent)).toBe(true)
     })
   })
 

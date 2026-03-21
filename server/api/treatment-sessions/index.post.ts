@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Calculate inherited price
-    const cost = calculateInheritedPrice({
+    const priceCent = calculateInheritedPrice({
       appointment,
       treatmentPlan,
       organization: organization as any
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
         primaryConcern,
         treatmentSummary,
         status: 'pre_session',
-        cost
+        priceCent
       })
       .returning()
 

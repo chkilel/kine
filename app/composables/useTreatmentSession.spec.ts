@@ -281,11 +281,11 @@ describe('Treatment Session Composables', () => {
     })
   })
 
-  describe('useUpdateSessionCost', () => {
+  describe('useUpdateSessionPrice', () => {
     it('9.8.1 should have correct endpoint path', () => {
       const sessionId = 'session-1'
-      const expectedEndpoint = `/api/treatment-sessions/${sessionId}/cost`
-      expect(expectedEndpoint).toBe('/api/treatment-sessions/session-1/cost')
+      const expectedEndpoint = `/api/treatment-sessions/${sessionId}/price`
+      expect(expectedEndpoint).toBe('/api/treatment-sessions/session-1/price')
     })
 
     it('9.8.2 should use PATCH method', () => {
@@ -293,14 +293,14 @@ describe('Treatment Session Composables', () => {
       expect(method).toBe('PATCH')
     })
 
-    it('9.8.3 should accept update cost parameters', () => {
+    it('9.8.3 should accept update price parameters', () => {
       const params = {
         sessionId: 'session-1',
-        cost: 5000
+        priceCent: 5000
       }
 
       expect(params.sessionId).toBe('session-1')
-      expect(params.cost).toBe(5000)
+      expect(params.priceCent).toBe(5000)
     })
 
     it('9.8.4 should invalidate queries on success', () => {
@@ -382,7 +382,7 @@ describe('Treatment Session Composables', () => {
         'useCancelTreatmentSession',
         'useUpdateSessionTags',
         'useExtendSession',
-        'useUpdateSessionCost',
+        'useUpdateSessionPrice',
         'useUpdateClinicalNotes'
       ]
 

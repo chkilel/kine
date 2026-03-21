@@ -60,7 +60,7 @@ export const treatmentSessions = sqliteTable(
     // ---- Billing (session-specific) ----
     billed: calendarDateField(),
     insuranceClaimed: integer({ mode: 'boolean' }).default(false),
-    cost: integer(),
+    priceCent: integer(),
 
     // ---- Creation & update timestamps ----
     ...creationAndUpdateTimestamps

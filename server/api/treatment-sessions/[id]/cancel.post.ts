@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
         tags: null,
         billed: null,
         insuranceClaimed: false,
-        cost: null
+        priceCent: null
       })
       .where(and(eq(treatmentSessions.organizationId, organizationId), eq(treatmentSessions.id, id)))
       .returning()

@@ -1316,7 +1316,7 @@ function generateAppointments(
       location,
       billed: isPast && status === 'completed' ? date : null,
       insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
-      cost: duration ? duration * 50 : 50,
+      priceCent: duration ? duration * 50 : 50,
       chiefComplaint: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       treatmentSummary:
@@ -1460,7 +1460,7 @@ function generateAppointments(
       location,
       billed: null,
       insuranceClaimed: 0,
-      cost: durationValue * 50,
+      priceCent: durationValue * 50,
       chiefComplaint: randomItem(medicalConditions),
       notes: null,
       treatmentSummary: null

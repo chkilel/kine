@@ -18,7 +18,7 @@ type UpdateTagsParams = SessionActionParams & UpdateTagsAction
 type ExtendParams = SessionActionParams & ExtendAction
 type CancelParams = SessionActionParams
 type UpdateClinicalNotesParams = SessionActionParams & UpdateClinicalNotesAction
-type UpdateCostParams = SessionActionParams & UpdateCostAction
+type UpdatePriceParams = SessionActionParams & UpdatePriceAction
 
 function useSessionInvalidation() {
   const queryCache = useQueryCache()
@@ -213,14 +213,14 @@ const _useExtendSession = () => {
   })
 }
 
-const _useUpdateSessionCost = () => {
+const _useUpdateSessionPrice = () => {
   const toast = useToast()
   const requestFetch = useRequestFetch()
   const invalidate = useSessionInvalidation()
 
   return useMutation({
-    mutation: ({ sessionId, ...body }: WithOnSuccess<UpdateCostParams>) =>
-      requestFetch(`/api/treatment-sessions/${sessionId}/cost`, { method: 'PATCH', body }),
+    mutation: ({ sessionId, ...body }: WithOnSuccess<UpdatePriceParams>) =>
+      requestFetch(`/api/treatment-sessions/${sessionId}/price`, { method: 'PATCH', body }),
     onSuccess: (data, { sessionId, onSuccess }) => {
       onSuccess?.()
       invalidate(sessionId, data?.data?.appointmentId)
@@ -265,5 +265,5 @@ export const useEndTreatmentSession = createSharedComposable(_useEndTreatmentSes
 export const useCancelTreatmentSession = createSharedComposable(_useCancelTreatmentSession)
 export const useUpdateSessionTags = createSharedComposable(_useUpdateSessionTags)
 export const useExtendSession = createSharedComposable(_useExtendSession)
-export const useUpdateSessionCost = createSharedComposable(_useUpdateSessionCost)
+export const useUpdateSessionPrice = createSharedComposable(_useUpdateSessionPrice)
 export const useUpdateClinicalNotes = createSharedComposable(_useUpdateClinicalNotes)

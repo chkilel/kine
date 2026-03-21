@@ -29,7 +29,7 @@ export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessio
   tags: z.string().nullable().optional(),
   billed: calendarDateSchema.nullable().optional(),
   insuranceClaimed: z.boolean().nullable().optional(),
-  cost: z.number().int().min(0).nullable().optional(),
+  priceCent: z.number().int().min(0).nullable().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 })
@@ -88,8 +88,8 @@ export const updateClinicalNotesActionSchema = z.object({
   nextSteps: z.string().optional()
 })
 
-export const updateCostActionSchema = z.object({
-  cost: z.number().int().min(1)
+export const updatePriceActionSchema = z.object({
+  priceCent: z.number().int().min(1)
 })
 
 // =============================================================================
@@ -127,7 +127,7 @@ export type EndAction = z.infer<typeof endActionSchema>
 export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
 export type UpdateClinicalNotesAction = z.infer<typeof updateClinicalNotesActionSchema>
-export type UpdateCostAction = z.infer<typeof updateCostActionSchema>
+export type UpdatePriceAction = z.infer<typeof updatePriceActionSchema>
 
 export type CreateTreatmentSession = z.infer<typeof createTreatmentSessionSchema>
 export type TreatmentSessionQuery = z.infer<typeof treatmentSessionQuerySchema>

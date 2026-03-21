@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const body = await readValidatedBody(event, updateCostActionSchema.parse)
+    const body = await readValidatedBody(event, updatePriceActionSchema.parse)
 
     const [session] = await db
       .select()
@@ -33,14 +33,14 @@ export default defineEventHandler(async (event) => {
     if (session.status === 'pre_session') {
       throw createError({
         statusCode: 400,
-        message: 'Cannot update cost before session starts'
+        message: 'Cannot update price before session starts'
       })
     }
 
     const [updated] = await db
       .update(treatmentSessions)
       .set({
-        cost: body.cost
+        priceCent: body.priceCent
       })
       .where(and(eq(treatmentSessions.organizationId, organizationId), eq(treatmentSessions.id, id)))
       .returning()
@@ -54,6 +54,6 @@ export default defineEventHandler(async (event) => {
 
     return successResponse(updated, 'Prix mis à jour avec succès')
   } catch (error: unknown) {
-    handleApiError(error, 'Failed to update treatment session cost')
+    handleApiError(error, 'Failed to update treatment session price')
   }
 })

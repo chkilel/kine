@@ -342,7 +342,7 @@ CREATE TABLE `treatment_sessions` (
 	`tags` text,
 	`billed` text,
 	`insuranceClaimed` integer DEFAULT false,
-	`cost` integer,
+	`priceCent` integer,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
 	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
