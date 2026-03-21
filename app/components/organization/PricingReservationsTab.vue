@@ -6,17 +6,15 @@
 
   const defaultForm = (org?: Organization) => ({
     pricing: {
-      sessionRates: {
-        clinic: org?.pricing?.sessionRates?.clinic ? centsToCurrency(org.pricing.sessionRates.clinic) : undefined,
-        home: org?.pricing?.sessionRates?.home ? centsToCurrency(org.pricing.sessionRates.home) : undefined,
-        telehealth: org?.pricing?.sessionRates?.telehealth
-          ? centsToCurrency(org.pricing.sessionRates.telehealth)
-          : undefined
+      rateCent: {
+        clinic: org?.pricing?.rateCent?.clinic ? centsToCurrency(org.pricing.rateCent.clinic) : 100,
+        home: org?.pricing?.rateCent?.home ? centsToCurrency(org.pricing.rateCent.home) : 100,
+        telehealth: org?.pricing?.rateCent?.telehealth ? centsToCurrency(org.pricing.rateCent.telehealth) : 100
       },
       packages:
         org?.pricing?.packages?.map((pkg: any) => ({
           ...pkg,
-          price: pkg.price ? centsToCurrency(pkg.price) : undefined
+          priceCent: pkg.priceCent ? centsToCurrency(pkg.priceCent) : 100
         })) ?? []
     },
     scheduling: {
@@ -94,18 +92,18 @@
           </p>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <UFormField label="Cabinet (MAD)" name="pricing.sessionRates.cabinet">
-                <UInput v-model.number="state.pricing.sessionRates.clinic" type="number" class="w-full" />
+              <UFormField label="Cabinet (MAD)" name="pricing.rateCent.cabinet">
+                <UInput v-model.number="state.pricing.rateCent.clinic" type="number" class="w-full" />
               </UFormField>
             </div>
             <div>
-              <UFormField label="Domicile (MAD)" name="pricing.sessionRates.domicile">
-                <UInput v-model.number="state.pricing.sessionRates.home" type="number" class="w-full" />
+              <UFormField label="Domicile (MAD)" name="pricing.rateCent.domicile">
+                <UInput v-model.number="state.pricing.rateCent.home" type="number" class="w-full" />
               </UFormField>
             </div>
             <div>
-              <UFormField label="Téléconsultation (MAD)" name="pricing.sessionRates.teleconsultation">
-                <UInput v-model.number="state.pricing.sessionRates.telehealth" type="number" class="w-full" />
+              <UFormField label="Téléconsultation (MAD)" name="pricing.rateCent.teleconsultation">
+                <UInput v-model.number="state.pricing.rateCent.telehealth" type="number" class="w-full" />
               </UFormField>
             </div>
           </div>

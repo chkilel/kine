@@ -28,9 +28,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    let pricing: SessionRates
+    let pricing: RateCent
 
-    // 4. Determine pricing: use provided pricing or fall back to org defaults
+    //4. Determine pricing: use provided pricing or fall back to org defaults
     if (body.pricing) {
       pricing = body.pricing
     } else {
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
           message: 'Organisation introuvable'
         })
       }
-      pricing = organization.pricing.sessionRates
+      pricing = organization.pricing.rateCent
     }
 
     // Use org ID from request body or fallback to session

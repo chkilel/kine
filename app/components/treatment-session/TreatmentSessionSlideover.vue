@@ -12,7 +12,7 @@
   const evaModal = overlay.create(LazyAppModalEVA)
 
   const { mutateAsync: createTreatmentSessionAsync, isLoading: isCreating } = useCreateTreatmentSession()
-  const treatmentSessionActions = useTreatmentSessionActions()
+  const { mutateAsync: startSessionAsync, isLoading: isSessionStarting } = useStartTreatmentSession()
 
   // Data fetching
   const { data: patient } = usePatientById(() => props.patientId)
@@ -54,7 +54,7 @@
 
   // Handler to start a new session
   async function handleStartSession() {
-    if (isCreating.value || treatmentSessionActions.isLoading.value) return
+    if (isCreating.value || isSessionStarting.value) return
 
     const evaValue = await evaModal.open({
       title: 'Évaluation de la douleur initiale',
@@ -91,9 +91,8 @@
 
       if (!sessionId) throw new Error('Failed to create session')
 
-      await treatmentSessionActions.startAsync({
+      await startSessionAsync({
         sessionId,
-        appointmentId: props.appointmentId,
         actualStartTime: getCurrentTimeHHMMSS(),
         painLevelBefore: evaValue
       })

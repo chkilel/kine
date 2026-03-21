@@ -147,12 +147,12 @@ The system SHALL provide endpoints to retrieve treatment session data.
 
 ### Requirement: Treatment Session Update
 
-The system SHALL allow updating treatment session data including clinical notes (primaryConcern, treatmentSummary, observations, nextSteps) at different stages, pain levels, and timer state. Users can modify **ANY field that is visible** regardless of when it was initially filled. Updates are triggered by clicking save buttons on individual fields.
+The system SHALL allow updating treatment session data including clinical notes (primaryConcern, treatmentSummary, observations, nextSteps), pain levels, tags, and cost. Users can modify **ANY field that is visible** regardless of when it was initially filled. Each field update uses a dedicated endpoint for explicit API semantics.
 
 #### Scenario: Update clinical notes
 
 - **GIVEN** a treatment session exists with id "session-123"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body { treatmentSummary: "Patient showed improvement in range of motion" }
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body { treatmentSummary: "Patient showed improvement in range of motion" }
 - **THEN** HTTP response is 200 OK
 - **AND** treatmentSummary field is updated
 - **AND** updatedAt timestamp is updated
@@ -160,21 +160,21 @@ The system SHALL allow updating treatment session data including clinical notes 
 #### Scenario: Update pain levels
 
 - **GIVEN** a treatment session exists with id "session-123"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body { painLevelBefore: 7, painLevelAfter: 3 }
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body { painLevelBefore: 7, painLevelAfter: 3 }
 - **THEN** HTTP response is 200 OK
 - **AND** both pain level fields are updated
 
 #### Scenario: Update session tags
 
 - **GIVEN** a treatment session exists with id "session-123"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body { tags: ["Douleur Diminuée", "Renforcement"] }
+- **WHEN** PATCH /api/treatment-sessions/session-123/tags is called with body { tags: ["Douleur Diminuée", "Renforcement"] }
 - **THEN** HTTP response is 200 OK
 - **AND** tags are stored as JSON string
 
 #### Scenario: Update observations and next steps
 
 - **GIVEN** a treatment session exists with id "session-123"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body {
   observations: "Patient fatigue noted during exercises",
   nextSteps: "Continue with same protocol next session"
   }
@@ -188,7 +188,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 - **WHEN** therapist opens TreatmentSessionSlideover and sees a visible field
 - **AND** therapist modifies that visible field
 - **AND** therapist clicks save button on that field
-- **THEN** the field is updated via API call
+- **THEN** the field is updated via appropriate API call (clinical-notes, tags, or cost endpoint)
 - **AND** update is successful
 - **AND** session status remains unchanged
 
@@ -200,7 +200,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 - **AND** therapist fills treatmentSummary field with "Initial assessment completed"
 - **AND** therapist clicks save button on primaryConcern field
 - **AND** therapist clicks save button on treatmentSummary field
-- **THEN** both fields are saved via API calls
+- **THEN** both fields are saved via PATCH /api/treatment-sessions/session-123/clinical-notes API calls
 - **AND** primaryConcern and treatmentSummary fields are updated
 - **AND** observations and nextSteps fields are not visible (cannot be modified in pre_session)
 - **AND** status remains "pre_session"
@@ -213,7 +213,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 - **AND** therapist fills treatmentSummary field with "Patient responding well to treatment"
 - **AND** therapist fills observations field with "Pain level decreased during exercises"
 - **AND** therapist clicks save buttons on each field
-- **THEN** all three fields are saved via API calls
+- **THEN** all three fields are saved via PATCH /api/treatment-sessions/session-123/clinical-notes API calls
 - **AND** primaryConcern, treatmentSummary, and observations fields are updated
 - **AND** nextSteps field is not visible (cannot be modified in in_progress)
 - **AND** status remains "in_progress"
@@ -227,7 +227,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 - **AND** therapist fills observations field with "Patient showed good improvement"
 - **AND** therapist fills nextSteps field with "Continue with strengthening exercises next session"
 - **AND** therapist clicks save buttons on each field
-- **THEN** all four fields are saved via API calls
+- **THEN** all four fields are saved via PATCH /api/treatment-sessions/session-123/clinical-notes API calls
 - **AND** primaryConcern, treatmentSummary, observations, and nextSteps fields are updated
 - **AND** status remains "finished"
 
@@ -238,7 +238,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 - **AND** session status is "in_progress"
 - **WHEN** therapist modifies primaryConcern field to "Updated: Lower back pain improved"
 - **AND** therapist clicks save button on primaryConcern field
-- **THEN** primaryConcern field is updated via API call
+- **THEN** primaryConcern field is updated via PATCH /api/treatment-sessions/session-123/clinical-notes API call
 - **AND** new value "Updated: Lower back pain improved" is saved
 - **AND** previous value is overwritten
 - **AND** session status remains "in_progress"
@@ -247,7 +247,7 @@ The system SHALL allow updating treatment session data including clinical notes 
 
 - **GIVEN** a treatment session exists with id "session-123"
 - **AND** session status is "pre_session"
-- **WHEN** therapist attempts to PATCH /api/treatment-sessions/session-123 with action "updateClinicalNotes" and body { observations: "Some observations" }
+- **WHEN** therapist attempts to PATCH /api/treatment-sessions/session-123/clinical-notes with body { observations: "Some observations" }
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Cannot update observations in pre_session status"
 
@@ -255,13 +255,13 @@ The system SHALL allow updating treatment session data including clinical notes 
 
 - **GIVEN** a treatment session exists with id "session-123"
 - **AND** session status is "in_progress"
-- **WHEN** therapist attempts to PATCH /api/treatment-sessions/session-123 with action "updateClinicalNotes" and body { nextSteps: "Some next steps" }
+- **WHEN** therapist attempts to PATCH /api/treatment-sessions/session-123/clinical-notes with body { nextSteps: "Some next steps" }
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Cannot update nextSteps before session is finished"
 
 ### Requirement: Treatment Session Pause and Resume
 
-The system SHALL support pausing and resuming treatment sessions for break tracking. Pause and resume actions are only valid when the session is in `in_progress` status.
+The system SHALL support pausing and resuming treatment sessions for break tracking via dedicated endpoints. Pause and resume actions are only valid when the session is in `in_progress` status.
 
 #### Scenario: Pause treatment session
 
@@ -269,7 +269,7 @@ The system SHALL support pausing and resuming treatment sessions for break track
 - **AND** session status is "in_progress"
 - **AND** pauseStartTime is null
 - **AND** current time is "10:15:30"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "pause" and pauseStartTime "10:15:30"
+- **WHEN** POST /api/treatment-sessions/session-123/pause is called with body { pauseStartTime: "10:15:30" }
 - **THEN** HTTP response is 200 OK
 - **AND** pauseStartTime is set to "10:15:30"
 - **AND** status remains "in_progress"
@@ -281,7 +281,7 @@ The system SHALL support pausing and resuming treatment sessions for break track
 - **AND** pauseStartTime is "10:15:30"
 - **AND** totalPausedSeconds is 300
 - **AND** current time is "10:20:30" (5 minutes later)
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "resume" and pauseDurationSeconds 300
+- **WHEN** POST /api/treatment-sessions/session-123/resume is called with body { pauseDurationSeconds: 300 }
 - **THEN** HTTP response is 200 OK
 - **AND** totalPausedSeconds is updated to 600 (300 + 300)
 - **AND** pauseStartTime is set to null
@@ -289,7 +289,7 @@ The system SHALL support pausing and resuming treatment sessions for break track
 #### Scenario: Prevent pause from pre_session status
 
 - **GIVEN** a treatment session exists with status "pre_session"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "pause"
+- **WHEN** POST /api/treatment-sessions/[id]/pause is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Cannot pause session - session is not in progress"
 
@@ -297,13 +297,13 @@ The system SHALL support pausing and resuming treatment sessions for break track
 
 - **GIVEN** a treatment session exists with status "in_progress"
 - **AND** pauseStartTime is null
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "resume"
+- **WHEN** POST /api/treatment-sessions/[id]/resume is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Treatment session is not paused"
 
 ### Requirement: Treatment Session Completion
 
-The system SHALL support completing treatment sessions with final duration calculation. Completing a session sets status to `finished` to allow for post-session documentation before billing.
+The system SHALL support completing treatment sessions via dedicated endpoint with final duration calculation. Completing a session sets status to `finished` to allow for post-session documentation before billing.
 
 #### Scenario: Complete treatment session
 
@@ -312,7 +312,7 @@ The system SHALL support completing treatment sessions with final duration calcu
 - **AND** actualStartTime is "10:00:00"
 - **AND** totalPausedSeconds is 300
 - **AND** current time is "11:00:00" (60 minutes elapsed)
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "end" and painLevelAfter 4
+- **WHEN** POST /api/treatment-sessions/session-123/end is called with body { painLevelAfter: 4 }
 - **THEN** HTTP response is 200 OK
 - **AND** status is updated to "finished"
 - **AND** actualDurationSeconds is set to 3300 (3600 elapsed - 300 paused)
@@ -323,7 +323,7 @@ The system SHALL support completing treatment sessions with final duration calcu
 - **GIVEN** a treatment session exists with id "session-123"
 - **AND** status is "in_progress"
 - **AND** pauseStartTime is set (currently paused)
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "end"
+- **WHEN** POST /api/treatment-sessions/session-123/end is called
 - **THEN** HTTP response is 200 OK
 - **AND** current pause duration is calculated and added to totalPausedSeconds
 - **AND** pauseStartTime is set to null
@@ -332,14 +332,14 @@ The system SHALL support completing treatment sessions with final duration calcu
 #### Scenario: Prevent completing already finished session
 
 - **GIVEN** a treatment session exists with status "finished"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "end"
+- **WHEN** POST /api/treatment-sessions/[id]/end is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Session is already finished or completed"
 
 #### Scenario: Prevent completing already completed session
 
 - **GIVEN** a treatment session exists with status "completed"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "end"
+- **WHEN** POST /api/treatment-sessions/[id]/end is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Session is already finished or completed"
 
@@ -350,7 +350,7 @@ The system SHALL support storing billing-related data on treatment sessions. Set
 #### Scenario: Update billing information
 
 - **GIVEN** a treatment session exists with id "session-123" with status "finished"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body {
   billed: "2026-01-16",
   insuranceClaimed: true,
   cost: 6500
@@ -363,7 +363,7 @@ The system SHALL support storing billing-related data on treatment sessions. Set
 #### Scenario: Update billing information without status change
 
 - **GIVEN** a treatment session exists with id "session-123" with status "completed"
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body { cost: 7000 }
+- **WHEN** PATCH /api/treatment-sessions/session-123/cost is called with body { cost: 7000 }
 - **THEN** HTTP response is 200 OK
 - **AND** cost is updated to 7000
 - **AND** status remains "completed"
@@ -371,7 +371,7 @@ The system SHALL support storing billing-related data on treatment sessions. Set
 #### Scenario: Use cost override when billing information is updated
 
 - **GIVEN** a treatment session has costOverride 6000
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body {
   billed: "2026-01-16"
   }
 - **THEN** session.cost is set to 6000 (from costOverride)
@@ -382,7 +382,7 @@ The system SHALL support storing billing-related data on treatment sessions. Set
 
 - **GIVEN** a treatment session has no costOverride
 - **AND** session is associated with treatment plan and organization with pricing
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
+- **WHEN** PATCH /api/treatment-sessions/session-123/clinical-notes is called with body {
   billed: "2026-01-16"
   }
 - **THEN** session.cost is calculated using inheritance chain
@@ -552,7 +552,7 @@ The system SHALL require the therapist to record the patient's initial pain leve
 - **WHEN** the EVA modal is displayed
 - **AND** the therapist sets EVA to 6
 - **AND** confirms
-- **THEN** the session start action is called with painLevelBefore 6
+- **THEN** the session start action is called with painLevelBefore 6 via POST /api/treatment-sessions/[id]/start
 - **AND** treatment session `painLevelBefore` is set to 6
 - **AND** treatment session status is updated to "in_progress"
 - **AND** the session timer starts
@@ -571,7 +571,7 @@ The system SHALL require the therapist to record the patient's initial pain leve
 #### Scenario: Start session API with painLevelBefore
 
 - **GIVEN** a therapist starts a session via API
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "start", actualStartTime "10:05:00", and painLevelBefore 5
+- **WHEN** POST /api/treatment-sessions/[id]/start is called with body { actualStartTime: "10:05:00", painLevelBefore: 5 }
 - **THEN** `painLevelBefore` is set to 5
 - **AND** status is updated to "in_progress"
 - **AND** actualStartTime is set to "10:05:00"
@@ -631,7 +631,7 @@ The system SHALL require the therapist to record the patient's final pain level 
 #### Scenario: End session API with painLevelAfter
 
 - **GIVEN** a treatment session with id "session-123" is in progress
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with action "end" and painLevelAfter 4
+- **WHEN** POST /api/treatment-sessions/session-123/end is called with body { painLevelAfter: 4 }
 - **THEN** `painLevelAfter` is set to 4
 - **AND** status is updated to "completed"
 - **AND** HTTP response is 200 OK
@@ -654,7 +654,7 @@ The system SHALL provide a `pre_session` status that allows therapists to prepar
 
 - **GIVEN** a treatment session exists with status "pre_session"
 - **AND** current time is "10:05:00"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "start", actualStartTime "10:05:00", and painLevelBefore 5
+- **WHEN** POST /api/treatment-sessions/[id]/start is called with body { actualStartTime: "10:05:00", painLevelBefore: 5 }
 - **THEN** status is updated to "in_progress"
 - **AND** actualStartTime is set to "10:05:00"
 - **AND** painLevelBefore is set to 5
@@ -670,7 +670,7 @@ The system SHALL provide a `finished` status to indicate that the session has en
 - **AND** actualStartTime is "10:00:00"
 - **AND** totalPausedSeconds is 300
 - **AND** current time is "11:00:00" (60 minutes elapsed)
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "end" and painLevelAfter 3
+- **WHEN** POST /api/treatment-sessions/[id]/end is called with body { painLevelAfter: 3 }
 - **THEN** status is updated to "finished"
 - **AND** actualDurationSeconds is set to 3300 (3600 elapsed - 300 paused)
 - **AND** HTTP response is 200 OK
@@ -682,7 +682,7 @@ The system SHALL automatically transition treatment sessions from `finished` to 
 #### Scenario: Mark session as billed triggers completion
 
 - **GIVEN** a treatment session exists with status "finished"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with body { billed: "2026-01-16" }
+- **WHEN** PATCH /api/treatment-sessions/[id]/clinical-notes is called with body { billed: "2026-01-16" }
 - **THEN** status is automatically updated to "completed"
 - **AND** billed field is set to "2026-01-16"
 - **AND** HTTP response is 200 OK
@@ -690,20 +690,20 @@ The system SHALL automatically transition treatment sessions from `finished` to 
 #### Scenario: Billing a non-finished session does not change status
 
 - **GIVEN** a treatment session exists with status "in_progress"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with body { billed: "2026-01-16" }
+- **WHEN** PATCH /api/treatment-sessions/[id]/clinical-notes is called with body { billed: "2026-01-16" }
 - **THEN** billed field is set to "2026-01-16"
 - **AND** status remains "in_progress"
 - **AND** HTTP response is 200 OK
 
 ### Requirement: Treatment Session Cancellation
 
-The system SHALL allow canceling treatment sessions from `pre_session` or `in_progress` status to handle no-shows or accidental session starts.
+The system SHALL allow canceling treatment sessions from `pre_session` or `in_progress` status to handle no-shows or accidental session starts via dedicated endpoint.
 
 #### Scenario: Cancel session from pre_session (no-show)
 
 - **GIVEN** a treatment session exists with status "pre_session"
 - **AND** patient did not show up
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "cancel"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
 - **THEN** status is updated to "canceled"
 - **AND** HTTP response is 200 OK
 - **AND** response message indicates "Session annulée"
@@ -713,7 +713,7 @@ The system SHALL allow canceling treatment sessions from `pre_session` or `in_pr
 - **GIVEN** a treatment session exists with status "in_progress"
 - **AND** session was started accidentally
 - **AND** pauseStartTime is "10:15:30"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "cancel"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
 - **THEN** status is updated to "canceled"
 - **AND** pauseStartTime is set to null
 - **AND** HTTP response is 200 OK
@@ -721,183 +721,23 @@ The system SHALL allow canceling treatment sessions from `pre_session` or `in_pr
 #### Scenario: Prevent cancel from finished status
 
 - **GIVEN** a treatment session exists with status "finished"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "cancel"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Cannot cancel a finished or completed session"
 
 #### Scenario: Prevent cancel from completed status
 
 - **GIVEN** a treatment session exists with status "completed"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "cancel"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Cannot cancel a finished or completed session"
 
 #### Scenario: Prevent cancel if already canceled
 
 - **GIVEN** a treatment session exists with status "canceled"
-- **WHEN** PATCH /api/treatment-sessions/[id] is called with action "cancel"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
 - **THEN** HTTP response is 400 Bad Request
 - **AND** error message states "Session is already canceled"
-
-### Requirement: Clinical Notes Progressive Visibility
-
-The system SHALL display clinical notes fields in Treatment Session Slideover with progressive visibility based on session status. The `primaryConcern` field is only visible for independent appointments (not part of a treatment plan) and is editable in all statuses when visible. The `treatmentSummary` field is visible and editable in all statuses. **Users can modify ANY field that is displayed**. Each visible field has an associated save button.
-
-#### Scenario: Display primaryConcern in pre_session for independent appointment
-
-- **GIVEN** an appointment exists with id "appointment-123"
-- **AND** appointment has no treatmentPlanId (independent appointment)
-- **AND** a treatment session exists for this appointment with status "pre_session"
-- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
-- **THEN** primaryConcern textarea field is visible
-- **AND** primaryConcern field can be edited
-- **AND** save button is displayed next to primaryConcern field
-- **AND** placeholder text indicates this is for primary concern
-
-#### Scenario: Display primaryConcern in in_progress for independent appointment
-
-- **GIVEN** an appointment exists with id "appointment-123"
-- **AND** appointment has no treatmentPlanId (independent appointment)
-- **AND** a treatment session exists for this appointment with status "in_progress"
-- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
-- **THEN** primaryConcern textarea field is visible
-- **AND** primaryConcern field can be edited
-- **AND** save button is displayed next to primaryConcern field
-
-#### Scenario: Display primaryConcern in finished for independent appointment
-
-- **GIVEN** an appointment exists with id "appointment-123"
-- **AND** appointment has no treatmentPlanId (independent appointment)
-- **AND** a treatment session exists for this appointment with status "finished"
-- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
-- **THEN** primaryConcern textarea field is visible
-- **AND** primaryConcern field can be edited
-- **AND** save button is displayed next to primaryConcern field
-
-#### Scenario: Hide primaryConcern for treatment plan appointment
-
-- **GIVEN** an appointment exists with id "appointment-123"
-- **AND** appointment has treatmentPlanId "plan-abc" (part of treatment plan)
-- **AND** a treatment session exists for this appointment
-- **WHEN** therapist opens TreatmentSessionSlideover for appointment "appointment-123"
-- **THEN** primaryConcern textarea field is not visible
-- **AND** no save button is displayed for primaryConcern
-
-#### Scenario: Display treatmentSummary in pre_session status
-
-- **GIVEN** a treatment session exists with status "pre_session"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** treatmentSummary textarea field is visible
-- **AND** treatmentSummary field can be edited
-- **AND** save button is displayed next to treatmentSummary field
-
-#### Scenario: Display treatmentSummary in in_progress status
-
-- **GIVEN** a treatment session exists with status "in_progress"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** treatmentSummary textarea field is visible
-- **AND** treatmentSummary field can be edited
-- **AND** save button is displayed next to treatmentSummary field
-
-#### Scenario: Display treatmentSummary in finished status
-
-- **GIVEN** a treatment session exists with status "finished"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** treatmentSummary textarea field is visible
-- **AND** treatmentSummary field can be edited
-- **AND** save button is displayed next to treatmentSummary field
-
-#### Scenario: Hide observations in pre_session status
-
-- **GIVEN** a treatment session exists with status "pre_session"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** observations textarea field is not visible
-- **AND** no save button is displayed for observations
-
-#### Scenario: Hide nextSteps in pre_session status
-
-- **GIVEN** a treatment session exists with status "pre_session"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** nextSteps textarea field is not visible
-- **AND** no save button is displayed for nextSteps
-
-#### Scenario: Display observations in in_progress status
-
-- **GIVEN** a treatment session exists with status "in_progress"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** observations textarea field is visible
-- **AND** observations field can be edited
-- **AND** save button is displayed next to observations field
-- **AND** placeholder text indicates this is for session observations
-
-#### Scenario: Hide nextSteps in in_progress status
-
-- **GIVEN** a treatment session exists with status "in_progress"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** nextSteps textarea field is not visible
-- **AND** no save button is displayed for nextSteps
-
-#### Scenario: Display observations and nextSteps in finished status
-
-- **GIVEN** a treatment session exists with status "finished"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** observations textarea field is visible
-- **AND** observations field can be edited
-- **AND** save button is displayed next to observations field
-- **AND** nextSteps textarea field is visible
-- **AND** nextSteps field can be edited
-- **AND** save button is displayed next to nextSteps field
-- **AND** placeholder text indicates this is for next steps
-
-#### Scenario: Display observations and nextSteps in completed status
-
-- **GIVEN** a treatment session exists with status "completed"
-- **WHEN** therapist opens TreatmentSessionSlideover
-- **THEN** observations textarea field is visible
-- **AND** observations field can be edited
-- **AND** save button is displayed next to observations field
-- **AND** nextSteps textarea field is visible
-- **AND** nextSteps field can be edited
-- **AND** save button is displayed next to nextSteps field
-
-#### Scenario: Save clinical notes via save button
-
-- **GIVEN** a treatment session exists
-- **WHEN** therapist types in a visible clinical notes field
-- **AND** therapist clicks to save button for that field
-- **THEN** updateClinicalNotes action is called for that specific field
-- **AND** loading indicator is displayed on save button during update
-- **AND** field content is saved to treatment session
-- **AND** no auto-save occurs without button click
-
-### Requirement: Direct Session Start Without Pre-Session
-
-The system SHALL allow starting a session directly to `in_progress` status without saving clinical notes first, bypassing `pre_session` status entirely. In this case, a session is created in `in_progress` status when "Démarrer la séance" button is clicked.
-
-#### Scenario: Start session directly without clinical notes
-
-- **GIVEN** an appointment exists with id "appointment-123"
-- **AND** no treatment session exists for this appointment
-- **AND** therapist has not filled or saved any clinical notes fields
-- **WHEN** therapist clicks "Démarrer la séance" button
-- **THEN** EVA modal is displayed for initial pain level
-- **AND** therapist sets pain level and confirms
-- **THEN** a treatment session is created with status "in_progress"
-- **AND** actualStartTime is set
-- **AND** painLevelBefore is recorded
-- **AND** session bypasses pre_session status
-
-#### Scenario: Start session from pre_session after saving notes
-
-- **GIVEN** a treatment session exists with status "pre_session"
-- **AND** primaryConcern and treatmentSummary fields are saved
-- **WHEN** therapist clicks "Démarrer la séance" button
-- **THEN** EVA modal is displayed for initial pain level
-- **AND** therapist sets pain level and confirms
-- **THEN** treatment session status is updated to "in_progress"
-- **AND** actualStartTime is set
-- **AND** painLevelBefore is recorded
-- **AND** primaryConcern and treatmentSummary values are preserved
 
 ### Requirement: Session Cost Calculation with Inheritance
 
@@ -964,21 +804,17 @@ The system SHALL allow therapists to override the calculated cost for individual
 
 - **GIVEN** a treatment session exists with status "finished"
 - **AND** calculated cost is 5000 cents
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
-  costOverride: 6000
-  }
+- **WHEN** PATCH /api/treatment-sessions/session-123/cost is called with body { cost: 6000 }
 - **THEN** HTTP response is 200 OK
-- **AND** session.costOverride is set to 6000
+- **AND** session.cost is set to 6000
 - **AND** final cost for billing uses 6000 cents
 
 #### Scenario: Remove session cost override
 
 - **GIVEN** a treatment session has costOverride 6000
-- **WHEN** PATCH /api/treatment-sessions/session-123 is called with body {
-  costOverride: null
-  }
+- **WHEN** PATCH /api/treatment-sessions/session-123/cost is called with body { cost: null }
 - **THEN** HTTP response is 200 OK
-- **AND** session.costOverride is set to null
+- **AND** session.cost is set to null
 - **AND** cost reverts to calculated value from inheritance chain
 
 ### Requirement: Immediate Session Billing
@@ -1187,4 +1023,105 @@ The system SHALL allow therapists to modify the session price through the Treatm
 - **THEN** price is successfully updated via PATCH API
 - **AND** new price is reflected in the UI immediately
 - **AND** session status remains unchanged
+
+### Requirement: Extend Treatment Session Duration
+
+The system SHALL support extending treatment session duration for situations where sessions run longer than planned.
+
+#### Scenario: Extend session duration
+
+- **GIVEN** a treatment session exists with id "session-123"
+- **AND** current extendedDurationMinutes is 0
+- **WHEN** PATCH /api/treatment-sessions/session-123/extend is called with body { extendedDurationMinutes: 10 }
+- **THEN** HTTP response is 200 OK
+- **AND** extendedDurationMinutes is updated to 10
+- **AND** success message indicates duration extended
+
+#### Scenario: Extend session duration cumulatively
+
+- **GIVEN** a treatment session has extendedDurationMinutes of 5
+- **WHEN** PATCH /api/treatment-sessions/session-123/extend is called with body { extendedDurationMinutes: 10 }
+- **THEN** HTTP response is 200 OK
+- **AND** extendedDurationMinutes is updated to 15 (5 + 10)
+
+#### Scenario: Prevent extending with zero or negative duration
+
+- **GIVEN** a treatment session exists
+- **WHEN** PATCH /api/treatment-sessions/session-123/extend is called with body { extendedDurationMinutes: 0 }
+- **THEN** HTTP response is 400 Bad Request
+- **AND** error message indicates extended duration must be at least 1 minute
+
+### Requirement: Treatment Session Action Endpoints
+
+The system SHALL provide dedicated RESTful endpoints for each treatment session action, eliminating complex union schema validation and action detection logic.
+
+#### Scenario: Start session via dedicated endpoint
+
+- **GIVEN** a treatment session exists with status "pre_session"
+- **AND** therapist provides actualStartTime and painLevelBefore
+- **WHEN** POST /api/treatment-sessions/[id]/start is called with valid start action body
+- **THEN** HTTP response is 200 OK
+- **AND** session status transitions to "in_progress"
+- **AND** actualStartTime and painLevelBefore are set
+- **AND** no action detection logic is needed
+
+#### Scenario: Pause session via dedicated endpoint
+
+- **GIVEN** a treatment session exists with status "in_progress"
+- **AND** session is not currently paused
+- **WHEN** POST /api/treatment-sessions/[id]/pause is called with valid pause action body
+- **THEN** HTTP response is 200 OK
+- **AND** pauseStartTime is set
+- **AND** session remains in "in_progress" status
+
+#### Scenario: Resume session via dedicated endpoint
+
+- **GIVEN** a treatment session exists with status "in_progress"
+- **AND** session is currently paused
+- **WHEN** POST /api/treatment-sessions/[id]/resume is called with valid resume action body
+- **THEN** HTTP response is 200 OK
+- **AND** totalPausedSeconds is incremented
+- **AND** pauseStartTime is set to null
+
+#### Scenario: End session via dedicated endpoint
+
+- **GIVEN** a treatment session exists with status "in_progress"
+- **WHEN** POST /api/treatment-sessions/[id]/end is called with valid end action body
+- **THEN** HTTP response is 200 OK
+- **AND** session status transitions to "finished"
+- **AND** actualDurationSeconds and painLevelAfter are set
+- **AND** pause state is cleared if session was paused
+
+#### Scenario: Cancel session via dedicated endpoint
+
+- **GIVEN** a treatment session exists with status "pre_session" or "in_progress"
+- **WHEN** POST /api/treatment-sessions/[id]/cancel is called
+- **THEN** HTTP response is 200 OK
+- **AND** session status transitions to "canceled"
+- **AND** all session data is cleared except metadata
+
+#### Scenario: Update tags via dedicated endpoint
+
+- **GIVEN** a treatment session exists
+- **WHEN** PATCH /api/treatment-sessions/[id]/tags is called with body { tags: ["Tag1", "Tag2"] }
+- **THEN** HTTP response is 200 OK
+- **AND** tags are stored as JSON string
+- **AND** other session fields remain unchanged
+
+#### Scenario: Update cost via dedicated endpoint
+
+- **GIVEN** a treatment session exists
+- **WHEN** PATCH /api/treatment-sessions/[id]/cost is called with body { cost: 6500 }
+- **THEN** HTTP response is 200 OK
+- **AND** cost is set to 6500 cents
+- **AND** other session fields remain unchanged
+
+#### Scenario: Update clinical notes via dedicated endpoint
+
+- **GIVEN** a treatment session exists
+- **WHEN** PATCH /api/treatment-sessions/[id]/clinical-notes is called with body { primaryConcern: "Lower back pain", treatmentSummary: "Good progress" }
+- **THEN** HTTP response is 200 OK
+- **AND** specified fields are updated
+- **AND** unspecified fields remain unchanged
+- **AND** state-specific validation is enforced (observations/nextSteps visibility rules)
 

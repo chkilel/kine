@@ -28,13 +28,13 @@ export default defineEventHandler(async (event) => {
       contact,
       address,
       pricing: {
-        sessionRates: {
+        rateCent: {
           clinic: sessionRates.clinic ? currencyToCents(sessionRates.clinic) : undefined,
           home: sessionRates.home ? currencyToCents(sessionRates.home) : undefined,
           telehealth: sessionRates.telehealth ? currencyToCents(sessionRates.telehealth) : undefined
         },
         packages: []
-      },
+      } as any,
       status: 'active',
       timezone: 'Africa/Casablanca'
     })

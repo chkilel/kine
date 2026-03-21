@@ -27,7 +27,7 @@
 
   // Get default pricing from organization (in DH for display)
   const getDefaultPricing = () => {
-    const pricing = activeOrganization.value.data?.pricing?.sessionRates
+    const pricing = activeOrganization.value.data?.pricing?.rateCent
     return {
       clinic: pricing?.clinic ? centsToCurrency(pricing.clinic) : 1,
       home: pricing?.home ? centsToCurrency(pricing.home) : 1,

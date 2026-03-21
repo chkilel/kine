@@ -9,6 +9,7 @@ import { patients } from './patient'
 import { appointments } from './appointment'
 import { patientDocuments } from './document'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
+import type { RateCent } from '~~/shared/types/org.types'
 
 /**
  * ================================================================
@@ -52,7 +53,7 @@ export const treatmentPlans = sqliteTable(
     insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
 
     // Pricing for sessions (inherited from org at creation, can be overridden)
-    pricing: text({ mode: 'json' }).$type<{ clinic: number; home: number; telehealth: number }>().notNull(),
+    pricing: text({ mode: 'json' }).$type<RateCent>().notNull(),
     notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
 
     // CreatedAt, UpdatedAt

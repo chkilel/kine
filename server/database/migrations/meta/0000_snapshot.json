@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4a6d7c8f-1135-4f52-a49e-e6a8dd77ce33",
+  "id": "8a771b54-1b1e-4ec9-a085-6e0f456cfa5c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "appointments": {
@@ -2523,8 +2523,8 @@
           "autoincrement": false,
           "default": false
         },
-        "cost": {
-          "name": "cost",
+        "priceCent": {
+          "name": "priceCent",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,

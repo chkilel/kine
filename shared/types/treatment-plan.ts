@@ -3,8 +3,6 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
-import { sessionRatesSchema } from '~~/shared/types/org.types'
-import { VALID_COVERAGE_STATUSES } from '~~/shared/utils/constants.treatement-plan'
 
 z.config(fr())
 
@@ -29,7 +27,7 @@ export const treatmentPlanSchema = createSelectSchema(treatmentPlans, {
   prescriptionDate: calendarDateSchema,
   coverageStatus: z.enum(VALID_COVERAGE_STATUSES).nullable(),
   insuranceInfo: z.string().nullable(),
-  pricing: sessionRatesSchema,
+  pricing: rateCentSchema,
   notes: z.array(noteSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
@@ -51,7 +49,7 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   status: treatmentPlanStatusSchema.default('planned'),
   insuranceInfo: z.string().optional(),
   coverageStatus: z.enum(VALID_COVERAGE_STATUSES).optional(),
-  pricing: sessionRatesSchema,
+  pricing: rateCentSchema,
   notes: z.array(noteSchema).optional()
 }).omit({
   id: true,

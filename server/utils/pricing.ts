@@ -11,7 +11,7 @@ export interface CalculateInheritedPriceParams {
 export function calculateInheritedPrice(params: CalculateInheritedPriceParams): number | null {
   const { appointment, treatmentPlan, organization } = params
 
-  if (!organization.pricing?.sessionRates) {
+  if (!organization.pricing?.rateCent) {
     return null
   }
 
@@ -21,5 +21,5 @@ export function calculateInheritedPrice(params: CalculateInheritedPriceParams): 
     return treatmentPlan.pricing[location]
   }
 
-  return organization.pricing.sessionRates[location] || null
+  return organization.pricing.rateCent[location] || null
 }
