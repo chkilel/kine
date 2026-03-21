@@ -87,21 +87,21 @@ export const orgBankingSchema = z.object({
 })
 export type OrgBanking = z.infer<typeof orgBankingSchema>
 
-export const sessionRatesSchema = z.object({
+export const rateCentSchema = z.object({
   clinic: z.number().min(1, 'Le tarif doit être positif'),
   home: z.number().min(1, 'Le tarif doit être positif'),
   telehealth: z.number().min(1, 'Le tarif doit être positif')
 })
-export type SessionRates = z.infer<typeof sessionRatesSchema>
+export type RateCent = z.infer<typeof rateCentSchema>
 
 export const orgPricingSchema = z.object({
-  sessionRates: sessionRatesSchema,
+  rateCent: rateCentSchema,
   packages: z
     .array(
       z.object({
         name: z.string(),
         sessionCount: z.number(),
-        price: z.number()
+        priceCent: z.number()
       })
     )
     .default([])
@@ -314,7 +314,7 @@ export const stepSchemas = [
   }),
   // Step 3 — Tarifs (all optional, no blocking validation)
   z.object({
-    sessionRates: sessionRatesSchema
+    sessionRates: rateCentSchema
   })
 ]
 
@@ -326,7 +326,7 @@ export const onboardingSchema = z.object({
     phones: z.array(phoneEntrySchema).min(1, 'Au moins un numéro de téléphone requis')
   }),
   address: orgAddressSchema,
-  sessionRates: sessionRatesSchema
+  sessionRates: rateCentSchema
 })
 
 export function generateSlug(name: string): string {

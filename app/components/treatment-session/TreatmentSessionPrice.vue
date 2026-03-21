@@ -28,7 +28,7 @@
       return treatmentPlan.value.pricing[location]
     }
 
-    return organization.value?.pricing.sessionRates[location] ?? null
+    return organization.value?.pricing.rateCent[location] ?? null
   })
 
   const hasCustomCost = computed(() => {

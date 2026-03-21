@@ -10,7 +10,7 @@ describe('calculateInheritedPrice', () => {
     name: 'Test Org',
     slug: 'test-org',
     pricing: {
-      sessionRates: {
+      rateCent: {
         clinic: 5000,
         home: 6500,
         telehealth: 4000
@@ -151,11 +151,11 @@ describe('calculateInheritedPrice', () => {
     expect(result).toBeNull()
   })
 
-  it('should return null when organization pricing has no sessionRates', () => {
-    const orgWithoutSessionRates: Organization = {
+  it('should return null when organization pricing has no rateCent', () => {
+    const orgWithoutRateCent: Organization = {
       ...mockOrganization,
       pricing: {
-        sessionRates: undefined as any,
+        rateCent: undefined as any,
         packages: []
       }
     }
@@ -163,7 +163,7 @@ describe('calculateInheritedPrice', () => {
     const result = calculateInheritedPrice({
       appointment: mockAppointmentClinic,
       treatmentPlan: mockTreatmentPlan,
-      organization: orgWithoutSessionRates
+      organization: orgWithoutRateCent
     })
 
     expect(result).toBeNull()

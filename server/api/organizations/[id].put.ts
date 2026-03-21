@@ -19,22 +19,22 @@ export default defineEventHandler(async (event) => {
 
     const updateData = { ...body }
 
-    if (updateData.pricing?.sessionRates) {
-      if (updateData.pricing.sessionRates.clinic !== undefined) {
-        updateData.pricing.sessionRates.clinic = currencyToCents(updateData.pricing.sessionRates.clinic)
+    if (updateData.pricing?.rateCent) {
+      if (updateData.pricing.rateCent.clinic !== undefined) {
+        updateData.pricing.rateCent.clinic = currencyToCents(updateData.pricing.rateCent.clinic)
       }
-      if (updateData.pricing.sessionRates.home !== undefined) {
-        updateData.pricing.sessionRates.home = currencyToCents(updateData.pricing.sessionRates.home)
+      if (updateData.pricing.rateCent.home !== undefined) {
+        updateData.pricing.rateCent.home = currencyToCents(updateData.pricing.rateCent.home)
       }
-      if (updateData.pricing.sessionRates.telehealth !== undefined) {
-        updateData.pricing.sessionRates.telehealth = currencyToCents(updateData.pricing.sessionRates.telehealth)
+      if (updateData.pricing.rateCent.telehealth !== undefined) {
+        updateData.pricing.rateCent.telehealth = currencyToCents(updateData.pricing.rateCent.telehealth)
       }
     }
 
     if (updateData.pricing?.packages) {
       updateData.pricing.packages = updateData.pricing.packages.map((pkg: any) => ({
         ...pkg,
-        price: pkg.price !== undefined ? currencyToCents(pkg.price) : undefined
+        priceCent: pkg.priceCent !== undefined ? currencyToCents(pkg.priceCent) : undefined
       }))
     }
 
