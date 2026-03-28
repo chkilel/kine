@@ -3,6 +3,7 @@
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
+  // ─── State ───────────────────────────────────────────────────────────────────
   const notes = ref('')
 
   const todoItems = ref([
@@ -12,6 +13,7 @@
     { id: 4, text: 'Mise à jour logiciel', done: false }
   ])
 
+  // ─── Route & date handling ──────────────────────────────────────────────────
   const route = useRoute()
 
   const currentDate = computed(() => {
@@ -29,13 +31,20 @@
     return distance
   })
 
+  // ─── Actions ───────────────────────────────────────────────────────────────
   const selectDate = async (date: string) => {
     await navigateTo({ path: route.path, query: { date } })
   }
 
+  // ─── Auth ─────────────────────────────────────────────────────────────────────
   const { user } = await useAuth()
-  const { data: appointments, isPending } = useTherapistAppointments(() => user.value?.id, currentDate)
 
+  const therapistId = computed(() => user.value?.id)
+
+  // ─── Data fetching ───────────────────────────────────────────────────────────
+  const { data: appointments, isPending } = useTherapistAppointments(therapistId, currentDate)
+
+  // ─── Computed ───────────────────────────────────────────────────────────────
   const stats = computed(() => {
     const list = appointments.value || []
     const completed = list.filter((a) => a.status === 'completed').length
@@ -52,6 +61,7 @@
     }
   })
 
+  // ─── Filters ────────────────────────────────────────────────────────────────
   const inProgressAppointments = computed(() =>
     appointments.value?.filter((a) => a.treatmentSession?.status === 'in_progress')
   )

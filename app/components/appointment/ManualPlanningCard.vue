@@ -45,7 +45,7 @@
     treatmentPlanId: props.treatmentPlan?.id || null,
     therapistId: props.treatmentPlan?.therapistId || '',
     roomId: '',
-    date: today(getLocalTimeZone()).toString(),
+    date: getTodayAsString(),
     startTime: '',
     endTime: '',
     duration: 45,

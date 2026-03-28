@@ -1,18 +1,18 @@
 <script setup lang="ts">
   const props = defineProps<{ appointment: AppointmentWithSession }>()
 
-  // --- Composables ---
+  // ─── Composables ─────────────────────────────────────────────────────────────
 
   const activeOrganization = authClient.useActiveOrganization()
   const { mutate: updatePrice, isLoading: isUpdating } = useUpdateSessionPrice()
 
-  // --- Reactive state ---
+  // ─── Reactive state ──────────────────────────────────────────────────────────
 
   const isEditingPrice = ref(false)
   const priceInputRaw = ref(100)
   const inputRef = ref<HTMLInputElement | null>(null)
 
-  // --- Derived state ---
+  // ─── Derived state ──────────────────────────────────────────────────────────
 
   const organization = computed(() => activeOrganization.value.data)
 
@@ -51,7 +51,7 @@
     return !isNaN(parsed) && parsed > 0
   })
 
-  // --- Handlers ---
+  // ─── Handlers ────────────────────────────────────────────────────────────────
 
   async function handleStartPriceEdit() {
     const currentPrice = props.appointment.treatmentSession?.priceCent ?? inheritedPrice.value
@@ -108,7 +108,7 @@
         size="xs"
         color="primary"
         variant="ghost"
-        icon="i-hugeicons-pencil-01"
+        icon="i-hugeicons-pencil-edit-01"
         @click="handleStartPriceEdit"
       >
         Modifier

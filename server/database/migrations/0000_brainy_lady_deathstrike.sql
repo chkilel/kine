@@ -271,6 +271,42 @@ CREATE INDEX `idx_patients_org_active_created_at` ON `patients` (`organizationId
 CREATE INDEX `idx_patients_org_active_name_search` ON `patients` (`organizationId`,`deletedAt`,`lastName`,`firstName`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_active_status_created` ON `patients` (`organizationId`,`deletedAt`,`status`,`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_patients_org_deleted_only` ON `patients` (`organizationId`,`deletedAt`);--> statement-breakpoint
+CREATE TABLE `payment_session_items` (
+	`id` text PRIMARY KEY NOT NULL,
+	`paymentId` text NOT NULL,
+	`treatmentSessionId` text NOT NULL,
+	`amountCents` integer NOT NULL,
+	FOREIGN KEY (`paymentId`) REFERENCES `payments`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_payment_session_items_payment` ON `payment_session_items` (`paymentId`);--> statement-breakpoint
+CREATE INDEX `idx_payment_session_items_session` ON `payment_session_items` (`treatmentSessionId`);--> statement-breakpoint
+CREATE TABLE `payments` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organizationId` text NOT NULL,
+	`patientId` text NOT NULL,
+	`recordedById` text NOT NULL,
+	`amountCents` integer NOT NULL,
+	`currency` text DEFAULT 'MAD',
+	`type` text NOT NULL,
+	`method` text NOT NULL,
+	`receiptNumber` text,
+	`notes` text,
+	`paidOn` text NOT NULL,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	`voidedAt` integer,
+	`voidedById` text,
+	FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`patientId`) REFERENCES `patients`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`recordedById`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`voidedById`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `payments_receiptNumber_unique` ON `payments` (`receiptNumber`);--> statement-breakpoint
+CREATE INDEX `idx_payments_org_patient_date` ON `payments` (`organizationId`,`patientId`,`paidOn`);--> statement-breakpoint
+CREATE INDEX `idx_payments_org_type` ON `payments` (`organizationId`,`type`);--> statement-breakpoint
+CREATE INDEX `idx_payments_voided` ON `payments` (`voidedAt`);--> statement-breakpoint
 CREATE TABLE `rooms` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organizationId` text NOT NULL,
@@ -340,7 +376,6 @@ CREATE TABLE `treatment_sessions` (
 	`pauseStartTime` text,
 	`extendedDurationMinutes` integer DEFAULT 0,
 	`tags` text,
-	`billed` text,
 	`insuranceClaimed` integer DEFAULT false,
 	`priceCent` integer,
 	`createdAt` integer NOT NULL,

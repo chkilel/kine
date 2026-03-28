@@ -6,7 +6,7 @@ import {
   differenceInWeeks,
   differenceInMonths
 } from 'date-fns'
-import { CalendarDate } from '@internationalized/date'
+import { CalendarDate, today, getLocalTimeZone } from '@internationalized/date'
 import { fr } from 'date-fns/locale'
 
 // ============================================================================
@@ -132,4 +132,9 @@ export function calculateAge(dateOfBirth: Date | string | null): string {
 
 export const convertToCalendarDate = (date: Date): CalendarDate => {
   return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+// Get today's date as a calendar string in local timezone
+export const getTodayAsString = (): string => {
+  return today(getLocalTimeZone()).toString()
 }

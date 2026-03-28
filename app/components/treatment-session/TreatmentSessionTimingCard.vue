@@ -1,6 +1,7 @@
 <script setup lang="ts">
   const props = defineProps<{ appointment: AppointmentWithSession }>()
 
+  // ─── Derived state (timing info) ────────────────────────────────────────────
   const timingInfo = computed(() => {
     const apt = props.appointment
     const session = apt.treatmentSession
@@ -22,6 +23,7 @@
     }
   })
 
+  // ─── Derived state (duration comparison) ───────────────────────────────────
   const durationComparison = computed(() => {
     const { plannedDurationMinutes, actualDurationMinutes } = timingInfo.value
     if (actualDurationMinutes === null) return null
@@ -33,6 +35,7 @@
 
   const isOverTime = computed(() => durationComparison.value?.isLate ?? false)
 
+  // ─── Derived state (display properties) ────────────────────────────────────
   const overtimePercentage = computed(() => {
     if (!isOverTime.value || !timingInfo.value.actualDurationMinutes) return 0
     const { plannedDurationMinutes, actualDurationMinutes } = timingInfo.value
@@ -112,7 +115,7 @@
             <UProgress
               size="md"
               :color="progressColor"
-              :model-value="timingInfo.actualDurationMinutes"
+              :model-value="Math.min(timingInfo.actualDurationMinutes, timingInfo.plannedDurationMinutes)"
               :max="timingInfo.plannedDurationMinutes"
             />
           </div>

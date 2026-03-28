@@ -25,6 +25,10 @@ import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/share
 import { createAuth } from '~~/server/utils/auth'
 import { getEffectiveAvailability } from '~~/shared/utils/planning-utils'
 
+// =============================================================================
+// Types
+// =============================================================================
+
 type DrizzleDB = ReturnType<typeof useDrizzle>
 
 type SeedResults = {
@@ -41,6 +45,10 @@ type SeedResults = {
   }
   errors: Array<{ type: string; message: string; details?: any }>
 }
+
+// =============================================================================
+// Seed Configuration
+// =============================================================================
 
 const SEED_CONFIG = {
   users: {
@@ -93,6 +101,10 @@ const SEED_CONFIG = {
     pastPercentage: 0.1
   }
 } as const
+
+// =============================================================================
+// Seed Data
+// =============================================================================
 
 const userData = [
   {
@@ -537,6 +549,10 @@ const roomDescriptions = [
   'Zone de rééducation cardiovasculaire'
 ]
 
+// =============================================================================
+// Utility Functions
+// =============================================================================
+
 function shuffleArray<T>(array: readonly T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
@@ -594,6 +610,10 @@ function generateTimeRange(startHour: number, endHour: number): { startTime: str
   }
 }
 
+// =============================================================================
+// Database Reset
+// =============================================================================
+
 async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(appointments)
   await db.delete(rooms)
@@ -606,6 +626,10 @@ async function resetDatabase(db: DrizzleDB): Promise<void> {
   // and seeding reuses existing users by email instead of recreating them
   await db.delete(organizations)
 }
+
+// =============================================================================
+// Entity Creation Functions
+// =============================================================================
 
 async function createOrganization(
   event: H3Event,
@@ -695,8 +719,10 @@ async function createOrganization(
           vatRate: 20,
           vatSubject: true,
           paymentDelay: '30',
-          paymentMethod: 'wire-transfer',
-          currency: 'MAD (Dirham Marocain)'
+          paymentMethod: 'bank-transfer',
+          currency: 'MAD (Dirham Marocain)',
+          receiptPrefix: 'REC',
+          nextReceiptNumber: 1
         }
       : {
           ice: '002 847 100 00018',
@@ -708,7 +734,9 @@ async function createOrganization(
           vatSubject: true,
           paymentDelay: '45',
           paymentMethod: 'bank-transfer',
-          currency: 'MAD (Dirham Marocain)'
+          currency: 'MAD (Dirham Marocain)',
+          receiptPrefix: 'REC',
+          nextReceiptNumber: 1
         }
 
     const bankingData = isClinicA
@@ -918,6 +946,10 @@ async function createMembership(
   }
 }
 
+// =============================================================================
+// Template & Exception Generation
+// =============================================================================
+
 function validateTemplateConflict(existingTemplates: any[], newTemplate: any): boolean {
   for (const existing of existingTemplates) {
     if (existing.dayOfWeek === newTemplate.dayOfWeek) {
@@ -1028,6 +1060,10 @@ function generateAvailabilityExceptions(userId: string, organizationId: string):
   return exceptions
 }
 
+// =============================================================================
+// Treatment Plan & Appointment Generation
+// =============================================================================
+
 function generateTreatmentPlans(patientId: string, organizationId: string, therapistId: string): any[] {
   const count = SEED_CONFIG.treatmentPlans.minPerPatient
   const statuses: string[] = []
@@ -1086,6 +1122,10 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
   })
 }
 
+// =============================================================================
+// Room Generation
+// =============================================================================
+
 function generateRooms(organizationId: string): any[] {
   const roomsData: any[] = []
 
@@ -1107,6 +1147,10 @@ function generateRooms(organizationId: string): any[] {
   return roomsData
 }
 
+// =============================================================================
+// Appointment Helpers
+// =============================================================================
+
 function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
   if (isToday) {
     return 'scheduled'
@@ -1122,6 +1166,10 @@ function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
 
   return Math.random() > 0.3 ? 'confirmed' : 'scheduled'
 }
+
+// =============================================================================
+// Appointment Generation
+// =============================================================================
 
 function generateAppointments(
   patientId: string,
@@ -1511,6 +1559,10 @@ function generateAppointments(
   return appointmentsData
 }
 
+// =============================================================================
+// Main Handler
+// =============================================================================
+
 export default defineEventHandler(async (event: H3Event) => {
   const isDevelopment = import.meta.dev
 
@@ -1547,6 +1599,8 @@ export default defineEventHandler(async (event: H3Event) => {
     return results
   }
 
+  // ─── Users ──────────────────────────────────────────────────────────────────
+
   const userIds: string[] = []
 
   for (const user of userData) {
@@ -1570,6 +1624,8 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
   }
+
+  // ─── Organizations ──────────────────────────────────────────────────────────
 
   const organizationIds: string[] = []
 
@@ -1603,6 +1659,8 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
   }
+
+  // ─── Memberships ────────────────────────────────────────────────────────────
 
   let userIndex = 0
   for (let orgIndex = 0; orgIndex < SEED_CONFIG.organizations.userDistribution.length; orgIndex++) {
@@ -1641,11 +1699,11 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
+  // ─── Rooms ───────────────────────────────────────────────────────────────────
+
   const db = useDrizzle(event)
 
   const orgRoomIds: Record<string, string[]> = {}
-  const templatesByUserId: Record<string, any[]> = {}
-  const exceptionsByUserId: Record<string, any[]> = {}
   for (const orgId of organizationIds) {
     try {
       const roomsData = generateRooms(orgId)
@@ -1663,6 +1721,10 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
+  // ─── Availability (Templates & Exceptions) ─────────────────────────────
+
+  const templatesByUserId: Record<string, any[]> = {}
+  const exceptionsByUserId: Record<string, any[]> = {}
   for (const userId of userIds) {
     const userOrgMemberships = await db
       .select({ organizationId: members.organizationId })
@@ -1703,6 +1765,8 @@ export default defineEventHandler(async (event: H3Event) => {
       }
     }
   }
+
+  // ─── Patients ───────────────────────────────────────────────────────────────
 
   const totalPatientsToCreate = Math.min(SEED_CONFIG.patients.count, patientData.length)
 
@@ -1764,6 +1828,8 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
   }
+
+  // ─── Appointments ──────────────────────────────────────────────────────────
 
   const roomBookings = new Map<string, string>()
   for (const patient of patientData) {

@@ -41,12 +41,12 @@
     therapistId: props.treatmentPlan?.therapistId || user.value!.id,
     organizationId: activeOrganization.value.data!.id,
     prescribingDoctor: props.treatmentPlan?.prescribingDoctor || '',
-    prescriptionDate: props.treatmentPlan?.prescriptionDate || today(getLocalTimeZone()).toString(),
+    prescriptionDate: props.treatmentPlan?.prescriptionDate || getTodayAsString(),
     title: props.treatmentPlan?.title || '',
     diagnosis: props.treatmentPlan?.diagnosis || '',
     objective: props.treatmentPlan?.objective || '',
     status: props.treatmentPlan?.status || 'planned',
-    startDate: props.treatmentPlan?.startDate || today(getLocalTimeZone()).toString(),
+    startDate: props.treatmentPlan?.startDate || getTodayAsString(),
     endDate: props.treatmentPlan?.endDate,
     numberOfSessions: props.treatmentPlan?.numberOfSessions || 0,
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
@@ -66,21 +66,21 @@
   const startDateModel = computed({
     get: () => (formState.startDate ? parseDate(formState.startDate) : null),
     set: (val) => {
-      formState.startDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+      formState.startDate = val ? val.toString() : getTodayAsString()
     }
   })
 
   const endDateModel = computed({
     get: () => (formState.endDate ? parseDate(formState.endDate) : null),
     set: (val) => {
-      formState.endDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+      formState.endDate = val ? val.toString() : getTodayAsString()
     }
   })
 
   const prescriptionDateModel = computed({
     get: () => (formState.prescriptionDate ? parseDate(formState.prescriptionDate) : null),
     set: (val) => {
-      formState.prescriptionDate = val ? val.toString() : today(getLocalTimeZone()).toString()
+      formState.prescriptionDate = val ? val.toString() : getTodayAsString()
     }
   })
 

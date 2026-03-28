@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createSelectSchema } from 'drizzle-zod'
 import { treatmentSessions } from '~~/server/database/schema/treatment-session'
 import type { Appointment } from './appointment.type'
+import type { Payment } from './invoicing'
 
 // =============================================================================
 // Treatment Session Schemas and Types
@@ -27,7 +28,6 @@ export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessio
   pauseStartTime: timeFormatSchema.nullable().optional(),
   extendedDurationMinutes: z.number().int().min(0).nullable(),
   tags: z.string().nullable().optional(),
-  billed: calendarDateSchema.nullable().optional(),
   insuranceClaimed: z.boolean().nullable().optional(),
   priceCent: z.number().int().min(0).nullable().optional(),
   createdAt: z.coerce.date(),
@@ -38,12 +38,13 @@ export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessio
 export type TreatmentSession = Omit<z.infer<typeof treatmentSessionResponseSchema>, 'createdAt' | 'updatedAt'> & {
   patientName?: string | null
   therapistName?: string | null
-  appointment?: Appointment | null
+  payments?: Payment[]
 }
 export type TreatmentSessionResponse = z.infer<typeof treatmentSessionResponseSchema> & {
   patientName?: string | null
   therapistName?: string | null
   appointment?: Appointment | null
+  payments?: Payment[]
 }
 
 // =============================================================================
