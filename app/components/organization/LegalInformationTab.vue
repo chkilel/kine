@@ -203,6 +203,18 @@
               </UFormField>
             </div>
           </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <UFormField label="Préfixe facture" name="fiscal.invoicePrefix">
+                <UInput v-model="state.fiscal.invoicePrefix" placeholder="FAC" class="w-full font-mono" />
+              </UFormField>
+            </div>
+            <div>
+              <UFormField label="Préfixe reçu" name="fiscal.receiptPrefix">
+                <UInput v-model="state.fiscal.receiptPrefix" placeholder="REC" class="w-full font-mono" />
+              </UFormField>
+            </div>
+          </div>
           <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
             <div>
               <UFormField label="Devise" name="fiscal.currency">
