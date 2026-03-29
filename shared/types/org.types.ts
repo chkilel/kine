@@ -2,14 +2,6 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 import { organizations } from '~~/server/database/schema'
-import { phoneEntrySchema } from '~~/shared/types/base.types'
-import {
-  ORGANIZATION_TYPES,
-  LEGAL_FORMS,
-  PAYMENT_METHODS,
-  PAYMENT_DELAYS,
-  ORGANIZATION_STATUS
-} from '~~/shared/utils/constants.location'
 
 z.config(fr())
 
@@ -73,8 +65,9 @@ export const orgFiscalSchema = z.object({
   paymentDelay: paymentDelaySchema,
   paymentMethod: paymentMethodSchema,
   currency: z.string().default('MAD'),
-  invoicePrefix: z.string().optional(),
-  requirePurchaseOrder: z.boolean().optional()
+  invoicePrefix: z.string().default('FAC'),
+  receiptPrefix: z.string().default('REC'),
+  nextReceiptNumber: z.number().min(1).default(1)
 })
 export type OrgFiscal = z.infer<typeof orgFiscalSchema>
 
@@ -177,7 +170,9 @@ export const orgBrandingSchema = z.object({
 })
 export type OrgBranding = z.infer<typeof orgBrandingSchema>
 
-// ---------------------------------------- Org --------------------------------------
+// =============================================================================
+// Organization Schema
+// =============================================================================
 export const organizationResponseSchema = createSelectSchema(organizations, {
   id: z.string(),
   name: orgNameSchema,
@@ -296,7 +291,9 @@ export const orgMetadataSchema = z.object({
   )
 })
 
-//---------------------------- Onboarding --------------------------
+// =============================================================================
+// Onboarding
+// =============================================================================
 
 export const stepSchemas = [
   // Step 0 — Identité

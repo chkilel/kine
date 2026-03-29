@@ -18,7 +18,7 @@
 
   // Form state
   const formState = reactive<AvailabilityExceptionCreate>({
-    date: props.availabilityException?.date || today(getLocalTimeZone()).toString(),
+    date: props.availabilityException?.date || getTodayAsString(),
     startTime: props.availabilityException?.startTime || undefined,
     endTime: props.availabilityException?.endTime || undefined,
     isAvailable: props.availabilityException?.isAvailable ?? false,
@@ -53,7 +53,7 @@
   const dateModel = computed<CalendarDate | null>({
     get: () => (formState.date ? parseDate(formState.date) : null),
     set: (calendarDate) => {
-      formState.date = calendarDate ? calendarDate.toString() : today(getLocalTimeZone()).toString()
+      formState.date = calendarDate ? calendarDate.toString() : getTodayAsString()
     }
   })
 

@@ -2,9 +2,11 @@
   import type { FormSubmitEvent } from '@nuxt/ui'
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
 
+  // ─── Composables ─────────────────────────────────────────────────────────────
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
+  // ─── Form state ─────────────────────────────────────────────────────────────
   const defaultForm = (org?: Organization) => ({
     fiscal: {
       ice: org?.fiscal?.ice ?? '',
@@ -17,7 +19,10 @@
       vatSubject: org?.fiscal?.vatSubject ?? true,
       paymentDelay: org?.fiscal?.paymentDelay ?? '30',
       paymentMethod: org?.fiscal?.paymentMethod ?? 'cash',
-      currency: org?.fiscal?.currency ?? 'MAD (Dirham Marocain)'
+      currency: org?.fiscal?.currency ?? 'MAD',
+      receiptPrefix: org?.fiscal?.receiptPrefix ?? 'REC',
+      nextReceiptNumber: org?.fiscal?.nextReceiptNumber ?? 1,
+      invoicePrefix: org?.fiscal?.invoicePrefix ?? 'FAC'
     },
     banking: {
       bankName: org?.banking?.bankName ?? '',
@@ -39,10 +44,12 @@
     { immediate: true }
   )
 
+  // ─── Date formatter ───────────────────────────────────────────────────────────
   const df = new DateFormatter('fr-FR', {
     dateStyle: 'medium'
   })
 
+  // ─── Computed ───────────────────────────────────────────────────────────────
   const creationDateModel = computed({
     get: () => (state.fiscal?.creationDate ? parseDate(state.fiscal.creationDate) : null),
     set: (val) => {
@@ -50,6 +57,7 @@
     }
   })
 
+  // ─── Actions ───────────────────────────────────────────────────────────────
   const updateOrganization = useUpdateOrganization()
   const toast = useToast()
   const isSaving = computed(() => updateOrganization.isLoading.value)
@@ -192,6 +200,18 @@
             <div>
               <UFormField label="Mode de paiement" name="fiscal.paymentMethod">
                 <USelect v-model="state.fiscal.paymentMethod" :items="PAYMENT_METHOD_OPTIONS" class="w-full" />
+              </UFormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <UFormField label="Préfixe facture" name="fiscal.invoicePrefix">
+                <UInput v-model="state.fiscal.invoicePrefix" placeholder="FAC" class="w-full font-mono" />
+              </UFormField>
+            </div>
+            <div>
+              <UFormField label="Préfixe reçu" name="fiscal.receiptPrefix">
+                <UInput v-model="state.fiscal.receiptPrefix" placeholder="REC" class="w-full font-mono" />
               </UFormField>
             </div>
           </div>

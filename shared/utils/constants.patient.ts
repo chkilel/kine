@@ -1,6 +1,6 @@
-// =================================================================================================
+// =============================================================================
 // Patient Status Constants
-// =================================================================================================
+// =============================================================================
 
 import type { InsuranceCoverageStatus, PatientStatus, Relationship } from '../types/base.types'
 
@@ -73,9 +73,9 @@ export const getPatientStatusLabel = (status: PatientStatus) => STATUS_CONFIG[st
 export const getPatientStatusColor = (status: PatientStatus) => STATUS_CONFIG[status].color
 export const getPatientStatusConfig = (status: PatientStatus) => STATUS_CONFIG[status]
 
-// =================================================================================================
+// =============================================================================
 // Insurance Coverage and Relationships Constants
-// =================================================================================================
+// =============================================================================
 
 export const INSURANCE_COVERAGE_CONFIG = {
   not_required: 'Non nécessaire',
@@ -98,9 +98,9 @@ export const INSURANCE_COVERAGE_OPTIONS = Object.entries(INSURANCE_COVERAGE_CONF
 // Insurance Coverage Helpers
 export const getInsuranceCoverageLabel = (value: InsuranceCoverageStatus) => INSURANCE_COVERAGE_CONFIG[value]
 
-// =================================================================================================
+// =============================================================================
 // Relationships Constants
-// =================================================================================================
+// =============================================================================
 export const RELATIONSHIPS_CONFIG = {
   husband: 'Époux',
   wife: 'Épouse',

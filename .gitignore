@@ -34,3 +34,4 @@ coverage
 
 # Doc
 doc*
+.opencode/skills/ui-ux-pro-max/scripts/__pycache__/

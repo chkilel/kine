@@ -1,9 +1,9 @@
 import type { SelectMenuItem } from '@nuxt/ui'
 import type { PhoneCategory } from '../types/base.types'
 
-// =================================================================================================
+// =============================================================================
 // Phone Categories Constants
-// =================================================================================================
+// =============================================================================
 
 // Valid phone number categories for practitioners
 export const VALID_PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
@@ -25,9 +25,9 @@ export const PHONE_CATEGORIES_OPTIONS = Object.entries(PHONE_CATEGORIES_CONFIG).
 // Phone Category Helpers
 export const getPhoneCategoryLabel = (category: PhoneCategory) => PHONE_CATEGORIES_CONFIG[category]?.label || category
 
-// =================================================================================================
+// =============================================================================
 // Specializations Constants
-// =================================================================================================
+// =============================================================================
 export const SPECIALIZATIONS: SelectMenuItem[] = [
   // Group 1
   { type: 'label', label: 'Domaines principaux' },
