@@ -1,13 +1,11 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
-import { treatmentSessions } from './treatment-session'
 import { rooms } from './rooms'
 import { APPOINTMENT_STATUSES, APPOINTMENT_TYPES } from '../../../shared/utils/constants.appointment'
 import { LOCATIONS } from '../../../shared/utils/constants.location'
@@ -90,30 +88,3 @@ export const appointments = sqliteTable(
     index('idx_appointments_room_date_time').on(table.roomId, table.date, table.startTime)
   ]
 )
-
-// ----------------------
-// Drizzle Relations
-// ----------------------
-
-export const appointmentsRelations = relations(appointments, ({ one }) => ({
-  treatmentSession: one(treatmentSessions, {
-    fields: [appointments.id],
-    references: [treatmentSessions.appointmentId]
-  }),
-  patient: one(patients, {
-    fields: [appointments.patientId],
-    references: [patients.id]
-  }),
-  organization: one(organizations, {
-    fields: [appointments.organizationId],
-    references: [organizations.id]
-  }),
-  treatmentPlan: one(treatmentPlans, {
-    fields: [appointments.treatmentPlanId],
-    references: [treatmentPlans.id]
-  }),
-  room: one(rooms, {
-    fields: [appointments.roomId],
-    references: [rooms.id]
-  })
-}))

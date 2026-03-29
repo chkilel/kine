@@ -1,6 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
@@ -45,26 +44,6 @@ export const payments = sqliteTable(
   ]
 )
 
-export const paymentsRelations = relations(payments, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [payments.organizationId],
-    references: [organizations.id]
-  }),
-  patient: one(patients, {
-    fields: [payments.patientId],
-    references: [patients.id]
-  }),
-  recordedBy: one(users, {
-    fields: [payments.recordedById],
-    references: [users.id]
-  }),
-  voidedBy: one(users, {
-    fields: [payments.voidedById],
-    references: [users.id]
-  }),
-  sessionItems: many(paymentSessionItems)
-}))
-
 export const paymentSessionItems = sqliteTable(
   'payment_session_items',
   {
@@ -80,10 +59,3 @@ export const paymentSessionItems = sqliteTable(
     index('idx_payment_session_items_session').on(table.treatmentSessionId)
   ]
 )
-
-export const paymentSessionItemsRelations = relations(paymentSessionItems, ({ one }) => ({
-  payment: one(payments, {
-    fields: [paymentSessionItems.paymentId],
-    references: [payments.id]
-  })
-}))

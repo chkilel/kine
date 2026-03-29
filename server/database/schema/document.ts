@@ -1,6 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
@@ -75,25 +74,3 @@ export const patientDocuments = sqliteTable(
   ]
 )
 
-// ----------------------
-// Drizzle Relations
-// ----------------------
-
-export const patientDocumentsRelations = relations(patientDocuments, ({ one }) => ({
-  patient: one(patients, {
-    fields: [patientDocuments.patientId],
-    references: [patients.id]
-  }),
-  organization: one(organizations, {
-    fields: [patientDocuments.organizationId],
-    references: [organizations.id]
-  }),
-  uploadedBy: one(users, {
-    fields: [patientDocuments.uploadedById],
-    references: [users.id]
-  }),
-  treatmentPlan: one(treatmentPlans, {
-    fields: [patientDocuments.treatmentPlanId],
-    references: [treatmentPlans.id]
-  })
-}))

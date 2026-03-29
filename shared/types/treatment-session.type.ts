@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createSelectSchema } from 'drizzle-zod'
+import { createSelectSchema } from 'drizzle-orm/zod'
 import { treatmentSessions } from '~~/server/database/schema/treatment-session'
 import type { Appointment } from './appointment.type'
 import type { Payment } from './invoicing'

@@ -1,6 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
@@ -108,29 +107,3 @@ export const availabilityExceptions = sqliteTable(
     index('idx_exceptions_org_date').on(table.organizationId, table.date)
   ]
 )
-
-// ----------------------
-// Drizzle Relations
-// ----------------------
-
-export const weeklyAvailabilityTemplatesRelations = relations(weeklyAvailabilityTemplates, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [weeklyAvailabilityTemplates.organizationId],
-    references: [organizations.id]
-  }),
-  user: one(authUsers, {
-    fields: [weeklyAvailabilityTemplates.userId],
-    references: [authUsers.id]
-  })
-}))
-
-export const availabilityExceptionsRelations = relations(availabilityExceptions, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [availabilityExceptions.organizationId],
-    references: [organizations.id]
-  }),
-  user: one(authUsers, {
-    fields: [availabilityExceptions.userId],
-    references: [authUsers.id]
-  })
-}))

@@ -1,6 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
@@ -40,10 +39,3 @@ export const rooms = sqliteTable(
     index('idx_rooms_org_deleted').on(table.organizationId, table.deletedAt)
   ]
 )
-
-export const roomsRelations = relations(rooms, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [rooms.organizationId],
-    references: [organizations.id]
-  })
-}))

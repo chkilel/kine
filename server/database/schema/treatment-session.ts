@@ -1,6 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
@@ -76,24 +75,3 @@ export const treatmentSessions = sqliteTable(
     uniqueIndex('ux_treatment_sessions_appointment').on(table.appointmentId)
   ]
 )
-
-// ─── Drizzle Relations ──────────────────────────────────────────────────────
-
-export const treatmentSessionsRelations = relations(treatmentSessions, ({ one }) => ({
-  appointment: one(appointments, {
-    fields: [treatmentSessions.appointmentId],
-    references: [appointments.id]
-  }),
-  patient: one(patients, {
-    fields: [treatmentSessions.patientId],
-    references: [patients.id]
-  }),
-  therapist: one(users, {
-    fields: [treatmentSessions.therapistId],
-    references: [users.id]
-  }),
-  treatmentPlan: one(treatmentPlans, {
-    fields: [treatmentSessions.treatmentPlanId],
-    references: [treatmentPlans.id]
-  })
-}))

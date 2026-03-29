@@ -3,6 +3,8 @@ import { drizzle } from 'drizzle-orm/d1'
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 
+import { relations } from '../database/relations'
+
 // Database access composables for Cloudflare D1 in Nuxt Nitro.
 // Three ways to use the database:
 // 1) useNitroDatabase(): via Nitro's experimental `useDatabase('default')` for direct binding access without H3 event.
@@ -75,7 +77,7 @@ export function useDB(event: H3Event) {
  */
 export function useDrizzle(event: H3Event) {
   const { cloudflare } = event.context
-  const db = drizzle(cloudflare.env.DB)
+  const db = drizzle(cloudflare.env.DB, { relations })
   if (!db) {
     throw createError({
       statusCode: 500,
