@@ -1,4 +1,4 @@
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
+import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
 import type { TreatmentSession } from '../types/treatment-session.type'

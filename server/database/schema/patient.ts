@@ -1,12 +1,8 @@
 import { v7 as uuidv7 } from 'uuid'
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { appointments } from './appointment'
-import { treatmentPlans } from './treatment-plan'
-import { patientDocuments } from './document'
 import {
   VALID_PATIENT_STATUSES,
   VALID_RELATIONSHIP_TYPES,
@@ -94,13 +90,3 @@ export const patients = sqliteTable(
     index('idx_patients_org_deleted_only').on(table.organizationId, table.deletedAt) // Note: When deletedAt IS NOT NULL, this index helps find deleted records
   ]
 )
-
-// ----------------------
-// Drizzle Relations
-// ----------------------
-
-export const patientsRelations = relations(patients, ({ many }) => ({
-  appointments: many(appointments),
-  treatmentPlans: many(treatmentPlans),
-  documents: many(patientDocuments)
-}))

@@ -1,4 +1,4 @@
-import { eq, and, getTableColumns } from 'drizzle-orm'
+import { eq, and, getColumns } from 'drizzle-orm'
 import { appointments, rooms, treatmentSessions, treatmentPlans } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
     const [appointmentData] = await db
       .select({
-        ...getTableColumns(appointments),
+        ...getColumns(appointments),
         roomName: rooms.name,
         treatmentSession: treatmentSessions,
         treatmentPlan: {

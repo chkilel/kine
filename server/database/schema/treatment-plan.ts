@@ -1,13 +1,10 @@
 import { v7 as uuidv7 } from 'uuid'
-import { relations } from 'drizzle-orm'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
-import { appointments } from './appointment'
-import { patientDocuments } from './document'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
 import type { RateCent } from '~~/shared/types/org.types'
 
@@ -75,20 +72,3 @@ export const treatmentPlans = sqliteTable(
     index('idx_treatment_plans_org_active_therapist_status').on(table.organizationId, table.therapistId, table.status)
   ]
 )
-
-// ----------------------
-// Drizzle Relations
-// ----------------------
-
-export const treatmentPlansRelations = relations(treatmentPlans, ({ one, many }) => ({
-  patient: one(patients, {
-    fields: [treatmentPlans.patientId],
-    references: [patients.id]
-  }),
-  organization: one(organizations, {
-    fields: [treatmentPlans.organizationId],
-    references: [organizations.id]
-  }),
-  appointments: many(appointments),
-  documents: many(patientDocuments)
-}))

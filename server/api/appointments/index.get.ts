@@ -1,4 +1,4 @@
-import { eq, and, asc, isNull, gte, lte, getTableColumns } from 'drizzle-orm'
+import { eq, and, asc, isNull, gte, lte, getColumns } from 'drizzle-orm'
 import { appointments, rooms, treatmentSessions } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
     if (includeTreatmentSession) {
       const query = db
         .select({
-          ...getTableColumns(appointments),
+          ...getColumns(appointments),
           roomName: rooms.name,
           treatmentSession: treatmentSessions
         })
@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
     const query = db
       .select({
-        ...getTableColumns(appointments),
+        ...getColumns(appointments),
         roomName: rooms.name
       })
       .from(appointments)

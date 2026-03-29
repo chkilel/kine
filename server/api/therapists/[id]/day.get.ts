@@ -1,4 +1,4 @@
-import { eq, and, asc, sql, getTableColumns } from 'drizzle-orm'
+import { eq, and, asc, sql, getColumns } from 'drizzle-orm'
 import { appointments, rooms, patients, treatmentPlans, treatmentSessions } from '~~/server/database/schema'
 import { z } from 'zod'
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
     const appointmentsList = await db
       .select({
-        ...getTableColumns(appointments),
+        ...getColumns(appointments),
         roomName: rooms.name,
         patientName: sql<string>`(${patients.firstName} || ' ' || ${patients.lastName})`,
         planTitle: treatmentPlans.title,
