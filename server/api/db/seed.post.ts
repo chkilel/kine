@@ -14,13 +14,19 @@ import {
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
 import { calculateEndTime, calculateTimeDifference, generateTimeSeriesInRange } from '~~/shared/utils/time'
-import { APPOINTMENT_TYPES } from '~~/shared/utils/constants.appointment'
+import {
+  VALID_APPOINTMENT_TYPES,
+  VALID_SCHEDULE_DAYS,
+  VALID_SCHEDULE_EXCEPTION_TYPES,
+  VALID_LOCATIONS,
+  VALID_PATIENT_STATUSES,
+  VALID_SEX_VALUES,
+  VALID_RELATIONSHIP_TYPES,
+  VALID_PHONE_CATEGORIES,
+  VALID_COVERAGE_STATUSES,
+  VALID_TREATMENT_PLAN_STATUSES
+} from '~~/shared/types/base.types'
 import { MINIMUM_APPOINTMENT_GAP_MINUTES, APPOINTMENT_DURATIONS } from '~~/shared/utils/constants.appointment'
-import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '~~/shared/utils/constants.availability'
-import { LOCATIONS } from '~~/shared/utils/constants.location'
-import { VALID_PATIENT_STATUSES, VALID_SEX_VALUES, VALID_RELATIONSHIP_TYPES } from '~~/shared/utils/constants.patient'
-import { VALID_PHONE_CATEGORIES } from '~~/shared/utils/constants.user'
-import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/utils/constants.treatement-plan'
 
 import { createAuth } from '~~/server/utils/auth'
 import { getEffectiveAvailability } from '~~/shared/utils/planning-utils'
@@ -572,7 +578,7 @@ function randomItem<T>(array: readonly T[]): T | undefined {
   return array[Math.floor(Math.random() * array.length)]
 }
 
-function getWeightedLocation(): (typeof LOCATIONS)[number] {
+function getWeightedLocation(): (typeof VALID_LOCATIONS)[number] {
   const roll = Math.random()
   if (roll < 0.8) return 'clinic'
   if (roll < 0.9) return 'home'
@@ -1334,7 +1340,7 @@ function generateAppointments(
     const isPast = date < today
     const isToday = date === today
     const status = getAppointmentStatus(isPast, isToday)
-    const location = randomItem(LOCATIONS) || 'clinic'
+    const location = randomItem(VALID_LOCATIONS) || 'clinic'
 
     let roomId: string | null = null
     if (location === 'clinic' && availableRoomIds.length > 0 && Math.random() > 0.3) {
@@ -1359,7 +1365,7 @@ function generateAppointments(
       startTime,
       endTime,
       duration,
-      type: randomItem(APPOINTMENT_TYPES) || 'follow_up',
+      type: randomItem(VALID_APPOINTMENT_TYPES) || 'follow_up',
       status,
       location,
       billed: isPast && status === 'completed' ? date : null,
@@ -1465,7 +1471,7 @@ function generateAppointments(
     const isPast = false
     const isToday = true
     const status = getAppointmentStatus(isPast, isToday)
-    const location = randomItem(LOCATIONS) || 'clinic'
+    const location = randomItem(VALID_LOCATIONS) || 'clinic'
 
     let treatmentPlanId: string | null = null
     if (treatmentPlansMeta.length > 0) {
@@ -1503,7 +1509,7 @@ function generateAppointments(
       startTime,
       endTime,
       duration: durationValue,
-      type: randomItem(APPOINTMENT_TYPES),
+      type: randomItem(VALID_APPOINTMENT_TYPES),
       status,
       location,
       billed: null,

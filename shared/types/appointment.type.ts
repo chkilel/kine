@@ -2,11 +2,18 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
 import type { TreatmentSession } from '../types/treatment-session.type'
-import type { TreatmentPlan } from '../types/treatment-plan'
 
 // =============================================================================
 // Appointment Schemas and Types
 // =============================================================================
+const appointmentSchemaShape = {
+  confirmedAt: z.coerce.date().nullable(),
+  cancelledAt: z.coerce.date().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
+}
+export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape)
+
 export const appointmentCreateSchema = createInsertSchema(appointments, {
   organizationId: z.string().min(1, 'Organization ID is required'),
   patientId: z.string().min(1, 'Patient ID is required'),
@@ -32,27 +39,6 @@ export const appointmentStatusUpdateSchema = z.object({
   confirmedAt: z.coerce.date().optional(),
   cancelledAt: z.coerce.date().optional(),
   noShowReason: z.string().optional()
-})
-
-export const appointmentSchema = createSelectSchema(appointments, {
-  id: z.string(),
-  organizationId: z.string(),
-  patientId: z.string(),
-  treatmentPlanId: z.string().nullable(),
-  therapistId: z.string(),
-  roomId: z.string().nullable(),
-  date: calendarDateSchema,
-  startTime: z.string(),
-  endTime: z.string(),
-  duration: z.int(),
-  type: appointmentTypeSchema.nullable(),
-  location: locationSchema,
-  status: appointmentStatusSchema,
-  confirmedAt: z.coerce.date().nullable(),
-  cancelledAt: z.coerce.date().nullable(),
-  noShowReason: z.string().nullable(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date()
 })
 
 export const appointmentQuerySchema = z.object({
@@ -100,13 +86,3 @@ export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
 export type AppointmentUpdate = z.infer<typeof appointmentUpdateSchema>
 export type AppointmentQuery = z.infer<typeof appointmentQuerySchema>
 export type AppointmentStatusUpdate = z.infer<typeof appointmentStatusUpdateSchema>
-
-// Planning types
-export interface PlanningSettings {
-  sessionsToPlan: number
-  frequency: number
-  duration: number
-  startDate: string
-  preferredDays: string[]
-  location: Location
-}

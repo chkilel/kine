@@ -1,11 +1,8 @@
-// =============================================================================
-// Appointment Locations Constants
-// =============================================================================
-
 import type { Location } from '../types/base.types'
 
-// Valid location types for appointments
-export const LOCATIONS = ['clinic', 'home', 'telehealth'] as const
+// =============================================================================
+// Locations Configuration
+// =============================================================================
 
 export const LOCATIONS_CONFIG = {
   clinic: {
@@ -31,7 +28,6 @@ export const LOCATIONS_CONFIG = {
   }
 } as const
 
-// Appointment Location Options
 export const LOCATION_OPTIONS = Object.entries(LOCATIONS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
@@ -39,17 +35,14 @@ export const LOCATION_OPTIONS = Object.entries(LOCATIONS_CONFIG).map(([key, item
   desc: item.desc
 })) as { label: string; value: Location; icon: string; desc: string }[]
 
-// Location Helpers
 export const getLocationLabel = (location: Location) => LOCATIONS_CONFIG[location]?.label || location
 export const getLocationIcon = (location: Location) => LOCATIONS_CONFIG[location]?.icon || 'i-hugeicons-location-01'
 export const getLocationColor = (location: Location) => LOCATIONS_CONFIG[location]?.color || 'neutral'
 export const getLocationVariant = (location: Location) => LOCATIONS_CONFIG[location]?.variant || 'soft'
 
-//---------------------------------  Organization ------------------------------------
-
-export const ORGANIZATION_STATUS = ['active', 'inactive', 'suspended'] as const
-
-export const ORGANIZATION_TYPES = ['cabinet', 'medical-center', 'clinic', 'rehabilitation-center'] as const
+// =============================================================================
+// Organization Types Configuration
+// =============================================================================
 
 export const ORGANIZATION_TYPES_CONFIG = {
   cabinet: { label: 'Cabinet', icon: 'i-hugeicons-hospital-01', color: 'success', variant: 'subtle' },
@@ -68,7 +61,18 @@ export const ORGANIZATION_TYPE_OPTIONS = Object.entries(ORGANIZATION_TYPES_CONFI
   value: key
 }))
 
-export const LEGAL_FORMS = ['liberal-profession', 'civil-company', 'commercial-company', 'other'] as const
+export const getOrganizationTypeLabel = (type: string) =>
+  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.label || type
+export const getOrganizationTypeIcon = (type: string) =>
+  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.icon || 'i-hugeicons-hospital-01'
+export const getOrganizationTypeColor = (type: string) =>
+  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.color || 'neutral'
+export const getOrganizationTypeVariant = (type: string) =>
+  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.variant || 'soft'
+
+// =============================================================================
+// Legal Forms Configuration
+// =============================================================================
 
 export const LEGAL_FORMS_CONFIG = {
   'liberal-profession': {
@@ -92,17 +96,6 @@ export const LEGAL_FORM_OPTIONS = Object.entries(LEGAL_FORMS_CONFIG).map(([key, 
   value: key
 }))
 
-// Getters for Organization Types
-export const getOrganizationTypeLabel = (type: string) =>
-  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.label || type
-export const getOrganizationTypeIcon = (type: string) =>
-  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.icon || 'i-hugeicons-hospital-01'
-export const getOrganizationTypeColor = (type: string) =>
-  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.color || 'neutral'
-export const getOrganizationTypeVariant = (type: string) =>
-  ORGANIZATION_TYPES_CONFIG[type as keyof typeof ORGANIZATION_TYPES_CONFIG]?.variant || 'soft'
-
-// Getters for Legal Forms
 export const getLegalFormLabel = (form: string) =>
   LEGAL_FORMS_CONFIG[form as keyof typeof LEGAL_FORMS_CONFIG]?.label || form
 export const getLegalFormIcon = (form: string) =>

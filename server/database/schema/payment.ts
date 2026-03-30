@@ -5,7 +5,7 @@ import { calendarDateField, creationAndUpdateTimestamps } from './columns.helper
 import { organizations } from './organization'
 import { patients } from './patient'
 import { users } from './auth'
-import { PAYMENT_TYPES, PAYMENT_METHODS } from '../../../shared/utils/constants.invoicing'
+import { PAYMENT_TYPES, PAYMENT_METHODS } from '../../../shared/types/base.types'
 
 export const payments = sqliteTable(
   'payments',

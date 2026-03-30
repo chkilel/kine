@@ -16,18 +16,6 @@ const orgSlugSchema = z
   .max(50, 'Le slug ne peut pas dépasser 50 caractères')
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (seulement lettres minuscules, chiffres et tirets)')
 
-export const organizationTypeSchema = z.enum(ORGANIZATION_TYPES, { message: "Type d'établissement invalide" })
-export type OrganizationType = z.infer<typeof organizationTypeSchema>
-
-export const legalFormSchema = z.enum(LEGAL_FORMS, { message: 'Form juridique invalide' })
-export type LegalForm = z.infer<typeof legalFormSchema>
-
-export const paymentMethodSchema = z.enum(PAYMENT_METHODS, { message: 'Mode de paiement invalide' })
-export type PaymentMethod = z.infer<typeof paymentMethodSchema>
-
-export const paymentDelaySchema = z.enum(PAYMENT_DELAYS, { message: 'Délai de paiement invalide' })
-export type PaymentDelay = z.infer<typeof paymentDelaySchema>
-
 export const orgContactSchema = z.object({
   email: z.email('Adresse email invalide'),
   website: z.url('URL invalide').optional(),

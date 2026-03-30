@@ -6,41 +6,36 @@ import { patients } from '~~/server/database/schema'
 
 z.config(fr())
 
-const stringArraySchema = z.array(z.string()).default([])
+import {
+  nameSchema,
+  calendarDateSchema,
+  genderSchema,
+  phoneNumberSchema,
+  emergencyContactSchema,
+  noteSchema,
+  patientStatusSchema
+} from './base.types'
 
 // =============================================================================
 // Patient Schemas and Types
 // =============================================================================
 
-export const patientSchema = createSelectSchema(patients, {
-  id: z.string(),
-  organizationId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  dateOfBirth: calendarDateSchema,
-  gender: genderSchema,
-  email: z.email().nullable(),
-  phone: z.string(),
-  address: z.string().nullable(),
-  city: z.string().nullable(),
-  postalCode: z.string().nullable(),
-  country: z.string().nullable(),
+// This is to fix the circular dependency between patient and other types
+const patientSchemaShape = {
   emergencyContacts: z.array(emergencyContactSchema),
   medicalConditions: z.array(z.string()),
   surgeries: z.array(z.string()),
   allergies: z.array(z.string()),
   medications: z.array(z.string()),
-  insuranceProvider: z.string().nullable(),
-  insuranceNumber: z.string().nullable(),
-  referralSource: z.string().nullable(),
-  status: patientStatusSchema,
   notes: z.array(noteSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   deletedAt: z.coerce.date().nullable()
-})
+}
 
-export const patientCreateSchema = createInsertSchema(patients, {
+export const patientSchema = createSelectSchema(patients, patientSchemaShape)
+
+const patientCreateShape = {
   organizationId: z.string(),
   firstName: nameSchema,
   lastName: nameSchema,
@@ -53,16 +48,18 @@ export const patientCreateSchema = createInsertSchema(patients, {
   postalCode: z.string().optional(),
   country: z.string().optional(),
   emergencyContacts: z.array(emergencyContactSchema).default([]),
-  medicalConditions: stringArraySchema,
-  surgeries: stringArraySchema,
-  allergies: stringArraySchema,
-  medications: stringArraySchema,
+  medicalConditions: z.array(z.string()).default([]),
+  surgeries: z.array(z.string()).default([]),
+  allergies: z.array(z.string()).default([]),
+  medications: z.array(z.string()).default([]),
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
   referralSource: z.string().optional(),
   status: patientStatusSchema,
   notes: z.array(noteSchema).default([])
-})
+}
+
+export const patientCreateSchema = createInsertSchema(patients, patientCreateShape)
 
 export const patientUpdateSchema = patientCreateSchema.partial()
 

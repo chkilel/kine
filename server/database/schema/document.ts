@@ -6,7 +6,7 @@ import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
-import { VALID_DOCUMENT_TYPES } from '../../../shared/utils/constants.document'
+import { VALID_DOCUMENT_TYPES } from '../../../shared/types/base.types'
 
 /**
  * ================================================================

@@ -1,24 +1,21 @@
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 
-import { VALID_DOCUMENT_TYPES } from '../utils/constants.document'
-import { VALID_PATIENT_STATUSES, VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '../utils/constants.patient'
-import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../utils/constants.treatement-plan'
-import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES } from '../utils/constants.availability'
-import { LOCATIONS } from '../utils/constants.location'
-import { VALID_PHONE_CATEGORIES } from '../utils/constants.user'
-import { APPOINTMENT_STATUSES, APPOINTMENT_TYPES } from '../utils/constants.appointment'
-import { TREATMENT_SESSION_STATUSES } from '../utils/constants.treatment-session'
-
 z.config(fr())
 
-// Regex pattern for validating time in HH:MM:SS format
-export const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
+// =============================================================================
+// Regex Patterns
+// =============================================================================
 
-// Regex pattern for validating phone numbers with optional country code
+// Validating time in HH:MM:SS format
+export const TIME_FORMAT_REGEX = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
+// Validating phone numbers with optional country code
 export const PHONE_REGEX = /^(\+?\d{1,3}[-.\s]?)?(\(?\d{1,4}\)?[-.\s]?)?[\d\s.-]{7,}$/
 
-// Basic validation schemas
+// =============================================================================
+// Basic Validation Schemas
+// =============================================================================
+
 export const nameSchema = z
   .string()
   .min(1, 'Ce champ est requis')
@@ -36,7 +33,10 @@ export const passwordSchema = z
   .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
   .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre')
 
-//  Date string schema for calendar dates (YYYY-MM-DD) with validation
+// =============================================================================
+// Calendar Date Schema (YYYY-MM-DD)
+// =============================================================================
+
 export const calendarDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format')
@@ -45,47 +45,17 @@ export const calendarDateSchema = z
     return !Number.isNaN(d.getTime())
   }, 'Invalid calendar date')
 
-// Common schemas
-export const genderSchema = z.enum(VALID_SEX_VALUES)
-export type Gender = z.infer<typeof genderSchema>
-
-export const patientStatusSchema = z.enum(VALID_PATIENT_STATUSES)
-export type PatientStatus = z.infer<typeof patientStatusSchema>
-
-export const documentCategorySchema = z.enum(VALID_DOCUMENT_TYPES)
-export type DocumentCategory = z.infer<typeof documentCategorySchema>
-
-export const relationshipSchema = z.enum(VALID_RELATIONSHIP_TYPES)
-export type Relationship = z.infer<typeof relationshipSchema>
-
-export const insuranceCoverageSchema = z.enum(VALID_COVERAGE_STATUSES)
-export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
-
-export const dayOfWeekSchema = z.enum(VALID_SCHEDULE_DAYS)
-export type DayOfWeek = z.infer<typeof dayOfWeekSchema>
-
-export const locationSchema = z.enum(LOCATIONS)
-export type Location = z.infer<typeof locationSchema>
+// =============================================================================
+// Time Format Schema
+// =============================================================================
 
 export const timeFormatSchema = z.string().regex(TIME_FORMAT_REGEX, "Format d'heure invalide (HH:MM:SS)")
 export type TimeFormat = z.infer<typeof timeFormatSchema>
 
-export const reasonSchema = z.enum(VALID_SCHEDULE_EXCEPTION_TYPES)
-export type Reason = z.infer<typeof reasonSchema>
+// =============================================================================
+// Note Schema
+// =============================================================================
 
-export const appointmentTypeSchema = z.enum(APPOINTMENT_TYPES)
-export type AppointmentType = z.infer<typeof appointmentTypeSchema>
-
-export const appointmentStatusSchema = z.enum(APPOINTMENT_STATUSES)
-export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
-
-export const treatmentSessionStatusSchema = z.enum(TREATMENT_SESSION_STATUSES)
-export type TreatmentSessionStatus = z.infer<typeof treatmentSessionStatusSchema>
-
-export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
-export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
-
-// Note schema
 export const noteSchema = z.object({
   author: z.string(),
   date: z.coerce.date(),
@@ -93,7 +63,18 @@ export const noteSchema = z.object({
 })
 export type Note = z.infer<typeof noteSchema>
 
-// Phone number schemas
+// =============================================================================
+// Phone Category Constants
+// =============================================================================
+
+export const VALID_PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
+export const phoneCategorySchema = z.enum(VALID_PHONE_CATEGORIES)
+export type PhoneCategory = z.infer<typeof phoneCategorySchema>
+
+// =============================================================================
+// Phone Number Schemas
+// =============================================================================
+
 export const phoneNumberSchema = z
   .string()
   .min(1, 'Le numéro est requis')
@@ -102,13 +83,12 @@ export const phoneNumberSchema = z
     PHONE_REGEX,
     'Format de numéro de téléphone invalide. \n Entrez un numéro de téléphone avec ou sans indicatif international, les espaces et tirets sont autorisés.'
   )
-  .transform((val) => val.replace(/\s+/g, '')) // Normalize phone numbers
+  .transform((val) => val.replace(/\s+/g, ''))
 
-// Phone category schema
-export const phoneCategorySchema = z.enum(VALID_PHONE_CATEGORIES, { message: 'La catégorie est requise' })
-export type PhoneCategory = z.infer<typeof phoneCategorySchema>
+// =============================================================================
+// Phone Entry Schema
+// =============================================================================
 
-// Phone entry schema, combining number and category
 export const phoneEntrySchema = z.object({
   id: z.string().min(1, "L'ID est requis"),
   number: phoneNumberSchema,
@@ -116,7 +96,216 @@ export const phoneEntrySchema = z.object({
 })
 export type PhoneEntry = z.infer<typeof phoneEntrySchema>
 
-// Emergency contact schema
+// =============================================================================
+// Relationship Types Constants
+// =============================================================================
+
+export const VALID_RELATIONSHIP_TYPES = [
+  'husband',
+  'wife',
+  'mother',
+  'father',
+  'daughter',
+  'son',
+  'sister',
+  'brother',
+  'grandmother',
+  'grandfather',
+  'granddaughter',
+  'grandson',
+  'aunt',
+  'uncle',
+  'female_cousin',
+  'male_cousin',
+  'female_friend',
+  'male_friend',
+  'female_neighbor',
+  'male_neighbor',
+  'colleague',
+  'acquaintance',
+  'other'
+] as const
+export const relationshipSchema = z.enum(VALID_RELATIONSHIP_TYPES)
+export type Relationship = z.infer<typeof relationshipSchema>
+
+// =============================================================================
+// Sex/Gender Values Constants
+// =============================================================================
+
+export const VALID_SEX_VALUES = ['male', 'female'] as const
+export const genderSchema = z.enum(VALID_SEX_VALUES)
+export type Gender = z.infer<typeof genderSchema>
+
+// =============================================================================
+// Patient Status Constants
+// =============================================================================
+
+export const VALID_PATIENT_STATUSES = ['active', 'inactive', 'discharged', 'archived'] as const
+export const patientStatusSchema = z.enum(VALID_PATIENT_STATUSES)
+export type PatientStatus = z.infer<typeof patientStatusSchema>
+
+// =============================================================================
+// Insurance Coverage Status Constants
+// =============================================================================
+
+export const VALID_COVERAGE_STATUSES = [
+  'not_required',
+  'not_provided',
+  'to_verify',
+  'awaiting_agreement',
+  'covered',
+  'partially_covered',
+  'refused',
+  'expired',
+  'cancelled'
+] as const
+export const insuranceCoverageSchema = z.enum(VALID_COVERAGE_STATUSES)
+export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
+
+// =============================================================================
+// Treatment Plan Status Constants
+// =============================================================================
+
+export const VALID_TREATMENT_PLAN_STATUSES = ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] as const
+export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
+export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
+
+// =============================================================================
+// Treatment Session Status Constants
+// =============================================================================
+
+export const TREATMENT_SESSION_STATUSES = ['pre_session', 'in_progress', 'finished', 'completed', 'canceled'] as const
+export const treatmentSessionStatusSchema = z.enum(TREATMENT_SESSION_STATUSES)
+export type TreatmentSessionStatus = z.infer<typeof treatmentSessionStatusSchema>
+
+// =============================================================================
+// Location Constants
+// =============================================================================
+
+export const VALID_LOCATIONS = ['clinic', 'home', 'telehealth'] as const
+export const locationSchema = z.enum(VALID_LOCATIONS)
+export type Location = z.infer<typeof locationSchema>
+
+// =============================================================================
+// Organization Status Constants
+// =============================================================================
+
+export const ORGANIZATION_STATUS = ['active', 'inactive', 'suspended'] as const
+export const organizationStatusSchema = z.enum(ORGANIZATION_STATUS)
+export type OrganizationStatus = z.infer<typeof organizationStatusSchema>
+
+// =============================================================================
+// Organization Types Constants
+// =============================================================================
+
+export const ORGANIZATION_TYPES = ['cabinet', 'medical-center', 'clinic', 'rehabilitation-center'] as const
+export const organizationTypeSchema = z.enum(ORGANIZATION_TYPES)
+export type OrganizationType = z.infer<typeof organizationTypeSchema>
+
+// =============================================================================
+// Legal Forms Constants
+// =============================================================================
+
+export const LEGAL_FORMS = ['liberal-profession', 'civil-company', 'commercial-company', 'other'] as const
+export const legalFormSchema = z.enum(LEGAL_FORMS)
+export type LegalForm = z.infer<typeof legalFormSchema>
+
+// =============================================================================
+// Document Category Constants
+// =============================================================================
+
+export const VALID_DOCUMENT_TYPES = [
+  'referral',
+  'imaging',
+  'lab_results',
+  'treatment_notes',
+  'prescriptions',
+  'other'
+] as const
+export const documentCategorySchema = z.enum(VALID_DOCUMENT_TYPES)
+export type DocumentCategory = z.infer<typeof documentCategorySchema>
+
+// =============================================================================
+// Appointment Types Constants
+// =============================================================================
+
+export const VALID_APPOINTMENT_TYPES = [
+  'initial',
+  'follow_up',
+  'treatment',
+  'mobilization',
+  'reinforcement',
+  'reeducation',
+  'exercise_supervision',
+  'post_op_follow_up',
+  'urgent_visit',
+  'consultation',
+  'discharge'
+] as const
+export const appointmentTypeSchema = z.enum(VALID_APPOINTMENT_TYPES)
+export type AppointmentType = z.infer<typeof appointmentTypeSchema>
+
+// =============================================================================
+// Appointment Status Constants
+// =============================================================================
+
+export const APPOINTMENT_STATUSES = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'] as const
+export const appointmentStatusSchema = z.enum(APPOINTMENT_STATUSES)
+export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
+
+// =============================================================================
+// Schedule Days Constants
+// =============================================================================
+
+export const VALID_SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+export const dayOfWeekSchema = z.enum(VALID_SCHEDULE_DAYS)
+export type DayOfWeek = z.infer<typeof dayOfWeekSchema>
+
+// =============================================================================
+// Schedule Exception Types Constants
+// =============================================================================
+
+export const VALID_SCHEDULE_EXCEPTION_TYPES = [
+  'vacation',
+  'holiday',
+  'sick',
+  'training',
+  'meeting',
+  'personal',
+  'reduced_hours',
+  'other'
+] as const
+export const reasonSchema = z.enum(VALID_SCHEDULE_EXCEPTION_TYPES)
+export type Reason = z.infer<typeof reasonSchema>
+
+// =============================================================================
+// Payment Methods Constants
+// =============================================================================
+
+export const PAYMENT_METHODS = ['cash', 'bank-card', 'check', 'bank-transfer'] as const
+export const paymentMethodSchema = z.enum(PAYMENT_METHODS)
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>
+
+// =============================================================================
+// Payment Delays Constants
+// =============================================================================
+
+export const PAYMENT_DELAYS = ['immediate', '7', '15', '30', 'end-of-month'] as const
+export const paymentDelaySchema = z.enum(PAYMENT_DELAYS)
+export type PaymentDelay = z.infer<typeof paymentDelaySchema>
+
+// =============================================================================
+// Payment Types Constants
+// =============================================================================
+
+export const PAYMENT_TYPES = ['payment', 'deposit', 'credit_usage', 'refund'] as const
+export const paymentTypeSchema = z.enum(PAYMENT_TYPES)
+export type PaymentType = z.infer<typeof paymentTypeSchema>
+
+// =============================================================================
+// Emergency Contact Schema
+// =============================================================================
+
 export const emergencyContactSchema = z.object({
   name: z.string().optional(),
   number: z.string(),
