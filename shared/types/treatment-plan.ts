@@ -6,34 +6,23 @@ import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
 
 z.config(fr())
 
+import { calendarDateSchema, noteSchema, treatmentPlanStatusSchema, insuranceCoverageSchema } from './base.types'
+import { rateCentSchema } from './org.types'
+
 // =============================================================================
 // Treatment Plan Schemas and Types
 // =============================================================================
 
-export const treatmentPlanSchema = createSelectSchema(treatmentPlans, {
-  id: z.string(),
-  organizationId: z.string(),
-  patientId: z.string(),
-  therapistId: z.string(),
-  title: z.string(),
-  diagnosis: z.string(),
-  objective: z.string().nullable(),
-  startDate: calendarDateSchema,
-  endDate: calendarDateSchema.nullable(),
-  numberOfSessions: z.number().nullable(),
-  sessionFrequency: z.number().nullable(),
-  status: treatmentPlanStatusSchema,
-  prescribingDoctor: z.string().nullable(),
-  prescriptionDate: calendarDateSchema,
-  coverageStatus: z.enum(VALID_COVERAGE_STATUSES).nullable(),
-  insuranceInfo: z.string().nullable(),
+const treatmentPlanSchemaShape = {
   pricing: rateCentSchema,
   notes: z.array(noteSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
-})
+}
 
-export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
+export const treatmentPlanSchema = createSelectSchema(treatmentPlans, treatmentPlanSchemaShape)
+
+const treatmentPlanCreateShape = {
   patientId: z.string().min(1),
   organizationId: z.string().min(1),
   therapistId: z.string().min(1),
@@ -48,10 +37,12 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, {
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
   insuranceInfo: z.string().optional(),
-  coverageStatus: z.enum(VALID_COVERAGE_STATUSES).optional(),
+  coverageStatus: insuranceCoverageSchema.optional(),
   pricing: rateCentSchema,
   notes: z.array(noteSchema).optional()
-}).omit({
+}
+
+export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, treatmentPlanCreateShape).omit({
   id: true,
   createdAt: true,
   updatedAt: true

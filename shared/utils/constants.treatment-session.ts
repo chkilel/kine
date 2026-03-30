@@ -1,13 +1,9 @@
-// =============================================================================
-// Treatment Session Constants
-// =============================================================================
-
 import type { TreatmentSessionStatus } from '../types/base.types'
 
-// Valid treatment session statuses (session lifecycle)
-export const TREATMENT_SESSION_STATUSES = ['pre_session', 'in_progress', 'finished', 'completed', 'canceled'] as const
-
+// =============================================================================
 // Treatment Session Status Configuration
+// =============================================================================
+
 export const TREATMENT_SESSION_STATUS_CONFIG = {
   pre_session: {
     color: 'info',
@@ -41,7 +37,6 @@ export const TREATMENT_SESSION_STATUS_CONFIG = {
   }
 } as const
 
-// Treatment Session Status Helpers
 export const getTreatmentSessionStatusLabel = (status: TreatmentSessionStatus) =>
   TREATMENT_SESSION_STATUS_CONFIG[status].label
 export const getTreatmentSessionStatusColor = (status: TreatmentSessionStatus) =>
@@ -50,12 +45,3 @@ export const getTreatmentSessionStatusIcon = (status: TreatmentSessionStatus) =>
   TREATMENT_SESSION_STATUS_CONFIG[status].icon
 export const getTreatmentSessionStatusConfig = (status: TreatmentSessionStatus) =>
   TREATMENT_SESSION_STATUS_CONFIG[status]
-
-// Available tags for treatment sessions
-export const TREATMENT_SESSION_TAGS = [
-  'Douleur Diminuée',
-  'Gain Amplitude',
-  'Proprioception',
-  'Cryothérapie',
-  'Renforcement'
-] as const

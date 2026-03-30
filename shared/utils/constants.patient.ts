@@ -1,48 +1,19 @@
+import type { Gender, InsuranceCoverageStatus, PatientStatus, Relationship } from '../types/base.types'
+
 // =============================================================================
-// Patient Status Constants
+// Gender Configuration
 // =============================================================================
-
-import type { InsuranceCoverageStatus, PatientStatus, Relationship } from '../types/base.types'
-
-// Valid relationship types for emergency contacts
-export const VALID_RELATIONSHIP_TYPES = [
-  'husband',
-  'wife',
-  'mother',
-  'father',
-  'daughter',
-  'son',
-  'sister',
-  'brother',
-  'grandmother',
-  'grandfather',
-  'granddaughter',
-  'grandson',
-  'aunt',
-  'uncle',
-  'female_cousin',
-  'male_cousin',
-  'female_friend',
-  'male_friend',
-  'female_neighbor',
-  'male_neighbor',
-  'colleague',
-  'acquaintance',
-  'other'
-] as const
-
-// Valid sex values for patient records
-export const VALID_SEX_VALUES = ['male', 'female'] as const
 
 export const GENDER_CONFIG = {
   male: 'Homme',
   female: 'Femme'
 } as const
 
-export const getGenderLabel = (sex: 'male' | 'female') => GENDER_CONFIG[sex]
+export const getGenderLabel = (sex: Gender) => GENDER_CONFIG[sex]
 
-// Valid status values for patient records
-export const VALID_PATIENT_STATUSES = ['active', 'inactive', 'discharged', 'archived'] as const
+// =============================================================================
+// Patient Status Configuration
+// =============================================================================
 
 export const STATUS_CONFIG = {
   active: { color: 'success', label: 'Actif' },
@@ -51,7 +22,6 @@ export const STATUS_CONFIG = {
   archived: { color: 'neutral', label: 'Archivé' }
 } as const
 
-// Status Filter Options
 export const STATUS_FILTER_OPTIONS = [
   { label: 'Statut: Tous', value: undefined },
   ...Object.entries(STATUS_CONFIG).map(([key, item]) => ({
@@ -61,20 +31,18 @@ export const STATUS_FILTER_OPTIONS = [
   }))
 ]
 
-// Patient Status Options
 export const PATIENT_STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
   color: item.color
 }))
 
-// Patient Status Helpers
 export const getPatientStatusLabel = (status: PatientStatus) => STATUS_CONFIG[status]?.label || status
 export const getPatientStatusColor = (status: PatientStatus) => STATUS_CONFIG[status].color
 export const getPatientStatusConfig = (status: PatientStatus) => STATUS_CONFIG[status]
 
 // =============================================================================
-// Insurance Coverage and Relationships Constants
+// Insurance Coverage Configuration
 // =============================================================================
 
 export const INSURANCE_COVERAGE_CONFIG = {
@@ -89,18 +57,17 @@ export const INSURANCE_COVERAGE_CONFIG = {
   cancelled: 'Prise en charge annulée'
 } as const
 
-// Insurance Coverage Options
 export const INSURANCE_COVERAGE_OPTIONS = Object.entries(INSURANCE_COVERAGE_CONFIG).map(([key, label]) => ({
   label,
   value: key
 }))
 
-// Insurance Coverage Helpers
 export const getInsuranceCoverageLabel = (value: InsuranceCoverageStatus) => INSURANCE_COVERAGE_CONFIG[value]
 
 // =============================================================================
-// Relationships Constants
+// Relationships Configuration
 // =============================================================================
+
 export const RELATIONSHIPS_CONFIG = {
   husband: 'Époux',
   wife: 'Épouse',
@@ -127,11 +94,9 @@ export const RELATIONSHIPS_CONFIG = {
   other: 'Autre'
 } as const
 
-// Relationship Options
 export const RELATIONSHIP_OPTIONS = Object.entries(RELATIONSHIPS_CONFIG).map(([key, label]) => ({
   label,
   value: key
 }))
 
-// Relationship Helpers
 export const getRelationshipLabel = (value: Relationship) => RELATIONSHIPS_CONFIG[value]

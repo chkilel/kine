@@ -3,13 +3,20 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { patientDocuments } from '~~/server/database/schema/document'
-import { documentCategorySchema } from './base.types'
 
 z.config(fr())
 
 // =============================================================================
 // Patient Document Schemas and Types
 // =============================================================================
+
+// This is to fix the circular dependency between patient document and other types
+const patientDocumentSchemaShape = {
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
+}
+export const patientDocumentSchema = createSelectSchema(patientDocuments, patientDocumentSchemaShape)
+
 export const patientDocumentCreateSchema = createInsertSchema(patientDocuments, {
   patientId: z.string().optional(),
   organizationId: z.string().min(1),
@@ -32,11 +39,6 @@ export const patientDocumentUpdateSchema = patientDocumentCreateSchema.partial()
   mimeType: true,
   fileSize: true,
   storageKey: true
-})
-
-export const patientDocumentSchema = createSelectSchema(patientDocuments, {
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date()
 })
 
 export const patientDocumentQuerySchema = z.object({

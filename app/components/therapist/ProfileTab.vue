@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { FormError } from '@nuxt/ui'
+  import { APPOINTMENT_GAP_OPTIONS } from '~~/shared/utils/constants.appointment'
 
   const toast = useToast()
 

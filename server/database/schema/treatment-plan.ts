@@ -5,7 +5,7 @@ import { calendarDateField, creationAndUpdateTimestamps } from './columns.helper
 import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
-import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/utils/constants.treatement-plan'
+import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/types/base.types'
 import type { RateCent } from '~~/shared/types/org.types'
 
 /**

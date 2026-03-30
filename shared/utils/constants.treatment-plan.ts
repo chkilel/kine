@@ -1,24 +1,8 @@
-// =============================================================================
-// Treatment Plan Status Constants
-// =============================================================================
-
 import type { TreatmentPlanStatus } from '../types/base.types'
 
-// Valid status values for treatment plan coverage
-export const VALID_COVERAGE_STATUSES = [
-  'not_required',
-  'not_provided',
-  'to_verify',
-  'awaiting_agreement',
-  'covered',
-  'partially_covered',
-  'refused',
-  'expired',
-  'cancelled'
-] as const
-
-// Valid status values for treatment plans
-export const VALID_TREATMENT_PLAN_STATUSES = ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] as const
+// =============================================================================
+// Treatment Plan Status Configuration
+// =============================================================================
 
 export const TREATMENT_PLAN_STATUS_CONFIG = {
   planned: {
@@ -48,7 +32,6 @@ export const TREATMENT_PLAN_STATUS_CONFIG = {
   cancelled: { label: 'Annulé', color: 'error', icon: 'hugeicons-cancel-circle', description: 'Ce plan a été annulé' }
 } as const
 
-// Treatment Plan Options
 export const TREATMENT_PLAN_STATUS_OPTIONS = Object.entries(TREATMENT_PLAN_STATUS_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
@@ -62,7 +45,10 @@ export const getTreatmentPlanStatusIcon = (status: TreatmentPlanStatus) => TREAT
 export const getTreatmentPlanStatusDescription = (status: TreatmentPlanStatus): string =>
   TREATMENT_PLAN_STATUS_CONFIG[status].description
 
+// =============================================================================
 // Frequency Options
+// =============================================================================
+
 export const FREQUENCY_OPTIONS = [
   { label: '1 fois', value: 1 },
   { label: '2 fois', value: 2 },

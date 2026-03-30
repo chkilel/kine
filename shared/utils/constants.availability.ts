@@ -1,27 +1,17 @@
+import type { Reason } from '../types/base.types'
+
 // =============================================================================
-// Availability Exception Types Constants
+// Working Hours Constants
 // =============================================================================
 
-// Valid days of the week for scheduling
-export const VALID_SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
-
-// Valid exception types for practitioner schedules
-export const VALID_SCHEDULE_EXCEPTION_TYPES = [
-  'vacation',
-  'holiday',
-  'sick',
-  'training',
-  'meeting',
-  'personal',
-  'reduced_hours',
-  'other'
-] as const
-
-// Standard working hours
 export const WORKING_HOURS = {
   start: '09:00:00',
   end: '17:00:00'
 }
+
+// =============================================================================
+// Availability Exception Configuration
+// =============================================================================
 
 export const AVAILABILITY_EXCEPTION_CONFIG = {
   vacation: { label: 'Congé', color: 'warning', icon: 'i-lucide-luggage' },
@@ -45,14 +35,12 @@ const typedEntries = <T extends Record<string, any>>(obj: T) =>
     [K in keyof T]: [K, T[K]]
   }[keyof T][]
 
-// Availability Exception Type Options
 export const EXCEPTION_TYPE_OPTIONS = typedEntries(AVAILABILITY_EXCEPTION_CONFIG).map(([key, item]) => ({
   label: item.label,
   value: key,
   icon: item.icon
 }))
 
-// Availability Exception Type Helpers
 export const getExceptionTypeColor = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].color
 export const getExceptionTypeLabel = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].label
 export const getExceptionTypeIcon = (type: Reason) => AVAILABILITY_EXCEPTION_CONFIG[type].icon

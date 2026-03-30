@@ -7,8 +7,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
-import { APPOINTMENT_STATUSES, APPOINTMENT_TYPES } from '../../../shared/utils/constants.appointment'
-import { LOCATIONS } from '../../../shared/utils/constants.location'
+import { APPOINTMENT_STATUSES, VALID_APPOINTMENT_TYPES, VALID_LOCATIONS } from '../../../shared/types/base.types'
 
 /**
  * ================================================================
@@ -39,8 +38,8 @@ export const appointments = sqliteTable(
     startTime: text().notNull(), // Start time of session — e.g., "10:00"
     endTime: text().notNull(), // End time of session — e.g., "11:00"
     duration: integer().notNull(), // Session duration in minutes — e.g., 60
-    type: text({ enum: APPOINTMENT_TYPES }), // Type of appointment — e.g., "follow_up"
-    location: text({ enum: LOCATIONS }).notNull().default('clinic'),
+    type: text({ enum: VALID_APPOINTMENT_TYPES }), // Type of appointment — e.g., "follow_up"
+    location: text({ enum: VALID_LOCATIONS }).notNull().default('clinic'),
 
     // ---- Appointment status (scheduling lifecycle) ----
     status: text({ enum: APPOINTMENT_STATUSES }).notNull().default('scheduled'),

@@ -2,11 +2,8 @@ import type { SelectMenuItem } from '@nuxt/ui'
 import type { PhoneCategory } from '../types/base.types'
 
 // =============================================================================
-// Phone Categories Constants
+// Phone Categories Configuration
 // =============================================================================
-
-// Valid phone number categories for practitioners
-export const VALID_PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
 
 export const PHONE_CATEGORIES_CONFIG = {
   personal: { label: 'Personnel' },
@@ -16,22 +13,19 @@ export const PHONE_CATEGORIES_CONFIG = {
   whatsapp: { label: 'WhatsApp' }
 } as const
 
-// Phone Categories Options
 export const PHONE_CATEGORIES_OPTIONS = Object.entries(PHONE_CATEGORIES_CONFIG).map(([key, config]) => ({
   label: config.label,
   value: key
 }))
 
-// Phone Category Helpers
 export const getPhoneCategoryLabel = (category: PhoneCategory) => PHONE_CATEGORIES_CONFIG[category]?.label || category
 
 // =============================================================================
-// Specializations Constants
+// Specializations
 // =============================================================================
-export const SPECIALIZATIONS: SelectMenuItem[] = [
-  // Group 1
-  { type: 'label', label: 'Domaines principaux' },
 
+export const SPECIALIZATIONS: SelectMenuItem[] = [
+  { type: 'label', label: 'Domaines principaux' },
   { label: 'Généraliste', value: 'general' },
   { label: 'Musculosquelettique / Orthopédique', value: 'musculoskeletal_orthopedic' },
   { label: 'Sport', value: 'sport' },
@@ -43,13 +37,8 @@ export const SPECIALIZATIONS: SelectMenuItem[] = [
   { label: 'Rhumatologie', value: 'rheumatology' },
   { label: "Vestibulaire / Troubles de l'équilibre", value: 'vestibular_balance' },
   { label: 'Douleur chronique', value: 'chronic_pain' },
-
-  // Separator
   { type: 'separator' },
-
-  // Group 2
   { type: 'label', label: 'Techniques avancées' },
-
   { label: 'Thérapie manuelle orthopédique (TMO)', value: 'orthopedic_manual_therapy' },
   { label: 'Rééducation fonctionnelle', value: 'functional_rehabilitation' },
   { label: 'Dry Needling', value: 'dry_needling' },
@@ -62,7 +51,7 @@ export const SPECIALIZATIONS: SelectMenuItem[] = [
   { label: 'Rééducation post-chirurgicale', value: 'post_surgical_rehab' },
   { label: 'Rééducation oncologique', value: 'oncology_rehab' }
 ]
-// Specialization Configuration
+
 export const SPECIALIZATIONS_CONFIG = SPECIALIZATIONS.reduce(
   (acc, spec) => {
     if (
@@ -81,5 +70,4 @@ export const SPECIALIZATIONS_CONFIG = SPECIALIZATIONS.reduce(
   {} as Record<string, string>
 )
 
-// Specialization Helpers
 export const getSpecializationLabel = (value: string) => SPECIALIZATIONS_CONFIG[value]

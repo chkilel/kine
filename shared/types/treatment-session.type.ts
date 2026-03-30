@@ -3,36 +3,17 @@ import { createSelectSchema } from 'drizzle-orm/zod'
 import { treatmentSessions } from '~~/server/database/schema/treatment-session'
 import type { Appointment } from './appointment.type'
 import type { Payment } from './invoicing'
+import { timeFormatSchema, treatmentSessionStatusSchema } from './base.types'
 
 // =============================================================================
 // Treatment Session Schemas and Types
 // =============================================================================
 
-export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessions, {
-  id: z.uuidv7(),
-  organizationId: z.string(),
-  appointmentId: z.string(),
-  patientId: z.string(),
-  treatmentPlanId: z.string().nullable().optional(),
-  therapistId: z.string(),
-  primaryConcern: z.string().nullable().optional(),
-  treatmentSummary: z.string().nullable().optional(),
-  observations: z.string().nullable().optional(),
-  nextSteps: z.string().nullable().optional(),
-  painLevelBefore: z.number().int().min(0).max(10).nullable().optional(),
-  painLevelAfter: z.number().int().min(0).max(10).nullable().optional(),
-  status: treatmentSessionStatusSchema,
-  actualStartTime: timeFormatSchema.nullable().optional(),
-  actualDurationSeconds: z.number().int().min(0).nullable().optional(),
-  totalPausedSeconds: z.number().int().min(0).nullable().optional(),
-  pauseStartTime: timeFormatSchema.nullable().optional(),
-  extendedDurationMinutes: z.number().int().min(0).nullable(),
-  tags: z.string().nullable().optional(),
-  insuranceClaimed: z.boolean().nullable().optional(),
-  priceCent: z.number().int().min(0).nullable().optional(),
+const treatmentSessionResponseShapeSchema = {
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
-})
+}
+export const treatmentSessionResponseSchema = createSelectSchema(treatmentSessions, treatmentSessionResponseShapeSchema)
 
 // Type inference
 export type TreatmentSession = Omit<z.infer<typeof treatmentSessionResponseSchema>, 'createdAt' | 'updatedAt'> & {
@@ -40,6 +21,7 @@ export type TreatmentSession = Omit<z.infer<typeof treatmentSessionResponseSchem
   therapistName?: string | null
   payments?: Payment[]
 }
+
 export type TreatmentSessionResponse = z.infer<typeof treatmentSessionResponseSchema> & {
   patientName?: string | null
   therapistName?: string | null
@@ -112,7 +94,7 @@ export const treatmentSessionQuerySchema = z.object({
   therapistId: z.string().optional(),
   appointmentId: z.string().optional(),
   date: z.string().optional(),
-  status: z.enum(TREATMENT_SESSION_STATUSES).optional(),
+  status: treatmentSessionStatusSchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20)
 })

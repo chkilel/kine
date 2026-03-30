@@ -7,7 +7,7 @@ import { users } from './auth'
 import { appointments } from './appointment'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
-import { TREATMENT_SESSION_STATUSES } from '../../../shared/utils/constants.treatment-session'
+import { TREATMENT_SESSION_STATUSES } from '../../../shared/types/base.types'
 
 /**
  * ================================================================
