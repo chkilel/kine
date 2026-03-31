@@ -16,8 +16,28 @@
   const { mutateAsync: createTreatmentSessionAsync, isLoading: isCreating } = useCreateTreatmentSession()
   const { mutateAsync: startSessionAsync, isLoading: isSessionStarting } = useStartTreatmentSession()
 
+  // ─── Data fetching ─────────────────────────────────────────────────────────
+  const { data: patient } = usePatientById(() => props.patientId)
+  const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
+  const {
+    data: appointment,
+    isPending: appointmentLoading,
+    refetch: refetchAppointment
+  } = useAppointment(() => props.appointmentId)
+
+  const { data: sessionPayments } = useTreatmentSessionPayments(() => appointment.value?.treatmentSession?.id ?? '')
+
   // ─── State ─────────────────────────────────────────────────────────────────
   const showPaymentCard = ref(false)
+  const isTimerPaused = ref(false)
+
+  watch(
+    () => appointment.value?.treatmentSession?.pauseStartTime,
+    (pauseStartTime) => {
+      isTimerPaused.value = !!pauseStartTime
+    },
+    { immediate: true }
+  )
 
   // ─── Derived state ─────────────────────────────────────────────────────────
   const showPaymentButton = computed(() => {
@@ -42,18 +62,17 @@
     () => !appointment.value?.treatmentSession || appointment.value?.treatmentSession?.status === 'pre_session'
   )
 
-  // ─── Data fetching ─────────────────────────────────────────────────────────
-  const { data: patient } = usePatientById(() => props.patientId)
-  const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
-  const {
-    data: appointment,
-    isPending: appointmentLoading,
-    refetch: refetchAppointment
-  } = useAppointment(() => props.appointmentId)
-
-  const { data: sessionPayments } = useTreatmentSessionPayments(() => appointment.value?.treatmentSession?.id ?? '')
-
   // ─── Computed ───────────────────────────────────────────────────────────────
+  const sessionStatusConfig = computed(() => {
+    const status = appointment.value?.treatmentSession?.status
+    if (!status) return null
+    return {
+      label: getTreatmentSessionStatusLabel(status),
+      color: getTreatmentSessionStatusColor(status),
+      icon: getTreatmentSessionStatusIcon(status)
+    }
+  })
+
   const previousAppointments = computed(() => {
     const list = allAppointments.value
     const currentAppointment = appointment.value
@@ -65,9 +84,9 @@
       .reverse()
   })
 
-  const headerTitle = computed(() =>
-    patient.value ? `${patient.value.firstName} ${patient.value.lastName}` : 'Séance active'
-  )
+  const patientfullname = computed(() => (patient.value ? formatFullName(patient.value) : ''))
+
+  const headerTitle = computed(() => patientfullname.value || 'Séance active')
 
   const headerDescription = computed(() => {
     if (!appointment.value) return ''
@@ -150,13 +169,68 @@
 </script>
 
 <template>
-  <USlideover
-    :dismissible="false"
-    :title="headerTitle"
-    :description="headerDescription"
-    :ui="{ content: 'w-full max-w-[1500px] bg-elevated' }"
-    @close="emit('close')"
-  >
+  <USlideover :dismissible="true" :close="false" :ui="{ content: 'w-full max-w-[1500px]' }" @close="emit('close')">
+    <template #header>
+      <div class="flex w-full items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <UButton
+            icon="i-hugeicons-panel-left-close"
+            size="xl"
+            color="neutral"
+            variant="ghost"
+            square
+            :ui="{ leadingIcon: 'size-8' }"
+            @click="emit('close')"
+          />
+          <div v-if="patient" class="flex items-center gap-3">
+            <div class="rounded-full p-1" :class="isTimerPaused ? 'bg-warning-300 animate-pulse' : 'bg-primary-100'">
+              <UAvatar :alt="patientfullname" size="xl" />
+            </div>
+
+            <div>
+              <h3 class="text-base leading-tight font-semibold">
+                {{ headerTitle }} •
+                <span class="text-muted text-sm font-medium">{{ calculateAge(patient.dateOfBirth) }} ans</span>
+              </h3>
+
+              <div class="flex h-5 items-end gap-2">
+                <p class="text-muted text-xs">{{ headerDescription }}</p>
+                <UBadge
+                  v-if="isTimerPaused"
+                  icon="i-lucide-pause-circle"
+                  size="sm"
+                  color="warning"
+                  variant="solid"
+                  class="ml-2 animate-pulse rounded-full"
+                >
+                  En pause
+                </UBadge>
+              </div>
+            </div>
+          </div>
+          <h3 v-else class="text-base font-semibold">Séance active</h3>
+        </div>
+        <div class="flex shrink-0 items-center gap-3">
+          <TreatmentSessionTimer
+            v-if="appointment"
+            compact
+            :appointment="appointment"
+            @pause="(event) => (isTimerPaused = event)"
+          />
+          <UButton
+            v-if="sessionNotStarted"
+            size="lg"
+            color="primary"
+            variant="solid"
+            icon="i-hugeicons-play-circle"
+            :loading="isCreating"
+            @click="handleStartSession"
+          >
+            Démarrer la séance
+          </UButton>
+        </div>
+      </div>
+    </template>
     <template #body>
       <!-- Loading State -->
       <div v-if="appointmentLoading" class="flex justify-center py-10">
@@ -242,7 +316,7 @@
           </div>
 
           <!-- Start Session Button - Only show when no session exists or when unpaid -->
-          <UButton
+          <!-- <UButton
             v-if="sessionNotStarted"
             size="xl"
             color="primary"
@@ -254,10 +328,10 @@
             @click="handleStartSession"
           >
             Démarrer la séance
-          </UButton>
+          </UButton> -->
 
           <!-- Timer Card - Now uses treatment session -->
-          <TreatmentSessionTimer v-if="appointment" :appointment="appointment" @close="emit('close')" />
+          <!-- <TreatmentSessionTimer v-if="appointment" :appointment="appointment" @close="emit('close')" /> -->
 
           <!-- Session Timing Information Card -->
           <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
