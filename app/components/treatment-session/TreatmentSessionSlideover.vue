@@ -28,7 +28,6 @@
   const { data: sessionPayments } = useTreatmentSessionPayments(() => appointment.value?.treatmentSession?.id ?? '')
 
   // ─── State ─────────────────────────────────────────────────────────────────
-  const showPaymentCard = ref(false)
   const isTimerPaused = ref(false)
 
   watch(
@@ -40,7 +39,7 @@
   )
 
   // ─── Derived state ─────────────────────────────────────────────────────────
-  const showPaymentButton = computed(() => {
+  const showPaymentCard = computed(() => {
     if (!appointment.value?.treatmentSession) return false
     return appointment.value.treatmentSession?.status === 'finished'
   })
@@ -56,23 +55,11 @@
     return payments[payments.length - 1]
   })
 
-  const paymentMethodLabel = (method: string) => PAYMENT_METHOD_OPTIONS.find((m) => m.value === method)?.label ?? method
-
   const sessionNotStarted = computed(
     () => !appointment.value?.treatmentSession || appointment.value?.treatmentSession?.status === 'pre_session'
   )
 
   // ─── Computed ───────────────────────────────────────────────────────────────
-  const sessionStatusConfig = computed(() => {
-    const status = appointment.value?.treatmentSession?.status
-    if (!status) return null
-    return {
-      label: getTreatmentSessionStatusLabel(status),
-      color: getTreatmentSessionStatusColor(status),
-      icon: getTreatmentSessionStatusIcon(status)
-    }
-  })
-
   const previousAppointments = computed(() => {
     const list = allAppointments.value
     const currentAppointment = appointment.value
@@ -163,7 +150,6 @@
   }
 
   async function handlePaymentCreated() {
-    showPaymentCard.value = false
     await refetchAppointment()
   }
 </script>
@@ -250,9 +236,9 @@
         <div class="flex h-full flex-col gap-4 lg:col-span-6">
           <TreatmentSessionSlideoverCenter v-if="appointment" :appointment="appointment" />
 
-          <!-- Payment Card (centered at bottom) -->
-          <PaymentCard
-            v-if="appointment?.treatmentSession && showPaymentButton && showPaymentCard"
+          <!-- Payment transaction Card (centered at bottom) -->
+          <PaymentTransactionCard
+            v-if="appointment?.treatmentSession && showPaymentCard"
             :treatment-session="appointment.treatmentSession"
             @payment-created="handlePaymentCreated"
           />
@@ -260,7 +246,7 @@
 
         <!-- Right Sidebar - Timer & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
-          <div v-if="appointment?.treatmentSession" class="bg-elevated border-default rounded-lg border p-4">
+          <template v-if="appointment?.treatmentSession">
             <template v-if="isSessionPaid && latestPayment">
               <div
                 class="bg-success-5 dark:bg-success-950/20 text-success flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold"
@@ -275,7 +261,9 @@
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-muted">Mode</span>
-                  <span class="font-medium">{{ paymentMethodLabel(latestPayment.method) }}</span>
+                  <span class="font-medium">
+                    {{ latestPayment.method ? getPaymentMethodLabel(latestPayment.method) : 'Solde patient' }}
+                  </span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-muted">Reçu</span>
@@ -294,26 +282,14 @@
               </UButton>
             </template>
 
-            <template v-else-if="showPaymentButton">
-              <div
-                class="bg-warning-5 dark:bg-warning-950/20 border-warning-20 text-warning flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold"
-              >
-                <UIcon name="i-hugeicons-clock-01" />
-                <span>En attente de paiement</span>
-              </div>
-              <UButton
-                v-if="!showPaymentCard"
-                size="lg"
-                color="primary"
-                variant="solid"
-                class="mt-2"
-                @click="showPaymentCard = true"
-              >
-                <UIcon name="i-hugeicons-payment-01" />
-                Enregistrer le paiement
-              </UButton>
-            </template>
-          </div>
+            <!-- Payment Card (centered at bottom) -->
+            <PaymentCard
+              v-if="appointment?.treatmentSession && showPaymentCard"
+              :treatment-session="appointment.treatmentSession"
+              :appointment
+              @payment-created="handlePaymentCreated"
+            />
+          </template>
 
           <!-- Start Session Button - Only show when no session exists or when unpaid -->
           <!-- <UButton
