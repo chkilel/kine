@@ -252,7 +252,7 @@ CREATE TABLE `payments` (
 	`amountCents` integer NOT NULL,
 	`currency` text DEFAULT 'MAD',
 	`type` text NOT NULL,
-	`method` text NOT NULL,
+	`method` text,
 	`receiptNumber` text UNIQUE,
 	`notes` text,
 	`paidOn` text NOT NULL,
