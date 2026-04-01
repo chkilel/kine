@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const requiresSessionItems = type === 'payment' || type === 'credit_usage'
   const forbidsSessionItems = type === 'deposit' || type === 'refund'
   const hasSessionItems = sessionItems && sessionItems.length > 0
+  const hasManySessionItems = sessionItems && sessionItems.length > 1
 
   // Validate that payment and credit_usage types have required session items
   if (requiresSessionItems) {
@@ -56,6 +57,33 @@ export default defineEventHandler(async (event) => {
     const balance = result[0]?.balance ?? 0
     if (balance < amountCents) {
       throw createError({ statusCode: 409, message: 'Insufficient credit balance' })
+    }
+
+    // When paying for multiple sessions with credit, ensure each session is covered
+    // in full — partial credit payments on individual sessions are not allowed.
+    if (hasManySessionItems) {
+      const sessionPrices = await db
+        .select({ id: treatmentSessions.id, priceCent: treatmentSessions.priceCent })
+        .from(treatmentSessions)
+        .where(
+          and(
+            eq(treatmentSessions.organizationId, organizationId),
+            inArray(
+              treatmentSessions.id,
+              sessionItems.map((i) => i.treatmentSessionId)
+            )
+          )
+        )
+
+      for (const item of sessionItems) {
+        const session = sessionPrices.find((s) => s.id === item.treatmentSessionId)
+        if (session && item.amountCents < session.priceCent) {
+          throw createError({
+            statusCode: 409,
+            message: 'Credit payment must cover the full cost of each session'
+          })
+        }
+      }
     }
   }
 
