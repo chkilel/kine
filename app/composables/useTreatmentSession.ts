@@ -225,7 +225,8 @@ const _useUpdateSessionPrice = () => {
       onSuccess?.()
       invalidate(sessionId, data?.data?.appointmentId)
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, { onError }) => {
+      onError?.()
       toast.add({
         title: 'Erreur',
         description: parseError(error, 'Impossible de mettre à jour le prix').message,
