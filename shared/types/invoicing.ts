@@ -25,7 +25,7 @@ export const paymentCreateSchema = createInsertSchema(payments, {
   amountCents: z.number().int().positive('Le montant doit être positif'),
   currency: z.string().default('MAD'),
   type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.default('cash'),
+  method: paymentMethodSchema.optional(),
   receiptNumber: z.string().optional(),
   notes: z.string().optional(),
   paidOn: calendarDateSchema,
@@ -68,7 +68,7 @@ export const paymentRequestBodySchema = z.object({
   patientId: z.string().min(1, 'Le patient est requis'),
   amountCents: z.number().int().positive('Le montant doit être positif'),
   type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.default('cash'),
+  method: paymentMethodSchema.optional(),
   notes: z.string().optional(),
   paidOn: calendarDateSchema.optional(),
   sessionItems: z
@@ -118,22 +118,11 @@ export type PaymentQuery = z.infer<typeof paymentQuerySchema>
 // Form Schemas
 // =============================================================================
 
-export const paymentFormSchemaFactory = (creditBalance = 0) =>
-  z
-    .object({
-      type: paymentTypeSchema,
-      method: paymentMethodSchema,
-      amount: z.number().min(1, 'Le montant doit être supérieur à 0'),
-      notes: z.string().optional()
-    })
-    .refine(
-      (data) => {
-        if (data.type === 'credit_usage') {
-          return currencyToCents(data.amount) <= creditBalance
-        }
-        return true
-      },
-      { message: "Solde d'avance insuffisant", path: ['amount'] }
-    )
+export const paymentFormSchema = z.object({
+  type: paymentTypeSchema,
+  method: paymentMethodSchema,
+  amount: z.number().min(1, 'Le montant doit être supérieur à 0'),
+  notes: z.string().optional()
+})
 
-export type PaymentForm = z.infer<ReturnType<typeof paymentFormSchemaFactory>>
+export type PaymentForm = z.infer<typeof paymentFormSchema>

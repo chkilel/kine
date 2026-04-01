@@ -6,7 +6,7 @@
 export type UIColor = 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'primary' | 'secondary'
 export type UIVariant = 'solid' | 'outline' | 'soft' | 'subtle'
 
-
 export type WithOnSuccess<T> = T & {
-  onSuccess?: () => void;
-};
+  onSuccess?: () => void
+  onError?: () => void
+}
