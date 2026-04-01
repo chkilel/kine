@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     const result = await db
       .select({
         balance: sql<number>`
-          SUM(CASE WHEN \${payments.type} = 'deposit' THEN \${payments.amountCents} ELSE -\${payments.amountCents} END)
+          SUM(CASE WHEN ${payments.type} = 'deposit' THEN ${payments.amountCents} ELSE -${payments.amountCents} END)
         `
       })
       .from(payments)
