@@ -199,13 +199,14 @@
 <template>
   <UCard
     :ui="{
-      header: 'bg-primary/5 border-primary/10',
+      root: 'divide-default',
+      header: 'bg-primary/5',
       footer: 'bg-muted'
     }"
   >
     <template #header>
       <header class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
           <AppIconBox
             name="i-hugeicons-wallet-02"
             size="xl"
@@ -214,8 +215,8 @@
             :ui="{ base: 'rounded-xl p-2' }"
           />
           <div>
-            <h2 class="text-primary text-sm font-black tracking-tight uppercase">Facturation</h2>
-            <p class="text-primary/60 text-[10px] font-bold">Enregistrer un paiement</p>
+            <h2 class="text-sm font-black uppercase">Facturation</h2>
+            <p class="text-muted text-[11px] font-semibold">Enregistrer un paiement</p>
           </div>
         </div>
 

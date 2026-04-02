@@ -26,7 +26,8 @@
 <template>
   <UCard
     :ui="{
-      header: 'bg-primary/5 border-primary/10',
+      root: 'divide-default',
+      header: 'bg-primary/5',
       footer: 'bg-muted'
     }"
   >
@@ -41,20 +42,18 @@
             :ui="{ base: 'rounded-xl p-2' }"
           />
           <div>
-            <h2 class="text-primary text-sm font-black tracking-tight uppercase">Facturation</h2>
-            <p class="text-primary/60 text-[10px] font-bold">
-              Séance du {{ formatFrenchDate(props.appointment.date) }}
-            </p>
+            <h2 class="text-sm font-black tracking-tight uppercase">Facturation</h2>
+            <p class="text-muted text-[11px] font-semibold">Séance du {{ formatFrenchDate(props.appointment.date) }}</p>
           </div>
         </div>
 
         <div v-if="latestPayment" class="flex flex-col items-end">
-          <UBadge size="md" color="success" variant="solid" class="uppercase">Payé</UBadge>
+          <UBadge size="md" color="success" variant="solid" class="rounded-full uppercase">Payé</UBadge>
         </div>
       </header>
     </template>
 
-    <div v-if="latestPayment" class="space-y-4">
+    <div v-if="latestPayment" class="space-y-2">
       <div class="flex flex-col items-center justify-center">
         <AppIconBox
           name="i-hugeicons-checkmark-circle-01"
@@ -66,47 +65,43 @@
         <h3 class="text-sm font-black tracking-tight uppercase">Paiement effectué</h3>
       </div>
 
-      <div class="border-default grid grid-cols-2 gap-x-6 gap-y-4 border-t py-1">
+      <div class="border-default grid grid-cols-2 gap-x-6 gap-y-2 border-t py-1">
         <div>
-          <span class="text-muted/60 text-[9px] font-bold tracking-widest uppercase">Montant</span>
-          <p class="text-xs font-black tracking-tight">
+          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Montant</span>
+          <p class="text-sm font-black tabular-nums">
             {{ formatCurrency(latestPayment.amountCents) }}
           </p>
         </div>
         <div class="text-right">
-          <span class="text-muted/60 text-[9px] font-bold tracking-widest uppercase">Mode</span>
-          <p class="text-xs font-black uppercase">
-            {{
-              latestPayment.method && latestPayment.method !== 'credit_usage'
-                ? getPaymentMethodLabel(latestPayment.method)
-                : 'Solde patient'
-            }}
+          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Mode</span>
+          <p class="text-xs font-bold uppercase">
+            {{ latestPayment.method ? getPaymentMethodLabel(latestPayment.method) : 'Solde patient' }}
           </p>
         </div>
         <div>
-          <span class="text-muted/60 text-[9px] font-bold tracking-widest uppercase">N° Reçu</span>
+          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">N° Reçu</span>
           <p class="text-xs font-bold">{{ latestPayment.receiptNumber }}</p>
         </div>
         <div class="text-right">
-          <span class="text-muted/60 text-[9px] font-bold tracking-widest uppercase">Date</span>
+          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Date</span>
           <p class="text-xs font-bold">{{ formatFrenchDate(latestPayment.paidOn) }}</p>
         </div>
       </div>
+      <UButton
+        color="success"
+        variant="subtle"
+        block
+        size="lg"
+        icon="i-hugeicons-invoice-03"
+        @click="handleViewReceipt"
+      >
+        Voir le reçu
+      </UButton>
     </div>
 
     <template #footer>
       <footer class="flex flex-col gap-4">
-        <UButton
-          color="neutral"
-          variant="outline"
-          block
-          size="lg"
-          icon="i-hugeicons-invoice-03"
-          @click="handleViewReceipt"
-        >
-          Voir le reçu
-        </UButton>
-        <div class="text-muted/40 mt-1 flex items-center justify-center gap-1.5 text-[10px] font-bold">
+        <div class="text-dimmed mt-1 flex items-center justify-center gap-1.5 text-[10px] font-bold">
           <UIcon name="i-hugeicons-shield-01" class="size-3.5" />
           <span>Paiement sécurisé • KineDesk</span>
         </div>
