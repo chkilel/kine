@@ -1,4 +1,5 @@
 import { createSharedComposable } from '@vueuse/core'
+import { APPOINTMENT_KEYS } from './useAppointment'
 
 export const PAYMENT_KEYS = {
   root: ['payments'] as const,
@@ -23,7 +24,7 @@ const _useCreatePayment = () => {
       })
       return response?.payment
     },
-    onSuccess: (payment, { onSuccess }) => {
+    onSuccess: (payment, { onSuccess, paymentData }) => {
       onSuccess?.()
 
       toast.add({
@@ -33,6 +34,12 @@ const _useCreatePayment = () => {
       })
 
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.root })
+
+      const sessionId = paymentData.sessionItems?.[0]?.treatmentSessionId
+      if (sessionId) {
+        queryCache.invalidateQueries({ key: PAYMENT_KEYS.sessionPayments(sessionId) })
+        queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+      }
     },
     onError: (error: any) => {
       toast.add({
