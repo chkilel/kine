@@ -48,7 +48,9 @@
   const isObservationsEditable = computed(() => sessionStatus.value === 'in_progress')
   const isNextStepsEditable = computed(() => sessionStatus.value === 'finished')
   const sessionInProgress = computed(() => sessionStatus.value === 'in_progress')
-  const shouldShowEVACards = computed(() => sessionInProgress.value || !!appointment.treatmentSession?.painLevelAfter)
+  const shouldShowEVACards = computed(
+    () => sessionInProgress.value || appointment.treatmentSession?.painLevelAfter != null
+  )
 
   // --- Watchers ---
 
@@ -121,8 +123,7 @@
 
 <template>
   <div class="flex flex-col gap-4 lg:col-span-6">
-    <TreatmentSessionPrice :appointment="appointment" />
-
+    <!-- <TreatmentSessionPrice :appointment="appointment" /> -->
     <div v-if="shouldShowEVACards" class="grid grid-cols-2 gap-4">
       <UCard>
         <div class="flex items-center gap-3">

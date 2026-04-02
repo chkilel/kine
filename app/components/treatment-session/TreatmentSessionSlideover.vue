@@ -220,8 +220,12 @@
           />
         </div>
 
-        <!-- Right Sidebar - Timer & History -->
+        <!-- Right Sidebar - Timer, payment & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
+          <!-- Session Timing Information Card -->
+          <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
+
+          <!-- Payment and summary cards -->
           <template v-if="appointment?.treatmentSession">
             <PaymentSummaryCard
               v-if="showPaymentSummaryCard"
@@ -248,9 +252,6 @@
 
           <!-- Timer Card - Now uses treatment session -->
           <!-- <TreatmentSessionTimer v-if="appointment" :appointment="appointment" @close="emit('close')" /> -->
-
-          <!-- Session Timing Information Card -->
-          <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
 
           <!-- Previous Appointments Card -->
           <UCard>

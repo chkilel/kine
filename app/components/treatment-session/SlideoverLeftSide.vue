@@ -95,103 +95,89 @@
         </UAlert>
       </div>
 
-      <div v-if="hasPatientAlerts">
-        <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Alertes Médicales</p>
-
-        <div class="space-y-3">
-          <UAlert
-            v-if="patient?.allergies?.length"
-            title="Allergie"
-            :description="patient.allergies.join(', ')"
-            icon="i-hugeicons-alert-01"
-            color="error"
-            variant="subtle"
+      <UCard
+        v-if="hasPatientAlerts"
+        :ui="{
+          root: 'divide-transparent rounded-md',
+          body: 'p-0 sm:p-0'
+        }"
+      >
+        <UCollapsible :default-open="false">
+          <UButton
+            color="primary"
+            variant="ghost"
+            class="group p-4 sm:px-6 sm:py-4"
             :ui="{
-              title: 'text-xs leading-snug tracking-wide font-bold uppercase text-error-700',
-              description: 'text-sm',
-              icon: 'size-6'
+              base: 'hover:rounded-b-none',
+              trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
             }"
-          />
+            trailing-icon="i-lucide-chevron-down"
+            block
+          >
+            <h3 class="text-default text-sm font-bold">Alertes Médicales</h3>
+          </UButton>
 
-          <UAlert
-            v-if="patient?.medicalConditions?.length"
-            title="Antécédents médicaux"
-            :description="patient.medicalConditions.join(', ')"
-            icon="i-hugeicons-medical-file"
-            color="warning"
-            variant="subtle"
-            :ui="{
-              title: 'text-xs leading-snug tracking-wide font-semibold uppercase text-warning-600',
-              description: 'text-sm',
-              icon: 'size-6'
-            }"
-          />
+          <template #content>
+            <div class="border-default space-y-3 border-t p-4 sm:p-6">
+              <UAlert
+                v-if="patient?.allergies?.length"
+                title="Allergie"
+                :description="patient.allergies.join(', ')"
+                icon="i-hugeicons-alert-01"
+                color="error"
+                variant="subtle"
+                :ui="{
+                  title: 'text-xs leading-snug tracking-wide font-bold uppercase text-error-700',
+                  description: 'text-sm',
+                  icon: 'size-6'
+                }"
+              />
 
-          <UAlert
-            v-if="patient?.surgeries?.length"
-            title="Chirurgies"
-            :description="patient.surgeries.join(', ')"
-            icon="i-hugeicons-hospital-02"
-            color="info"
-            variant="subtle"
-            :ui="{
-              title: 'text-xs leading-snug tracking-wide font-bold uppercase text-info-800 dark:text-info-300',
-              description: 'text-sm',
-              icon: 'size-6'
-            }"
-          />
+              <UAlert
+                v-if="patient?.medicalConditions?.length"
+                title="Antécédents médicaux"
+                :description="patient.medicalConditions.join(', ')"
+                icon="i-hugeicons-medical-file"
+                color="warning"
+                variant="subtle"
+                :ui="{
+                  title: 'text-xs leading-snug tracking-wide font-semibold uppercase text-warning-600',
+                  description: 'text-sm',
+                  icon: 'size-6'
+                }"
+              />
 
-          <UAlert
-            v-if="patient?.medications?.length"
-            title="Médicaments"
-            :description="patient.medications.join(', ')"
-            icon="i-hugeicons-give-pill"
-            color="neutral"
-            variant="subtle"
-            :ui="{
-              title: 'text-xs leading-snug tracking-wide font-bold uppercase',
-              description: 'text-sm',
-              icon: 'size-6'
-            }"
-          />
+              <UAlert
+                v-if="patient?.surgeries?.length"
+                title="Chirurgies"
+                :description="patient.surgeries.join(', ')"
+                icon="i-hugeicons-hospital-02"
+                color="info"
+                variant="subtle"
+                :ui="{
+                  title: 'text-xs leading-snug tracking-wide font-bold uppercase text-info-800 dark:text-info-300',
+                  description: 'text-sm',
+                  icon: 'size-6'
+                }"
+              />
 
-          <!-- <div class="border-warning divide-muted divide-y overflow-hidden rounded-lg border">
-            <div v-if="patient?.allergies?.length" class="flex items-start gap-3 p-3">
-              <UIcon name="i-hugeicons-alert-01" class="text-error mt-0.5 shrink-0 text-lg" />
-              <div class="flex flex-col gap-2">
-                <span class="text-error-600 text-xs leading-none font-bold uppercase">Allergie</span>
-                <p class="text-default text-sm leading-tight">{{ patient.allergies.join(', ') }}</p>
-              </div>
+              <UAlert
+                v-if="patient?.medications?.length"
+                title="Médicaments"
+                :description="patient.medications.join(', ')"
+                icon="i-hugeicons-give-pill"
+                color="neutral"
+                variant="subtle"
+                :ui="{
+                  title: 'text-xs leading-snug tracking-wide font-bold uppercase',
+                  description: 'text-sm',
+                  icon: 'size-6'
+                }"
+              />
             </div>
-
-            <div v-if="patient?.medicalConditions?.length" class="flex items-start gap-3 p-3">
-              <UIcon name="i-hugeicons-medical-file" class="text-warning-600 mt-0.5 shrink-0 text-lg" />
-              <div class="flex flex-col gap-2">
-                <span class="text-warning-600 text-xs leading-none font-bold uppercase">Antécédents</span>
-                <p class="text-default text-sm leading-tight">
-                  {{ patient.medicalConditions.join(', ') }}
-                </p>
-              </div>
-            </div>
-
-            <div v-if="patient?.surgeries?.length" class="flex items-start gap-3 p-3">
-              <UIcon name="i-hugeicons-hospital-02" class="text-info mt-0.5 shrink-0 text-lg" />
-              <div class="flex flex-col gap-2">
-                <span class="text-info-600 text-xs leading-none font-bold uppercase">Chirurgie</span>
-                <p class="text-default text-sm leading-tight">{{ patient.surgeries.join(', ') }}</p>
-              </div>
-            </div>
-
-            <div v-if="patient?.medications?.length" class="flex items-start gap-3 p-3">
-              <UIcon name="i-hugeicons-give-pill" class="text-muted mt-0.5 shrink-0 text-lg" />
-              <div class="flex flex-col gap-2">
-                <span class="text-muted text-xs leading-none font-bold uppercase">Médicament</span>
-                <p class="text-default text-sm leading-tight">{{ patient.medications.join(', ') }}</p>
-              </div>
-            </div>
-          </div> -->
-        </div>
-      </div>
+          </template>
+        </UCollapsible>
+      </UCard>
     </div>
   </aside>
 </template>
