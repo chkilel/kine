@@ -82,7 +82,7 @@ export const PAYMENT_TYPE_CONFIG = {
     bannerMessage: 'Cette avance sera disponible pour les futures séances.'
   },
   credit_usage: {
-    label: 'Utiliser solde',
+    label: 'Utilisation du solde',
     description: "Utiliser l'avance existante",
     submitLabel: "Utiliser l'avance",
     bannerMessage: ''
