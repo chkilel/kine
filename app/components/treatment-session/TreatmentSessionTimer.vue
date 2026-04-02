@@ -220,19 +220,17 @@
       >
         <div class="flex flex-col items-center">
           <span class="text-muted text-[10px] font-semibold tracking-wider uppercase">Écoulé</span>
-          <div>
-            <span class="text-default text-sm font-bold slashed-zero tabular-nums">
-              {{ formatSecondsAsHHMMSS(timerSeconds) }}
-              <span v-if="isPaused && timeSincePause" class="text-muted ml-1 text-[10px] font-medium">• En pause</span>
-            </span>
+          <div class="text-default text-sm font-bold slashed-zero tabular-nums">
+            {{ formatSecondsAsHHMMSS(timerSeconds) }}
+            <span v-if="isPaused && timeSincePause" class="text-muted ml-1 text-[10px] font-medium">• En pause</span>
           </div>
         </div>
         <div class="bg-border h-8 w-px" />
         <div class="flex min-w-15 flex-col items-center">
           <span class="text-primary text-[10px] font-semibold tracking-wider uppercase">Restant</span>
-          <span class="text-primary text-sm font-bold slashed-zero tabular-nums">
+          <div class="text-primary text-sm font-bold slashed-zero tabular-nums">
             {{ remainingLabel || '00:00' }}
-          </span>
+          </div>
         </div>
         <UButton
           :icon="isPaused ? 'i-hugeicons-play' : 'i-hugeicons-pause'"
