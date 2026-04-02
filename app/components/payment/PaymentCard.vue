@@ -7,10 +7,6 @@
     appointment: AppointmentWithSession
   }>()
 
-  const emit = defineEmits<{
-    paymentCreated: []
-  }>()
-
   // ─── Composables ─────────────────────────────────────────────
   const { data: patientCreditBalance } = usePatientBalance(() => props.treatmentSession.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
@@ -110,7 +106,6 @@
     () => priceInputRaw.value !== null && !isNaN(priceInputRaw.value) && priceInputRaw.value > 0
   )
 
-  // ✅ single reusable updater
   function updateSessionPrice(priceCent: number) {
     updatePriceMutation({
       sessionId: props.treatmentSession.id,
@@ -194,7 +189,6 @@
     createPayment({
       paymentData,
       onSuccess: () => {
-        emit('paymentCreated')
         formState.amount = defaultAmount.value
         formState.notes = ''
       }
@@ -209,7 +203,6 @@
       footer: 'bg-muted'
     }"
   >
-    <!-- ─── Header: title + inline price editor ─────────────────────────────── -->
     <template #header>
       <header class="flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -226,12 +219,7 @@
           </div>
         </div>
 
-        <!-- Price display & edit popover -->
         <UPopover v-model:open="isEditingPrice" :content="{ align: 'end', side: 'bottom', sideOffset: 8 }">
-          <!--
-            Click bound only to the icon to avoid a double-toggle when the
-            popover's own trigger and handleStartPriceEdit both fire.
-          -->
           <div class="group flex items-center gap-2">
             <div class="text-right">
               <span class="text-primary text-lg font-black">
@@ -274,7 +262,6 @@
                 />
               </UFieldGroup>
 
-              <!-- Reset to inherited price hint -->
               <div v-if="inheritedPrice !== null" class="mt-2">
                 <p class="text-muted text-xs">
                   Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
@@ -295,13 +282,10 @@
       </header>
     </template>
 
-    <!-- ─── Payment form body ────────────────────────────────────────────────── -->
     <UForm ref="paymentForm" :state="formState" :schema="paymentFormSchema" @submit="onSubmit">
       <div class="space-y-6">
-        <!-- Info banner -->
         <UAlert v-if="showErrorBanner" size="sm" color="neutral" variant="subtle" :description="showErrorBanner" />
 
-        <!-- Insufficient credit warning -->
         <UAlert
           v-if="insufficientCredit"
           size="sm"
@@ -312,12 +296,10 @@
           description="Le solde d'avance du patient est insuffisant pour couvrir le coût de la séance."
         />
 
-        <!-- Payment method grid -->
         <div class="space-y-3">
           <label class="text-muted text-[10px] font-bold tracking-wider uppercase">Mode de règlement</label>
 
           <div class="grid grid-cols-5 gap-1">
-            <!-- Standard payment methods -->
             <button
               v-for="method in methodButtons"
               :key="method.value"
@@ -338,7 +320,6 @@
             </button>
           </div>
 
-          <!-- Credit balance hint — always visible when credit exists, improving discoverability -->
           <p v-if="showCreditBalanceHint" class="text-muted text-xs">
             Solde disponible : {{ centsToCurrency(creditBalance).toFixed(2) }} DH
             <UButton
@@ -352,19 +333,6 @@
           </p>
         </div>
 
-        <!-- TODO Amount field — usefull when partial payment patient + therapist insurance convention -->
-        <!-- <UFormField name="amount" label="Montant (DH)">
-          <UInputNumber
-            v-model="formState.amount"
-            :step="0.5"
-            :min="0"
-            :disabled="isUsingCredit"
-            class="w-full"
-            size="md"
-          />
-        </UFormField> -->
-
-        <!-- Transaction notes -->
         <UFormField name="notes" label="Note transaction">
           <UTextarea
             v-model="formState.notes"
@@ -377,7 +345,6 @@
       </div>
     </UForm>
 
-    <!-- ─── Footer: patient balance & submit ─────────────────────────────────── -->
     <template #footer>
       <footer class="flex flex-col gap-4">
         <div class="text-muted flex items-center justify-between text-[11px] font-bold">

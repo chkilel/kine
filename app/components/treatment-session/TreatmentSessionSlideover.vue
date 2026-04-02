@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalEVA, LazyAppReceiptModal } from '#components'
+  import { LazyAppModalEVA } from '#components'
 
   const props = defineProps<{
     patientId: string
@@ -11,7 +11,6 @@
   // ─── Composable ─────────────────────────────────────────────────────────────
   const overlay = useOverlay()
   const evaModal = overlay.create(LazyAppModalEVA)
-  const receiptModal = overlay.create(LazyAppReceiptModal)
 
   const { mutateAsync: createTreatmentSessionAsync, isLoading: isCreating } = useCreateTreatmentSession()
   const { mutateAsync: startSessionAsync, isLoading: isSessionStarting } = useStartTreatmentSession()
@@ -24,8 +23,6 @@
     isPending: appointmentLoading,
     refetch: refetchAppointment
   } = useAppointment(() => props.appointmentId)
-
-  const { data: sessionPayments } = useTreatmentSessionPayments(() => appointment.value?.treatmentSession?.id ?? '')
 
   // ─── State ─────────────────────────────────────────────────────────────────
   const isTimerPaused = ref(false)
@@ -44,15 +41,9 @@
     return appointment.value.treatmentSession?.status === 'finished'
   })
 
-  const isSessionPaid = computed(() => {
+  const showPaymentSummaryCard = computed(() => {
     if (!appointment.value?.treatmentSession) return false
     return appointment.value.treatmentSession?.status === 'completed'
-  })
-
-  const latestPayment = computed(() => {
-    const payments = sessionPayments.value as Payment[] | undefined
-    if (!payments?.length) return null
-    return payments[payments.length - 1]
   })
 
   const sessionNotStarted = computed(
@@ -128,8 +119,7 @@
         actualStartTime: getCurrentTimeHHMMSS(),
         painLevelBefore: evaValue
       })
-
-      await refetchAppointment()
+      // Cache invalidation in mutation onSuccess will trigger automatic refetch
     } catch (error) {
       const parsedError = parseError(error, 'Impossible de démarrer la séance')
       useToast().add({
@@ -138,19 +128,6 @@
         color: 'error'
       })
     }
-  }
-
-  function handleViewReceipt() {
-    if (!appointment.value?.treatmentSession) return
-
-    const session = appointment.value.treatmentSession
-    if (!session || session.status !== 'completed') return
-
-    receiptModal.open({ sessionId: session.id })
-  }
-
-  async function handlePaymentCreated() {
-    await refetchAppointment()
   }
 </script>
 
@@ -236,62 +213,25 @@
         <div class="flex h-full flex-col gap-4 lg:col-span-6">
           <TreatmentSessionSlideoverCenter v-if="appointment" :appointment="appointment" />
 
-          <!-- Payment transaction Card (centered at bottom) -->
+          <!-- FIXME just for testing deposit/credit_usage - Payment transaction Card (centered at bottom) -->
           <PaymentTransactionCard
             v-if="appointment?.treatmentSession && showPaymentCard"
             :treatment-session="appointment.treatmentSession"
-            @payment-created="handlePaymentCreated"
           />
         </div>
 
         <!-- Right Sidebar - Timer & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
           <template v-if="appointment?.treatmentSession">
-            <template v-if="isSessionPaid && latestPayment">
-              <div
-                class="bg-success-5 dark:bg-success-950/20 text-success flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold"
-              >
-                <UIcon name="i-hugeicons-checkmark-circle-01" />
-                <span>Paiement enregistré</span>
-              </div>
-              <div class="mt-3 space-y-2 text-sm">
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">Montant</span>
-                  <span class="font-bold">{{ centsToCurrency(latestPayment.amountCents) }} Dh</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">Mode</span>
-                  <span class="font-medium">
-                    {{ latestPayment.method ? getPaymentMethodLabel(latestPayment.method) : 'Solde patient' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">Reçu</span>
-                  <span class="text-xs font-medium">{{ latestPayment.receiptNumber }}</span>
-                </div>
-              </div>
-              <UButton
-                size="sm"
-                color="neutral"
-                variant="outline"
-                icon="i-hugeicons-file-01"
-                class="mt-3"
-                @click="handleViewReceipt"
-              >
-                Voir le reçu
-              </UButton>
-            </template>
-
-            <!-- Payment Card (centered at bottom) -->
-            <PaymentCard
-              v-if="appointment?.treatmentSession && showPaymentCard"
+            <PaymentSummaryCard
+              v-if="showPaymentSummaryCard"
               :treatment-session="appointment.treatmentSession"
               :appointment
-              @payment-created="handlePaymentCreated"
             />
+            <PaymentCard v-else-if="showPaymentCard" :treatment-session="appointment.treatmentSession" :appointment />
           </template>
 
-          <!-- Start Session Button - Only show when no session exists or when unpaid -->
+          <!-- Start Session Button - Only show when no session exists or when unpaid / Old UI -->
           <!-- <UButton
             v-if="sessionNotStarted"
             size="xl"
