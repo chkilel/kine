@@ -1,145 +1,285 @@
 <script setup lang="ts">
-  // BillingTab is currently static with mock data
+  // ─── Composables ─────────────────────────────────────────────
+  const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance, openCancelPayment } =
+    useBillingSlideover()
+
+  // ─── State ──────────────────────────────────────────────────
+  const selectedPlan = ref('all')
+  const selectedStatus = ref('all')
+
+  // ─── UI helpers ──────────────────────────────────────────────
+  const planOptions = [
+    { label: 'Toutes les séances', value: 'all' },
+    { label: 'Kiné du dos', value: 'plan-1' },
+    { label: 'Rééducation épaule', value: 'plan-2' }
+  ]
+
+  const statusOptions = [
+    { label: 'Tous', value: 'all' },
+    { label: 'Non facturé', value: 'unpaid' },
+    { label: 'Partiellement', value: 'partial' },
+    { label: 'Payé', value: 'paid' }
+  ]
+
+  // ─── Types ──────────────────────────────────────────────────
+  type MockSession = {
+    id: string
+    date: string
+    planName: string
+    planId: string
+    location: string
+    amountCents: number
+    paidCents: number
+    status: 'unpaid' | 'partial' | 'paid'
+  }
+
+  type MockPaymentHistoryItem = {
+    id: string
+    method: PaymentMethod | null
+    amountCents: number
+    date: string
+    receiptNumber: string
+    sessionRef: string
+    type: PaymentType
+    isVoided: boolean
+  }
+
+  // ─── Mock data ──────────────────────────────────────────────
+  const mockSessions: MockSession[] = [
+    {
+      id: 's1',
+      date: '12 Oct 2023',
+      planName: 'Session de Kinésithérapie #12',
+      planId: 'plan-1',
+      location: 'Rééducation lombaire intensif',
+      amountCents: 20000,
+      paidCents: 0,
+      status: 'unpaid'
+    },
+    {
+      id: 's2',
+      date: '08 Oct 2023',
+      planName: 'Évaluation de la mobilité',
+      planId: 'plan-1',
+      location: 'Rééducation lombaire intensif',
+      amountCents: 20000,
+      paidCents: 10000,
+      status: 'partial'
+    },
+    {
+      id: 's3',
+      date: '05 Oct 2023',
+      planName: 'Massage thérapeutique',
+      planId: 'plan-1',
+      location: 'Rééducation lombaire intensif',
+      amountCents: 20000,
+      paidCents: 20000,
+      status: 'paid'
+    },
+    {
+      id: 's4',
+      date: '03 Oct 2023',
+      planName: 'Renforcement musculaire',
+      planId: 'plan-1',
+      location: 'Rééducation lombaire intensif',
+      amountCents: 20000,
+      paidCents: 0,
+      status: 'unpaid'
+    },
+    {
+      id: 's5',
+      date: '28 Sept 2023',
+      planName: 'Post-opératoire Épaule #5',
+      planId: 'plan-2',
+      location: 'Post-opératoire Épaule',
+      amountCents: 25000,
+      paidCents: 25000,
+      status: 'paid'
+    }
+  ]
+
+  const mockPaymentHistory: MockPaymentHistoryItem[] = [
+    {
+      id: 'p1',
+      method: 'cash',
+      amountCents: 50000,
+      date: "Aujourd'hui, 09:45",
+      receiptNumber: 'REC-0042',
+      sessionRef: 'Sess. #10, #11',
+      type: 'payment',
+      isVoided: false
+    },
+    {
+      id: 'p2',
+      method: 'bank-card',
+      amountCents: 30000,
+      date: '05 Oct 2023',
+      receiptNumber: 'REC-0038',
+      sessionRef: 'Avance patient',
+      type: 'deposit',
+      isVoided: false
+    },
+    {
+      id: 'p3',
+      method: 'bank-transfer',
+      amountCents: 15000,
+      date: '01 Oct 2023',
+      receiptNumber: 'REC-0037',
+      sessionRef: 'Sess. #7',
+      type: 'payment',
+      isVoided: false
+    }
+  ]
+
+  // ─── Computed ───────────────────────────────────────────────
+  const filteredSessions = computed(() =>
+    mockSessions.filter((s) => {
+      if (selectedPlan.value !== 'all' && s.planId !== selectedPlan.value) return false
+      if (selectedStatus.value !== 'all' && s.status !== selectedStatus.value) return false
+      return true
+    })
+  )
+
+  const recentPayments = computed(() => mockPaymentHistory.filter((p) => !p.isVoided))
+
+  const sessionCounts = computed(() => ({
+    total: mockSessions.length,
+    unpaid: mockSessions.filter((s) => s.status === 'unpaid').length,
+    partial: mockSessions.filter((s) => s.status === 'partial').length,
+    paid: mockSessions.filter((s) => s.status === 'paid').length
+  }))
+
+  // ─── Actions ─────────────────────────────────────────────────
+  function handleRecordPayment(sessionId: string) {
+    openRecordPayment([sessionId])
+  }
+
+  function handleOpenRecordPayment() {
+    const unpaidIds = mockSessions.filter((s) => s.status === 'unpaid' || s.status === 'partial').map((s) => s.id)
+    openRecordPayment(unpaidIds)
+  }
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <div class="flex flex-col gap-6 lg:col-span-2">
-      <!-- Recent Invoices -->
-      <AppCard title="Factures récentes" class="overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
-            <thead class="bg-muted text-toned text-xs uppercase">
-              <tr>
-                <th scope="col" class="px-6 py-3">Date</th>
-                <th scope="col" class="px-6 py-3">Montant</th>
-                <th scope="col" class="px-6 py-3">Statut</th>
-                <th scope="col" class="px-6 py-3"><span class="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="bg-default hover:bg-muted dark:border-muted border-b">
-                <td class="text-default px-6 py-4 font-medium whitespace-nowrap">08 Oct. 2024</td>
-                <td class="text-toned px-6 py-4">50,00 €</td>
-                <td class="px-6 py-4">
-                  <UBadge color="success" variant="subtle" size="xs">Payé</UBadge>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <UButton variant="ghost" color="primary" size="sm" class="inline-flex items-center gap-1.5">
-                    <UIcon name="i-lucide-download" />
-                    <span>Télécharger</span>
-                  </UButton>
-                </td>
-              </tr>
-              <tr class="bg-default hover:bg-muted dark:border-muted border-b">
-                <td class="text-default px-6 py-4 font-medium whitespace-nowrap">01 Oct. 2024</td>
-                <td class="text-toned px-6 py-4">50,00 €</td>
-                <td class="px-6 py-4">
-                  <UBadge color="warning" variant="subtle" size="xs">En attente</UBadge>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <UButton variant="ghost" color="primary" size="sm" class="inline-flex items-center gap-1.5">
-                    <UIcon name="i-lucide-download" />
-                    <span>Télécharger</span>
-                  </UButton>
-                </td>
-              </tr>
-              <tr class="bg-default hover:bg-muted">
-                <td class="text-default px-6 py-4 font-medium whitespace-nowrap">17 Sept. 2024</td>
-                <td class="text-toned px-6 py-4">75,00 €</td>
-                <td class="px-6 py-4">
-                  <UBadge color="error" variant="subtle" size="xs">Impayé</UBadge>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <UButton variant="ghost" color="primary" size="sm" class="inline-flex items-center gap-1.5">
-                    <UIcon name="i-lucide-receipt" />
-                    <span>Générer</span>
-                  </UButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+  <div class="space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-4">
+        <USelect
+          v-model="selectedPlan"
+          :items="planOptions"
+          value-key="value"
+          label-key="label"
+          size="md"
+          placeholder="Plan de traitement"
+          class="w-52"
+        />
+        <div class="bg-muted flex gap-0.5 rounded-xl p-1">
+          <UButton
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
+            :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
+            size="xs"
+            :label="opt.label"
+            class="rounded-lg"
+            @click="selectedStatus = opt.value"
+          />
         </div>
-      </AppCard>
-
-      <!-- Payments Received -->
-      <AppCard variant="outline">
-        <template #header>
-          <h2 class="text-default text-lg font-bold">Paiements reçus</h2>
-        </template>
-
-        <ul class="space-y-3">
-          <li class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <div class="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-full">
-                <UIcon name="i-lucide-credit-card" class="text-lg" />
-              </div>
-              <div>
-                <p class="text-default font-medium">Carte Bancaire</p>
-                <p class="text-muted">08 Oct. 2024</p>
-              </div>
-            </div>
-            <span class="text-default font-semibold">50,00 €</span>
-          </li>
-          <li class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <div class="bg-success/10 text-success flex size-8 items-center justify-center rounded-full">
-                <UIcon name="i-lucide-banknote" class="text-lg" />
-              </div>
-              <div>
-                <p class="text-default font-medium">Espèces</p>
-                <p class="text-muted">24 Sept. 2024</p>
-              </div>
-            </div>
-            <span class="text-default font-semibold">50,00 €</span>
-          </li>
-          <li class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <div class="bg-info/10 text-info flex size-8 items-center justify-center rounded-full">
-                <UIcon name="i-lucide-hospital" class="text-lg" />
-              </div>
-              <div>
-                <p class="text-default font-medium">Tiers payant (Mutuelle ABC)</p>
-                <p class="text-muted">01 Oct. 2024</p>
-              </div>
-            </div>
-            <span class="text-default font-semibold">En attente de remboursement</span>
-          </li>
-        </ul>
-      </AppCard>
+      </div>
+      <UButton
+        label="Enregistrer un paiement"
+        icon="i-hugeicons-invoice-01"
+        color="primary"
+        size="md"
+        @click="handleOpenRecordPayment"
+      />
     </div>
 
-    <!-- Sidebar -->
-    <div class="flex flex-col gap-6 lg:col-span-1">
-      <AppCard variant="outline">
-        <template #header>
-          <h2 class="text-default text-lg font-bold">À facturer / En attente</h2>
-        </template>
-
-        <div class="space-y-4">
-          <div class="bg-error/10 flex items-center justify-between rounded-lg p-3">
-            <div>
-              <p class="text-error font-semibold">2 séances non facturées</p>
-              <p class="text-error/70 text-sm">Montant total: 125,00 €</p>
-            </div>
-            <UIcon name="i-lucide-alert-circle" class="text-error" />
+    <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+      <div class="space-y-10 lg:col-span-2">
+        <section>
+          <div class="mb-6 flex items-center justify-between">
+            <h3 class="flex items-center gap-3 text-xl font-bold">
+              <span class="bg-primary h-8 w-2 rounded-full" />
+              Séances à facturer
+            </h3>
+            <span class="text-muted text-sm font-medium">
+              {{ sessionCounts.unpaid + sessionCounts.partial }} en attente
+            </span>
           </div>
-          <div class="bg-warning/10 flex items-center justify-between rounded-lg p-3">
-            <div>
-              <p class="text-warning font-semibold">1 paiement en attente</p>
-              <p class="text-warning/70 text-sm">Tiers payant: 50,00 €</p>
-            </div>
-            <UIcon name="i-lucide-clock" class="text-warning" />
+          <div class="space-y-4">
+            <PaymentBillingSessionCard
+              v-for="session in filteredSessions"
+              :key="session.id"
+              :session="session"
+              @record-payment="handleRecordPayment"
+            />
+            <p v-if="filteredSessions.length === 0" class="text-muted py-4 text-center text-sm">
+              Aucune séance trouvée
+            </p>
           </div>
-        </div>
+        </section>
 
-        <div class="border-default border-t pt-4">
-          <UButton color="primary" size="lg" class="flex w-full items-center justify-center gap-2">
-            <UIcon name="i-lucide-plus-circle" />
-            <span>Créer une nouvelle facture</span>
-          </UButton>
-        </div>
-      </AppCard>
+        <section>
+          <div class="mb-6 flex items-center justify-between">
+            <h3 class="text-xl font-bold">Historique des paiements</h3>
+            <UButton variant="link" size="sm" label="Voir tout l'historique" @click="openPaymentHistory()" />
+          </div>
+          <AppCard variant="outline">
+            <div class="divide-default divide-y">
+              <div
+                v-for="item in recentPayments"
+                :key="item.id"
+                class="hover:bg-muted/50 flex items-center justify-between p-4 transition-colors"
+              >
+                <div class="flex flex-1 items-center gap-4">
+                  <AppIconBox
+                    :name="item.method ? getPaymentMethodIcon(item.method) : 'i-hugeicons-wallet-02'"
+                    size="sm"
+                    :color="item.method ? (getPaymentMethodColor(item.method) as UIColor) : 'primary'"
+                    variant="subtle"
+                  />
+                  <div class="grid flex-1 grid-cols-2 items-center gap-4 lg:grid-cols-4">
+                    <div>
+                      <p class="text-xs font-bold uppercase">
+                        {{ item.method ? getPaymentMethodLabel(item.method) : 'Solde patient' }}
+                      </p>
+                      <p class="text-muted text-xs font-medium">{{ item.receiptNumber }}</p>
+                    </div>
+                    <div>
+                      <p class="text-muted text-xs">Montant</p>
+                      <p class="text-success text-sm font-bold">+{{ formatCurrency(item.amountCents) }}</p>
+                    </div>
+                    <div class="hidden lg:block">
+                      <p class="text-muted text-xs">Référence</p>
+                      <p class="text-default truncate text-sm font-medium">{{ item.sessionRef || '-' }}</p>
+                    </div>
+                    <div class="hidden lg:block">
+                      <p class="text-muted text-xs">Date</p>
+                      <p class="text-default text-sm font-medium">{{ item.date }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="ml-4 flex items-center gap-2">
+                  <UButton variant="ghost" size="xs" icon="i-hugeicons-download-01" color="neutral" />
+                  <UButton
+                    variant="ghost"
+                    size="xs"
+                    icon="i-hugeicons-cancel-01"
+                    color="error"
+                    @click="openCancelPayment()"
+                  />
+                </div>
+              </div>
+            </div>
+          </AppCard>
+        </section>
+      </div>
+
+      <aside class="space-y-6">
+        <PaymentBillingBalanceCard @add-deposit="openAddDeposit()" @refund-balance="openRefundBalance()" />
+        <PaymentBillingFinancialSummaryCard />
+      </aside>
     </div>
   </div>
 </template>
