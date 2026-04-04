@@ -25,7 +25,7 @@ export const payments = sqliteTable(
     currency: text().default('MAD'),
 
     type: text({ enum: PAYMENT_TYPES }).notNull(),
-    method: text({ enum: PAYMENT_METHODS }).notNull(),
+    method: text({ enum: PAYMENT_METHODS }),
 
     receiptNumber: text().unique(),
 

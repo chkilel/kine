@@ -21,7 +21,10 @@
     refresh: refreshReceipt
   } = usePaymentReceipt(() => payment.value?.id ?? '')
 
-  const paymentTypeLabel = computed(() => (payment.value ? getPaymentTypeLabel(payment.value.type) : ''))
+  const paymentTypeLabel = computed(() => {
+    if (!payment.value) return ''
+    return payment.value.type === 'credit_usage' ? 'Solde patient' : getPaymentTypeLabel(payment.value.type)
+  })
 
   // ─── Actions ───────────────────────────────────────────────────────────────────
   const handlePrint = () => {

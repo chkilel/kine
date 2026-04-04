@@ -1,4 +1,4 @@
-import { eq, and, sql, isNull } from 'drizzle-orm'
+import { eq, and, sql, isNull, inArray } from 'drizzle-orm'
 import { payments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -18,7 +18,12 @@ export default defineEventHandler(async (event) => {
       })
       .from(payments)
       .where(
-        and(eq(payments.patientId, patientId), eq(payments.organizationId, organizationId), isNull(payments.voidedAt))
+        and(
+          eq(payments.organizationId, organizationId),
+          eq(payments.patientId, patientId),
+          inArray(payments.type, ['deposit', 'credit_usage']),
+          isNull(payments.voidedAt)
+        )
       )
 
     const depositTotal = result[0]?.depositTotal || 0

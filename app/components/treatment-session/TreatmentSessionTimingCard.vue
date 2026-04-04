@@ -54,43 +54,97 @@
 </script>
 
 <template>
-  <UCard variant="outline" :ui="{ root: 'divide-none', header: 'pb-0!' }">
+  <UCard
+    variant="outline"
+    :ui="{
+      root: 'divide-default',
+      header: 'bg-primary/5 '
+    }"
+  >
     <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon name="i-hugeicons-timer-02" class="text-primary size-5" />
-        <p class="text-xs font-bold tracking-wider uppercase">Horaires de la séance</p>
-      </div>
+      <header class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <AppIconBox
+            name="i-hugeicons-timer-02"
+            size="xl"
+            color="primary"
+            variant="solid"
+            :ui="{ base: 'rounded-xl p-2' }"
+          />
+          <div>
+            <h2 class="text-sm font-black uppercase">Horaires</h2>
+            <p class="text-muted text-[11px] font-semibold">Séance du {{ timingInfo.appointmentDate }}</p>
+          </div>
+        </div>
+      </header>
     </template>
 
-    <div class="space-y-3">
-      <!-- Appointment Times -->
+    <div class="divide-default space-y-3 divide-y">
       <div>
-        <p class="text-muted mb-2 text-[10px] font-bold uppercase">Planifié</p>
-        <div class="text-default flex justify-between text-sm font-semibold">
-          <span>{{ timingInfo.appointmentDate }}</span>
-          <span class="tabular-nums">
-            {{ timingInfo.appointmentStartTime }} -
-            {{ timingInfo.appointmentEndTime }}
-          </span>
+        <p class="text-muted mb-2 text-[10px] font-bold tracking-wider uppercase">Planifié (Prévu)</p>
+        <div class="mb-3 grid grid-cols-2 gap-4">
+          <div class="flex items-baseline gap-1">
+            <p class="text-muted text-[11px]">Début</p>
+            <p class="text-sm font-semibold">{{ timingInfo.appointmentStartTime }}</p>
+          </div>
+          <div class="flex items-baseline gap-1 justify-self-end">
+            <p class="text-muted text-[11px]">Fin</p>
+            <p class="text-sm font-semibold">{{ timingInfo.appointmentEndTime }}</p>
+          </div>
+          <!-- <div class="text-right">
+            <p class="text-primary mb-1 text-xs font-medium">Durée</p>
+            <p class="text-primary text-sm font-bold">{{ timingInfo.plannedDurationMinutes }} min</p>
+          </div> -->
         </div>
       </div>
 
-      <!-- Actual Times (only if session started) -->
       <div v-if="timingInfo.actualStartTime">
-        <p class="text-muted mb-2 text-[10px] font-bold uppercase">Réel</p>
-        <div
-          class="border-primary/20 bg-primary/5 flex items-center justify-between rounded border p-2 text-sm font-semibold"
-        >
-          <span class="text-primary">Début: {{ timingInfo.actualStartTime }}</span>
-          <span v-if="timingInfo.actualEndTime" class="text-primary tabular-nums">
-            Fin: {{ timingInfo.actualEndTime }}
-          </span>
-          <span v-else class="text-muted text-xs">En cours...</span>
+        <p class="text-primary mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase">
+          Réel
+          <span v-if="!timingInfo.actualEndTime" class="bg-primary size-1.5 animate-pulse rounded-full"></span>
+        </p>
+        <div class="mb-3 grid grid-cols-2 gap-4">
+          <div class="flex items-baseline gap-1">
+            <p class="text-muted text-[11px]">Début</p>
+            <p class="text-sm font-semibold">{{ timingInfo.actualStartTime }}</p>
+          </div>
+          <div class="flex items-baseline gap-1 justify-self-end">
+            <p class="text-muted text-[11px]">Fin</p>
+            <p v-if="timingInfo.actualEndTime" class="text-sm font-semibold">{{ timingInfo.actualEndTime }}</p>
+            <p v-else class="text-primary text-sm font-medium italic">En cours...</p>
+          </div>
         </div>
       </div>
+      <div v-if="timingInfo.totalPausedMinutes || timingInfo.isPaused">
+        <p class="text-warning mb-2 text-[10px] font-bold tracking-wider uppercase">Pause</p>
+        <UAlert
+          color="warning"
+          variant="subtle"
+          icon="i-hugeicons-pause-circle"
+          :ui="{ description: 'text-xs font-bold' }"
+        >
+          <template #title>
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span v-if="timingInfo.totalPausedMinutes" class="text-default">
+                  Total: {{ timingInfo.totalPausedMinutes }} min
+                </span>
+                <span v-else class="text-default">Pause en cours</span>
+              </div>
+              <UIcon
+                v-if="timingInfo.isPaused"
+                name="i-hugeicons-loading-03"
+                class="text-warning size-4 animate-spin"
+              />
+            </div>
+          </template>
+          <template #description v-if="timingInfo.elapsedTimeSincePause">
+            {{ timingInfo.elapsedTimeSincePause }}
+          </template>
+        </UAlert>
+      </div>
 
-      <!-- Duration -->
-      <div class="border-default border-t pt-4">
+      <div>
         <p class="text-muted mb-4 text-[10px] font-bold tracking-wider uppercase">Durée de la séance</p>
         <div class="space-y-4">
           <div class="flex items-center justify-between">
@@ -133,34 +187,6 @@
             </UBadge>
           </div>
         </div>
-      </div>
-
-      <!-- Paused Time (only if applicable) -->
-      <div v-if="timingInfo.totalPausedMinutes || timingInfo.isPaused">
-        <p class="text-muted mb-2 text-[10px] font-bold uppercase">Pause</p>
-        <UAlert
-          color="warning"
-          variant="subtle"
-          icon="i-hugeicons-pause-circle"
-          :description="timingInfo.elapsedTimeSincePause ?? undefined"
-          :ui="{ description: 'text-xs font-bold' }"
-        >
-          <template #title>
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex flex-col">
-                <span v-if="timingInfo.totalPausedMinutes" class="text-default">
-                  Total: {{ timingInfo.totalPausedMinutes }} min
-                </span>
-                <span v-else class="text-default">Pause en cours</span>
-              </div>
-              <UIcon
-                v-if="timingInfo.isPaused"
-                name="i-hugeicons-loading-03"
-                class="text-warning size-4 animate-spin"
-              />
-            </div>
-          </template>
-        </UAlert>
       </div>
     </div>
   </UCard>

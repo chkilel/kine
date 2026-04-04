@@ -5,10 +5,30 @@ import type { PaymentDelay, PaymentMethod, PaymentType } from '../types/base.typ
 // =============================================================================
 
 export const PAYMENT_METHODS_CONFIG = {
-  cash: { label: 'Espèces', icon: 'i-hugeicons-money-01', color: 'success', variant: 'subtle' },
-  'bank-card': { label: 'Carte bancaire', icon: 'i-hugeicons-credit-card', color: 'primary', variant: 'subtle' },
-  check: { label: 'Chèque', icon: 'i-hugeicons-check-01', color: 'info', variant: 'subtle' },
-  'bank-transfer': { label: 'Virement', icon: 'i-hugeicons-bank-01', color: 'warning', variant: 'subtle' }
+  cash: {
+    label: 'Espèces',
+    icon: 'i-hugeicons-money-01',
+    color: 'success',
+    variant: 'subtle'
+  },
+  'bank-card': {
+    label: 'Carte bancaire',
+    icon: 'i-hugeicons-credit-card',
+    color: 'primary',
+    variant: 'subtle'
+  },
+  check: {
+    label: 'Chèque',
+    icon: 'i-hugeicons-pay-by-check',
+    color: 'info',
+    variant: 'subtle'
+  },
+  'bank-transfer': {
+    label: 'Virement',
+    icon: 'i-hugeicons-bank',
+    color: 'warning',
+    variant: 'subtle'
+  }
 } as const
 
 export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG).map(([key, item]) => ({
@@ -62,7 +82,7 @@ export const PAYMENT_TYPE_CONFIG = {
     bannerMessage: 'Cette avance sera disponible pour les futures séances.'
   },
   credit_usage: {
-    label: 'Utiliser solde',
+    label: 'Utilisation du solde',
     description: "Utiliser l'avance existante",
     submitLabel: "Utiliser l'avance",
     bannerMessage: ''

@@ -63,8 +63,6 @@ export default defineEventHandler(async (event) => {
       .leftJoin(treatmentSessions, eq(paymentSessionItems.treatmentSessionId, treatmentSessions.id))
       .where(eq(paymentSessionItems.paymentId, paymentId))
 
-    const getPaymentMethodLabel = (method: string) =>
-      PAYMENT_METHOD_OPTIONS.find((m) => m.value === method)?.label || method
     const amountDhs = centsToCurrency(payment.amountCents)
 
     const html = `
@@ -185,8 +183,8 @@ export default defineEventHandler(async (event) => {
   <hr class="separator">
 
   <div class="payment-row">
-    <span class="label">${PAYMENT_TYPE_CONFIG[payment.type as keyof typeof PAYMENT_TYPE_CONFIG]?.label || payment.type}</span>
-    <span class="bold">${getPaymentMethodLabel(payment.method)}</span>
+    <span class="label">${getPaymentTypeLabel(payment.type)}</span>
+    <span class="bold">${payment.method ? getPaymentMethodLabel(payment.method) : 'Avance patient'}</span>
   </div>
 
   <div class="payment-row">

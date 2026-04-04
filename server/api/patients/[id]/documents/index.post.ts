@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { userId, organizationId } = await requireAuth(event)
+    const { userId, organizationId } = await requireAuthWithOrg(event)
 
     const body = await readValidatedBody(event, patientDocumentCreateSchema.parse)
 
