@@ -6,12 +6,12 @@
   const { openCancelPayment } = useBillingSlideover()
 
   // ─── Types ──────────────────────────────────────────────────
-  type FilterTab = 'all' | 'payment' | 'deposit' | 'refund' | 'voided'
+  type FilterTab = 'all' | 'session_payment' | 'deposit_add' | 'session_refund' | 'deposit_refund' | 'voided'
 
   type MockPaymentItem = {
     id: string
     type: PaymentType
-    method: PaymentMethod | null
+    method: PaymentMethod
     amountCents: number
     date: string
     receiptNumber: string
@@ -26,9 +26,10 @@
   // ─── UI helpers ──────────────────────────────────────────────
   const filterTabs = [
     { value: 'all' as FilterTab, label: 'Tous' },
-    { value: 'payment' as FilterTab, label: 'Paiements' },
-    { value: 'deposit' as FilterTab, label: 'Avances' },
-    { value: 'refund' as FilterTab, label: 'Remboursements' },
+    { value: 'session_payment' as FilterTab, label: 'Paiements' },
+    { value: 'deposit_add' as FilterTab, label: 'Avances' },
+    { value: 'session_refund' as FilterTab, label: 'Remb. séances' },
+    { value: 'deposit_refund' as FilterTab, label: 'Remb. avances' },
     { value: 'voided' as FilterTab, label: 'Annulés' }
   ]
 
@@ -36,7 +37,7 @@
   const mockPayments: MockPaymentItem[] = [
     {
       id: 'p1',
-      type: 'payment',
+      type: 'session_payment',
       method: 'cash',
       amountCents: 9500,
       date: '15 Mars 2026',
@@ -46,7 +47,7 @@
     },
     {
       id: 'p2',
-      type: 'payment',
+      type: 'session_payment',
       method: 'bank-card',
       amountCents: 9500,
       date: '12 Mars 2026',
@@ -56,7 +57,7 @@
     },
     {
       id: 'p3',
-      type: 'deposit',
+      type: 'deposit_add',
       method: 'bank-transfer',
       amountCents: 15000,
       date: '01 Mars 2026',
@@ -66,7 +67,7 @@
     },
     {
       id: 'p4',
-      type: 'payment',
+      type: 'session_payment',
       method: 'check',
       amountCents: 12000,
       date: '25 Fév. 2026',
@@ -76,7 +77,7 @@
     },
     {
       id: 'p5',
-      type: 'refund',
+      type: 'deposit_refund',
       method: 'cash',
       amountCents: 5000,
       date: '20 Fév. 2026',
@@ -86,8 +87,8 @@
     },
     {
       id: 'p6',
-      type: 'payment',
-      method: 'cash',
+      type: 'session_payment',
+      method: 'deposit',
       amountCents: 9500,
       date: '18 Fév. 2026',
       receiptNumber: 'REC-2026-0037',
@@ -96,7 +97,7 @@
     },
     {
       id: 'p7',
-      type: 'payment',
+      type: 'session_payment',
       method: 'bank-card',
       amountCents: 12000,
       date: '10 Fév. 2026',
@@ -106,7 +107,7 @@
     },
     {
       id: 'p8',
-      type: 'deposit',
+      type: 'deposit_add',
       method: 'cash',
       amountCents: 20000,
       date: '01 Fév. 2026',
@@ -116,7 +117,7 @@
     },
     {
       id: 'p9',
-      type: 'payment',
+      type: 'session_payment',
       method: 'cash',
       amountCents: 9500,
       date: '28 Jan. 2026',
@@ -126,7 +127,7 @@
     },
     {
       id: 'p10',
-      type: 'payment',
+      type: 'session_payment',
       method: 'bank-transfer',
       amountCents: 9500,
       date: '22 Jan. 2026',
@@ -136,7 +137,7 @@
     },
     {
       id: 'p11',
-      type: 'refund',
+      type: 'deposit_refund',
       method: 'bank-card',
       amountCents: 3000,
       date: '15 Jan. 2026',
@@ -146,7 +147,7 @@
     },
     {
       id: 'p12',
-      type: 'payment',
+      type: 'session_payment',
       method: 'cash',
       amountCents: 12000,
       date: '10 Jan. 2026',
@@ -174,13 +175,13 @@
   // ─── UI helpers ──────────────────────────────────────────────
   function getPaymentColor(item: MockPaymentItem): string {
     if (item.isVoided) return 'text-muted'
-    if (item.type === 'refund') return 'text-error'
+    if (item.type === 'session_refund' || item.type === 'deposit_refund') return 'text-error'
     return 'text-success'
   }
 
   function getAmountPrefix(item: MockPaymentItem): string {
     if (item.isVoided) return ''
-    if (item.type === 'refund') return '-'
+    if (item.type === 'session_refund' || item.type === 'deposit_refund') return '-'
     return '+'
   }
 
@@ -224,9 +225,9 @@
             :class="{ 'opacity-60': item.isVoided }"
           >
             <AppIconBox
-              :name="item.method ? getPaymentMethodIcon(item.method) : 'i-hugeicons-wallet-02'"
+              :name="getPaymentMethodIcon(item.method)"
               size="sm"
-              :color="item.method ? (getPaymentMethodColor(item.method) as UIColor) : 'primary'"
+              :color="getPaymentMethodColor(item.method) as UIColor"
               variant="subtle"
             />
 
@@ -234,8 +235,14 @@
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <p class="text-default text-sm font-medium">
-                    {{ item.method ? getPaymentMethodLabel(item.method) : 'Solde patient' }}
-                    <UBadge v-if="item.type !== 'payment'" size="xs" variant="subtle" color="neutral" class="ml-1">
+                    {{ getPaymentMethodLabel(item.method) }}
+                    <UBadge
+                      v-if="item.type !== 'session_payment'"
+                      size="xs"
+                      variant="subtle"
+                      color="neutral"
+                      class="ml-1"
+                    >
                       {{ getPaymentTypeLabel(item.type) }}
                     </UBadge>
                   </p>

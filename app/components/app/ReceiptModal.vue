@@ -23,7 +23,7 @@
 
   const paymentTypeLabel = computed(() => {
     if (!payment.value) return ''
-    return payment.value.type === 'credit_usage' ? 'Solde patient' : getPaymentTypeLabel(payment.value.type)
+    return getPaymentTypeLabel(payment.value.type)
   })
 
   // ─── Actions ───────────────────────────────────────────────────────────────────

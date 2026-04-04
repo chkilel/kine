@@ -24,8 +24,8 @@ export const paymentCreateSchema = createInsertSchema(payments, {
   recordedById: z.string().min(1, "L'utilisateur est requis"),
   amountCents: z.number().int().positive('Le montant doit être positif'),
   currency: z.string().default('MAD'),
-  type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.optional(),
+  type: paymentTypeSchema.default('session_payment'),
+  method: paymentMethodSchema,
   receiptNumber: z.string().optional(),
   notes: z.string().optional(),
   paidOn: calendarDateSchema,
@@ -67,8 +67,8 @@ export const paymentSessionItemUpdateSchema = paymentSessionItemCreateSchema.par
 export const paymentRequestBodySchema = z.object({
   patientId: z.string().min(1, 'Le patient est requis'),
   amountCents: z.number().int().positive('Le montant doit être positif'),
-  type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.optional(),
+  type: paymentTypeSchema.default('session_payment'),
+  method: paymentMethodSchema,
   notes: z.string().optional(),
   paidOn: calendarDateSchema.optional(),
   sessionItems: z

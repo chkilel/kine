@@ -28,13 +28,28 @@ export const PAYMENT_METHODS_CONFIG = {
     icon: 'i-hugeicons-bank',
     color: 'warning',
     variant: 'subtle'
+  },
+  deposit: {
+    label: 'Solde patient',
+    icon: 'i-hugeicons-wallet-02',
+    color: 'neutral',
+    variant: 'subtle'
   }
 } as const
 
 export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG).map(([key, item]) => ({
   label: item.label,
-  value: key
+  value: key,
+  icon: item.icon
 }))
+
+export const PAYMENT_FUNDING_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG)
+  .filter(([key]) => key !== 'deposit')
+  .map(([key, item]) => ({
+    label: item.label,
+    value: key,
+    icon: item.icon
+  }))
 
 export const getPaymentMethodLabel = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].label || method
 export const getPaymentMethodColor = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].color || 'neutral'
@@ -69,25 +84,25 @@ export const getPaymentDelayVariant = (delay: PaymentDelay) => PAYMENT_DELAYS_CO
 // =============================================================================
 
 export const PAYMENT_TYPE_CONFIG = {
-  payment: {
+  session_payment: {
     label: 'Paiement',
     description: 'Enregistrer un paiement pour cette séance',
     submitLabel: 'Enregistrer le paiement',
     bannerMessage: ''
   },
-  deposit: {
+  session_refund: {
+    label: 'Remboursement de séance',
+    description: 'Rembourser un paiement de séance',
+    submitLabel: 'Enregistrer le remboursement',
+    bannerMessage: ''
+  },
+  deposit_add: {
     label: 'Avance',
     description: 'Ajouter une avance pour soins futurs',
     submitLabel: "Enregistrer l'avance",
     bannerMessage: 'Cette avance sera disponible pour les futures séances.'
   },
-  credit_usage: {
-    label: 'Utilisation du solde',
-    description: "Utiliser l'avance existante",
-    submitLabel: "Utiliser l'avance",
-    bannerMessage: ''
-  },
-  refund: {
+  deposit_refund: {
     label: 'Remboursement',
     description: 'Rembourser une avance non utilisée',
     submitLabel: 'Enregistrer le remboursement',

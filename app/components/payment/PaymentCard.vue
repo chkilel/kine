@@ -34,7 +34,7 @@
 
   // ─── Form ────────────────────────────────────────────────────
   const formState = reactive<PaymentForm>({
-    type: 'payment',
+    type: 'session_payment',
     method: 'cash',
     amount: defaultAmount.value,
     notes: ''
@@ -45,13 +45,13 @@
   // ─── Credit ──────────────────────────────────────────────────
   const creditBalance = computed(() => patientCreditBalance.value ?? 0)
   const hasCredit = computed(() => creditBalance.value > 0)
-  const isUsingCredit = computed(() => formState.type === 'credit_usage')
+  const isUsingDeposit = computed(() => formState.method === 'deposit')
 
-  const insufficientCredit = computed(() => isUsingCredit.value && creditBalance.value < sessionCostCents.value)
+  const insufficientCredit = computed(() => isUsingDeposit.value && creditBalance.value < sessionCostCents.value)
 
   const hasSufficientCredit = computed(() => hasCredit.value && creditBalance.value >= sessionCostCents.value)
 
-  const showCreditBalanceHint = computed(() => hasSufficientCredit.value && !isUsingCredit.value)
+  const showCreditBalanceHint = computed(() => hasSufficientCredit.value && !isUsingDeposit.value)
 
   // ─── UI helpers ──────────────────────────────────────────────
   const submitButtonLabel = computed(() =>
@@ -60,9 +60,6 @@
 
   const showErrorBanner = computed(() => getPaymentTypeBannerMessage(formState.type))
 
-  // `credit_usage` is a payment *type*, not a method.
-  // The method buttons array only contains actual PaymentMethod values.
-  // ─── Methods ─────────────────────────────────────────────────
   const methodButtons = computed(() => {
     const methods: { value: string; label: string; icon: string }[] = Object.entries(PAYMENT_METHODS_CONFIG).map(
       ([key, config]) => ({
@@ -72,28 +69,14 @@
       })
     )
 
-    if (hasCredit.value) {
-      methods.push({ value: 'credit_usage', label: 'Solde', icon: 'i-hugeicons-wallet-02' })
+    if (!hasCredit.value) {
+      return methods.filter((m) => m.value !== 'deposit')
     }
 
     return methods
   })
 
-  function isMethodActive(value: string) {
-    if (value === 'credit_usage') return isUsingCredit.value
-    return !isUsingCredit.value && formState.method === value
-  }
-
   function handleMethodSelect(value: string) {
-    if (value === 'credit_usage') {
-      formState.type = 'credit_usage'
-      return
-    }
-
-    if (isUsingCredit.value) {
-      formState.type = 'payment'
-    }
-
     formState.method = value as PaymentMethod
   }
 
@@ -146,9 +129,9 @@
 
   // ─── Watchers ────────────────────────────────────────────────
   watch(
-    () => formState.type,
-    (type) => {
-      if (type === 'credit_usage') {
+    () => formState.method,
+    (method) => {
+      if (method === 'deposit') {
         const cost = sessionCostCents.value
         formState.amount = cost === 0 ? 0 : cost / 100
       } else {
@@ -158,7 +141,7 @@
   )
 
   watch(sessionCostCents, (newCost) => {
-    if (!isEditingPrice.value && !isUsingCredit.value) {
+    if (!isEditingPrice.value && !isUsingDeposit.value) {
       formState.amount = newCost / 100
     }
   })
@@ -179,8 +162,8 @@
     const paymentData: PaymentRequestBody = {
       patientId: patientId.value,
       amountCents,
-      type: event.data.type,
-      ...(event.data.type !== 'credit_usage' ? { method: event.data.method } : {}),
+      type: 'session_payment',
+      method: event.data.method,
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString(),
       sessionItems: [{ treatmentSessionId: props.treatmentSession.id, amountCents }]
@@ -306,10 +289,10 @@
               :key="method.value"
               type="button"
               tabindex="0"
-              :aria-pressed="isMethodActive(method.value)"
+              :aria-pressed="formState.method === method.value"
               class="flex flex-col items-center justify-center gap-1.5 rounded-md border p-3 transition-colors"
               :class="
-                isMethodActive(method.value)
+                formState.method === method.value
                   ? 'border-primary bg-primary/5 text-primary'
                   : 'border-default text-muted hover:border-primary/50'
               "
@@ -329,7 +312,7 @@
               variant="link"
               size="xs"
               class="underline underline-offset-2"
-              @click="handleMethodSelect('credit_usage')"
+              @click="handleMethodSelect('deposit')"
             />
           </p>
         </div>

@@ -35,7 +35,7 @@
 
   type MockPaymentHistoryItem = {
     id: string
-    method: PaymentMethod | null
+    method: PaymentMethod
     amountCents: number
     date: string
     receiptNumber: string
@@ -106,7 +106,7 @@
       date: "Aujourd'hui, 09:45",
       receiptNumber: 'REC-0042',
       sessionRef: 'Sess. #10, #11',
-      type: 'payment',
+      type: 'session_payment',
       isVoided: false
     },
     {
@@ -116,7 +116,7 @@
       date: '05 Oct 2023',
       receiptNumber: 'REC-0038',
       sessionRef: 'Avance patient',
-      type: 'deposit',
+      type: 'deposit_add',
       isVoided: false
     },
     {
@@ -126,7 +126,7 @@
       date: '01 Oct 2023',
       receiptNumber: 'REC-0037',
       sessionRef: 'Sess. #7',
-      type: 'payment',
+      type: 'session_payment',
       isVoided: false
     }
   ]
@@ -234,15 +234,15 @@
               >
                 <div class="flex flex-1 items-center gap-4">
                   <AppIconBox
-                    :name="item.method ? getPaymentMethodIcon(item.method) : 'i-hugeicons-wallet-02'"
+                    :name="getPaymentMethodIcon(item.method)"
                     size="sm"
-                    :color="item.method ? (getPaymentMethodColor(item.method) as UIColor) : 'primary'"
+                    :color="getPaymentMethodColor(item.method) as UIColor"
                     variant="subtle"
                   />
                   <div class="grid flex-1 grid-cols-2 items-center gap-4 lg:grid-cols-4">
                     <div>
                       <p class="text-xs font-bold uppercase">
-                        {{ item.method ? getPaymentMethodLabel(item.method) : 'Solde patient' }}
+                        {{ getPaymentMethodLabel(item.method) }}
                       </p>
                       <p class="text-muted text-xs font-medium">{{ item.receiptNumber }}</p>
                     </div>

@@ -184,7 +184,7 @@ export default defineEventHandler(async (event) => {
 
   <div class="payment-row">
     <span class="label">${getPaymentTypeLabel(payment.type)}</span>
-    <span class="bold">${payment.method ? getPaymentMethodLabel(payment.method) : 'Avance patient'}</span>
+    <span class="bold">${getPaymentMethodLabel(payment.method)}</span>
   </div>
 
   <div class="payment-row">
@@ -232,7 +232,16 @@ export default defineEventHandler(async (event) => {
       .join('')}
   </div>
   `
-      : ''
+      : payment.type === 'deposit_add'
+        ? `
+  <hr class="separator">
+  <div class="session-block">
+    <div class="payment-row bold">
+      <span>Avance sur soins</span>
+    </div>
+  </div>
+  `
+        : ''
   }
 
   <hr class="separator-double">

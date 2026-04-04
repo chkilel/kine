@@ -49,7 +49,7 @@
         <UFormField label="Mode de remboursement">
           <USelect
             v-model="formState.method"
-            :items="[...PAYMENT_METHOD_OPTIONS]"
+            :items="[...PAYMENT_FUNDING_METHOD_OPTIONS]"
             value-key="value"
             label-key="label"
             size="md"

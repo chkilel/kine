@@ -75,7 +75,7 @@
         <div class="text-right">
           <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Mode</span>
           <p class="text-xs font-bold uppercase">
-            {{ latestPayment.method ? getPaymentMethodLabel(latestPayment.method) : 'Solde patient' }}
+            {{ getPaymentMethodLabel(latestPayment.method) }}
           </p>
         </div>
         <div>

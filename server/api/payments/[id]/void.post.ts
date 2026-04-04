@@ -27,6 +27,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'Payment is already voided' })
     }
 
+    if (payment.type === 'session_refund' || payment.type === 'deposit_refund') {
+      throw createError({ statusCode: 400, message: 'Refund payments cannot be voided' })
+    }
+
     const sessionIds = sessionItemRows.map((i) => i.treatmentSessionId)
 
     const [, coveredRows] = await db.batch([
@@ -41,7 +45,7 @@ export default defineEventHandler(async (event) => {
               .where(
                 and(
                   inArray(paymentSessionItems.treatmentSessionId, sessionIds),
-                  eq(payments.type, 'payment'),
+                  eq(payments.type, 'session_payment'),
                   isNull(payments.voidedAt),
                   ne(paymentSessionItems.paymentId, paymentId)
                 )

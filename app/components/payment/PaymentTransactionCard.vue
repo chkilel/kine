@@ -19,7 +19,7 @@
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const state = reactive<PaymentForm>({
-    type: 'payment',
+    type: 'session_payment',
     method: 'cash',
     amount: (treatmentSession.priceCent ?? 0) / 100,
     notes: ''
@@ -27,24 +27,27 @@
 
   // ─── Form computed ─────────────────────────────────────────────────────────
   const hasCredit = computed(() => (patientCreditBalance.value || 0) > 0)
-  const canUseCredit = computed(() => state.type === 'credit_usage' && hasCredit.value)
+  const canUseCredit = computed(() => state.method === 'deposit' && hasCredit.value)
   const submitButtonLabel = computed(() =>
     isCreating.value ? 'Enregistrement...' : getPaymentTypeSubmitLabel(state.type)
   )
   const showErrorBanner = computed(() => getPaymentTypeBannerMessage(state.type))
 
-  const paymentTypeOptions = computed(() =>
-    PAYMENT_TYPE_OPTIONS.filter((o) => o.value !== 'credit_usage' || canUseCredit.value)
-  )
   // ─── Watchers ───────────────────────────────────────────────────────────────
   watch(
     () => state.type,
     (newType) => {
-      if (newType === 'credit_usage' && hasCredit.value) {
-        handleUseFullCredit()
-      }
-      if (newType === 'payment' && sessionCostCents.value) {
+      if (newType === 'session_payment' && sessionCostCents.value) {
         state.amount = sessionCostCents.value / 100
+      }
+    }
+  )
+
+  watch(
+    () => state.method,
+    (newMethod) => {
+      if (newMethod === 'deposit' && hasCredit.value) {
+        handleUseFullCredit()
       }
     }
   )
@@ -100,7 +103,7 @@
         <UFormField label="Type de transaction" name="type">
           <URadioGroup
             v-model="state.type"
-            :items="paymentTypeOptions"
+            :items="PAYMENT_TYPE_OPTIONS"
             value-key="value"
             label-key="label"
             description-key="description"
