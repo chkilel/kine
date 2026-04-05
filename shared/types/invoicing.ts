@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { payments, paymentSessionItems } from '~~/server/database/schema/payment'
+import { paymentTypeSchema, paymentMethodSchema, calendarDateSchema } from './base.types'
 
 z.config(fr())
 

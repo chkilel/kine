@@ -76,6 +76,9 @@ describe('date-utils', () => {
     it('1.5.5 should not disable future dates', () => {
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
+      while (tomorrow.getDay() === 0) {
+        tomorrow.setDate(tomorrow.getDate() + 1)
+      }
       expect(isDateDisabled(tomorrow)).toBe(false)
     })
 
