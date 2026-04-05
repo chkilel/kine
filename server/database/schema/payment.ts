@@ -27,7 +27,7 @@ export const payments = sqliteTable(
     type: text({ enum: PAYMENT_TYPES }).notNull(),
     method: text({ enum: PAYMENT_METHODS }).notNull(),
 
-    receiptNumber: text().unique(),
+    receiptNumber: text().unique().notNull(),
 
     notes: text(),
     paidOn: calendarDateField().notNull(),
