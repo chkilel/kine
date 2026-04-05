@@ -1,8 +1,5 @@
-# payment-tracking Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change implement-payment-ledger-system. Update Purpose after archive.
-## Requirements
 ### Requirement: Payment Recording
 
 The system SHALL record financial events as immutable ledger entries in the `payments` table. Payment types are: `session_payment` (paying for therapy sessions), `session_refund` (refunding a session payment), `deposit_add` (adding funds to patient deposit), and `deposit_refund` (refunding unused deposit balance). Payment methods are: `deposit` (using deposit balance as funding source), `cash`, `bank-card`, `check`, and `bank-transfer`. Every payment SHALL have both a type and a method (method is NOT NULL).
@@ -285,130 +282,6 @@ The system SHALL validate payment requests to ensure data integrity and business
 - **AND** error message states "Valid payment date required (YYYY-MM-DD)"
 - **AND** no payment record is created
 
-### Requirement: Payment Voiding
-
-The system SHALL support voiding (canceling) `session_payment` and `deposit_add` records to correct mistakes while maintaining immutable ledger. Voided payments are excluded from all derived queries and balance calculations. Only `session_payment` and `deposit_add` types MAY be voided — refund types (`session_refund`, `deposit_refund`) SHALL NOT be voidable.
-
-#### Scenario: Void session_payment updates session status
-
-- **GIVEN** a session_payment exists with id "payment-123" linked to session "session-456"
-- **AND** session "session-456" is currently considered paid
-- **AND** no other non-voided session_payment covers session "session-456"
-- **AND** user "user-789" has voiding permissions
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** payment.voidedAt is set to current timestamp
-- **AND** payment.voidedById is set to "user-789"
-- **AND** payment record remains in database (not deleted)
-- **AND** linked payment_session_items are excluded from queries
-- **AND** session "session-456" is recalculated as NOT paid (net amount is 0)
-- **AND** HTTP response is 200 OK
-- **AND** response message indicates payment voided
-
-#### Scenario: Void deposit-funded session_payment restores credit balance
-
-- **GIVEN** a session_payment with method="deposit" of 5000 cents exists linked to session "session-456"
-- **AND** patient credit balance is 15000 (deposit_add 20000 - session_payment 5000)
-- **AND** user "user-789" has voiding permissions
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** payment is voided
-- **AND** patient credit balance is restored to 20000 (session_payment excluded from balance)
-- **AND** session "session-456" is recalculated as NOT paid
-
-#### Scenario: Void deposit_add has no session impact
-
-- **GIVEN** a deposit_add payment exists with id "payment-123" with no linked session items
-- **AND** user "user-789" has voiding permissions
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** payment is voided
-- **AND** no session status recalculation occurs (no linked sessions)
-
-#### Scenario: Void excluded from balance calculation
-
-- **GIVEN** a patient has payments: deposit_add 20000, session_payment (method='deposit') 5000
-- **AND** patient credit balance is 15000
-- **AND** the deposit_add payment is voided
-- **WHEN** patient credit balance is recalculated
-- **THEN** balance is -5000 (only session_payment with method='deposit' counts, deposit_add excluded)
-- **AND** voided deposit_add does not contribute to balance
-
-#### Scenario: Prevent voiding refund types
-
-- **GIVEN** a payment exists with id "payment-123"
-- **AND** payment type is "session_refund" or "deposit_refund"
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** HTTP response is 400 Bad Request
-- **AND** error message states "Refund payments cannot be voided"
-- **AND** payment is not modified
-
-#### Scenario: Prevent voiding already voided payment
-
-- **GIVEN** a payment exists with id "payment-123"
-- **AND** payment.voidedAt is already set
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** HTTP response is 400 Bad Request
-- **AND** error message states "Payment is already voided"
-- **AND** payment.voidedAt remains unchanged
-
-#### Scenario: Prevent voiding with authorization check
-
-- **GIVEN** a payment exists with id "payment-123"
-- **AND** authenticated user lacks voiding permissions
-- **WHEN** POST /payments/payment-123/void is called
-- **THEN** HTTP response is 403 Forbidden
-- **AND** error message states "Insufficient permissions to void payment"
-- **AND** payment is not voided
-
-### Requirement: Receipt Number Generation
-
-The system SHALL generate sequential, gap-free receipt numbers per organization, stored in `organizations.fiscal` and atomically incremented within a transaction.
-
-#### Scenario: Generate receipt number sequentially
-
-- **GIVEN** organization has fiscal.receiptPrefix "REC"
-- **AND** fiscal.nextReceiptNumber is 1
-- **WHEN** first payment is created
-- **THEN** receiptNumber is "REC-2026-0001"
-- **AND** fiscal.nextReceiptNumber is incremented to 2
-- **AND** receipt is stored in database
-
-#### Scenario: Generate second receipt number
-
-- **GIVEN** organization fiscal.nextReceiptNumber is 2
-- **WHEN** second payment is created
-- **THEN** receiptNumber is "REC-2026-0002"
-- **AND** fiscal.nextReceiptNumber is incremented to 3
-
-#### Scenario: Use organization-specific prefix
-
-- **GIVEN** organization has fiscal.receiptPrefix "INV"
-- **AND** fiscal.nextReceiptNumber is 5
-- **WHEN** payment is created
-- **THEN** receiptNumber is "INV-2026-0005"
-
-#### Scenario: Generate receipts for all payment types
-
-- **GIVEN** a deposit_add payment is created
-- **WHEN** receiptNumber is generated
-- **THEN** deposit_add receives receipt number
-- **AND** receipt renders as "Avance sur soins"
-
-- **GIVEN** a session_payment with method='deposit' is created
-- **WHEN** receiptNumber is generated
-- **THEN** session_payment receives receipt number
-
-- **GIVEN** a deposit_refund payment is created
-- **WHEN** receiptNumber is generated
-- **THEN** deposit_refund receives receipt number
-
-#### Scenario: Atomic increment to prevent gaps
-
-- **GIVEN** organization fiscal.nextReceiptNumber is 10
-- **AND** two concurrent payment requests occur simultaneously
-- **WHEN** both payments complete
-- **THEN** receipt numbers are "REC-2026-0010" and "REC-2026-0011" (no duplicates)
-- **AND** fiscal.nextReceiptNumber is 12
-- **AND** transaction ensures atomic increment
-
 ### Requirement: Patient Credit Balance Calculation
 
 The system SHALL calculate patient credit balance dynamically from the ledger: `SUM(deposit_add) - SUM(session_payment WHERE method='deposit') - SUM(deposit_refund)` for non-voided payments, without a separate balance table.
@@ -610,6 +483,130 @@ The system SHALL link payments to sessions exclusively through the `payment_sess
 - **THEN** payment_session_items for voided payment are excluded
 - **AND** session reflects actual paid status (excluding voided payments)
 
+### Requirement: Payment Voiding
+
+The system SHALL support voiding (canceling) `session_payment` and `deposit_add` records to correct mistakes while maintaining immutable ledger. Voided payments are excluded from all derived queries and balance calculations. Only `session_payment` and `deposit_add` types MAY be voided — refund types (`session_refund`, `deposit_refund`) SHALL NOT be voidable.
+
+#### Scenario: Void session_payment updates session status
+
+- **GIVEN** a session_payment exists with id "payment-123" linked to session "session-456"
+- **AND** session "session-456" is currently considered paid
+- **AND** no other non-voided session_payment covers session "session-456"
+- **AND** user "user-789" has voiding permissions
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** payment.voidedAt is set to current timestamp
+- **AND** payment.voidedById is set to "user-789"
+- **AND** payment record remains in database (not deleted)
+- **AND** linked payment_session_items are excluded from queries
+- **AND** session "session-456" is recalculated as NOT paid (net amount is 0)
+- **AND** HTTP response is 200 OK
+- **AND** response message indicates payment voided
+
+#### Scenario: Void deposit-funded session_payment restores credit balance
+
+- **GIVEN** a session_payment with method="deposit" of 5000 cents exists linked to session "session-456"
+- **AND** patient credit balance is 15000 (deposit_add 20000 - session_payment 5000)
+- **AND** user "user-789" has voiding permissions
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** payment is voided
+- **AND** patient credit balance is restored to 20000 (session_payment excluded from balance)
+- **AND** session "session-456" is recalculated as NOT paid
+
+#### Scenario: Void deposit_add has no session impact
+
+- **GIVEN** a deposit_add payment exists with id "payment-123" with no linked session items
+- **AND** user "user-789" has voiding permissions
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** payment is voided
+- **AND** no session status recalculation occurs (no linked sessions)
+
+#### Scenario: Void excluded from balance calculation
+
+- **GIVEN** a patient has payments: deposit_add 20000, session_payment (method='deposit') 5000
+- **AND** patient credit balance is 15000
+- **AND** the deposit_add payment is voided
+- **WHEN** patient credit balance is recalculated
+- **THEN** balance is -5000 (only session_payment with method='deposit' counts, deposit_add excluded)
+- **AND** voided deposit_add does not contribute to balance
+
+#### Scenario: Prevent voiding refund types
+
+- **GIVEN** a payment exists with id "payment-123"
+- **AND** payment type is "session_refund" or "deposit_refund"
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** HTTP response is 400 Bad Request
+- **AND** error message states "Refund payments cannot be voided"
+- **AND** payment is not modified
+
+#### Scenario: Prevent voiding already voided payment
+
+- **GIVEN** a payment exists with id "payment-123"
+- **AND** payment.voidedAt is already set
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** HTTP response is 400 Bad Request
+- **AND** error message states "Payment is already voided"
+- **AND** payment.voidedAt remains unchanged
+
+#### Scenario: Prevent voiding with authorization check
+
+- **GIVEN** a payment exists with id "payment-123"
+- **AND** authenticated user lacks voiding permissions
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** HTTP response is 403 Forbidden
+- **AND** error message states "Insufficient permissions to void payment"
+- **AND** payment is not voided
+
+### Requirement: Receipt Number Generation
+
+The system SHALL generate sequential, gap-free receipt numbers per organization, stored in `organizations.fiscal` and atomically incremented within a transaction.
+
+#### Scenario: Generate receipt number sequentially
+
+- **GIVEN** organization has fiscal.receiptPrefix "REC"
+- **AND** fiscal.nextReceiptNumber is 1
+- **WHEN** first payment is created
+- **THEN** receiptNumber is "REC-2026-0001"
+- **AND** fiscal.nextReceiptNumber is incremented to 2
+- **AND** receipt is stored in database
+
+#### Scenario: Generate second receipt number
+
+- **GIVEN** organization fiscal.nextReceiptNumber is 2
+- **WHEN** second payment is created
+- **THEN** receiptNumber is "REC-2026-0002"
+- **AND** fiscal.nextReceiptNumber is incremented to 3
+
+#### Scenario: Use organization-specific prefix
+
+- **GIVEN** organization has fiscal.receiptPrefix "INV"
+- **AND** fiscal.nextReceiptNumber is 5
+- **WHEN** payment is created
+- **THEN** receiptNumber is "INV-2026-0005"
+
+#### Scenario: Generate receipts for all payment types
+
+- **GIVEN** a deposit_add payment is created
+- **WHEN** receiptNumber is generated
+- **THEN** deposit_add receives receipt number
+- **AND** receipt renders as "Avance sur soins"
+
+- **GIVEN** a session_payment with method='deposit' is created
+- **WHEN** receiptNumber is generated
+- **THEN** session_payment receives receipt number
+
+- **GIVEN** a deposit_refund payment is created
+- **WHEN** receiptNumber is generated
+- **THEN** deposit_refund receives receipt number
+
+#### Scenario: Atomic increment to prevent gaps
+
+- **GIVEN** organization fiscal.nextReceiptNumber is 10
+- **AND** two concurrent payment requests occur simultaneously
+- **WHEN** both payments complete
+- **THEN** receipt numbers are "REC-2026-0010" and "REC-2026-0011" (no duplicates)
+- **AND** fiscal.nextReceiptNumber is 12
+- **AND** transaction ensures atomic increment
+
 ### Requirement: Billing Page Layout
 
 The billing tab page SHALL display a 3-column responsive grid layout with a filter bar, sessions-to-bill section, payment history preview, patient balance card, and financial summary card. All data SHALL be static/mock.
@@ -748,4 +745,3 @@ The system SHALL provide a confirmation modal for voiding a payment, showing pay
 - `type='deposit'` → `type='deposit_add'`
 - `type='refund'` → `type='deposit_refund'` (for balance refunds) or `type='session_refund'` (for session refunds)
 - `method` is now required (NOT NULL) on all payments
-
