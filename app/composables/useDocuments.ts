@@ -11,8 +11,9 @@ const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?
   return useQuery({
     key: () => DOCUMENT_KEYS.byPatient(toValue(patientId), toValue(treatmentPlanId)),
     query: async () => {
-      const params = toValue(treatmentPlanId) ? `?treatmentPlanId=${toValue(treatmentPlanId)}` : ''
-      return requestFetch<PatientDocument[]>(`/api/patients/${toValue(patientId)}/documents${params}`)
+      return requestFetch<PatientDocument[]>(`/api/patients/${toValue(patientId)}/documents`, {
+        query: toValue(treatmentPlanId) ? { treatmentPlanId: toValue(treatmentPlanId) } : undefined
+      })
     },
     enabled: () => !!toValue(patientId)
   })
