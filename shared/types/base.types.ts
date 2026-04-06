@@ -307,6 +307,14 @@ export const paymentTypeSchema = z.enum(PAYMENT_TYPES)
 export type PaymentType = z.infer<typeof paymentTypeSchema>
 
 // =============================================================================
+// Payment Status Constants
+// =============================================================================
+
+export const PAYMENT_STATUSES = ['unpaid', 'partial', 'paid'] as const
+export const paymentStatusSchema = z.enum(PAYMENT_STATUSES)
+export type PaymentStatus = z.infer<typeof paymentStatusSchema>
+
+// =============================================================================
 // Emergency Contact Schema
 // =============================================================================
 

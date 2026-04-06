@@ -1,4 +1,4 @@
-import type { PaymentDelay, PaymentMethod, PaymentType } from '../types/base.types'
+import type { PaymentDelay, PaymentMethod, PaymentStatus, PaymentType } from '../types/base.types'
 
 // =============================================================================
 // Payment Methods Configuration
@@ -120,3 +120,40 @@ export const getPaymentTypeLabel = (type: PaymentType): string => PAYMENT_TYPE_C
 export const getPaymentTypeDescription = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].description
 export const getPaymentTypeSubmitLabel = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].submitLabel
 export const getPaymentTypeBannerMessage = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].bannerMessage
+
+// =============================================================================
+// Payment Status Configuration
+// =============================================================================
+
+export const PAYMENT_STATUS_CONFIG = {
+  unpaid: {
+    label: 'Non facturé',
+    icon: 'i-hugeicons-money-not-found-03',
+    color: 'error',
+    variant: 'subtle'
+  },
+  partial: {
+    label: 'Partiellement',
+    icon: 'i-hugeicons-money-add-02',
+    color: 'warning',
+    variant: 'subtle'
+  },
+  paid: {
+    label: 'Payé',
+    icon: 'i-hugeicons-file-verified',
+    color: 'success',
+    variant: 'subtle'
+  }
+} as const
+
+export const PAYMENT_STATUS_OPTIONS = Object.entries(PAYMENT_STATUS_CONFIG).map(([key, item]) => ({
+  label: item.label,
+  value: key
+}))
+
+export const PAYMENT_STATUS_FILTER_OPTIONS = [{ label: 'Tous', value: 'all' }, ...PAYMENT_STATUS_OPTIONS]
+
+export const getPaymentStatusLabel = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].label
+export const getPaymentStatusIcon = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].icon
+export const getPaymentStatusColor = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].color
+export const getPaymentStatusVariant = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].variant

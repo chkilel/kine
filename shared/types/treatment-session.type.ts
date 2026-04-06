@@ -3,7 +3,7 @@ import { createSelectSchema } from 'drizzle-orm/zod'
 import { treatmentSessions } from '~~/server/database/schema/treatment-session'
 import type { Appointment } from './appointment.type'
 import type { Payment } from './invoicing'
-import { timeFormatSchema, treatmentSessionStatusSchema } from './base.types'
+import { timeFormatSchema, treatmentSessionStatusSchema, type PaymentStatus } from './base.types'
 
 // =============================================================================
 // Treatment Session Schemas and Types
@@ -94,10 +94,23 @@ export const treatmentSessionQuerySchema = z.object({
   therapistId: z.string().optional(),
   appointmentId: z.string().optional(),
   date: z.string().optional(),
-  status: treatmentSessionStatusSchema.optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20)
+  status: z.union([treatmentSessionStatusSchema, z.string()]).optional(),
+  includePaymentStatus: z.coerce.boolean().default(false),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional()
 })
+
+// =============================================================================
+// Treatment Session with Payment Status
+// =============================================================================
+
+export type TreatmentSessionWithPaymentStatus = TreatmentSessionResponse & {
+  paidCents: number
+  paymentStatus: PaymentStatus
+  planTitle: string | null
+  appointmentDate: string | null
+  appointmentLocation: 'clinic' | 'home' | 'telehealth' | null
+}
 
 // =============================================================================
 // Type Exports

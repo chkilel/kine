@@ -101,6 +101,12 @@ export const paymentQuerySchema = z.object({
   endDate: z.string().optional()
 })
 
+export const patientPaymentsQuerySchema = z.object({
+  type: paymentTypeSchema.optional(),
+  limit: z.coerce.number().min(1).max(100).default(50),
+  includeVoided: z.coerce.boolean().default(false)
+})
+
 // =============================================================================
 // Type Inference
 // =============================================================================
@@ -114,6 +120,7 @@ export type PaymentSessionItemUpdate = z.infer<typeof paymentSessionItemUpdateSc
 export type PaymentRequestBody = z.infer<typeof paymentRequestBodySchema>
 export type PaymentResponse = z.infer<typeof paymentResponseSchema>
 export type PaymentQuery = z.infer<typeof paymentQuerySchema>
+export type PatientPaymentsQuery = z.infer<typeof patientPaymentsQuerySchema>
 
 // =============================================================================
 // Form Schemas
