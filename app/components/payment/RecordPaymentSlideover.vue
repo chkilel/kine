@@ -136,7 +136,7 @@
           </div>
         </div>
 
-        <UDivider />
+        <USeparator />
 
         <div>
           <h3 class="text-muted text-[10px] font-bold tracking-wider uppercase">Étape 2 — Détails du paiement</h3>

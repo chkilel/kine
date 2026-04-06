@@ -1,18 +1,10 @@
 <script setup lang="ts">
-  // ─── Composables ─────────────────────────────────────────────
   const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance, openCancelPayment } =
     useBillingSlideover()
 
-  // ─── State ──────────────────────────────────────────────────
-  const selectedPlan = ref('all')
+  const selectedPlan = ref<'all' | 'no-plan' | string>('all')
   const selectedStatus = ref('all')
-
-  // ─── UI helpers ──────────────────────────────────────────────
-  const planOptions = [
-    { label: 'Toutes les séances', value: 'all' },
-    { label: 'Kiné du dos', value: 'plan-1' },
-    { label: 'Rééducation épaule', value: 'plan-2' }
-  ]
+  const planPopoverOpen = ref(false)
 
   const statusOptions = [
     { label: 'Tous', value: 'all' },
@@ -21,12 +13,17 @@
     { label: 'Payé', value: 'paid' }
   ]
 
-  // ─── Types ──────────────────────────────────────────────────
+  const treatmentPlans = [
+    { id: 'plan-1', name: 'Rééducation lombaire intensif' },
+    { id: 'plan-2', name: 'Post-opératoire Épaule' },
+    { id: 'plan-3', name: 'Lombalgie chronique' }
+  ]
+
   type MockSession = {
     id: string
     date: string
     planName: string
-    planId: string
+    planId: string | null
     location: string
     amountCents: number
     paidCents: number
@@ -44,7 +41,6 @@
     isVoided: boolean
   }
 
-  // ─── Mock data ──────────────────────────────────────────────
   const mockSessions: MockSession[] = [
     {
       id: 's1',
@@ -95,6 +91,26 @@
       amountCents: 25000,
       paidCents: 25000,
       status: 'paid'
+    },
+    {
+      id: 's6',
+      date: '25 Sept 2023',
+      planName: 'Consultation hors plan',
+      planId: null,
+      location: 'Cabinet',
+      amountCents: 20000,
+      paidCents: 0,
+      status: 'unpaid'
+    },
+    {
+      id: 's7',
+      date: '20 Sept 2023',
+      planName: 'Suivi lombalgie',
+      planId: 'plan-3',
+      location: 'Cabinet',
+      amountCents: 20000,
+      paidCents: 20000,
+      status: 'paid'
     }
   ]
 
@@ -131,10 +147,11 @@
     }
   ]
 
-  // ─── Computed ───────────────────────────────────────────────
   const filteredSessions = computed(() =>
     mockSessions.filter((s) => {
-      if (selectedPlan.value !== 'all' && s.planId !== selectedPlan.value) return false
+      if (selectedPlan.value === 'no-plan' && s.planId !== null) return false
+      if (selectedPlan.value !== 'all' && selectedPlan.value !== 'no-plan' && s.planId !== selectedPlan.value)
+        return false
       if (selectedStatus.value !== 'all' && s.status !== selectedStatus.value) return false
       return true
     })
@@ -144,12 +161,33 @@
 
   const sessionCounts = computed(() => ({
     total: mockSessions.length,
+    noPlan: mockSessions.filter((s) => s.planId === null).length,
     unpaid: mockSessions.filter((s) => s.status === 'unpaid').length,
     partial: mockSessions.filter((s) => s.status === 'partial').length,
     paid: mockSessions.filter((s) => s.status === 'paid').length
   }))
 
-  // ─── Actions ─────────────────────────────────────────────────
+  const activePlanSegment = computed(() => {
+    if (selectedPlan.value === 'all') return 'all'
+    if (selectedPlan.value === 'no-plan') return 'no-plan'
+    return 'by-plan'
+  })
+
+  const selectedPlanName = computed(() => {
+    const plan = treatmentPlans.find((p) => p.id === selectedPlan.value)
+    return plan?.name ?? ''
+  })
+
+  function selectPlanFilter(segment: 'all' | 'no-plan') {
+    selectedPlan.value = segment
+    planPopoverOpen.value = false
+  }
+
+  function selectTreatmentPlan(planId: string) {
+    selectedPlan.value = planId
+    planPopoverOpen.value = false
+  }
+
   function handleRecordPayment(sessionId: string) {
     openRecordPayment([sessionId])
   }
@@ -163,36 +201,66 @@
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-4">
-        <USelect
-          v-model="selectedPlan"
-          :items="planOptions"
-          value-key="value"
-          label-key="label"
-          size="md"
-          placeholder="Plan de traitement"
-          class="w-52"
-        />
-        <div class="bg-muted flex gap-0.5 rounded-xl p-1">
+      <div class="bg-muted flex items-center gap-0.5 rounded-xl p-1">
+        <UButton
+          :variant="activePlanSegment === 'all' ? 'soft' : 'ghost'"
+          :color="activePlanSegment === 'all' ? 'primary' : 'neutral'"
+          size="xs"
+          class="rounded-lg"
+          @click="selectPlanFilter('all')"
+        >
+          Toutes ({{ sessionCounts.total }})
+        </UButton>
+        <UButton
+          :variant="activePlanSegment === 'no-plan' ? 'soft' : 'ghost'"
+          :color="activePlanSegment === 'no-plan' ? 'primary' : 'neutral'"
+          size="xs"
+          class="rounded-lg"
+          @click="selectPlanFilter('no-plan')"
+        >
+          Sans plan ({{ sessionCounts.noPlan }})
+        </UButton>
+        <UPopover v-model:open="planPopoverOpen">
           <UButton
-            v-for="opt in statusOptions"
-            :key="opt.value"
-            :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
-            :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
+            :variant="activePlanSegment === 'by-plan' ? 'soft' : 'ghost'"
+            :color="activePlanSegment === 'by-plan' ? 'primary' : 'neutral'"
             size="xs"
-            :label="opt.label"
             class="rounded-lg"
-            @click="selectedStatus = opt.value"
-          />
-        </div>
+            :trailing-icon="activePlanSegment === 'by-plan' ? 'i-lucide-check' : 'i-lucide-chevron-down'"
+          >
+            {{ activePlanSegment === 'by-plan' && selectedPlanName ? selectedPlanName : 'Par plan' }}
+          </UButton>
+          <template #content>
+            <div class="flex min-w-56 flex-col gap-1 p-1">
+              <UButton
+                v-for="plan in treatmentPlans"
+                :key="plan.id"
+                color="neutral"
+                type="button"
+                :variant="selectedPlan === plan.id ? 'soft' : 'ghost'"
+                @click="selectTreatmentPlan(plan.id)"
+              >
+                <UIcon v-if="selectedPlan === plan.id" name="i-lucide-check" class="size-4 shrink-0" />
+                <span v-else class="size-4 shrink-0" />
+                {{ plan.name }}
+              </UButton>
+            </div>
+          </template>
+        </UPopover>
       </div>
-      <UButton
-        label="Enregistrer un paiement"
-        icon="i-hugeicons-invoice-01"
-        color="primary"
-        size="md"
-        @click="handleOpenRecordPayment"
-      />
+
+      <div class="bg-muted flex gap-0.5 rounded-xl p-1">
+        <UButton
+          v-for="opt in statusOptions"
+          :key="opt.value"
+          :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
+          :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
+          size="xs"
+          :label="opt.label"
+          class="rounded-lg"
+          @click="selectedStatus = opt.value"
+        />
+      </div>
     </div>
 
     <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
@@ -277,6 +345,14 @@
       </div>
 
       <aside class="space-y-6">
+        <UButton
+          label="Enregistrer un paiement"
+          icon="i-hugeicons-receipt-01"
+          color="primary"
+          size="lg"
+          block
+          @click="handleOpenRecordPayment"
+        />
         <PaymentBillingBalanceCard @add-deposit="openAddDeposit()" @refund-balance="openRefundBalance()" />
         <PaymentBillingFinancialSummaryCard />
       </aside>
