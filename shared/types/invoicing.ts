@@ -103,8 +103,8 @@ export const paymentQuerySchema = z.object({
 
 export const patientPaymentsQuerySchema = z.object({
   type: paymentTypeSchema.optional(),
-  limit: z.coerce.number().min(1).max(100).default(50),
-  includeVoided: z.coerce.boolean().default(false)
+  limit: z.coerce.number().optional().default(50),
+  includeVoided: z.coerce.boolean().optional().default(false)
 })
 
 // =============================================================================

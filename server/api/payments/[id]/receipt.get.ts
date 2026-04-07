@@ -63,8 +63,6 @@ export default defineEventHandler(async (event) => {
       .leftJoin(treatmentSessions, eq(paymentSessionItems.treatmentSessionId, treatmentSessions.id))
       .where(eq(paymentSessionItems.paymentId, paymentId))
 
-    const amountDhs = centsToCurrency(payment.amountCents)
-
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -225,7 +223,7 @@ export default defineEventHandler(async (event) => {
         (item) => `
     <div class="payment-row">
       <span class="label">${item.treatmentSession ? new Date(item.treatmentSession.createdAt).toLocaleDateString('fr-FR') : '-'}</span>
-      <span>${centsToCurrency(item.amountCents)} Dh</span>
+      <span>${formatCurrency(item.amountCents)}</span>
     </div>
     `
       )
@@ -248,7 +246,7 @@ export default defineEventHandler(async (event) => {
 
   <div class="amount-section">
     <p class="amount-label">TOTAL</p>
-    <p class="amount-value">${amountDhs} Dh</p>
+    <p class="amount-value">${formatCurrency(payment.amountCents)}</p>
   </div>
 
   <hr class="separator-double">

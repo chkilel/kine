@@ -6,7 +6,7 @@ export function currencyToCents(currency: number): number {
   return Math.round(currency * 100)
 }
 
-export function formatCurrency(cents: number | null | undefined, currencyCode: string = 'DH'): string {
+export function formatCurrency(cents: number | null | undefined, currencyCode: string = 'Dh'): string {
   if (cents === null || cents === undefined) return '-'
 
   const currency = centsToCurrency(cents)

@@ -153,7 +153,7 @@ export const PAYMENT_STATUS_OPTIONS = Object.entries(PAYMENT_STATUS_CONFIG).map(
 
 export const PAYMENT_STATUS_FILTER_OPTIONS = [{ label: 'Tous', value: 'all' }, ...PAYMENT_STATUS_OPTIONS]
 
-export const getPaymentStatusLabel = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].label
-export const getPaymentStatusIcon = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].icon
-export const getPaymentStatusColor = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].color
-export const getPaymentStatusVariant = (status: PaymentStatus): string => PAYMENT_STATUS_CONFIG[status].variant
+export const getPaymentStatusLabel = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].label
+export const getPaymentStatusIcon = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].icon
+export const getPaymentStatusColor = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].color
+export const getPaymentStatusVariant = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].variant
