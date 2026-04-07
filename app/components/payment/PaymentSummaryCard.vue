@@ -18,8 +18,8 @@
   })
 
   function handleViewReceipt() {
-    if (props.treatmentSession.status !== 'completed') return
-    receiptModal.open({ sessionId: props.treatmentSession.id })
+    if (props.treatmentSession.status !== 'completed' || !latestPayment.value) return
+    receiptModal.open({ paymentId: latestPayment.value.id })
   }
 </script>
 
