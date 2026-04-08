@@ -1,5 +1,6 @@
 import { createSharedComposable } from '@vueuse/core'
 import { APPOINTMENT_KEYS } from './useAppointment'
+import { parseISO } from 'date-fns'
 
 // ─── Keys ─────────────────────────────────────────────────────
 export const PAYMENT_KEYS = {
@@ -118,13 +119,19 @@ const _usePatientPayments = (patientId: MaybeRefOrGetter<string>, filters?: Mayb
     ],
     query: async () => {
       const f = toValue(filters)
-      return requestFetch(`/api/patients/${toValue(patientId)}/payments`, {
+      const resp = await requestFetch(`/api/patients/${toValue(patientId)}/payments`, {
         query: {
           ...(f?.type && { type: f.type }),
           ...(f?.limit && { limit: f.limit }),
           ...(f?.includeVoided && { includeVoided: true })
         }
       })
+      return resp?.map((item) => ({
+        ...item,
+        createdAt: parseISO(item.createdAt),
+        updatedAt: parseISO(item.updatedAt),
+        voidedAt: safeParseISODate(item.voidedAt)
+      }))
     },
     enabled: () => !!toValue(patientId)
   })
@@ -138,8 +145,7 @@ const _usePatientSessionsPaymentStatus = (patientId: MaybeRefOrGetter<string>) =
       return requestFetch<{ data: TreatmentSessionWithPaymentStatus[] }>('/api/treatment-sessions', {
         query: {
           patientId: toValue(patientId),
-          status: 'finished',
-          completed: true,
+          status: 'finished,completed',
           includePaymentStatus: true,
           limit: 100
         }
