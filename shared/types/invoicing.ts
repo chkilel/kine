@@ -121,7 +121,7 @@ export type PaymentRequestBody = z.infer<typeof paymentRequestBodySchema>
 export type PaymentResponse = z.infer<typeof paymentResponseSchema>
 export type PaymentQuery = z.infer<typeof paymentQuerySchema>
 export type PatientPaymentsQuery = z.infer<typeof patientPaymentsQuerySchema>
-
+export type PaymentWithSessions = Payment & { sessionItems: PaymentSessionItem[] }
 // =============================================================================
 // Form Schemas
 // =============================================================================

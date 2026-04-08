@@ -140,7 +140,7 @@ export const PAYMENT_STATUS_CONFIG = {
   },
   paid: {
     label: 'Payé',
-    icon: 'i-hugeicons-file-verified',
+    icon: 'i-hugeicons-tick-02',
     color: 'success',
     variant: 'subtle'
   }
