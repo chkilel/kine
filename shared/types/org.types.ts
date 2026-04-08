@@ -51,7 +51,7 @@ export const orgFiscalSchema = z.object({
   vatRate: z.number().min(0, 'Taux de TVA doit être entre 0 et 100').max(100),
   vatSubject: z.boolean(),
   paymentDelay: paymentDelaySchema,
-  paymentMethod: paymentMethodSchema,
+  paymentMethod: paymentFundingMethodSchema,
   currency: z.string().default('MAD'),
   invoicePrefix: z.string().default('FAC'),
   receiptPrefix: z.string().default('REC'),

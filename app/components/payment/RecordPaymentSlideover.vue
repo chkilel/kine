@@ -1,79 +1,61 @@
 <script setup lang="ts">
-  import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+  import { CalendarDate, DateFormatter, getLocalTimeZone, today } from '@internationalized/date'
 
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = withDefaults(
-    defineProps<{
-      preselectedSessionIds?: string[]
-    }>(),
-    {
-      preselectedSessionIds: () => []
-    }
-  )
+  const props = defineProps<{
+    patientId: string
+    preselectedSessionIds?: string[]
+  }>()
 
   const emit = defineEmits<{ close: [] }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
+  const createPayment = useCreatePayment()
+  const { data: balanceData } = usePatientBalance(() => props.patientId)
+  const { data: sessionsData, isLoading: sessionsLoading } = usePatientSessionsPaymentStatus(() => props.patientId)
 
-  // ─── Mock data ──────────────────────────────────────────────
-  const mockSessions = [
-    { id: 's1', date: '15 Mars 2026', planName: 'Kiné du dos', location: 'Cabinet', amountCents: 9500, checked: false },
-    { id: 's2', date: '12 Mars 2026', planName: 'Kiné du dos', location: 'Cabinet', amountCents: 9500, checked: false },
-    {
-      id: 's3',
-      date: '08 Mars 2026',
-      planName: 'Rééducation épaule',
-      location: 'Domicile',
-      amountCents: 12000,
-      checked: false
-    },
-    { id: 's4', date: '05 Mars 2026', planName: 'Kiné du dos', location: 'Cabinet', amountCents: 9500, checked: false },
-    {
-      id: 's5',
-      date: '01 Mars 2026',
-      planName: 'Rééducation épaule',
-      location: 'Cabinet',
-      amountCents: 12000,
-      checked: false
-    }
-  ]
+  // ─── Base state ──────────────────────────────────────────────
+  const checkedIds = ref<Set<string>>(new Set(props.preselectedSessionIds))
+  const isSubmitting = ref(false)
+  const formError = ref('')
 
-  const mockCreditBalanceCents = 15000
+  // ─── Computed state ──────────────────────────────────────────
+  const creditBalanceCents = computed(() => (balanceData.value as number) ?? 0)
 
-  // ─── State ──────────────────────────────────────────────────
-  const sessions = reactive(mockSessions)
+  const unbilledSessions = computed(() => {
+    const items = sessionsData.value?.data ?? []
+    return items.filter((s) => {
+      const status: PaymentStatus = s.paymentStatus
+      return status === 'unpaid' || status === 'partial'
+    })
+  })
+
+  const selectedSessions = computed(() => unbilledSessions.value.filter((s: any) => checkedIds.value.has(s.id)))
+  const selectedTotalCents = computed(() =>
+    selectedSessions.value.reduce((sum: number, s: any) => sum + ((s.priceCent || 0) - (s.paidCents || 0)), 0)
+  )
+  const selectedCount = computed(() => selectedSessions.value.length)
+
+  // ─── Form ────────────────────────────────────────────────────
   const formState = reactive({
     amount: 0,
     useCredit: false,
     method: 'cash' as PaymentMethod,
-    date: shallowRef<CalendarDate | null>(
-      new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())
-    ),
+    date: shallowRef<CalendarDate | null>(today(getLocalTimeZone())),
     notes: ''
   })
 
-  // ─── Computed ───────────────────────────────────────────────
-  const selectedSessions = computed(() => sessions.filter((s) => s.checked))
-  const selectedTotalCents = computed(() => selectedSessions.value.reduce((sum, s) => sum + s.amountCents, 0))
-  const selectedCount = computed(() => selectedSessions.value.length)
-
+  // ─── UI helpers ──────────────────────────────────────────────
   const methodButtons = computed(() =>
-    Object.entries(PAYMENT_METHODS_CONFIG).map(([key, config]) => ({
-      value: key,
-      label: config.label === 'Carte bancaire' ? 'Carte' : config.label === 'Virement' ? 'Vir.' : config.label,
-      icon: config.icon
+    PAYMENT_METHOD_OPTIONS.map((m) => ({
+      value: m.value,
+      label: m.label === 'Carte bancaire' ? 'Carte' : m.label === 'Virement' ? 'Vir.' : m.label,
+      icon: m.icon
     }))
   )
 
-  // ─── Lifecycle ───────────────────────────────────────────────
-  onMounted(() => {
-    for (const session of sessions) {
-      if (props.preselectedSessionIds.includes(session.id)) {
-        session.checked = true
-      }
-    }
-  })
+  const hasCreditOption = computed(() => creditBalanceCents.value > 0 && formState.method !== 'deposit')
 
   // ─── Watchers ────────────────────────────────────────────────
   watch(
@@ -87,10 +69,11 @@
   watch(
     () => formState.useCredit,
     (use) => {
-      if (use && mockCreditBalanceCents > 0) {
+      if (use && creditBalanceCents.value > 0) {
         formState.amount = Math.max(
           0,
-          centsToCurrency(selectedTotalCents.value) - centsToCurrency(mockCreditBalanceCents)
+          centsToCurrency(selectedTotalCents.value) -
+            centsToCurrency(Math.min(creditBalanceCents.value, selectedTotalCents.value))
         )
       } else {
         formState.amount = centsToCurrency(selectedTotalCents.value)
@@ -98,9 +81,132 @@
     }
   )
 
-  // ─── Actions ─────────────────────────────────────────────────
-  function onSubmit() {
-    emit('close')
+  // ─── Event handlers ──────────────────────────────────────────
+  function toggleSession(sessionId: string) {
+    if (checkedIds.value.has(sessionId)) {
+      checkedIds.value = new Set([...checkedIds.value].filter((id) => id !== sessionId))
+    } else {
+      checkedIds.value = new Set([...checkedIds.value, sessionId])
+    }
+  }
+
+  function sessionLabel(s: any): string {
+    return s.planTitle || 'Séance de kinésithérapie'
+  }
+
+  function sessionLocation(s: TreatmentSessionWithPaymentStatus) {
+    const loc = s.appointmentLocation
+    return loc ? getLocationLabel(loc) : loc || ''
+  }
+
+  function sessionRemaining(s: TreatmentSessionWithPaymentStatus) {
+    return (s.priceCent || 0) - (s.paidCents || 0)
+  }
+
+  // ─── Submit ──────────────────────────────────────────────────
+  type SessionItem = { treatmentSessionId: string; amountCents: number }
+
+  async function onSubmit() {
+    formError.value = ''
+    if (selectedCount.value === 0) return
+    if (formState.amount <= 0 && !formState.useCredit) return
+
+    isSubmitting.value = true
+
+    try {
+      const totalCents = selectedTotalCents.value
+      const creditToUse = formState.useCredit ? Math.min(creditBalanceCents.value, totalCents) : 0
+
+      const depositItems: SessionItem[] = []
+      const cashItems: SessionItem[] = []
+      let creditRemaining = creditToUse
+
+      for (const session of selectedSessions.value) {
+        const remaining = sessionRemaining(session)
+        if (creditRemaining >= remaining) {
+          depositItems.push({ treatmentSessionId: session.id, amountCents: remaining })
+          creditRemaining -= remaining
+        } else if (creditRemaining > 0) {
+          depositItems.push({ treatmentSessionId: session.id, amountCents: creditRemaining })
+          cashItems.push({ treatmentSessionId: session.id, amountCents: remaining - creditRemaining })
+          creditRemaining = 0
+        } else {
+          cashItems.push({ treatmentSessionId: session.id, amountCents: remaining })
+        }
+      }
+
+      const basePayment = {
+        patientId: props.patientId,
+        type: 'session_payment' as const,
+        notes: formState.notes || undefined,
+        paidOn: formState.date?.toString()
+      }
+
+      if (depositItems.length > 0) {
+        const hasPartialSession = depositItems.some((item) => {
+          const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+          return session && item.amountCents < sessionRemaining(session)
+        })
+
+        if (hasPartialSession && depositItems.length > 1) {
+          const fullCoverItems = depositItems.filter((item) => {
+            const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+            return session && item.amountCents >= sessionRemaining(session)
+          })
+          const partialItem = depositItems.find((item) => {
+            const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+            return session && item.amountCents < sessionRemaining(session)
+          })!
+
+          await createPayment.mutateAsync({
+            paymentData: {
+              ...basePayment,
+              amountCents: fullCoverItems.reduce((sum, i) => sum + i.amountCents, 0),
+              method: 'deposit',
+              sessionItems: fullCoverItems
+            }
+          })
+
+          await createPayment.mutateAsync({
+            paymentData: {
+              ...basePayment,
+              amountCents: partialItem.amountCents,
+              method: 'deposit',
+              sessionItems: [partialItem]
+            }
+          })
+        } else {
+          await createPayment.mutateAsync({
+            paymentData: {
+              ...basePayment,
+              amountCents: depositItems.reduce((sum, i) => sum + i.amountCents, 0),
+              method: 'deposit',
+              sessionItems: depositItems
+            }
+          })
+        }
+      }
+
+      const cashCents = cashItems.reduce((sum, i) => sum + i.amountCents, 0)
+
+      if (cashItems.length > 0 && cashCents > 0) {
+        await createPayment.mutateAsync({
+          paymentData: {
+            ...basePayment,
+            amountCents: cashCents,
+            method: formState.method,
+            sessionItems: cashItems
+          },
+          onSuccess: () => emit('close')
+        })
+      } else {
+        emit('close')
+      }
+    } catch (error) {
+      formError.value = parseError(error, "Erreur lors de l'enregistrement du paiement").message
+    } finally {
+      isSubmitting.value = false
+    }
   }
 </script>
 
@@ -108,22 +214,28 @@
   <USlideover title="Enregistrer un paiement" @close="emit('close')">
     <template #body>
       <div class="space-y-6">
-        <div>
+        <div v-if="sessionsLoading" class="py-8 text-center">
+          <AppSpinner />
+        </div>
+        <div v-else>
           <h3 class="text-muted text-[10px] font-bold tracking-wider uppercase">Étape 1 — Sélectionner les séances</h3>
           <div class="mt-3 space-y-2">
+            <p v-if="unbilledSessions.length === 0" class="text-muted py-4 text-center text-sm">
+              Aucune séance impayée
+            </p>
             <label
-              v-for="session in sessions"
+              v-for="session in unbilledSessions"
               :key="session.id"
               class="border-default hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors"
-              :class="{ 'border-primary bg-primary/5': session.checked }"
+              :class="{ 'border-primary bg-primary/5': checkedIds.has(session.id) }"
             >
-              <UCheckbox v-model="session.checked" />
+              <UCheckbox :model-value="checkedIds.has(session.id)" @update:model-value="toggleSession(session.id)" />
               <div class="min-w-0 flex-1">
-                <p class="text-default truncate text-sm font-medium">{{ session.planName }}</p>
-                <p class="text-muted text-xs">{{ session.date }} — {{ session.location }}</p>
+                <p class="text-default truncate text-sm font-medium">{{ sessionLabel(session) }}</p>
+                <p class="text-muted text-xs">{{ session.appointmentDate || '' }} — {{ sessionLocation(session) }}</p>
               </div>
               <span class="text-default text-sm font-bold whitespace-nowrap tabular-nums">
-                {{ formatCurrency(session.amountCents) }}
+                {{ formatCurrency(sessionRemaining(session)) }}
               </span>
             </label>
           </div>
@@ -136,7 +248,7 @@
           </div>
         </div>
 
-        <UDivider />
+        <USeparator />
 
         <div>
           <h3 class="text-muted text-[10px] font-bold tracking-wider uppercase">Étape 2 — Détails du paiement</h3>
@@ -145,11 +257,11 @@
               <UInputNumber v-model="formState.amount" :min="0" :step="10" size="md" class="w-full" />
             </UFormField>
 
-            <div v-if="mockCreditBalanceCents > 0" class="flex items-center justify-between">
+            <div v-if="hasCreditOption" class="flex items-center justify-between">
               <label class="cursor-pointer text-sm font-medium">Utiliser l'avance disponible</label>
               <div class="flex items-center gap-2">
                 <span class="text-primary text-xs font-semibold tabular-nums">
-                  {{ formatCurrency(mockCreditBalanceCents) }}
+                  {{ formatCurrency(creditBalanceCents) }}
                 </span>
                 <USwitch v-model="formState.useCredit" />
               </div>
@@ -191,13 +303,23 @@
             </UFormField>
           </div>
         </div>
+
+        <div v-if="formError">
+          <UAlert color="error" variant="subtle" :description="formError" />
+        </div>
       </div>
     </template>
 
     <template #footer>
       <div class="flex gap-3">
         <UButton label="Annuler" variant="outline" @click="emit('close')" />
-        <UButton label="Enregistrer le paiement" color="primary" :disabled="selectedCount === 0" @click="onSubmit" />
+        <UButton
+          label="Enregistrer le paiement"
+          color="primary"
+          :disabled="selectedCount === 0 || isSubmitting"
+          :loading="isSubmitting"
+          @click="onSubmit"
+        />
       </div>
     </template>
   </USlideover>

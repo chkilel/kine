@@ -13,22 +13,24 @@ export default defineEventHandler(async (event) => {
 
     const result = await db
       .select({
-        depositTotal: sql<number>`SUM(CASE WHEN ${payments.type} = 'deposit' THEN ${payments.amountCents} ELSE 0 END)`,
-        creditUsageTotal: sql<number>`SUM(CASE WHEN ${payments.type} = 'credit_usage' THEN ${payments.amountCents} ELSE 0 END)`
+        depositAddTotal: sql<number>`SUM(CASE WHEN ${payments.type} = 'deposit_add' THEN ${payments.amountCents} ELSE 0 END)`,
+        depositUsageTotal: sql<number>`SUM(CASE WHEN ${payments.type} = 'session_payment' AND ${payments.method} = 'deposit' THEN ${payments.amountCents} ELSE 0 END)`,
+        depositRefundTotal: sql<number>`SUM(CASE WHEN ${payments.type} = 'deposit_refund' THEN ${payments.amountCents} ELSE 0 END)`
       })
       .from(payments)
       .where(
         and(
           eq(payments.organizationId, organizationId),
           eq(payments.patientId, patientId),
-          inArray(payments.type, ['deposit', 'credit_usage']),
+          inArray(payments.type, ['deposit_add', 'session_payment', 'deposit_refund']),
           isNull(payments.voidedAt)
         )
       )
 
-    const depositTotal = result[0]?.depositTotal || 0
-    const creditUsageTotal = result[0]?.creditUsageTotal || 0
-    const balanceCents = depositTotal - creditUsageTotal
+    const depositAddTotal = result[0]?.depositAddTotal || 0
+    const depositUsageTotal = result[0]?.depositUsageTotal || 0
+    const depositRefundTotal = result[0]?.depositRefundTotal || 0
+    const balanceCents = depositAddTotal - depositUsageTotal - depositRefundTotal
 
     return balanceCents
   } catch (error) {

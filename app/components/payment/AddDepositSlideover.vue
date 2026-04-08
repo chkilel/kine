@@ -2,12 +2,20 @@
   import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
 
   // ─── Props / Emits ───────────────────────────────────────────
+  const props = defineProps<{ patientId: string }>()
   const emit = defineEmits<{ close: [] }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
+  const createPayment = useCreatePayment()
 
-  // ─── Form state ──────────────────────────────────────────────
+  // ─── States ──────────────────────────────────────────────────
+  const formError = ref('')
+
+  // ─── Computed state ──────────────────────────────────────────
+  const isSubmitting = computed(() => createPayment.isLoading.value)
+
+  // ─── Form ────────────────────────────────────────────────────
   const formState = reactive({
     amount: 0,
     method: 'cash' as PaymentMethod,
@@ -17,18 +25,23 @@
     notes: ''
   })
 
-  // ─── UI helpers ──────────────────────────────────────────────
-  const methodButtons = computed(() =>
-    Object.entries(PAYMENT_METHODS_CONFIG).map(([key, config]) => ({
-      value: key,
-      label: config.label === 'Carte bancaire' ? 'Carte' : config.label === 'Virement' ? 'Vir.' : config.label,
-      icon: config.icon
-    }))
-  )
+  // ─── Submit ──────────────────────────────────────────────────
+  async function onSubmit() {
+    formError.value = ''
+    if (formState.amount <= 0) return
 
-  // ─── Actions ─────────────────────────────────────────────────
-  function onSubmit() {
-    emit('close')
+    createPayment.mutate({
+      paymentData: {
+        patientId: props.patientId,
+        amountCents: currencyToCents(formState.amount),
+        type: 'deposit_add',
+        method: formState.method,
+        notes: formState.notes || undefined,
+        paidOn: formState.date?.toString()
+      },
+      onSuccess: () => emit('close'),
+      onError: (error) => (formError.value = parseError(error, "Erreur lors de l'ajout de l'avance").message)
+    })
   }
 </script>
 
@@ -51,7 +64,7 @@
         <UFormField label="Mode de règlement">
           <div class="grid w-full grid-cols-4 gap-2">
             <button
-              v-for="method in methodButtons"
+              v-for="method in PAYMENT_FUNDING_METHOD_OPTIONS"
               :key="method.value"
               type="button"
               class="flex flex-col items-center justify-center gap-1.5 rounded-lg border p-3 transition-colors"
@@ -82,13 +95,23 @@
         <UFormField label="Notes" hint="Optionnel">
           <UTextarea v-model="formState.notes" placeholder="Commentaire..." :rows="2" size="md" class="w-full" />
         </UFormField>
+
+        <div v-if="formError">
+          <UAlert color="error" variant="subtle" :description="formError" />
+        </div>
       </div>
     </template>
 
     <template #footer>
       <div class="flex w-full justify-between gap-3">
         <UButton label="Annuler" variant="outline" @click="emit('close')" />
-        <UButton label="Ajouter l'avance" color="primary" :disabled="formState.amount <= 0" @click="onSubmit" />
+        <UButton
+          label="Ajouter l'avance"
+          color="primary"
+          :disabled="formState.amount <= 0 || isSubmitting"
+          :loading="isSubmitting"
+          @click="onSubmit"
+        />
       </div>
     </template>
   </USlideover>

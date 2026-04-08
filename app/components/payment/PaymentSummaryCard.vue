@@ -1,25 +1,24 @@
 <script setup lang="ts">
-  import { LazyAppReceiptModal } from '#components'
-
   const props = defineProps<{
     treatmentSession: TreatmentSession
     appointment: AppointmentWithSession
   }>()
 
-  const overlay = useOverlay()
-  const receiptModal = overlay.create(LazyAppReceiptModal)
-
+  // ─── Composables ─────────────────────────────────────────────
+  const { viewPaymentReceipt } = useBillingSlideover()
   const { data: sessionPayments } = useTreatmentSessionPayments(() => props.treatmentSession.id ?? '')
 
+  // ─── Computed state ──────────────────────────────────────────
   const latestPayment = computed(() => {
     const payments = sessionPayments.value as Payment[] | undefined
     if (!payments?.length) return null
     return payments[payments.length - 1]
   })
 
+  // ─── Event handlers ──────────────────────────────────────────
   function handleViewReceipt() {
-    if (props.treatmentSession.status !== 'completed') return
-    receiptModal.open({ sessionId: props.treatmentSession.id })
+    if (props.treatmentSession.status !== 'completed' || !latestPayment.value) return
+    viewPaymentReceipt(latestPayment.value.id)
   }
 </script>
 
@@ -75,7 +74,7 @@
         <div class="text-right">
           <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Mode</span>
           <p class="text-xs font-bold uppercase">
-            {{ latestPayment.method ? getPaymentMethodLabel(latestPayment.method) : 'Solde patient' }}
+            {{ getPaymentMethodLabel(latestPayment.method) }}
           </p>
         </div>
         <div>

@@ -1,53 +1,55 @@
 <script setup lang="ts">
-  // ─── Mock data ──────────────────────────────────────────────
-  const mockData = {
-    totalBilledCents: 45000,
-    totalCollectedCents: 32000,
-    remainingCents: 13000,
-    depositCents: 15000
-  }
+  // ─── Props ───────────────────────────────────────────────────
+  const props = defineProps<{
+    sessions: TreatmentSessionWithPaymentStatus[]
+    patientId: string
+  }>()
 
-  // ─── Computed ───────────────────────────────────────────────
+  // ─── Composables ─────────────────────────────────────────────
+  const { data: balanceData } = usePatientBalance(() => props.patientId)
+
+  // ─── Computed state ──────────────────────────────────────────
+  const totalBilledCents = computed(() => props.sessions.reduce((sum, s) => sum + (s.priceCent || 0), 0))
+
+  const totalCollectedCents = computed(() => props.sessions.reduce((sum, s) => sum + (s.paidCents || 0), 0))
+
+  const remainingCents = computed(() => totalBilledCents.value - totalCollectedCents.value)
+
+  const depositCents = computed(() => balanceData.value ?? 0)
+
   const recoveryRate = computed(() => {
-    if (mockData.totalBilledCents === 0) return 0
-    return Math.round((mockData.totalCollectedCents / mockData.totalBilledCents) * 100)
+    if (totalBilledCents.value === 0) return 0
+    return Math.round((totalCollectedCents.value / totalBilledCents.value) * 100)
   })
 </script>
 
 <template>
-  <AppCard variant="outline">
-    <template #header>
-      <div class="flex items-center gap-2">
-        <AppIconBox name="i-hugeicons-chart-pie-01" size="md" color="primary" variant="soft" />
-        <h3 class="font-bold">Résumé financier</h3>
-      </div>
-    </template>
-
+  <AppCard variant="outline" iconColor="info" title="Résumé financier" icon="i-hugeicons-pie-chart-01">
     <div class="space-y-3">
       <div class="flex items-center justify-between text-sm">
         <span class="text-muted">Total facturé</span>
-        <span class="text-default font-bold tabular-nums">{{ formatCurrency(mockData.totalBilledCents) }}</span>
+        <span class="text-default font-bold tabular-nums">{{ formatCurrency(totalBilledCents) }}</span>
       </div>
       <div class="flex items-center justify-between text-sm">
         <span class="text-muted">Total encaissé</span>
-        <span class="text-success font-bold tabular-nums">{{ formatCurrency(mockData.totalCollectedCents) }}</span>
+        <span class="text-success font-bold tabular-nums">{{ formatCurrency(totalCollectedCents) }}</span>
+      </div>
+      <USeparator />
+      <div class="flex items-center justify-between text-sm">
+        <span class="font-bold">Reste à encaisser</span>
+        <span class="text-error font-bold tabular-nums">{{ formatCurrency(remainingCents) }}</span>
       </div>
       <div class="flex items-center justify-between text-sm">
-        <span class="text-muted">Reste à encaisser</span>
-        <span class="text-error font-bold tabular-nums">{{ formatCurrency(mockData.remainingCents) }}</span>
+        <span class="text-muted italic">Dont avance disp.</span>
+        <span class="text-primary font-bold tabular-nums">{{ formatCurrency(depositCents) }}</span>
       </div>
-      <div class="flex items-center justify-between text-sm">
-        <span class="text-muted">Avance disponible</span>
-        <span class="text-primary font-bold tabular-nums">{{ formatCurrency(mockData.depositCents) }}</span>
+    </div>
+    <div>
+      <div class="mt-5 flex items-center justify-between text-xs">
+        <span class="text-muted font-semibold uppercase">Taux de recouvrement</span>
+        <span class="text-info font-bold">{{ recoveryRate }}%</span>
       </div>
-
-      <div class="border-default border-t pt-3">
-        <div class="flex items-center justify-between text-xs">
-          <span class="text-muted font-medium">Taux de recouvrement</span>
-          <span class="text-default font-bold">{{ recoveryRate }}%</span>
-        </div>
-        <UProgress :model-value="recoveryRate" :max="100" color="primary" size="sm" class="mt-2" />
-      </div>
+      <UProgress :model-value="recoveryRate" :max="100" color="primary" size="md" class="mt-2" />
     </div>
   </AppCard>
 </template>

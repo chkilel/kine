@@ -4,38 +4,43 @@ import {
   LazyPaymentCancelPaymentModal,
   LazyPaymentHistorySlideover,
   LazyPaymentRecordPaymentSlideover,
-  LazyPaymentRefundBalanceSlideover
+  LazyPaymentRefundBalanceSlideover,
+  LazyAppReceiptModal
 } from '#components'
 
-// ─── Composable implementation ─────────────────────────────────
 const _useBillingSlideover = () => {
-  // ─── Overlay setup ───────────────────────────────────────────
+  // ─── Overlays ────────────────────────────────────────────────
   const overlay = useOverlay()
   const recordPaymentOverlay = overlay.create(LazyPaymentRecordPaymentSlideover)
   const addDepositOverlay = overlay.create(LazyPaymentAddDepositSlideover)
   const refundBalanceOverlay = overlay.create(LazyPaymentRefundBalanceSlideover)
   const paymentHistoryOverlay = overlay.create(LazyPaymentHistorySlideover)
   const cancelPaymentOverlay = overlay.create(LazyPaymentCancelPaymentModal)
+  const receiptOverlay = overlay.create(LazyAppReceiptModal)
 
-  // ─── Actions ─────────────────────────────────────────────────
-  const openRecordPayment = (preselectedSessionIds?: string[]) => {
-    recordPaymentOverlay.open({ preselectedSessionIds: preselectedSessionIds ?? [] })
+  // ─── Open functions ─────────────────────────────────────────
+  const openRecordPayment = (patientId: string, preselectedSessionIds?: string[]) => {
+    recordPaymentOverlay.open({ patientId, preselectedSessionIds: preselectedSessionIds ?? [] })
   }
 
-  const openAddDeposit = () => {
-    addDepositOverlay.open()
+  const openAddDeposit = (patientId: string) => {
+    addDepositOverlay.open({ patientId })
   }
 
-  const openRefundBalance = () => {
-    refundBalanceOverlay.open()
+  const openRefundBalance = (patientId: string) => {
+    refundBalanceOverlay.open({ patientId })
   }
 
-  const openPaymentHistory = () => {
-    paymentHistoryOverlay.open()
+  const openPaymentHistory = (patientId: string) => {
+    paymentHistoryOverlay.open({ patientId })
   }
 
-  const openCancelPayment = () => {
-    cancelPaymentOverlay.open()
+  const openCancelPayment = (payment: PaymentWithSessions) => {
+    cancelPaymentOverlay.open({ payment })
+  }
+
+  const viewPaymentReceipt = (paymentId: string) => {
+    receiptOverlay.open({ paymentId })
   }
 
   return {
@@ -43,7 +48,8 @@ const _useBillingSlideover = () => {
     openAddDeposit,
     openRefundBalance,
     openPaymentHistory,
-    openCancelPayment
+    openCancelPayment,
+    viewPaymentReceipt
   }
 }
 

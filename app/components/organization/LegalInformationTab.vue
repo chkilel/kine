@@ -199,7 +199,7 @@
             </div>
             <div>
               <UFormField label="Mode de paiement" name="fiscal.paymentMethod">
-                <USelect v-model="state.fiscal.paymentMethod" :items="PAYMENT_METHOD_OPTIONS" class="w-full" />
+                <USelect v-model="state.fiscal.paymentMethod" :items="PAYMENT_FUNDING_METHOD_OPTIONS" class="w-full" />
               </UFormField>
             </div>
           </div>

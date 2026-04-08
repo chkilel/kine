@@ -63,8 +63,6 @@ export default defineEventHandler(async (event) => {
       .leftJoin(treatmentSessions, eq(paymentSessionItems.treatmentSessionId, treatmentSessions.id))
       .where(eq(paymentSessionItems.paymentId, paymentId))
 
-    const amountDhs = centsToCurrency(payment.amountCents)
-
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -184,7 +182,7 @@ export default defineEventHandler(async (event) => {
 
   <div class="payment-row">
     <span class="label">${getPaymentTypeLabel(payment.type)}</span>
-    <span class="bold">${payment.method ? getPaymentMethodLabel(payment.method) : 'Avance patient'}</span>
+    <span class="bold">${getPaymentMethodLabel(payment.method)}</span>
   </div>
 
   <div class="payment-row">
@@ -225,21 +223,30 @@ export default defineEventHandler(async (event) => {
         (item) => `
     <div class="payment-row">
       <span class="label">${item.treatmentSession ? new Date(item.treatmentSession.createdAt).toLocaleDateString('fr-FR') : '-'}</span>
-      <span>${centsToCurrency(item.amountCents)} Dh</span>
+      <span>${formatCurrency(item.amountCents)}</span>
     </div>
     `
       )
       .join('')}
   </div>
   `
-      : ''
+      : payment.type === 'deposit_add'
+        ? `
+  <hr class="separator">
+  <div class="session-block">
+    <div class="payment-row bold">
+      <span>Avance sur soins</span>
+    </div>
+  </div>
+  `
+        : ''
   }
 
   <hr class="separator-double">
 
   <div class="amount-section">
     <p class="amount-label">TOTAL</p>
-    <p class="amount-value">${amountDhs} Dh</p>
+    <p class="amount-value">${formatCurrency(payment.amountCents)}</p>
   </div>
 
   <hr class="separator-double">

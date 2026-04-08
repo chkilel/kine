@@ -1,284 +1,207 @@
 <script setup lang="ts">
-  // ─── Composables ─────────────────────────────────────────────
-  const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance, openCancelPayment } =
-    useBillingSlideover()
+  // ─── Base state ──────────────────────────────────────────────
+  const route = useRoute()
+  const patientId = computed(() => route.params.id as string)
 
-  // ─── State ──────────────────────────────────────────────────
-  const selectedPlan = ref('all')
+  const selectedPlan = ref<'all' | 'no-plan' | string>('all')
   const selectedStatus = ref('all')
+  const planPopoverOpen = ref(false)
 
-  // ─── UI helpers ──────────────────────────────────────────────
-  const planOptions = [
-    { label: 'Toutes les séances', value: 'all' },
-    { label: 'Kiné du dos', value: 'plan-1' },
-    { label: 'Rééducation épaule', value: 'plan-2' }
-  ]
+  // ─── Composables ─────────────────────────────────────────────
+  const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance } = useBillingSlideover()
 
-  const statusOptions = [
-    { label: 'Tous', value: 'all' },
-    { label: 'Non facturé', value: 'unpaid' },
-    { label: 'Partiellement', value: 'partial' },
-    { label: 'Payé', value: 'paid' }
-  ]
+  const { data: sessionsData, isLoading: isSessionsLoading } = usePatientSessionsPaymentStatus(patientId)
 
-  // ─── Types ──────────────────────────────────────────────────
-  type MockSession = {
-    id: string
-    date: string
-    planName: string
-    planId: string
-    location: string
-    amountCents: number
-    paidCents: number
-    status: 'unpaid' | 'partial' | 'paid'
-  }
+  // ─── Computed state ──────────────────────────────────────────
+  const sessions = computed(() => sessionsData.value?.data ?? [])
 
-  type MockPaymentHistoryItem = {
-    id: string
-    method: PaymentMethod | null
-    amountCents: number
-    date: string
-    receiptNumber: string
-    sessionRef: string
-    type: PaymentType
-    isVoided: boolean
-  }
-
-  // ─── Mock data ──────────────────────────────────────────────
-  const mockSessions: MockSession[] = [
-    {
-      id: 's1',
-      date: '12 Oct 2023',
-      planName: 'Session de Kinésithérapie #12',
-      planId: 'plan-1',
-      location: 'Rééducation lombaire intensif',
-      amountCents: 20000,
-      paidCents: 0,
-      status: 'unpaid'
-    },
-    {
-      id: 's2',
-      date: '08 Oct 2023',
-      planName: 'Évaluation de la mobilité',
-      planId: 'plan-1',
-      location: 'Rééducation lombaire intensif',
-      amountCents: 20000,
-      paidCents: 10000,
-      status: 'partial'
-    },
-    {
-      id: 's3',
-      date: '05 Oct 2023',
-      planName: 'Massage thérapeutique',
-      planId: 'plan-1',
-      location: 'Rééducation lombaire intensif',
-      amountCents: 20000,
-      paidCents: 20000,
-      status: 'paid'
-    },
-    {
-      id: 's4',
-      date: '03 Oct 2023',
-      planName: 'Renforcement musculaire',
-      planId: 'plan-1',
-      location: 'Rééducation lombaire intensif',
-      amountCents: 20000,
-      paidCents: 0,
-      status: 'unpaid'
-    },
-    {
-      id: 's5',
-      date: '28 Sept 2023',
-      planName: 'Post-opératoire Épaule #5',
-      planId: 'plan-2',
-      location: 'Post-opératoire Épaule',
-      amountCents: 25000,
-      paidCents: 25000,
-      status: 'paid'
+  const plans = computed(() => {
+    const planMap = new Map<string, { id: string; name: string; count: number }>()
+    for (const s of sessions.value) {
+      if (s.treatmentPlanId && s.planTitle) {
+        const existing = planMap.get(s.treatmentPlanId)
+        if (existing) {
+          existing.count++
+        } else {
+          planMap.set(s.treatmentPlanId, { id: s.treatmentPlanId, name: s.planTitle, count: 1 })
+        }
+      }
     }
-  ]
+    return Array.from(planMap.values())
+  })
 
-  const mockPaymentHistory: MockPaymentHistoryItem[] = [
-    {
-      id: 'p1',
-      method: 'cash',
-      amountCents: 50000,
-      date: "Aujourd'hui, 09:45",
-      receiptNumber: 'REC-0042',
-      sessionRef: 'Sess. #10, #11',
-      type: 'payment',
-      isVoided: false
-    },
-    {
-      id: 'p2',
-      method: 'bank-card',
-      amountCents: 30000,
-      date: '05 Oct 2023',
-      receiptNumber: 'REC-0038',
-      sessionRef: 'Avance patient',
-      type: 'deposit',
-      isVoided: false
-    },
-    {
-      id: 'p3',
-      method: 'bank-transfer',
-      amountCents: 15000,
-      date: '01 Oct 2023',
-      receiptNumber: 'REC-0037',
-      sessionRef: 'Sess. #7',
-      type: 'payment',
-      isVoided: false
-    }
-  ]
-
-  // ─── Computed ───────────────────────────────────────────────
-  const filteredSessions = computed(() =>
-    mockSessions.filter((s) => {
-      if (selectedPlan.value !== 'all' && s.planId !== selectedPlan.value) return false
-      if (selectedStatus.value !== 'all' && s.status !== selectedStatus.value) return false
+  const planFilteredSessions = computed(() =>
+    sessions.value.filter((s) => {
+      if (selectedPlan.value === 'no-plan' && s.treatmentPlanId !== null) return false
+      if (selectedPlan.value !== 'all' && selectedPlan.value !== 'no-plan' && s.treatmentPlanId !== selectedPlan.value)
+        return false
       return true
     })
   )
 
-  const recentPayments = computed(() => mockPaymentHistory.filter((p) => !p.isVoided))
+  const filteredSessions = computed(() =>
+    planFilteredSessions.value.filter((s) => {
+      if (selectedStatus.value !== 'all' && s.paymentStatus !== selectedStatus.value) return false
+      return true
+    })
+  )
 
   const sessionCounts = computed(() => ({
-    total: mockSessions.length,
-    unpaid: mockSessions.filter((s) => s.status === 'unpaid').length,
-    partial: mockSessions.filter((s) => s.status === 'partial').length,
-    paid: mockSessions.filter((s) => s.status === 'paid').length
+    total: sessions.value.length,
+    noPlan: sessions.value.filter((s) => s.treatmentPlanId === null).length,
+    unpaid: sessions.value.filter((s) => s.paymentStatus === 'unpaid').length,
+    partial: sessions.value.filter((s) => s.paymentStatus === 'partial').length,
+    paid: sessions.value.filter((s) => s.paymentStatus === 'paid').length
   }))
 
-  // ─── Actions ─────────────────────────────────────────────────
-  function handleRecordPayment(sessionId: string) {
-    openRecordPayment([sessionId])
+  const activePlanSegment = computed(() => {
+    if (selectedPlan.value === 'all') return 'all'
+    if (selectedPlan.value === 'no-plan') return 'no-plan'
+    return 'by-plan'
+  })
+
+  const selectedPlanName = computed(() => {
+    const plan = plans.value.find((p) => p.id === selectedPlan.value)
+    return plan?.name ?? ''
+  })
+
+  // ─── Event handlers ──────────────────────────────────────────
+  function selectPlanFilter(segment: 'all' | 'no-plan') {
+    selectedPlan.value = segment
+    planPopoverOpen.value = false
+  }
+
+  function selectTreatmentPlan(planId: string) {
+    selectedPlan.value = planId
+    planPopoverOpen.value = false
   }
 
   function handleOpenRecordPayment() {
-    const unpaidIds = mockSessions.filter((s) => s.status === 'unpaid' || s.status === 'partial').map((s) => s.id)
-    openRecordPayment(unpaidIds)
+    const unpaidIds = sessions.value
+      .filter((s) => s.paymentStatus === 'unpaid' || s.paymentStatus === 'partial')
+      .map((s) => s.id)
+    openRecordPayment(patientId.value, unpaidIds)
   }
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-4">
-        <USelect
-          v-model="selectedPlan"
-          :items="planOptions"
-          value-key="value"
-          label-key="label"
-          size="md"
-          placeholder="Plan de traitement"
-          class="w-52"
-        />
-        <div class="bg-muted flex gap-0.5 rounded-xl p-1">
+      <div class="bg-muted flex items-center gap-0.5 rounded-xl p-1">
+        <UButton
+          :variant="activePlanSegment === 'all' ? 'soft' : 'ghost'"
+          :color="activePlanSegment === 'all' ? 'primary' : 'neutral'"
+          size="xs"
+          class="rounded-lg"
+          @click="selectPlanFilter('all')"
+        >
+          Toutes ({{ sessionCounts.total }})
+        </UButton>
+        <UButton
+          :variant="activePlanSegment === 'no-plan' ? 'soft' : 'ghost'"
+          :color="activePlanSegment === 'no-plan' ? 'primary' : 'neutral'"
+          size="xs"
+          class="rounded-lg"
+          @click="selectPlanFilter('no-plan')"
+        >
+          Sans plan ({{ sessionCounts.noPlan }})
+        </UButton>
+        <UPopover v-model:open="planPopoverOpen">
           <UButton
-            v-for="opt in statusOptions"
-            :key="opt.value"
-            :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
-            :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
+            :variant="activePlanSegment === 'by-plan' ? 'soft' : 'ghost'"
+            :color="activePlanSegment === 'by-plan' ? 'primary' : 'neutral'"
             size="xs"
-            :label="opt.label"
             class="rounded-lg"
-            @click="selectedStatus = opt.value"
-          />
-        </div>
+            :trailing-icon="activePlanSegment === 'by-plan' ? 'i-lucide-check' : 'i-lucide-chevron-down'"
+          >
+            {{ activePlanSegment === 'by-plan' && selectedPlanName ? selectedPlanName : 'Par plan' }}
+          </UButton>
+          <template #content>
+            <div class="flex min-w-56 flex-col gap-1 p-1">
+              <UButton
+                v-for="plan in plans"
+                :key="plan.id"
+                color="neutral"
+                type="button"
+                :variant="selectedPlan === plan.id ? 'soft' : 'ghost'"
+                @click="selectTreatmentPlan(plan.id)"
+              >
+                <UIcon v-if="selectedPlan === plan.id" name="i-lucide-check" class="size-4 shrink-0" />
+                <span v-else class="size-4 shrink-0" />
+                {{ plan.name }}
+                <UBadge size="xs" variant="subtle" class="ml-auto">{{ plan.count }}</UBadge>
+              </UButton>
+            </div>
+          </template>
+        </UPopover>
       </div>
-      <UButton
-        label="Enregistrer un paiement"
-        icon="i-hugeicons-invoice-01"
-        color="primary"
-        size="md"
-        @click="handleOpenRecordPayment"
-      />
+
+      <div class="bg-muted flex gap-0.5 rounded-xl p-1">
+        <UButton
+          v-for="opt in PAYMENT_STATUS_FILTER_OPTIONS"
+          :key="opt.value"
+          :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
+          :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
+          size="xs"
+          :label="opt.label"
+          class="rounded-lg"
+          @click="selectedStatus = opt.value"
+        />
+      </div>
     </div>
 
     <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
       <div class="space-y-10 lg:col-span-2">
         <section>
-          <div class="mb-6 flex items-center justify-between">
-            <h3 class="flex items-center gap-3 text-xl font-bold">
-              <span class="bg-primary h-8 w-2 rounded-full" />
-              Séances à facturer
-            </h3>
-            <span class="text-muted text-sm font-medium">
-              {{ sessionCounts.unpaid + sessionCounts.partial }} en attente
-            </span>
-          </div>
-          <div class="space-y-4">
-            <PaymentBillingSessionCard
-              v-for="session in filteredSessions"
-              :key="session.id"
-              :session="session"
-              @record-payment="handleRecordPayment"
+          <div class="mb-6 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h3 class="flex items-center gap-3 font-bold">
+                <!-- <span class="bg-primary h-8 w-2 rounded-full" /> -->
+                Séances
+              </h3>
+
+              <UBadge color="info" variant="soft" size="lg" class="rounded-full">
+                {{ sessionCounts.unpaid + sessionCounts.partial }} en attente
+              </UBadge>
+            </div>
+            <UButton
+              label="Historique des paiements"
+              icon="i-hugeicons-clock-03"
+              variant="ghost"
+              color="info"
+              size="md"
+              @click="openPaymentHistory(patientId)"
             />
+          </div>
+          <div v-if="isSessionsLoading" class="py-8 text-center">
+            <AppSpinner />
+          </div>
+          <div v-else class="space-y-4">
+            <PaymentBillingSessionCard v-for="session in filteredSessions" :key="session.id" :session="session" />
             <p v-if="filteredSessions.length === 0" class="text-muted py-4 text-center text-sm">
               Aucune séance trouvée
             </p>
           </div>
         </section>
-
-        <section>
-          <div class="mb-6 flex items-center justify-between">
-            <h3 class="text-xl font-bold">Historique des paiements</h3>
-            <UButton variant="link" size="sm" label="Voir tout l'historique" @click="openPaymentHistory()" />
-          </div>
-          <AppCard variant="outline">
-            <div class="divide-default divide-y">
-              <div
-                v-for="item in recentPayments"
-                :key="item.id"
-                class="hover:bg-muted/50 flex items-center justify-between p-4 transition-colors"
-              >
-                <div class="flex flex-1 items-center gap-4">
-                  <AppIconBox
-                    :name="item.method ? getPaymentMethodIcon(item.method) : 'i-hugeicons-wallet-02'"
-                    size="sm"
-                    :color="item.method ? (getPaymentMethodColor(item.method) as UIColor) : 'primary'"
-                    variant="subtle"
-                  />
-                  <div class="grid flex-1 grid-cols-2 items-center gap-4 lg:grid-cols-4">
-                    <div>
-                      <p class="text-xs font-bold uppercase">
-                        {{ item.method ? getPaymentMethodLabel(item.method) : 'Solde patient' }}
-                      </p>
-                      <p class="text-muted text-xs font-medium">{{ item.receiptNumber }}</p>
-                    </div>
-                    <div>
-                      <p class="text-muted text-xs">Montant</p>
-                      <p class="text-success text-sm font-bold">+{{ formatCurrency(item.amountCents) }}</p>
-                    </div>
-                    <div class="hidden lg:block">
-                      <p class="text-muted text-xs">Référence</p>
-                      <p class="text-default truncate text-sm font-medium">{{ item.sessionRef || '-' }}</p>
-                    </div>
-                    <div class="hidden lg:block">
-                      <p class="text-muted text-xs">Date</p>
-                      <p class="text-default text-sm font-medium">{{ item.date }}</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="ml-4 flex items-center gap-2">
-                  <UButton variant="ghost" size="xs" icon="i-hugeicons-download-01" color="neutral" />
-                  <UButton
-                    variant="ghost"
-                    size="xs"
-                    icon="i-hugeicons-cancel-01"
-                    color="error"
-                    @click="openCancelPayment()"
-                  />
-                </div>
-              </div>
-            </div>
-          </AppCard>
-        </section>
       </div>
 
-      <aside class="space-y-6">
-        <PaymentBillingBalanceCard @add-deposit="openAddDeposit()" @refund-balance="openRefundBalance()" />
-        <PaymentBillingFinancialSummaryCard />
+      <aside class="space-y-4">
+        <div class="space-y-2">
+          <UButton
+            label="Enregistrer un paiement"
+            icon="i-hugeicons-invoice-03"
+            color="primary"
+            size="lg"
+            block
+            @click="handleOpenRecordPayment"
+          />
+        </div>
+        <PaymentBillingBalanceCard
+          :patient-id="patientId"
+          @add-deposit="openAddDeposit(patientId)"
+          @refund-balance="openRefundBalance(patientId)"
+        />
+        <PaymentBillingFinancialSummaryCard :sessions="planFilteredSessions" :patient-id="patientId" />
       </aside>
     </div>
   </div>

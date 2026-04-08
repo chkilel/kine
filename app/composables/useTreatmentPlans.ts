@@ -23,7 +23,11 @@ const _usePatientTreatmentPlans = (patientId: MaybeRefOrGetter<string>) => {
   } = useQuery({
     key: () => TREATMENT_PLAN_KEYS.byPatient(toValue(patientId)),
     query: async () => {
-      const data = await requestFetch(`/api/treatment-plans?patientId=${toValue(patientId)}`)
+      const data = await requestFetch('/api/treatment-plans', {
+        query: {
+          patientId: toValue(patientId)
+        }
+      })
       return data?.map((plan) => ({
         ...plan,
         createdAt: parseISO(plan.createdAt),

@@ -1,4 +1,4 @@
-import type { PaymentDelay, PaymentMethod, PaymentType } from '../types/base.types'
+import type { PaymentDelay, PaymentMethod, PaymentStatus, PaymentType } from '../types/base.types'
 
 // =============================================================================
 // Payment Methods Configuration
@@ -8,37 +8,46 @@ export const PAYMENT_METHODS_CONFIG = {
   cash: {
     label: 'Espèces',
     icon: 'i-hugeicons-money-01',
-    color: 'success',
-    variant: 'subtle'
+    color: 'success'
   },
   'bank-card': {
     label: 'Carte bancaire',
     icon: 'i-hugeicons-credit-card',
-    color: 'primary',
-    variant: 'subtle'
+    color: 'primary'
   },
   check: {
     label: 'Chèque',
     icon: 'i-hugeicons-pay-by-check',
-    color: 'info',
-    variant: 'subtle'
+    color: 'info'
   },
   'bank-transfer': {
     label: 'Virement',
     icon: 'i-hugeicons-bank',
-    color: 'warning',
-    variant: 'subtle'
+    color: 'warning'
+  },
+  deposit: {
+    label: 'Solde patient',
+    icon: 'i-hugeicons-wallet-02',
+    color: 'neutral'
   }
 } as const
 
 export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG).map(([key, item]) => ({
   label: item.label,
-  value: key
+  value: key as PaymentMethod,
+  icon: item.icon
 }))
+
+export const PAYMENT_FUNDING_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG)
+  .filter(([key]) => key !== 'deposit')
+  .map(([key, item]) => ({
+    label: item.label,
+    value: key as PaymentMethod,
+    icon: item.icon
+  }))
 
 export const getPaymentMethodLabel = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].label || method
 export const getPaymentMethodColor = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].color || 'neutral'
-export const getPaymentMethodVariant = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].variant || 'soft'
 export const getPaymentMethodIcon = (method: PaymentMethod) =>
   PAYMENT_METHODS_CONFIG[method].icon || 'i-hugeicons-money-01'
 
@@ -69,25 +78,25 @@ export const getPaymentDelayVariant = (delay: PaymentDelay) => PAYMENT_DELAYS_CO
 // =============================================================================
 
 export const PAYMENT_TYPE_CONFIG = {
-  payment: {
+  session_payment: {
     label: 'Paiement',
     description: 'Enregistrer un paiement pour cette séance',
     submitLabel: 'Enregistrer le paiement',
     bannerMessage: ''
   },
-  deposit: {
+  session_refund: {
+    label: 'Remboursement de séance',
+    description: 'Rembourser un paiement de séance',
+    submitLabel: 'Enregistrer le remboursement',
+    bannerMessage: ''
+  },
+  deposit_add: {
     label: 'Avance',
     description: 'Ajouter une avance pour soins futurs',
     submitLabel: "Enregistrer l'avance",
     bannerMessage: 'Cette avance sera disponible pour les futures séances.'
   },
-  credit_usage: {
-    label: 'Utilisation du solde',
-    description: "Utiliser l'avance existante",
-    submitLabel: "Utiliser l'avance",
-    bannerMessage: ''
-  },
-  refund: {
+  deposit_refund: {
     label: 'Remboursement',
     description: 'Rembourser une avance non utilisée',
     submitLabel: 'Enregistrer le remboursement',
@@ -105,3 +114,36 @@ export const getPaymentTypeLabel = (type: PaymentType): string => PAYMENT_TYPE_C
 export const getPaymentTypeDescription = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].description
 export const getPaymentTypeSubmitLabel = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].submitLabel
 export const getPaymentTypeBannerMessage = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].bannerMessage
+
+// =============================================================================
+// Payment Status Configuration
+// =============================================================================
+
+export const PAYMENT_STATUS_CONFIG = {
+  unpaid: {
+    label: 'Non facturé',
+    icon: 'i-hugeicons-money-not-found-03',
+    color: 'error'
+  },
+  partial: {
+    label: 'Partiellement',
+    icon: 'i-hugeicons-money-add-02',
+    color: 'warning'
+  },
+  paid: {
+    label: 'Payé',
+    icon: 'i-hugeicons-tick-02',
+    color: 'success'
+  }
+} as const
+
+export const PAYMENT_STATUS_OPTIONS = Object.entries(PAYMENT_STATUS_CONFIG).map(([key, item]) => ({
+  label: item.label,
+  value: key
+}))
+
+export const PAYMENT_STATUS_FILTER_OPTIONS = [{ label: 'Tous', value: 'all' }, ...PAYMENT_STATUS_OPTIONS]
+
+export const getPaymentStatusLabel = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].label
+export const getPaymentStatusIcon = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].icon
+export const getPaymentStatusColor = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].color

@@ -1,30 +1,17 @@
 <script setup lang="ts">
-  const { sessionId } = defineProps<{ sessionId: string }>()
+  // ─── Props / Emits ───────────────────────────────────────────
+  const { paymentId } = defineProps<{ paymentId: string }>()
   const emit = defineEmits<{ close: [] }>()
 
-  // ─── Composables ─────────────────────────────────────────────────────────────
-  const { data: payments, isPending: paymentsLoading } = useTreatmentSessionPayments(() => sessionId)
+  // ─── Composables ─────────────────────────────────────────────
+  const { data: payment, isPending: isPaymentLoading } = usePayment(() => paymentId)
+  const { data: receiptUrl, state: receiptState, refresh: refreshReceipt } = usePaymentReceipt(() => paymentId)
 
-  // ─── Template refs ────────────────────────────────────────────────────────────
+  // ─── Base state ──────────────────────────────────────────────
   const iframeRef = useTemplateRef<HTMLIFrameElement>('receiptIframe')
 
-  // ─── Computed ───────────────────────────────────────────────────────────────
-  // FIXME why the first payment
-  const payment = computed(() => {
-    const list = payments.value as Payment[] | undefined
-    return list?.length ? list[0] : null
-  })
-
-  const {
-    data: receiptUrl,
-    state: receiptState,
-    refresh: refreshReceipt
-  } = usePaymentReceipt(() => payment.value?.id ?? '')
-
-  const paymentTypeLabel = computed(() => {
-    if (!payment.value) return ''
-    return payment.value.type === 'credit_usage' ? 'Solde patient' : getPaymentTypeLabel(payment.value.type)
-  })
+  // ─── Computed state ──────────────────────────────────────────
+  const paymentTypeLabel = computed(() => (!payment.value ? '' : getPaymentTypeLabel(payment.value.type)))
 
   // ─── Actions ───────────────────────────────────────────────────────────────────
   const handlePrint = () => {
@@ -71,7 +58,7 @@
     </template>
 
     <template #body>
-      <div v-if="paymentsLoading" class="flex justify-center py-10">
+      <div v-if="isPaymentLoading" class="flex justify-center py-10">
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { fr } from 'zod/locales'
 
 import { payments, paymentSessionItems } from '~~/server/database/schema/payment'
+import { paymentTypeSchema, paymentMethodSchema, calendarDateSchema } from './base.types'
 
 z.config(fr())
 
@@ -24,8 +25,8 @@ export const paymentCreateSchema = createInsertSchema(payments, {
   recordedById: z.string().min(1, "L'utilisateur est requis"),
   amountCents: z.number().int().positive('Le montant doit être positif'),
   currency: z.string().default('MAD'),
-  type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.optional(),
+  type: paymentTypeSchema.default('session_payment'),
+  method: paymentMethodSchema,
   receiptNumber: z.string().optional(),
   notes: z.string().optional(),
   paidOn: calendarDateSchema,
@@ -67,8 +68,8 @@ export const paymentSessionItemUpdateSchema = paymentSessionItemCreateSchema.par
 export const paymentRequestBodySchema = z.object({
   patientId: z.string().min(1, 'Le patient est requis'),
   amountCents: z.number().int().positive('Le montant doit être positif'),
-  type: paymentTypeSchema.default('payment'),
-  method: paymentMethodSchema.optional(),
+  type: paymentTypeSchema.default('session_payment'),
+  method: paymentMethodSchema,
   notes: z.string().optional(),
   paidOn: calendarDateSchema.optional(),
   sessionItems: z
@@ -100,6 +101,12 @@ export const paymentQuerySchema = z.object({
   endDate: z.string().optional()
 })
 
+export const patientPaymentsQuerySchema = z.object({
+  type: paymentTypeSchema.optional(),
+  limit: z.coerce.number().optional().default(50),
+  includeVoided: z.coerce.boolean().optional().default(false)
+})
+
 // =============================================================================
 // Type Inference
 // =============================================================================
@@ -113,7 +120,8 @@ export type PaymentSessionItemUpdate = z.infer<typeof paymentSessionItemUpdateSc
 export type PaymentRequestBody = z.infer<typeof paymentRequestBodySchema>
 export type PaymentResponse = z.infer<typeof paymentResponseSchema>
 export type PaymentQuery = z.infer<typeof paymentQuerySchema>
-
+export type PatientPaymentsQuery = z.infer<typeof patientPaymentsQuerySchema>
+export type PaymentWithSessions = Payment & { sessionItems: PaymentSessionItem[] }
 // =============================================================================
 // Form Schemas
 // =============================================================================

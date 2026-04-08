@@ -122,6 +122,10 @@ export const relations = defineRelations(schema, (r) => ({
     payment: r.one.payments({
       from: r.paymentSessionItems.paymentId,
       to: r.payments.id
+    }),
+    treatmentSession: r.one.treatmentSessions({
+      from: r.paymentSessionItems.treatmentSessionId,
+      to: r.treatmentSessions.id
     })
   },
   rooms: {

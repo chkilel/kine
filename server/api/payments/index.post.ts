@@ -6,18 +6,19 @@ export default defineEventHandler(async (event) => {
   const { userId, organizationId } = await requireAuthWithOrg(event)
 
   const body = await readValidatedBody(event, paymentRequestBodySchema.parse)
-  const { type, amountCents, sessionItems, patientId } = body
+  const { type, amountCents, method, sessionItems, patientId } = body
 
-  // Determine session item requirements based on payment type
-  const requiresSessionItems = type === 'payment' || type === 'credit_usage'
-  const forbidsSessionItems = type === 'deposit' || type === 'refund'
+  const requiresSessionItems = type === 'session_payment' || type === 'session_refund'
+  const forbidsSessionItems = type === 'deposit_add' || type === 'deposit_refund'
   const hasSessionItems = sessionItems && sessionItems.length > 0
   const hasManySessionItems = sessionItems && sessionItems.length > 1
 
-  // Validate that payment and credit_usage types have required session items
   if (requiresSessionItems) {
     if (!hasSessionItems) {
-      throw createError({ statusCode: 400, message: 'Session items required for payment and credit_usage types' })
+      throw createError({
+        statusCode: 400,
+        message: `Session items required for ${type} type`
+      })
     }
     const sessionItemsTotal = sessionItems.reduce((sum, item) => sum + item.amountCents, 0)
     if (sessionItemsTotal !== amountCents) {
@@ -25,23 +26,27 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Validate that deposit and refund types don't have session items
   if (forbidsSessionItems && hasSessionItems) {
     throw createError({
       statusCode: 400,
       message:
-        type === 'refund'
-          ? 'Session items not allowed for refund type (refunds apply to unused deposit credit only)'
-          : 'Session items not allowed for deposit type'
+        type === 'deposit_refund'
+          ? 'Session items not allowed for deposit_refund type (refunds apply to unused deposit credit only)'
+          : 'Session items not allowed for deposit_add type'
     })
   }
 
-  // For credit_usage, check that patient has sufficient credit balance
-  if (type === 'credit_usage') {
+  if (method === 'deposit') {
+    if (type !== 'session_payment') {
+      throw createError({ statusCode: 400, message: 'Deposit method can only be used with session_payment type' })
+    }
+
     const result = await db
       .select({
         balance: sql<number>`
-          SUM(CASE WHEN ${payments.type} = 'deposit' THEN ${payments.amountCents} ELSE -${payments.amountCents} END)
+          SUM(CASE WHEN ${payments.type} = 'deposit_add' THEN ${payments.amountCents} ELSE 0 END)
+          - SUM(CASE WHEN ${payments.type} = 'session_payment' AND ${payments.method} = 'deposit' THEN ${payments.amountCents} ELSE 0 END)
+          - SUM(CASE WHEN ${payments.type} = 'deposit_refund' THEN ${payments.amountCents} ELSE 0 END)
         `
       })
       .from(payments)
@@ -49,7 +54,7 @@ export default defineEventHandler(async (event) => {
         and(
           eq(payments.organizationId, organizationId),
           eq(payments.patientId, patientId),
-          inArray(payments.type, ['deposit', 'credit_usage']),
+          inArray(payments.type, ['deposit_add', 'session_payment', 'deposit_refund']),
           isNull(payments.voidedAt)
         )
       )
@@ -59,8 +64,6 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, message: 'Insufficient credit balance' })
     }
 
-    // When paying for multiple sessions with credit, ensure each session is covered
-    // in full — partial credit payments on individual sessions are not allowed.
     if (hasManySessionItems) {
       const sessionPrices = await db
         .select({ id: treatmentSessions.id, priceCent: treatmentSessions.priceCent })
@@ -87,10 +90,8 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Generate unique receipt number for this organization
   const receiptNumber = await generateReceiptNumber(event, organizationId)
 
-  // Create payment record in database
   const [payment] = await db
     .insert(payments)
     .values({
@@ -99,7 +100,7 @@ export default defineEventHandler(async (event) => {
       recordedById: userId,
       amountCents,
       type,
-      method: body.method,
+      method,
       notes: body.notes,
       paidOn: body.paidOn || getTodayAsString(),
       receiptNumber,
@@ -109,12 +110,9 @@ export default defineEventHandler(async (event) => {
 
   if (!payment) throw createError({ statusCode: 500, message: 'Failed to create payment' })
 
-  // If no session items, return early
   if (!hasSessionItems) return { payment, receiptNumber }
 
   try {
-    // TODO: I need to test this with an intentional failure (e.g. a duplicate key) to confirm the throw behavior before relying on it in production for financial data.
-    // Batch insert session items and update treatment session statuses
     await db.batch([
       db.insert(paymentSessionItems).values(
         sessionItems.map((item) => ({
@@ -141,7 +139,6 @@ export default defineEventHandler(async (event) => {
         : [])
     ])
   } catch (error) {
-    // Rolle back payment
     await db.delete(payments).where(eq(payments.id, payment.id))
     throw createError({ statusCode: 500, message: 'Failed to record payment details, payment has been rolled back' })
   }

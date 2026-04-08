@@ -282,9 +282,13 @@ export type Reason = z.infer<typeof reasonSchema>
 // Payment Methods Constants
 // =============================================================================
 
-export const PAYMENT_METHODS = ['cash', 'bank-card', 'check', 'bank-transfer'] as const
+export const PAYMENT_METHODS = ['cash', 'bank-card', 'check', 'bank-transfer', 'deposit'] as const
 export const paymentMethodSchema = z.enum(PAYMENT_METHODS)
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>
+
+export const PAYMENT_FUNDING_METHODS = ['cash', 'bank-card', 'check', 'bank-transfer'] as const
+export const paymentFundingMethodSchema = z.enum(PAYMENT_FUNDING_METHODS)
+export type PaymentFundingMethod = z.infer<typeof paymentFundingMethodSchema>
 
 // =============================================================================
 // Payment Delays Constants
@@ -298,9 +302,17 @@ export type PaymentDelay = z.infer<typeof paymentDelaySchema>
 // Payment Types Constants
 // =============================================================================
 
-export const PAYMENT_TYPES = ['payment', 'deposit', 'credit_usage', 'refund'] as const
+export const PAYMENT_TYPES = ['session_payment', 'session_refund', 'deposit_add', 'deposit_refund'] as const
 export const paymentTypeSchema = z.enum(PAYMENT_TYPES)
 export type PaymentType = z.infer<typeof paymentTypeSchema>
+
+// =============================================================================
+// Payment Status Constants
+// =============================================================================
+
+export const PAYMENT_STATUSES = ['unpaid', 'partial', 'paid'] as const
+export const paymentStatusSchema = z.enum(PAYMENT_STATUSES)
+export type PaymentStatus = z.infer<typeof paymentStatusSchema>
 
 // =============================================================================
 // Emergency Contact Schema
