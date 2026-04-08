@@ -25,7 +25,7 @@ const _useCreatePayment = () => {
 
   return useMutation({
     mutation: async ({ paymentData }: WithOnSuccess<CreatePaymentParams>) => {
-      const response = await requestFetch<{ payment: any }>('/api/payments', {
+      const response = await requestFetch('/api/payments', {
         method: 'POST',
         body: paymentData
       })
@@ -52,7 +52,8 @@ const _useCreatePayment = () => {
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientSessionsPaymentStatus(paymentData.patientId) })
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientBalance(paymentData.patientId) })
     },
-    onError: (error: any) => {
+    onError: (error, { onError, paymentData }) => {
+      onError?.(error)
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Erreur lors de l'enregistrement du paiement").message,
@@ -67,7 +68,8 @@ const _useTreatmentSessionPayments = (sessionId: MaybeRefOrGetter<string>) => {
   return useQuery({
     key: () => PAYMENT_KEYS.sessionPayments(toValue(sessionId)),
     query: async () => {
-      return requestFetch(`/api/treatment-sessions/${toValue(sessionId)}/payments`)
+      const resp = await requestFetch(`/api/treatment-sessions/${toValue(sessionId)}/payments`)
+      return resp
     },
     enabled: () => !!toValue(sessionId)
   })
@@ -90,7 +92,8 @@ const _usePayment = (paymentId: MaybeRefOrGetter<string>) => {
   return useQuery({
     key: () => PAYMENT_KEYS.payment(toValue(paymentId)),
     query: async () => {
-      return requestFetch(`/api/payments/${toValue(paymentId)}`)
+      const resp = await requestFetch(`/api/payments/${toValue(paymentId)}`)
+      return resp
     },
     enabled: () => !!toValue(paymentId)
   })
@@ -162,9 +165,10 @@ const _useVoidPayment = () => {
 
   return useMutation({
     mutation: async ({ paymentId }: { paymentId: string; patientId: string; onSuccess?: () => void }) => {
-      return requestFetch(`/api/payments/${paymentId}/void`, {
+      const resp = await requestFetch(`/api/payments/${paymentId}/void`, {
         method: 'POST'
       })
+      return resp
     },
     onSuccess: (_result, { patientId, onSuccess }) => {
       onSuccess?.()
@@ -182,7 +186,7 @@ const _useVoidPayment = () => {
         queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientBalance(patientId) })
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Erreur lors de l'annulation du paiement").message,
