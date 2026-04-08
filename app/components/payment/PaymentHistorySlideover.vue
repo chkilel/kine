@@ -1,27 +1,25 @@
 <script setup lang="ts">
+  // ─── Types ───────────────────────────────────────────────────
+  type FilterTab = 'all' | 'session_payment' | 'deposit_add' | 'session_refund' | 'deposit_refund' | 'voided'
+
   // ─── Props / Emits ───────────────────────────────────────────
+  const props = defineProps<{ patientId: string }>()
   const emit = defineEmits<{ close: [] }>()
 
   // ─── Composables ─────────────────────────────────────────────
-  const { openCancelPayment } = useBillingSlideover()
+  const { openCancelPayment, viewPaymentReceipt } = useBillingSlideover()
 
-  // ─── Types ──────────────────────────────────────────────────
-  type FilterTab = 'all' | 'session_payment' | 'deposit_add' | 'session_refund' | 'deposit_refund' | 'voided'
-
-  type MockPaymentItem = {
-    id: string
-    type: PaymentType
-    method: PaymentMethod
-    amountCents: number
-    date: string
-    receiptNumber: string
-    sessionRefs: string[]
-    isVoided: boolean
+  // ─── Event handlers ──────────────────────────────────────────
+  async function handleViewReceipt(paymentId: string) {
+    viewPaymentReceipt(paymentId)
   }
 
-  // ─── State ──────────────────────────────────────────────────
+  function handleCancelPayment(payment: PaymentWithSessions) {
+    openCancelPayment(payment)
+  }
+
+  // ─── Base state ──────────────────────────────────────────────
   const activeFilter = ref<FilterTab>('all')
-  const visibleCount = ref(5)
 
   // ─── UI helpers ──────────────────────────────────────────────
   const filterTabs = [
@@ -33,161 +31,36 @@
     { value: 'voided' as FilterTab, label: 'Annulés' }
   ]
 
-  // ─── Mock data ──────────────────────────────────────────────
-  const mockPayments: MockPaymentItem[] = [
-    {
-      id: 'p1',
-      type: 'session_payment',
-      method: 'cash',
-      amountCents: 9500,
-      date: '15 Mars 2026',
-      receiptNumber: 'REC-2026-0042',
-      sessionRefs: ['Kiné du dos #12', 'Kiné du dos #11'],
-      isVoided: false
-    },
-    {
-      id: 'p2',
-      type: 'session_payment',
-      method: 'bank-card',
-      amountCents: 9500,
-      date: '12 Mars 2026',
-      receiptNumber: 'REC-2026-0041',
-      sessionRefs: ['Kiné du dos #10'],
-      isVoided: false
-    },
-    {
-      id: 'p3',
-      type: 'deposit_add',
-      method: 'bank-transfer',
-      amountCents: 15000,
-      date: '01 Mars 2026',
-      receiptNumber: 'REC-2026-0040',
-      sessionRefs: [],
-      isVoided: false
-    },
-    {
-      id: 'p4',
-      type: 'session_payment',
-      method: 'check',
-      amountCents: 12000,
-      date: '25 Fév. 2026',
-      receiptNumber: 'REC-2026-0039',
-      sessionRefs: ['Rééducation épaule #8'],
-      isVoided: true
-    },
-    {
-      id: 'p5',
-      type: 'deposit_refund',
-      method: 'cash',
-      amountCents: 5000,
-      date: '20 Fév. 2026',
-      receiptNumber: 'REC-2026-0038',
-      sessionRefs: [],
-      isVoided: false
-    },
-    {
-      id: 'p6',
-      type: 'session_payment',
-      method: 'deposit',
-      amountCents: 9500,
-      date: '18 Fév. 2026',
-      receiptNumber: 'REC-2026-0037',
-      sessionRefs: ['Kiné du dos #7'],
-      isVoided: false
-    },
-    {
-      id: 'p7',
-      type: 'session_payment',
-      method: 'bank-card',
-      amountCents: 12000,
-      date: '10 Fév. 2026',
-      receiptNumber: 'REC-2026-0036',
-      sessionRefs: ['Rééducation épaule #6'],
-      isVoided: false
-    },
-    {
-      id: 'p8',
-      type: 'deposit_add',
-      method: 'cash',
-      amountCents: 20000,
-      date: '01 Fév. 2026',
-      receiptNumber: 'REC-2026-0035',
-      sessionRefs: [],
-      isVoided: false
-    },
-    {
-      id: 'p9',
-      type: 'session_payment',
-      method: 'cash',
-      amountCents: 9500,
-      date: '28 Jan. 2026',
-      receiptNumber: 'REC-2026-0034',
-      sessionRefs: ['Kiné du dos #5'],
-      isVoided: false
-    },
-    {
-      id: 'p10',
-      type: 'session_payment',
-      method: 'bank-transfer',
-      amountCents: 9500,
-      date: '22 Jan. 2026',
-      receiptNumber: 'REC-2026-0033',
-      sessionRefs: ['Kiné du dos #4'],
-      isVoided: false
-    },
-    {
-      id: 'p11',
-      type: 'deposit_refund',
-      method: 'bank-card',
-      amountCents: 3000,
-      date: '15 Jan. 2026',
-      receiptNumber: 'REC-2026-0032',
-      sessionRefs: [],
-      isVoided: false
-    },
-    {
-      id: 'p12',
-      type: 'session_payment',
-      method: 'cash',
-      amountCents: 12000,
-      date: '10 Jan. 2026',
-      receiptNumber: 'REC-2026-0031',
-      sessionRefs: ['Rééducation épaule #3'],
-      isVoided: false
-    }
-  ]
-
-  // ─── Computed ───────────────────────────────────────────────
-  const filteredPayments = computed(() => {
-    if (activeFilter.value === 'all') return mockPayments.filter((p) => !p.isVoided)
-    if (activeFilter.value === 'voided') return mockPayments.filter((p) => p.isVoided)
-    return mockPayments.filter((p) => p.type === activeFilter.value && !p.isVoided)
+  // ─── Computed state ──────────────────────────────────────────
+  const queryFilters = computed(() => {
+    if (activeFilter.value === 'voided') return { includeVoided: true, limit: 200 }
+    if (activeFilter.value === 'all') return { includeVoided: false, limit: 200 }
+    return { type: activeFilter.value, includeVoided: false, limit: 200 }
   })
+  const { data: paymentsData, isLoading: paymentsLoading } = usePatientPayments(() => props.patientId, queryFilters)
+  const allPayments = computed(() => paymentsData.value ?? [])
 
-  const visiblePayments = computed(() => filteredPayments.value.slice(0, visibleCount.value))
-  const hasMore = computed(() => visibleCount.value < filteredPayments.value.length)
-
-  // ─── Watchers ────────────────────────────────────────────────
-  watch(activeFilter, () => {
-    visibleCount.value = 5
+  const filteredPayments = computed(() => {
+    if (activeFilter.value === 'all') return allPayments.value.filter((p: any) => !p.voidedAt)
+    if (activeFilter.value === 'voided') return allPayments.value.filter((p: any) => !!p.voidedAt)
+    return allPayments.value.filter((p: any) => p.type === activeFilter.value && !p.voidedAt)
   })
 
   // ─── UI helpers ──────────────────────────────────────────────
-  function getPaymentColor(item: MockPaymentItem): string {
-    if (item.isVoided) return 'text-muted'
-    if (item.type === 'session_refund' || item.type === 'deposit_refund') return 'text-error'
+  function getPaymentColor(payment: PaymentWithSessions): string {
+    if (payment.voidedAt) return 'text-muted'
+    if (payment.type === 'session_refund' || payment.type === 'deposit_refund') return 'text-error'
     return 'text-success'
   }
 
-  function getAmountPrefix(item: MockPaymentItem): string {
-    if (item.isVoided) return ''
-    if (item.type === 'session_refund' || item.type === 'deposit_refund') return '-'
+  function getAmountPrefix(payment: PaymentWithSessions): string {
+    if (payment.voidedAt) return ''
+    if (payment.type === 'session_refund' || payment.type === 'deposit_refund') return '-'
     return '+'
   }
 
-  // ─── Actions ─────────────────────────────────────────────────
-  function loadMore() {
-    visibleCount.value += 5
+  function canVoid(payment: PaymentWithSessions): boolean {
+    return !payment.voidedAt && payment.type !== 'session_refund' && payment.type !== 'deposit_refund'
   }
 </script>
 
@@ -197,7 +70,6 @@
       <div class="flex items-center justify-between">
         <div>
           <h2 class="font-bold">Historique des paiements</h2>
-          <p class="text-muted text-xs">Patient — Mock</p>
         </div>
         <UButton variant="ghost" icon="i-hugeicons-cancel-01" @click="close" />
       </div>
@@ -217,17 +89,20 @@
           />
         </div>
 
-        <div class="space-y-2">
+        <div v-if="paymentsLoading" class="py-8 text-center">
+          <AppSpinner />
+        </div>
+        <div v-else class="space-y-2">
           <div
-            v-for="item in visiblePayments"
-            :key="item.id"
+            v-for="payment in filteredPayments"
+            :key="payment.id"
             class="border-default flex items-start gap-3 rounded-lg border p-3 transition-colors"
-            :class="{ 'opacity-60': item.isVoided }"
+            :class="{ 'opacity-60': !!payment.voidedAt }"
           >
             <AppIconBox
-              :name="getPaymentMethodIcon(item.method)"
+              :name="getPaymentMethodIcon(payment.method)"
               size="sm"
-              :color="getPaymentMethodColor(item.method) as UIColor"
+              :color="getPaymentMethodColor(payment.method) as UIColor"
               variant="subtle"
             />
 
@@ -235,58 +110,61 @@
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <p class="text-default text-sm font-medium">
-                    {{ getPaymentMethodLabel(item.method) }}
+                    {{ getPaymentMethodLabel(payment.method) }}
                     <UBadge
-                      v-if="item.type !== 'session_payment'"
+                      v-if="payment.type !== 'session_payment'"
                       size="xs"
                       variant="subtle"
                       color="neutral"
                       class="ml-1"
                     >
-                      {{ getPaymentTypeLabel(item.type) }}
+                      {{ getPaymentTypeLabel(payment.type) }}
                     </UBadge>
                   </p>
-                  <p class="text-muted text-xs">{{ item.date }}</p>
+                  <p class="text-muted text-xs">{{ payment.paidOn }}</p>
                 </div>
                 <span
                   class="text-sm font-bold whitespace-nowrap tabular-nums"
-                  :class="[getPaymentColor(item), { 'line-through': item.isVoided }]"
+                  :class="[getPaymentColor(payment), { 'line-through': !!payment.voidedAt }]"
                 >
-                  {{ getAmountPrefix(item) }}{{ formatCurrency(item.amountCents) }}
+                  {{ getAmountPrefix(payment) }}{{ formatCurrency(payment.amountCents) }}
                 </span>
               </div>
 
               <div class="mt-1 flex flex-wrap items-center gap-2">
-                <span class="text-muted font-mono text-[10px]">{{ item.receiptNumber }}</span>
+                <span class="text-muted font-mono text-[10px]">{{ payment.receiptNumber }}</span>
                 <span
-                  v-for="ref in item.sessionRefs"
-                  :key="ref"
+                  v-for="si in payment.sessionItems || []"
+                  :key="si.id"
                   class="text-muted bg-muted rounded px-1.5 py-0.5 text-[10px]"
                 >
-                  {{ ref }}
+                  Séance
                 </span>
-                <UBadge v-if="item.isVoided" size="xs" color="error" variant="subtle">Annulé</UBadge>
+                <UBadge v-if="!!payment.voidedAt" size="xs" color="error" variant="subtle">Annulé</UBadge>
               </div>
             </div>
 
             <div class="flex shrink-0 gap-1">
-              <UButton variant="ghost" size="xs" icon="i-hugeicons-download-01" color="neutral" />
               <UButton
-                v-if="!item.isVoided"
+                variant="ghost"
+                size="xs"
+                icon="i-hugeicons-download-01"
+                color="neutral"
+                :disabled="!!payment.voidedAt"
+                @click="handleViewReceipt(payment.id)"
+              />
+              <UButton
+                v-if="canVoid(payment)"
                 variant="ghost"
                 size="xs"
                 icon="i-hugeicons-cancel-01"
                 color="error"
-                @click="openCancelPayment()"
+                @click="handleCancelPayment(payment)"
               />
             </div>
           </div>
 
           <p v-if="filteredPayments.length === 0" class="text-muted py-6 text-center text-sm">Aucun paiement trouvé</p>
-
-          <div v-if="hasMore" class="pt-2 text-center">
-            <UButton label="Voir plus" variant="outline" color="neutral" block @click="loadMore" />
-          </div>
         </div>
       </div>
     </template>

@@ -164,7 +164,7 @@ const _useVoidPayment = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ paymentId }: { paymentId: string; patientId: string; onSuccess?: () => void }) => {
+    mutation: async ({ paymentId }: WithOnSuccess<{ paymentId: string; patientId: string }>) => {
       const resp = await requestFetch(`/api/payments/${paymentId}/void`, {
         method: 'POST'
       })
@@ -186,7 +186,8 @@ const _useVoidPayment = () => {
         queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientBalance(patientId) })
       }
     },
-    onError: (error) => {
+    onError: (error, { onError }) => {
+      onError?.(error)
       toast.add({
         title: 'Erreur',
         description: parseError(error, "Erreur lors de l'annulation du paiement").message,

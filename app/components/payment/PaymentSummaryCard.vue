@@ -1,25 +1,24 @@
 <script setup lang="ts">
-  import { LazyAppReceiptModal } from '#components'
-
   const props = defineProps<{
     treatmentSession: TreatmentSession
     appointment: AppointmentWithSession
   }>()
 
-  const overlay = useOverlay()
-  const receiptModal = overlay.create(LazyAppReceiptModal)
-
+  // ─── Composables ─────────────────────────────────────────────
+  const { viewPaymentReceipt } = useBillingSlideover()
   const { data: sessionPayments } = useTreatmentSessionPayments(() => props.treatmentSession.id ?? '')
 
+  // ─── Computed state ──────────────────────────────────────────
   const latestPayment = computed(() => {
     const payments = sessionPayments.value as Payment[] | undefined
     if (!payments?.length) return null
     return payments[payments.length - 1]
   })
 
+  // ─── Event handlers ──────────────────────────────────────────
   function handleViewReceipt() {
     if (props.treatmentSession.status !== 'completed' || !latestPayment.value) return
-    receiptModal.open({ paymentId: latestPayment.value.id })
+    viewPaymentReceipt(latestPayment.value.id)
   }
 </script>
 
