@@ -8,38 +8,33 @@ export const PAYMENT_METHODS_CONFIG = {
   cash: {
     label: 'Espèces',
     icon: 'i-hugeicons-money-01',
-    color: 'success',
-    variant: 'subtle'
+    color: 'success'
   },
   'bank-card': {
     label: 'Carte bancaire',
     icon: 'i-hugeicons-credit-card',
-    color: 'primary',
-    variant: 'subtle'
+    color: 'primary'
   },
   check: {
     label: 'Chèque',
     icon: 'i-hugeicons-pay-by-check',
-    color: 'info',
-    variant: 'subtle'
+    color: 'info'
   },
   'bank-transfer': {
     label: 'Virement',
     icon: 'i-hugeicons-bank',
-    color: 'warning',
-    variant: 'subtle'
+    color: 'warning'
   },
   deposit: {
     label: 'Solde patient',
     icon: 'i-hugeicons-wallet-02',
-    color: 'neutral',
-    variant: 'subtle'
+    color: 'neutral'
   }
 } as const
 
 export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CONFIG).map(([key, item]) => ({
   label: item.label,
-  value: key,
+  value: key as PaymentMethod,
   icon: item.icon
 }))
 
@@ -47,13 +42,12 @@ export const PAYMENT_FUNDING_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CON
   .filter(([key]) => key !== 'deposit')
   .map(([key, item]) => ({
     label: item.label,
-    value: key,
+    value: key as PaymentMethod,
     icon: item.icon
   }))
 
 export const getPaymentMethodLabel = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].label || method
 export const getPaymentMethodColor = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].color || 'neutral'
-export const getPaymentMethodVariant = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].variant || 'soft'
 export const getPaymentMethodIcon = (method: PaymentMethod) =>
   PAYMENT_METHODS_CONFIG[method].icon || 'i-hugeicons-money-01'
 
@@ -129,20 +123,17 @@ export const PAYMENT_STATUS_CONFIG = {
   unpaid: {
     label: 'Non facturé',
     icon: 'i-hugeicons-money-not-found-03',
-    color: 'error',
-    variant: 'subtle'
+    color: 'error'
   },
   partial: {
     label: 'Partiellement',
     icon: 'i-hugeicons-money-add-02',
-    color: 'warning',
-    variant: 'subtle'
+    color: 'warning'
   },
   paid: {
     label: 'Payé',
     icon: 'i-hugeicons-tick-02',
-    color: 'success',
-    variant: 'subtle'
+    color: 'success'
   }
 } as const
 
@@ -156,4 +147,3 @@ export const PAYMENT_STATUS_FILTER_OPTIONS = [{ label: 'Tous', value: 'all' }, .
 export const getPaymentStatusLabel = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].label
 export const getPaymentStatusIcon = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].icon
 export const getPaymentStatusColor = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].color
-export const getPaymentStatusVariant = (status: PaymentStatus) => PAYMENT_STATUS_CONFIG[status].variant
