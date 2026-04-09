@@ -60,21 +60,12 @@
   }
 
   function canVoid(payment: PaymentWithSessions): boolean {
-    return !payment.voidedAt && payment.type !== 'session_refund' && payment.type !== 'deposit_refund'
+    return !payment.voidedAt && payment.type === 'session_payment'
   }
 </script>
 
 <template>
   <USlideover title="Historique des paiements" @close="emit('close')">
-    <template #header="{ close }">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="font-bold">Historique des paiements</h2>
-        </div>
-        <UButton variant="ghost" icon="i-hugeicons-cancel-01" @click="close" />
-      </div>
-    </template>
-
     <template #body>
       <div class="space-y-4">
         <div class="flex flex-wrap gap-1">
@@ -102,7 +93,7 @@
             <AppIconBox
               :name="getPaymentMethodIcon(payment.method)"
               size="sm"
-              :color="getPaymentMethodColor(payment.method) as UIColor"
+              :color="getPaymentMethodColor(payment.method)"
               variant="subtle"
             />
 

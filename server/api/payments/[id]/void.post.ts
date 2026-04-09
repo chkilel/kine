@@ -31,6 +31,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'Refund payments cannot be voided' })
     }
 
+    if (payment.type === 'deposit_add') {
+      throw createError({
+        statusCode: 400,
+        message: 'Les avances ne peuvent pas être annulées. Utilisez la fonction de remboursement.'
+      })
+    }
+
     const sessionIds = sessionItemRows.map((i) => i.treatmentSessionId)
 
     const [, coveredRows] = await db.batch([
