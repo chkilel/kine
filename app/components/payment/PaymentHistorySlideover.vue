@@ -90,68 +90,78 @@
             class="border-default flex items-start gap-3 rounded-lg border p-3 transition-colors"
             :class="{ 'opacity-60': !!payment.voidedAt }"
           >
-            <AppIconBox
-              :name="getPaymentMethodIcon(payment.method)"
-              size="sm"
-              :color="getPaymentMethodColor(payment.method)"
-              variant="subtle"
-            />
-
-            <div class="min-w-0 flex-1">
+            <div class="min-w-0 flex-1 space-y-1.5">
               <div class="flex items-start justify-between gap-2">
-                <div>
-                  <p class="text-default text-sm font-medium">
-                    {{ getPaymentMethodLabel(payment.method) }}
-                    <UBadge
-                      v-if="payment.type !== 'session_payment'"
-                      size="xs"
-                      variant="subtle"
-                      color="neutral"
-                      class="ml-1"
-                    >
+                <div class="flex items-start gap-2">
+                  <AppIconBox
+                    :name="getPaymentTypeIcon(payment.type)"
+                    :color="getPaymentTypeColor(payment.type)"
+                    size="lg"
+                    variant="subtle"
+                    class="p-1.5"
+                  />
+                  <div>
+                    <p class="text-muted text-xs font-medium uppercase">
+                      {{ formatShortDate(payment.paidOn) }}
+                    </p>
+                    <p class="text-[13px] font-medium">
                       {{ getPaymentTypeLabel(payment.type) }}
-                    </UBadge>
-                  </p>
-                  <p class="text-muted text-xs">{{ payment.paidOn }}</p>
+                    </p>
+                  </div>
                 </div>
-                <span
-                  class="text-sm font-bold whitespace-nowrap tabular-nums"
-                  :class="[getPaymentColor(payment), { 'line-through': !!payment.voidedAt }]"
-                >
-                  {{ getAmountPrefix(payment) }}{{ formatCurrency(payment.amountCents) }}
-                </span>
+                <div>
+                  <p
+                    class="text-sm font-bold whitespace-nowrap tabular-nums"
+                    :class="[getPaymentColor(payment), { 'line-through': !!payment.voidedAt }]"
+                  >
+                    {{ getAmountPrefix(payment) }}{{ formatCurrency(payment.amountCents) }}
+                  </p>
+                </div>
               </div>
-
-              <div class="mt-1 flex flex-wrap items-center gap-2">
-                <span class="text-muted font-mono text-[10px]">{{ payment.receiptNumber }}</span>
-                <span
-                  v-for="si in payment.sessionItems || []"
-                  :key="si.id"
-                  class="text-muted bg-muted rounded px-1.5 py-0.5 text-[10px]"
-                >
-                  Séance
-                </span>
-                <UBadge v-if="!!payment.voidedAt" size="xs" color="error" variant="subtle">Annulé</UBadge>
+              <USeparator />
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <p class="font-medium">
+                    <span class="text-toned text-[11px]">
+                      {{ payment.receiptNumber }}
+                    </span>
+                    •
+                    <span class="text-muted text-xs">
+                      {{ getPaymentMethodLabel(payment.method) }}
+                    </span>
+                  </p>
+                  <div class="flex shrink-0 gap-1">
+                    <UButton
+                      variant="subtle"
+                      size="xs"
+                      icon="i-hugeicons-invoice-01"
+                      color="neutral"
+                      :disabled="!!payment.voidedAt"
+                      class="rounded-full"
+                      @click="handleViewReceipt(payment.id)"
+                    />
+                    <UButton
+                      v-if="canVoid(payment)"
+                      variant="subtle"
+                      size="xs"
+                      icon="i-hugeicons-cancel-01"
+                      color="error"
+                      class="rounded-full"
+                      @click="handleCancelPayment(payment)"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span
+                    v-for="si in payment.sessionItems || []"
+                    :key="si.id"
+                    class="text-muted bg-muted rounded px-1.5 py-0.5 text-[10px]"
+                  >
+                    Séance
+                  </span>
+                  <UBadge v-if="!!payment.voidedAt" size="xs" color="error" variant="subtle">Annulé</UBadge>
+                </div>
               </div>
-            </div>
-
-            <div class="flex shrink-0 gap-1">
-              <UButton
-                variant="ghost"
-                size="xs"
-                icon="i-hugeicons-download-01"
-                color="neutral"
-                :disabled="!!payment.voidedAt"
-                @click="handleViewReceipt(payment.id)"
-              />
-              <UButton
-                v-if="canVoid(payment)"
-                variant="ghost"
-                size="xs"
-                icon="i-hugeicons-cancel-01"
-                color="error"
-                @click="handleCancelPayment(payment)"
-              />
             </div>
           </div>
 

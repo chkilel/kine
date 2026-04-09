@@ -82,25 +82,33 @@ export const PAYMENT_TYPE_CONFIG = {
     label: 'Paiement',
     description: 'Enregistrer un paiement pour cette séance',
     submitLabel: 'Enregistrer le paiement',
-    bannerMessage: ''
+    bannerMessage: '',
+    color: 'success',
+    icon: 'i-hugeicons-credit-card' // or 'cash-01'
   },
   session_refund: {
     label: 'Remboursement de séance',
     description: 'Rembourser un paiement de séance',
     submitLabel: 'Enregistrer le remboursement',
-    bannerMessage: ''
+    bannerMessage: '',
+    color: 'error',
+    icon: 'i-hugeicons-cashback' // or 'return-request'
   },
   deposit_add: {
     label: 'Avance',
     description: 'Ajouter une avance pour soins futurs',
     submitLabel: "Enregistrer l'avance",
-    bannerMessage: 'Cette avance sera disponible pour les futures séances.'
+    bannerMessage: 'Cette avance sera disponible pour les futures séances.',
+    color: 'info',
+    icon: 'i-hugeicons-piggy-bank' // or 'savings'
   },
   deposit_refund: {
     label: 'Remboursement',
     description: 'Rembourser une avance non utilisée',
     submitLabel: 'Enregistrer le remboursement',
-    bannerMessage: "Le remboursement réduit le solde d'avance du patient."
+    bannerMessage: "Le remboursement réduit le solde d'avance du patient.",
+    color: 'warning',
+    icon: 'i-hugeicons-cashback' // or 'return-request'
   }
 } as const
 
@@ -110,10 +118,12 @@ export const PAYMENT_TYPE_OPTIONS = (Object.keys(PAYMENT_TYPE_CONFIG) as Payment
   description: PAYMENT_TYPE_CONFIG[key].description
 }))
 
-export const getPaymentTypeLabel = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].label
-export const getPaymentTypeDescription = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].description
-export const getPaymentTypeSubmitLabel = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].submitLabel
-export const getPaymentTypeBannerMessage = (type: PaymentType): string => PAYMENT_TYPE_CONFIG[type].bannerMessage
+export const getPaymentTypeLabel = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].label
+export const getPaymentTypeIcon = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].icon
+export const getPaymentTypeColor = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].color
+export const getPaymentTypeDescription = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].description
+export const getPaymentTypeSubmitLabel = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].submitLabel
+export const getPaymentTypeBannerMessage = (type: PaymentType) => PAYMENT_TYPE_CONFIG[type].bannerMessage
 
 // =============================================================================
 // Payment Status Configuration
