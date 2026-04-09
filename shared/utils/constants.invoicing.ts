@@ -100,7 +100,7 @@ export const PAYMENT_TYPE_CONFIG = {
     submitLabel: "Enregistrer l'avance",
     bannerMessage: 'Cette avance sera disponible pour les futures séances.',
     color: 'info',
-    icon: 'i-hugeicons-piggy-bank' // or 'savings'
+    icon: 'i-hugeicons-money-bag-02' // or 'savings' or 'piggy-bank'
   },
   deposit_refund: {
     label: 'Remboursement',
@@ -131,12 +131,12 @@ export const getPaymentTypeBannerMessage = (type: PaymentType) => PAYMENT_TYPE_C
 
 export const PAYMENT_STATUS_CONFIG = {
   unpaid: {
-    label: 'Non facturé',
+    label: 'Impayé',
     icon: 'i-hugeicons-money-not-found-03',
     color: 'error'
   },
   partial: {
-    label: 'Partiellement',
+    label: 'Partiel',
     icon: 'i-hugeicons-money-add-02',
     color: 'warning'
   },
