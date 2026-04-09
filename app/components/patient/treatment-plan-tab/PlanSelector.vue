@@ -41,7 +41,7 @@
     const planOptions = treatmentPlans.value.map((plan) => ({
       label: plan.title || 'Plan sans titre',
       value: plan.id,
-      description: `${formatFrenchDateRange(plan.startDate, plan.endDate)} · ${getTherapistName(plan.therapistId)}`,
+      description: `${formatDateRange(plan.startDate, plan.endDate)} · ${getTherapistName(plan.therapistId)}`,
       status: plan.status
     }))
 

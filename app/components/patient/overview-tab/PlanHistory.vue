@@ -51,7 +51,7 @@
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold">{{ plan.title }}</p>
             <p class="text-muted-foreground text-xs">
-              {{ formatFrenchDateRange(plan.startDate, plan.endDate) }}
+              {{ formatDateRange(plan.startDate, plan.endDate) }}
             </p>
           </div>
           <UBadge :color="getTreatmentPlanStatusColor(plan.status)" variant="subtle" size="md">

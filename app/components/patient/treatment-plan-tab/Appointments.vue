@@ -69,7 +69,7 @@
   async function handleDeleteAppointment(appointment: Appointment) {
     const confirmed = await confirmModal.open({
       title: 'Supprimer la séance',
-      message: `Êtes-vous sûr de vouloir supprimer cette séance du ${formatFrenchDate(appointment.date)} ? Cette action est irréversible.`,
+      message: `Êtes-vous sûr de vouloir supprimer cette séance du ${formatDate(appointment.date)} ? Cette action est irréversible.`,
       confirmText: 'Supprimer',
       cancelText: 'Annuler',
       confirmColor: 'error',

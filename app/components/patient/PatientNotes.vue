@@ -50,7 +50,7 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-foreground text-sm">{{ note.content }}</p>
-                <p class="text-muted-foreground mt-1 text-xs">{{ formatFrenchDate(note.date) }} - {{ note.author }}</p>
+                <p class="text-muted-foreground mt-1 text-xs">{{ formatDate(note.date) }} - {{ note.author }}</p>
               </div>
               <UButton
                 icon="i-lucide-trash-2"

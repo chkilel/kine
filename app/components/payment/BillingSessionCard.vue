@@ -64,7 +64,7 @@
       amount: formatCurrency(p.amountCents),
       method: getPaymentMethodLabel(p.method),
       methodIcon: getPaymentMethodIcon(p.method),
-      date: formatFrenchDate(p.paidOn),
+      date: formatDate(p.paidOn),
       receiptNumber: p.receiptNumber
     }))
   })

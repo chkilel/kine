@@ -91,7 +91,7 @@
                   {{ formatTimeString(exception.endTime) }}
                 </template>
                 <div v-else class="flex items-baseline gap-6">
-                  {{ formatFrenchDate(exception.date) }}
+                  {{ formatDate(exception.date) }}
                   <span class="text-toned text-sm font-normal">Journée complète</span>
                 </div>
               </div>

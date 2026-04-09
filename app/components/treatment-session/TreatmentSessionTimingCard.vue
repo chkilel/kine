@@ -7,7 +7,7 @@
     const session = apt.treatmentSession
     const isSessionFinished = session?.status === 'finished' || session?.status === 'completed'
     return {
-      appointmentDate: formatFrenchDate(apt.date),
+      appointmentDate: formatDate(apt.date),
       appointmentStartTime: formatTimeString(apt.startTime),
       appointmentEndTime: formatTimeString(apt.endTime),
       actualStartTime: session?.actualStartTime ? formatTimeString(session.actualStartTime) : null,

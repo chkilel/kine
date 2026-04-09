@@ -311,7 +311,7 @@
                   <UIcon name="i-hugeicons-birthday-cake" class="size-4.5" />
                 </div>
                 <span class="text-foreground">
-                  {{ formatFrenchDate(patient.dateOfBirth) }}
+                  {{ formatDate(patient.dateOfBirth) }}
                 </span>
                 &middot
                 <UBadge color="neutral" variant="soft" class="font-medium">

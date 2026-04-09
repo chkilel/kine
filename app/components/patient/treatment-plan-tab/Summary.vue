@@ -30,7 +30,7 @@
     },
     {
       label: 'Date',
-      value: formatFrenchDate(props.treatmentPlan.prescriptionDate),
+      value: formatDate(props.treatmentPlan.prescriptionDate),
       icon: 'i-hugeicons-calendar-02',
       color: 'info' as UIColor
     }
@@ -80,8 +80,8 @@
         <div class="flex items-center gap-1.5">
           <UIcon name="i-hugeicons-calendar-02" class="text-[16px]" />
           <span class="font-semibold">
-            {{ formatFrenchDate(treatmentPlan.startDate) }}
-            {{ treatmentPlan.endDate ? ` - ${formatFrenchDate(treatmentPlan.endDate)}` : '' }}
+            {{ formatDate(treatmentPlan.startDate) }}
+            {{ treatmentPlan.endDate ? ` - ${formatDate(treatmentPlan.endDate)}` : '' }}
           </span>
         </div>
       </div>

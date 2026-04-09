@@ -42,7 +42,7 @@
           />
           <div>
             <h2 class="text-sm font-black tracking-tight uppercase">Facturation</h2>
-            <p class="text-muted text-[11px] font-semibold">Séance du {{ formatFrenchDate(props.appointment.date) }}</p>
+            <p class="text-muted text-[11px] font-semibold">Séance du {{ formatDate(props.appointment.date) }}</p>
           </div>
         </div>
 
@@ -83,7 +83,7 @@
         </div>
         <div class="text-right">
           <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Date</span>
-          <p class="text-xs font-bold">{{ formatFrenchDate(latestPayment.paidOn) }}</p>
+          <p class="text-xs font-bold">{{ formatDate(latestPayment.paidOn) }}</p>
         </div>
       </div>
       <UButton

@@ -66,11 +66,8 @@ export function formatRelativeDate(date: Date | string): string {
 
   const diffDays = differenceInCalendarDays(d, now)
 
-  // Always use days as minimum unit
   if (diffDays === 0) return rtf.format(0, 'day') // "aujourd'hui"
-
   if (diffDays === -1) return rtf.format(-1, 'day') // "hier"
-
   if (Math.abs(diffDays) < 7) return rtfAlways.format(diffDays, 'day')
 
   const diffWeeks = differenceInWeeks(d, now)
@@ -83,24 +80,35 @@ export function formatRelativeDate(date: Date | string): string {
   return rtfAlways.format(diffYears, 'year')
 }
 
-export function formatFrenchDate(date: Date | string | null): string {
+/**
+ * Formats a date as dd/MM/yyyy — e.g. 12/01/2024
+ */
+export function formatDate(date: Date | string | null): string {
   if (!date) return '-'
-
   const dateObj = typeof date === 'string' ? safeParseISODate(date) : date
   if (!dateObj || isNaN(dateObj.getTime())) return '-'
-
   return format(dateObj, 'dd/MM/yyyy', { locale: fr })
 }
 
-export const formatFrenchDateRange = (startDate: Date | string, endDate: Date | string | null): string => {
-  const start = formatFrenchDate(startDate)
-  const end = endDate ? formatFrenchDate(endDate) : 'En cours'
+/**
+ * Formats a date as "12 jan. 2024" — abbreviated month, human-readable
+ */
+export function formatShortDate(date: Date | string | null): string {
+  if (!date) return '-'
+  const dateObj = typeof date === 'string' ? safeParseISODate(date) : date
+  if (!dateObj || isNaN(dateObj.getTime())) return '-'
+  return format(dateObj, 'd MMM yyyy', { locale: fr }) // "12 janv. 2024"
+}
+
+export const formatDateRange = (startDate: Date | string, endDate: Date | string | null): string => {
+  const start = formatDate(startDate)
+  const end = endDate ? formatDate(endDate) : 'En cours'
   return `${start} - ${end}`
 }
 
 export function getDayOfWeek(date: string): string {
   const d = parseISO(date)
-  return format(d, 'EEE').toLowerCase() // Returns 'sun', 'mon', 'tue', 'wed', etc.
+  return format(d, 'EEE').toLowerCase()
 }
 
 // ============================================================================
@@ -112,12 +120,10 @@ export function calculateAge(dateOfBirth: Date | string | null): string {
 
   try {
     const birth = dateOfBirth instanceof Date ? dateOfBirth : parseISO(dateOfBirth)
-
     if (isNaN(birth.getTime())) {
       console.error('Invalid date of birth:', dateOfBirth)
       return ''
     }
-
     const age = differenceInYears(new Date(), birth)
     return age >= 0 ? age.toString() : ''
   } catch (error) {

@@ -5,8 +5,8 @@ import {
   getAbbreviatedMonthName,
   extractDayAndMonth,
   formatRelativeDate,
-  formatFrenchDate,
-  formatFrenchDateRange,
+  formatDate,
+  formatDateRange,
   getDayOfWeek,
   calculateAge,
   convertToCalendarDate
@@ -162,43 +162,43 @@ describe('date-utils', () => {
     })
   })
 
-  describe('formatFrenchDate', () => {
+  describe('formatDate', () => {
     it('1.9.1 should format date to DD/MM/YYYY', () => {
       const date = new Date('2026-01-15')
-      expect(formatFrenchDate(date)).toBe('15/01/2026')
+      expect(formatDate(date)).toBe('15/01/2026')
     })
 
     it('1.9.2 should handle string date input', () => {
-      expect(formatFrenchDate('2026-01-15')).toBe('15/01/2026')
+      expect(formatDate('2026-01-15')).toBe('15/01/2026')
     })
 
     it('1.9.3 should return "-" for null input', () => {
-      expect(formatFrenchDate(null)).toBe('-')
+      expect(formatDate(null)).toBe('-')
     })
 
     it('1.9.4 should return "-" for empty string', () => {
-      expect(formatFrenchDate('')).toBe('-')
+      expect(formatDate('')).toBe('-')
     })
 
     it('1.9.5 should handle invalid date', () => {
-      expect(formatFrenchDate('invalid')).toBe('-')
+      expect(formatDate('invalid')).toBe('-')
     })
   })
 
-  describe('formatFrenchDateRange', () => {
+  describe('formatDateRange', () => {
     it('1.10.1 should format date range with start and end dates', () => {
       const start = new Date('2026-01-15')
       const end = new Date('2026-01-20')
-      expect(formatFrenchDateRange(start, end)).toBe('15/01/2026 - 20/01/2026')
+      expect(formatDateRange(start, end)).toBe('15/01/2026 - 20/01/2026')
     })
 
     it('1.10.2 should format date range with null end date', () => {
       const start = new Date('2026-01-15')
-      expect(formatFrenchDateRange(start, null)).toBe('15/01/2026 - En cours')
+      expect(formatDateRange(start, null)).toBe('15/01/2026 - En cours')
     })
 
     it('1.10.3 should handle string date inputs', () => {
-      expect(formatFrenchDateRange('2026-01-15', '2026-01-20')).toBe('15/01/2026 - 20/01/2026')
+      expect(formatDateRange('2026-01-15', '2026-01-20')).toBe('15/01/2026 - 20/01/2026')
     })
   })
 

@@ -60,7 +60,7 @@
               <div class="flex items-center gap-1.5">
                 <UIcon name="i-hugeicons-birthday-cake" class="size-4.5" />
                 <span v-if="patient.dateOfBirth">
-                  {{ calculateAge(patient.dateOfBirth) }} ans ({{ formatFrenchDate(patient.dateOfBirth) }})
+                  {{ calculateAge(patient.dateOfBirth) }} ans ({{ formatDate(patient.dateOfBirth) }})
                 </span>
               </div>
               <div

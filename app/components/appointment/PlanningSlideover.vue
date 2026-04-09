@@ -21,7 +21,7 @@
       const planInfo = props.treatmentPlan ? ` - Plan: ${props.treatmentPlan.title}` : ''
       return `Patient: ${formatFullName(props.patient)}${planInfo}`
     }
-    return `Modifier la séance du ${formatFrenchDate(props.appointment.date)} pour ${formatFullName(props.patient)}`
+    return `Modifier la séance du ${formatDate(props.appointment.date)} pour ${formatFullName(props.patient)}`
   })
 
   const treatmentPlanStats = ref<{

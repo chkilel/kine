@@ -78,7 +78,7 @@
         <div class="space-y-1">
           <div class="text-muted flex items-center gap-1.5 text-xs">
             <UIcon name="i-hugeicons-calendar-02" class="size-3.5" />
-            <span>{{ formatFrenchDate(plan.startDate) }}</span>
+            <span>{{ formatDate(plan.startDate) }}</span>
           </div>
           <div v-if="plan.numberOfSessions" class="text-muted flex items-center gap-1.5 text-xs">
             <UIcon name="i-hugeicons-target-02" class="size-3.5" />

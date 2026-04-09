@@ -275,7 +275,7 @@
                 <div v-if="previousAppointments.length" class="space-y-5 pt-3">
                   <div v-for="previous in previousAppointments" :key="previous.id">
                     <div class="mb-1 flex items-center justify-between">
-                      <span class="text-sm font-bold">{{ formatFrenchDate(previous.date) }}</span>
+                      <span class="text-sm font-bold">{{ formatDate(previous.date) }}</span>
                       <span
                         v-if="previous.treatmentSession?.painLevelBefore !== null"
                         class="text-muted bg-muted-100 dark:bg-muted-800 rounded px-2 py-0.5 text-xs"
