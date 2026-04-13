@@ -1,0 +1,61 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Project: Kine — multi-tenant physical therapy clinic management SaaS
+  Target users: Clinic admins, therapists, staff (French-speaking regions)
+
+  Tech stack:
+    Frontend: Nuxt 4, Vue 3, TypeScript, Nuxt UI (Tailwind CSS)
+    Backend: Nitro on Cloudflare Workers
+    Database: Cloudflare D1 (SQLite) + Drizzle ORM
+    Auth: Better Auth with organization support
+    Storage: Cloudflare R2 (S3-compatible)
+    Package manager: pnpm
+    Deployment: Cloudflare Workers (Wrangler)
+
+  Architecture:
+    - Multi-tenant SaaS with strict org-based data isolation
+    - Soft-delete pattern (deleted_at timestamps) for all data
+    - File-based routing via Nuxt pages/
+    - RESTful API with Zod validation on all request/response schemas
+    - Direct R2 uploads via signed URLs
+    - Optimized for Cloudflare Workers edge (no long-running processes)
+
+  Code conventions:
+    - Vue: Composition API with <script setup lang="ts">
+    - Components: PascalCase; functions/variables: camelCase
+    - Use Nuxt auto-imports, useFetch/useAsyncData for API calls
+    - Prioritize Nuxt UI base classes before raw Tailwind utilities
+    - Never use custom colors outside the Nuxt UI design system
+    - Prettier: 2-space tabs, single quotes, 120-char line width
+    - TypeScript strict mode enabled
+    - Feature-based file organization
+
+  Testing:
+    - Vitest for unit tests alongside source files (.spec.ts)
+    - Target >90% coverage on critical business logic
+    - pnpm test / pnpm test:watch / pnpm test:coverage
+
+  Git: Conventional commits (feat, fix, docs, style, refactor, test, chore)
+
+rules:
+  proposal:
+    - Identify which tenant data boundaries are affected
+    - Note any HIPAA-like compliance implications for patient data
+    - Flag if Cloudflare Workers constraints apply (CPU limits, no filesystem)
+
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Specify organization-scoping requirements explicitly
+    - Note soft-delete behavior expectations where relevant
+
+  design:
+    - Include sequence diagrams for API flows involving auth/org context
+    - Document Drizzle ORM query patterns for new data models
+    - Specify R2 upload flow if file handling is involved
+
+  tasks:
+    - Break into chunks completable in under 2 hours
+    - Include database migration tasks separately from application code tasks
+    - Add Vitest unit test tasks for any new business logic
