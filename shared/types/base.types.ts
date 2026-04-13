@@ -171,14 +171,6 @@ export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
 export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
 
 // =============================================================================
-// Treatment Session Status Constants
-// =============================================================================
-
-export const TREATMENT_SESSION_STATUSES = ['pre_session', 'in_progress', 'finished', 'completed', 'canceled'] as const
-export const treatmentSessionStatusSchema = z.enum(TREATMENT_SESSION_STATUSES)
-export type TreatmentSessionStatus = z.infer<typeof treatmentSessionStatusSchema>
-
-// =============================================================================
 // Location Constants
 // =============================================================================
 
@@ -249,7 +241,15 @@ export type AppointmentType = z.infer<typeof appointmentTypeSchema>
 // Appointment Status Constants
 // =============================================================================
 
-export const APPOINTMENT_STATUSES = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'] as const
+export const APPOINTMENT_STATUSES = [
+  'scheduled',
+  'confirmed',
+  'in_progress',
+  'finished',
+  'completed',
+  'cancelled',
+  'no_show'
+] as const
 export const appointmentStatusSchema = z.enum(APPOINTMENT_STATUSES)
 export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
 
@@ -310,9 +310,9 @@ export type PaymentType = z.infer<typeof paymentTypeSchema>
 // Payment Status Constants
 // =============================================================================
 
-export const PAYMENT_STATUSES = ['unpaid', 'partial', 'paid'] as const
-export const paymentStatusSchema = z.enum(PAYMENT_STATUSES)
-export type PaymentStatus = z.infer<typeof paymentStatusSchema>
+export const APPOINTMENT_PAYMENT_STATUSES = ['unpaid', 'copay_paid', 'partially_paid', 'paid', 'overpaid'] as const
+export const appointmentPaymentStatusSchema = z.enum(APPOINTMENT_PAYMENT_STATUSES)
+export type AppointmentPaymentStatus = z.infer<typeof appointmentPaymentStatusSchema>
 
 // =============================================================================
 // Emergency Contact Schema

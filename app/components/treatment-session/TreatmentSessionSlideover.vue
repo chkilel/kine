@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { LazyAppModalEVA } from '#components'
 
+  // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{
     patientId: string
     appointmentId: string
@@ -8,49 +9,51 @@
 
   const emit = defineEmits<{ close: [] }>()
 
-  // ─── Composable ─────────────────────────────────────────────────────────────
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const evaModal = overlay.create(LazyAppModalEVA)
 
-  const { mutateAsync: createTreatmentSessionAsync, isLoading: isCreating } = useCreateTreatmentSession()
-  const { mutateAsync: startSessionAsync, isLoading: isSessionStarting } = useStartTreatmentSession()
+  const { mutateAsync: startAppointmentAsync, isLoading: isSessionStarting } = useStartAppointment()
 
-  // ─── Data fetching ─────────────────────────────────────────────────────────
   const { data: patient } = usePatientById(() => props.patientId)
-  const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId, limit: 6 }))
+  const { data: allAppointments } = useAppointmentsList(() => ({
+    patientId: props.patientId,
+    limit: 6,
+    includePaymentStatus: false
+  }))
   const {
     data: appointment,
     isPending: appointmentLoading,
     refetch: refetchAppointment
   } = useAppointment(() => props.appointmentId)
 
-  // ─── State ─────────────────────────────────────────────────────────────────
+  // ─── Base state ──────────────────────────────────────────────
   const isTimerPaused = ref(false)
 
+  // ─── Watchers ────────────────────────────────────────────────
   watch(
-    () => appointment.value?.treatmentSession?.pauseStartTime,
+    () => appointment.value?.pauseStartTime,
     (pauseStartTime) => {
       isTimerPaused.value = !!pauseStartTime
     },
     { immediate: true }
   )
 
-  // ─── Derived state ─────────────────────────────────────────────────────────
+  // ─── Computed state ──────────────────────────────────────────
   const showPaymentCard = computed(() => {
-    if (!appointment.value?.treatmentSession) return false
-    return appointment.value.treatmentSession?.status === 'finished'
+    if (appointment.value?.status !== 'in_progress' && appointment.value?.status !== 'finished') return false
+    return appointment.value?.status === 'finished'
   })
 
   const showPaymentSummaryCard = computed(() => {
-    if (!appointment.value?.treatmentSession) return false
-    return appointment.value.treatmentSession?.status === 'completed'
+    if (appointment.value?.status !== 'in_progress' && appointment.value?.status !== 'completed') return false
+    return appointment.value?.status === 'completed'
   })
 
   const sessionNotStarted = computed(
-    () => !appointment.value?.treatmentSession || appointment.value?.treatmentSession?.status === 'pre_session'
+    () => appointment.value?.status === 'confirmed' || appointment.value?.status === 'scheduled'
   )
 
-  // ─── Computed ───────────────────────────────────────────────────────────────
   const previousAppointments = computed(() => {
     const list = allAppointments.value
     const currentAppointment = appointment.value
@@ -69,15 +72,14 @@
   const headerDescription = computed(() => {
     if (!appointment.value) return ''
     const typeLabel = getAppointmentTypeLabel(appointment.value.type || 'follow_up')
-    const totalDuration =
-      appointment.value.duration + (appointment.value?.treatmentSession?.extendedDurationMinutes || 0)
+    const totalDuration = appointment.value.duration + (appointment.value?.extendedDurationMinutes || 0)
     const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')
   })
 
-  // ─── Actions ───────────────────────────────────────────────────────────────
+  // ─── Event handlers ──────────────────────────────────────────
   async function handleStartSession() {
-    if (isCreating.value || isSessionStarting.value) return
+    if (isSessionStarting.value) return
 
     const evaValue = await evaModal.open({
       title: 'Évaluation de la douleur initiale',
@@ -90,36 +92,15 @@
     if (evaValue === null) return
 
     try {
-      let sessionId = appointment.value?.treatmentSession?.id
-
-      if (!sessionId) {
-        try {
-          const result = await createTreatmentSessionAsync({ appointmentId: props.appointmentId })
-          sessionId = result?.data?.id
-        } catch (error) {
-          const parsedError = parseError(error, 'Impossible de créer la séance de traitement')
-          if (parsedError.statusCode === 409) {
-            await refetchAppointment()
-            sessionId = appointment.value?.treatmentSession?.id
-          } else {
-            throw error
-          }
-        }
-      }
-
-      if (!sessionId) {
+      if (appointment.value?.status === 'in_progress') {
         await refetchAppointment()
-        sessionId = appointment.value?.treatmentSession?.id
       }
 
-      if (!sessionId) throw new Error('Failed to create session')
-
-      await startSessionAsync({
-        sessionId,
+      await startAppointmentAsync({
+        appointmentId: props.appointmentId,
         actualStartTime: getCurrentTimeHHMMSS(),
         painLevelBefore: evaValue
       })
-      // Cache invalidation in mutation onSuccess will trigger automatic refetch
     } catch (error) {
       const parsedError = parseError(error, 'Impossible de démarrer la séance')
       useToast().add({
@@ -186,7 +167,7 @@
             color="primary"
             variant="solid"
             icon="i-hugeicons-play-circle"
-            :loading="isCreating"
+            :loading="isSessionStarting"
             @click="handleStartSession"
           >
             Démarrer la séance
@@ -215,8 +196,8 @@
 
           <!-- FIXME just for testing deposit/credit_usage - Payment transaction Card (centered at bottom) -->
           <PaymentTransactionCard
-            v-if="appointment?.treatmentSession && showPaymentCard"
-            :treatment-session="appointment.treatmentSession"
+            v-if="appointment?.status === 'in_progress' && showPaymentCard"
+            :appointment="appointment"
           />
         </div>
 
@@ -226,13 +207,15 @@
           <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
 
           <!-- Payment and summary cards -->
-          <template v-if="appointment?.treatmentSession">
-            <PaymentSummaryCard
-              v-if="showPaymentSummaryCard"
-              :treatment-session="appointment.treatmentSession"
-              :appointment
-            />
-            <PaymentCard v-else-if="showPaymentCard" :treatment-session="appointment.treatmentSession" :appointment />
+          <template
+            v-if="
+              appointment?.status === 'in_progress' ||
+              appointment?.status === 'finished' ||
+              appointment?.status === 'completed'
+            "
+          >
+            <PaymentSummaryCard v-if="showPaymentSummaryCard" :appointment />
+            <PaymentCard v-else-if="showPaymentCard" :appointment />
           </template>
 
           <!-- Start Session Button - Only show when no session exists or when unpaid / Old UI -->
@@ -277,14 +260,14 @@
                     <div class="mb-1 flex items-center justify-between">
                       <span class="text-sm font-bold">{{ formatDate(previous.date) }}</span>
                       <span
-                        v-if="previous.treatmentSession?.painLevelBefore !== null"
+                        v-if="previous.status === 'in_progress' && previous.painLevelBefore !== null"
                         class="text-muted bg-muted-100 dark:bg-muted-800 rounded px-2 py-0.5 text-xs"
                       >
-                        EVA {{ previous.treatmentSession?.painLevelBefore }}/10
+                        EVA {{ previous.painLevelBefore }}/10
                       </span>
                     </div>
                     <p class="text-muted line-clamp-3 text-sm leading-relaxed">
-                      {{ previous.treatmentSession?.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
+                      {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
                     </p>
                   </div>
                 </div>

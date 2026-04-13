@@ -7,9 +7,11 @@ export const PAYMENT_KEYS = {
   root: ['payments'] as const,
   patientBalance: (patientId: string) => [...PAYMENT_KEYS.root, 'balance', patientId],
   sessionPayments: (sessionId: string) => [...PAYMENT_KEYS.root, 'session', sessionId],
+  appointmentPayments: (appointmentId: string) => [...PAYMENT_KEYS.root, 'appointment', appointmentId],
   patientPayments: (patientId: string) => [...PAYMENT_KEYS.root, 'patient', patientId],
   payment: (paymentId: string) => [...PAYMENT_KEYS.root, 'detail', paymentId],
-  patientSessionsPaymentStatus: (patientId: string) => [...PAYMENT_KEYS.root, 'sessions-status', patientId]
+  patientSessionsPaymentStatus: (patientId: string) => [...PAYMENT_KEYS.root, 'sessions-status', patientId],
+  patientAppointmentsPaymentStatus: (patientId: string) => [...PAYMENT_KEYS.root, 'appointments-status', patientId]
 }
 
 // ─── Types ────────────────────────────────────────────────────
@@ -42,9 +44,9 @@ const _useCreatePayment = () => {
 
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.root })
 
-      const sessionId = paymentData.sessionItems?.[0]?.treatmentSessionId
-      if (sessionId) {
-        queryCache.invalidateQueries({ key: PAYMENT_KEYS.sessionPayments(sessionId) })
+      const appointmentId = paymentData.sessionItems?.[0]?.appointmentId
+      if (appointmentId) {
+        queryCache.invalidateQueries({ key: PAYMENT_KEYS.appointmentPayments(appointmentId) })
         queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
       }
 
@@ -63,15 +65,15 @@ const _useCreatePayment = () => {
   })
 }
 
-const _useTreatmentSessionPayments = (sessionId: MaybeRefOrGetter<string>) => {
+const _useAppointmentPayments = (appointmentId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => PAYMENT_KEYS.sessionPayments(toValue(sessionId)),
+    key: () => PAYMENT_KEYS.appointmentPayments(toValue(appointmentId)),
     query: async () => {
-      const resp = await requestFetch(`/api/treatment-sessions/${toValue(sessionId)}/payments`)
+      const resp = await requestFetch(`/api/appointments/${toValue(appointmentId)}/payments`)
       return resp
     },
-    enabled: () => !!toValue(sessionId)
+    enabled: () => !!toValue(appointmentId)
   })
 }
 
@@ -140,12 +142,12 @@ const _usePatientPayments = (patientId: MaybeRefOrGetter<string>, filters?: Mayb
   })
 }
 
-const _usePatientSessionsPaymentStatus = (patientId: MaybeRefOrGetter<string>) => {
+const _useAppointmentsPaymentStatus = (patientId: MaybeRefOrGetter<string>) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => PAYMENT_KEYS.patientSessionsPaymentStatus(toValue(patientId)),
+    key: () => PAYMENT_KEYS.patientAppointmentsPaymentStatus(toValue(patientId)),
     query: async () => {
-      return requestFetch<{ data: TreatmentSessionWithPaymentStatus[] }>('/api/treatment-sessions', {
+      const resp = await requestFetch<AppointmentWithPaymentStatus[]>('/api/appointments', {
         query: {
           patientId: toValue(patientId),
           status: 'finished,completed',
@@ -153,6 +155,7 @@ const _usePatientSessionsPaymentStatus = (patientId: MaybeRefOrGetter<string>) =
           limit: 100
         }
       })
+      return resp
     },
     enabled: () => !!toValue(patientId)
   })
@@ -200,9 +203,9 @@ const _useVoidPayment = () => {
 // ─── Exports ──────────────────────────────────────────────────
 export const useCreatePayment = createSharedComposable(_useCreatePayment)
 export const usePayment = _usePayment
-export const useTreatmentSessionPayments = _useTreatmentSessionPayments
+export const useAppointmentPayments = _useAppointmentPayments
 export const usePatientBalance = _usePatientBalance
 export const usePaymentReceipt = _usePaymentReceipt
 export const usePatientPayments = _usePatientPayments
-export const usePatientSessionsPaymentStatus = _usePatientSessionsPaymentStatus
+export const useAppointmentsPaymentStatus = _useAppointmentsPaymentStatus
 export const useVoidPayment = createSharedComposable(_useVoidPayment)

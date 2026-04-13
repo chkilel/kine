@@ -13,7 +13,7 @@
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
   const createPayment = useCreatePayment()
   const { data: balanceData } = usePatientBalance(() => props.patientId)
-  const { data: sessionsData, isLoading: sessionsLoading } = usePatientSessionsPaymentStatus(() => props.patientId)
+  const { data: sessionsData, isLoading: sessionsLoading } = useAppointmentsPaymentStatus(() => props.patientId)
 
   // ─── Base state ──────────────────────────────────────────────
   const checkedIds = ref<Set<string>>(new Set(props.preselectedSessionIds))
@@ -24,7 +24,7 @@
   const creditBalanceCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unbilledSessions = computed(() => {
-    const items = sessionsData.value?.data ?? []
+    const items = sessionsData.value ?? []
     return items.filter((s) => {
       const status: PaymentStatus = s.paymentStatus
       return status === 'unpaid' || status === 'partial'
@@ -94,17 +94,17 @@
     return s.planTitle || 'Séance de kinésithérapie'
   }
 
-  function sessionLocation(s: TreatmentSessionWithPaymentStatus) {
-    const loc = s.appointmentLocation
+  function sessionLocation(s: AppointmentWithPaymentStatus) {
+    const loc = s.location
     return loc ? getLocationLabel(loc) : loc || ''
   }
 
-  function sessionRemaining(s: TreatmentSessionWithPaymentStatus) {
-    return (s.priceCent || 0) - (s.paidCents || 0)
+  function sessionRemaining(s: AppointmentWithPaymentStatus) {
+    return (s.priceCents || 0) - (s.paidCents || 0)
   }
 
   // ─── Submit ──────────────────────────────────────────────────
-  type SessionItem = { treatmentSessionId: string; amountCents: number }
+  type SessionItem = { appointmentId: string; amountCents: number }
 
   async function onSubmit() {
     formError.value = ''
@@ -124,14 +124,14 @@
       for (const session of selectedSessions.value) {
         const remaining = sessionRemaining(session)
         if (creditRemaining >= remaining) {
-          depositItems.push({ treatmentSessionId: session.id, amountCents: remaining })
+          depositItems.push({ appointmentId: session.id, amountCents: remaining })
           creditRemaining -= remaining
         } else if (creditRemaining > 0) {
-          depositItems.push({ treatmentSessionId: session.id, amountCents: creditRemaining })
-          cashItems.push({ treatmentSessionId: session.id, amountCents: remaining - creditRemaining })
+          depositItems.push({ appointmentId: session.id, amountCents: creditRemaining })
+          cashItems.push({ appointmentId: session.id, amountCents: remaining - creditRemaining })
           creditRemaining = 0
         } else {
-          cashItems.push({ treatmentSessionId: session.id, amountCents: remaining })
+          cashItems.push({ appointmentId: session.id, amountCents: remaining })
         }
       }
 
@@ -144,17 +144,17 @@
 
       if (depositItems.length > 0) {
         const hasPartialSession = depositItems.some((item) => {
-          const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+          const session = selectedSessions.value.find((s) => s.id === item.appointmentId)
           return session && item.amountCents < sessionRemaining(session)
         })
 
         if (hasPartialSession && depositItems.length > 1) {
           const fullCoverItems = depositItems.filter((item) => {
-            const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+            const session = selectedSessions.value.find((s) => s.id === item.appointmentId)
             return session && item.amountCents >= sessionRemaining(session)
           })
           const partialItem = depositItems.find((item) => {
-            const session = selectedSessions.value.find((s) => s.id === item.treatmentSessionId)
+            const session = selectedSessions.value.find((s) => s.id === item.appointmentId)
             return session && item.amountCents < sessionRemaining(session)
           })!
 
@@ -232,7 +232,7 @@
               <UCheckbox :model-value="checkedIds.has(session.id)" @update:model-value="toggleSession(session.id)" />
               <div class="min-w-0 flex-1">
                 <p class="text-default truncate text-sm font-medium">{{ sessionLabel(session) }}</p>
-                <p class="text-muted text-xs">{{ session.appointmentDate || '' }} — {{ sessionLocation(session) }}</p>
+                <p class="text-muted text-xs">{{ session.date || '' }} — {{ sessionLocation(session) }}</p>
               </div>
               <span class="text-default text-sm font-bold whitespace-nowrap tabular-nums">
                 {{ formatCurrency(sessionRemaining(session)) }}

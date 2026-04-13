@@ -1,13 +1,15 @@
 <script setup lang="ts">
   import { LazyTreatmentSessionSlideover } from '#components'
 
+  // ─── Props ───────────────────────────────────────────────────
   const { appointment } = defineProps<{ appointment: Appointment }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
-  // Get treatment session from appointment relation
-  const treatmentSession = computed(() => appointment.treatmentSession)
+  // ─── Computed state ──────────────────────────────────────────
+  const isPaused = computed(() => !!appointment.pauseStartTime)
 
   const locationLabel = computed(() => {
     if (appointment.location === 'clinic') {
@@ -25,8 +27,7 @@
 
   const locationColor = computed(() => getLocationColor(appointment.location))
 
-  const isPaused = computed(() => !!treatmentSession.value?.pauseStartTime)
-
+  // ─── Event handlers ──────────────────────────────────────────
   const handleViewSession = () => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
@@ -79,7 +80,7 @@
               formatTimeString(
                 addMinutesToTime(
                   appointment.startTime,
-                  appointment.duration + (treatmentSession?.extendedDurationMinutes || 0)
+                  appointment.duration + (appointment.extendedDurationMinutes || 0)
                 )
               )
             }}

@@ -39,7 +39,8 @@ export default defineNuxtConfig({
         'date-fns',
         'date-fns/locale',
         '@unovis/vue',
-        '@internationalized/date'
+        '@internationalized/date',
+        '@tanstack/table-core'
       ]
     }
   },

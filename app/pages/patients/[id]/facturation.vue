@@ -10,10 +10,10 @@
   // ─── Composables ─────────────────────────────────────────────
   const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance } = useBillingSlideover()
 
-  const { data: sessionsData, isLoading: isSessionsLoading } = usePatientSessionsPaymentStatus(patientId)
+  const { data: sessionsData, isLoading: isSessionsLoading } = useAppointmentsPaymentStatus(patientId)
 
   // ─── Computed state ──────────────────────────────────────────
-  const sessions = computed(() => sessionsData.value?.data ?? [])
+  const sessions = computed(() => sessionsData.value ?? [])
 
   const plans = computed(() => {
     const planMap = new Map<string, { id: string; name: string; count: number }>()
@@ -50,7 +50,7 @@
     total: sessions.value.length,
     noPlan: sessions.value.filter((s) => s.treatmentPlanId === null).length,
     unpaid: sessions.value.filter((s) => s.paymentStatus === 'unpaid').length,
-    partial: sessions.value.filter((s) => s.paymentStatus === 'partial').length,
+    partial: sessions.value.filter((s) => s.paymentStatus === 'partially_paid').length,
     paid: sessions.value.filter((s) => s.paymentStatus === 'paid').length
   }))
 
@@ -78,7 +78,7 @@
 
   function handleOpenRecordPayment() {
     const unpaidIds = sessions.value
-      .filter((s) => s.paymentStatus === 'unpaid' || s.paymentStatus === 'partial')
+      .filter((s) => s.paymentStatus === 'unpaid' || s.paymentStatus === 'partially_paid')
       .map((s) => s.id)
     openRecordPayment(patientId.value, unpaidIds)
   }

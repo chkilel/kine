@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  const props = defineProps<{ appointment: AppointmentWithSession }>()
+  const props = defineProps<{ appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────────────────────
 
   const activeOrganization = authClient.useActiveOrganization()
-  const { mutate: updatePrice, isLoading: isUpdating } = useUpdateSessionPrice()
+  const { mutate: updatePrice, isLoading: isUpdating } = useUpdateAppointmentPrice()
 
   // ─── Reactive state ──────────────────────────────────────────────────────────
 
@@ -16,29 +16,17 @@
 
   const organization = computed(() => activeOrganization.value.data)
 
-  const treatmentPlan = computed(() => {
-    if (!props.appointment.treatmentPlanId || !props.appointment.treatmentPlan) return null
-    return props.appointment.treatmentPlan
-  })
-
   const inheritedPrice = computed(() => {
     const location = props.appointment.location
-
-    if (treatmentPlan.value?.pricing[location]) {
-      return treatmentPlan.value.pricing[location]
-    }
-
-    return organization.value?.pricing.rateCent[location] ?? null
+    return activeOrganization.value.data?.pricing.rateCent[location] ?? null
   })
 
   const hasCustomCost = computed(() => {
-    const priceCent = props.appointment.treatmentSession?.priceCent
-    return priceCent !== null && priceCent !== undefined
+    const priceCents = props.appointment.priceCents
+    return priceCents !== null && priceCents !== undefined
   })
 
-  const displayPrice = computed(() =>
-    hasCustomCost.value ? props.appointment.treatmentSession!.priceCent : inheritedPrice.value
-  )
+  const displayPrice = computed(() => (hasCustomCost.value ? props.appointment.priceCents : inheritedPrice.value))
 
   const displayPriceFormatted = computed(() =>
     displayPrice.value !== null && displayPrice.value !== undefined ? formatCurrency(displayPrice.value) : '-'
@@ -54,7 +42,7 @@
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
   async function handleStartPriceEdit() {
-    const currentPrice = props.appointment.treatmentSession?.priceCent ?? inheritedPrice.value
+    const currentPrice = props.appointment.priceCents ?? inheritedPrice.value
     priceInputRaw.value = currentPrice !== null && currentPrice !== undefined ? centsToCurrency(currentPrice) : 1
     isEditingPrice.value = true
     await nextTick()
@@ -62,23 +50,23 @@
   }
 
   function handleSavePrice() {
-    if (!props.appointment.treatmentSession || !isValidInput.value) return
+    if (props.appointment.status !== 'in_progress' || !isValidInput.value) return
 
     const priceInCents = currencyToCents(priceInputRaw.value)
 
     updatePrice({
-      sessionId: props.appointment.treatmentSession.id,
-      priceCent: priceInCents
+      appointmentId: props.appointment.id,
+      priceCents: priceInCents
     })
     isEditingPrice.value = false
   }
 
   function handleResetPrice() {
-    if (!props.appointment.treatmentSession) return
+    if (props.appointment.status !== 'in_progress') return
 
     updatePrice({
-      sessionId: props.appointment.treatmentSession.id,
-      priceCent: inheritedPrice.value
+      appointmentId: props.appointment.id,
+      priceCents: inheritedPrice.value
     })
     isEditingPrice.value = false
   }
@@ -104,7 +92,7 @@
         </div>
       </div>
       <UButton
-        v-if="appointment.treatmentSession && !isEditingPrice"
+        v-if="appointment.status === 'in_progress' && !isEditingPrice"
         size="xs"
         color="primary"
         variant="ghost"
@@ -115,7 +103,7 @@
       </UButton>
     </div>
 
-    <div v-if="appointment.treatmentSession && isEditingPrice" class="mt-4 space-y-2">
+    <div v-if="appointment.status === 'in_progress' && isEditingPrice" class="mt-4 space-y-2">
       <div class="flex gap-2">
         <UFieldGroup>
           <UInputNumber

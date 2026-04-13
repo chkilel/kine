@@ -1,5 +1,5 @@
 import { eq, and, isNull, inArray, ne } from 'drizzle-orm'
-import { payments, paymentSessionItems, treatmentSessions } from '~~/server/database/schema'
+import { payments, appointmentPaymentItems, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -14,9 +14,9 @@ export default defineEventHandler(async (event) => {
     const [paymentRows, sessionItemRows] = await db.batch([
       db.select().from(payments).where(eq(payments.id, paymentId)).limit(1),
       db
-        .select({ treatmentSessionId: paymentSessionItems.treatmentSessionId })
-        .from(paymentSessionItems)
-        .where(eq(paymentSessionItems.paymentId, paymentId))
+        .select({ appointmentId: appointmentPaymentItems.appointmentId })
+        .from(appointmentPaymentItems)
+        .where(eq(appointmentPaymentItems.paymentId, paymentId))
     ])
 
     const payment = paymentRows[0]
@@ -38,34 +38,34 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const sessionIds = sessionItemRows.map((i) => i.treatmentSessionId)
+    const appointmentIds = sessionItemRows.map((i) => i.appointmentId)
 
     const [, coveredRows] = await db.batch([
       db.update(payments).set({ voidedAt: new Date(), voidedById: userId }).where(eq(payments.id, paymentId)),
 
-      ...(sessionIds.length > 0
+      ...(appointmentIds.length > 0
         ? [
             db
-              .selectDistinct({ treatmentSessionId: paymentSessionItems.treatmentSessionId })
-              .from(paymentSessionItems)
-              .innerJoin(payments, eq(payments.id, paymentSessionItems.paymentId))
+              .selectDistinct({ appointmentId: appointmentPaymentItems.appointmentId })
+              .from(appointmentPaymentItems)
+              .innerJoin(payments, eq(payments.id, appointmentPaymentItems.paymentId))
               .where(
                 and(
-                  inArray(paymentSessionItems.treatmentSessionId, sessionIds),
+                  inArray(appointmentPaymentItems.appointmentId, appointmentIds),
                   eq(payments.type, 'session_payment'),
                   isNull(payments.voidedAt),
-                  ne(paymentSessionItems.paymentId, paymentId)
+                  ne(appointmentPaymentItems.paymentId, paymentId)
                 )
               )
           ]
         : [])
     ])
 
-    const stillCoveredIds = new Set((coveredRows ?? []).map((r) => r.treatmentSessionId))
-    const toRevert = sessionIds.filter((id) => !stillCoveredIds.has(id))
+    const stillCoveredIds = new Set((coveredRows ?? []).map((r) => r.appointmentId))
+    const toRevert = appointmentIds.filter((id) => !stillCoveredIds.has(id))
 
     if (toRevert.length > 0) {
-      await db.update(treatmentSessions).set({ status: 'finished' }).where(inArray(treatmentSessions.id, toRevert))
+      await db.update(appointments).set({ status: 'finished' }).where(inArray(appointments.id, toRevert))
     }
 
     return { message: 'Payment voided successfully' }

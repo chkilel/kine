@@ -3,31 +3,28 @@
 
   // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{
-    treatmentSession: TreatmentSession
-    appointment: AppointmentWithSession
+    appointment: Appointment
   }>()
 
   // ─── Composables ─────────────────────────────────────────────
-  const { data: patientCreditBalance } = usePatientBalance(() => props.treatmentSession.patientId)
+  const { data: patientCreditBalance } = usePatientBalance(() => props.appointment.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
-  const { mutate: updatePriceMutation, isLoading: isUpdating } = useUpdateSessionPrice()
+  const { mutate: updatePriceMutation, isLoading: isUpdating } = useUpdateAppointmentPrice()
   const activeOrganization = authClient.useActiveOrganization()
 
   // ─── Base state ──────────────────────────────────────────────
-  const sessionCostCents = computed(() => props.treatmentSession.priceCent ?? 0)
-  const patientId = computed(() => props.treatmentSession.patientId)
+  const sessionCostCents = computed(() => props.appointment.priceCents ?? 0)
+  const patientId = computed(() => props.appointment.patientId)
   const defaultAmount = computed(() => sessionCostCents.value / 100)
 
   // ─── Pricing ─────────────────────────────────────────────────
-  const treatmentPlan = computed(() =>
-    props.appointment?.treatmentPlanId && props.appointment?.treatmentPlan ? props.appointment.treatmentPlan : null
-  )
+  const treatmentPlan = computed(() => null)
 
   const inheritedPrice = computed<number | null>(() => {
     if (!props.appointment) return null
     const { location } = props.appointment
 
-    return treatmentPlan.value?.pricing[location] ?? activeOrganization.value.data?.pricing.rateCent[location] ?? null
+    return activeOrganization.value.data?.pricing.rateCent[location] ?? null
   })
 
   const hasCustomCost = computed(() => inheritedPrice.value !== null && sessionCostCents.value !== inheritedPrice.value)
@@ -89,12 +86,12 @@
     () => priceInputRaw.value !== null && !isNaN(priceInputRaw.value) && priceInputRaw.value > 0
   )
 
-  function updateSessionPrice(priceCent: number) {
+  function updateSessionPrice(newPriceCents: number) {
     updatePriceMutation({
-      sessionId: props.treatmentSession.id,
-      priceCent,
+      appointmentId: props.appointment.id,
+      priceCents: newPriceCents,
       onSuccess: () => {
-        formState.amount = priceCent / 100
+        formState.amount = newPriceCents / 100
         isEditingPrice.value = false
       },
       onError: () => {
@@ -166,7 +163,7 @@
       method: event.data.method,
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString(),
-      sessionItems: [{ treatmentSessionId: props.treatmentSession.id, amountCents }]
+      sessionItems: [{ appointmentId: props.appointment.id, amountCents }]
     }
 
     createPayment({

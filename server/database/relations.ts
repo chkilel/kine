@@ -6,10 +6,9 @@ import { appointments } from './schema/appointment'
 import { patientDocuments } from './schema/document'
 import { organizations, members, invitations, teams, teamMembers } from './schema/organization'
 import { patients } from './schema/patient'
-import { payments, paymentSessionItems } from './schema/payment'
+import { payments, appointmentPaymentItems } from './schema/payment'
 import { rooms } from './schema/rooms'
 import { treatmentPlans } from './schema/treatment-plan'
-import { treatmentSessions } from './schema/treatment-session'
 
 const schema = {
   users,
@@ -27,10 +26,9 @@ const schema = {
   teamMembers,
   patients,
   payments,
-  paymentSessionItems,
+  appointmentPaymentItems: appointmentPaymentItems,
   rooms,
-  treatmentPlans,
-  treatmentSessions
+  treatmentPlans
 }
 
 export const relations = defineRelations(schema, (r) => ({
@@ -55,13 +53,13 @@ export const relations = defineRelations(schema, (r) => ({
     })
   },
   appointments: {
-    treatmentSession: r.one.treatmentSessions({
-      from: r.appointments.id,
-      to: r.treatmentSessions.appointmentId
-    }),
     patient: r.one.patients({
       from: r.appointments.patientId,
       to: r.patients.id
+    }),
+    therapist: r.one.users({
+      from: r.appointments.therapistId,
+      to: r.users.id
     }),
     organization: r.one.organizations({
       from: r.appointments.organizationId,
@@ -74,6 +72,10 @@ export const relations = defineRelations(schema, (r) => ({
     room: r.one.rooms({
       from: r.appointments.roomId,
       to: r.rooms.id
+    }),
+    lockedBy: r.one.users({
+      from: r.appointments.lockedById,
+      to: r.users.id
     })
   },
   patientDocuments: {
@@ -116,16 +118,16 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.payments.voidedById,
       to: r.users.id
     }),
-    sessionItems: r.many.paymentSessionItems()
+    sessionItems: r.many.appointmentPaymentItems()
   },
-  paymentSessionItems: {
+  appointmentPaymentItems: {
     payment: r.one.payments({
-      from: r.paymentSessionItems.paymentId,
+      from: r.appointmentPaymentItems.paymentId,
       to: r.payments.id
     }),
-    treatmentSession: r.one.treatmentSessions({
-      from: r.paymentSessionItems.treatmentSessionId,
-      to: r.treatmentSessions.id
+    appointment: r.one.appointments({
+      from: r.appointmentPaymentItems.appointmentId,
+      to: r.appointments.id
     })
   },
   rooms: {
@@ -145,23 +147,5 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     appointments: r.many.appointments(),
     documents: r.many.patientDocuments()
-  },
-  treatmentSessions: {
-    appointment: r.one.appointments({
-      from: r.treatmentSessions.appointmentId,
-      to: r.appointments.id
-    }),
-    patient: r.one.patients({
-      from: r.treatmentSessions.patientId,
-      to: r.patients.id
-    }),
-    therapist: r.one.users({
-      from: r.treatmentSessions.therapistId,
-      to: r.users.id
-    }),
-    treatmentPlan: r.one.treatmentPlans({
-      from: r.treatmentSessions.treatmentPlanId,
-      to: r.treatmentPlans.id
-    })
   }
 }))

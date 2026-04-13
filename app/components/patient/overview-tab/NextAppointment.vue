@@ -1,13 +1,16 @@
 <script setup lang="ts">
   import { LazyTreatmentSessionSlideover } from '#components'
 
+  // ─── Props ───────────────────────────────────────────────────
   const { patient } = defineProps<{ patient: Patient }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
-  const { data: appointments } = useAppointmentsList(() => ({ patientId: patient?.id }))
+  const { data: appointments } = useAppointmentsList(() => ({ patientId: patient.id }))
 
+  // ─── Computed state ──────────────────────────────────────────
   const nextAppointment = computed(() => {
     if (!appointments.value) return null
     const upcoming = appointments.value
@@ -19,6 +22,7 @@
     return upcoming[0] || null
   })
 
+  // ─── Event handlers ──────────────────────────────────────────
   async function navigateToPlan(planId?: string) {
     const path = `/patients/${patient.id}/plan`
     if (planId) {

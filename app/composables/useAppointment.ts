@@ -4,7 +4,6 @@ import { parseISO } from 'date-fns'
 export const APPOINTMENT_KEYS = {
   root: ['appointments'] as const,
   list: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, params],
-  listWithSessions: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, 'with-sessions', params],
   single: (id: string) => [...APPOINTMENT_KEYS.root, id],
   therapist: (therapistId: string, date: string) => [...APPOINTMENT_KEYS.root, 'therapist', therapistId, date],
   therapistRoot: () => [...APPOINTMENT_KEYS.root, 'therapist']
@@ -28,39 +27,11 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
       return resp?.map((item) => ({
         ...item,
         createdAt: parseISO(item.createdAt),
-
         updatedAt: parseISO(item.updatedAt),
         confirmedAt: safeParseISODate(item.confirmedAt),
-        cancelledAt: safeParseISODate(item.cancelledAt)
+        cancelledAt: safeParseISODate(item.cancelledAt),
+        lockedAt: safeParseISODate(item.lockedAt)
       }))
-    }
-  })
-}
-
-const _useAppointmentsListWithSessions = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) => {
-  const requestFetch = useRequestFetch()
-  return useQuery<AppointmentWithSession[]>({
-    key: () => {
-      const queryParamsValue = toValue(queryParams) || {}
-      return APPOINTMENT_KEYS.listWithSessions(queryParamsValue)
-    },
-    query: async () => {
-      const queryParamsValue = toValue(queryParams) || {}
-      const validatedQuery = appointmentQuerySchema.parse({ ...queryParamsValue, include: 'treatmentSession' })
-      const resp = await requestFetch('/api/appointments', {
-        query: Object.fromEntries(
-          Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
-        )
-      })
-      return (
-        resp?.map((item) => ({
-          ...item,
-          createdAt: parseISO(item.createdAt),
-          updatedAt: parseISO(item.updatedAt),
-          confirmedAt: safeParseISODate(item.confirmedAt),
-          cancelledAt: safeParseISODate(item.cancelledAt)
-        })) ?? []
-      )
     }
   })
 }
@@ -76,11 +47,13 @@ const _useCreateAppointment = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentData }: CreateAppointmentParams) =>
-      requestFetch('/api/appointments', {
+    mutation: async ({ appointmentData }: CreateAppointmentParams) => {
+      const resp = requestFetch('/api/appointments', {
         method: 'POST',
         body: appointmentData
-      }),
+      })
+      return resp
+    },
     onSuccess: (_, { appointmentData, onSuccess }) => {
       onSuccess?.()
       toast.add({
@@ -116,11 +89,13 @@ const _useUpdateAppointment = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId, appointmentData }: UpdateAppointmentParams) =>
-      requestFetch(`/api/appointments/${appointmentId}`, {
+    mutation: async ({ appointmentId, appointmentData }: UpdateAppointmentParams) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'PUT',
         body: appointmentData
-      }),
+      })
+      return resp
+    },
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       toast.add({
@@ -161,7 +136,8 @@ const _useAppointment = (appointmentId: MaybeRefOrGetter<string>) => {
         createdAt: parseISO(data.createdAt),
         updatedAt: parseISO(data.updatedAt),
         confirmedAt: safeParseISODate(data.confirmedAt),
-        cancelledAt: safeParseISODate(data.cancelledAt)
+        cancelledAt: safeParseISODate(data.cancelledAt),
+        lockedAt: safeParseISODate(data.lockedAt)
       }
     },
     enabled: () => !!toValue(appointmentId)
@@ -174,10 +150,12 @@ const _useDeleteAppointment = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ appointmentId }: { appointmentId: string; patientId?: string; onSuccess?: () => void }) =>
-      requestFetch(`/api/appointments/${appointmentId}`, {
+    mutation: async ({ appointmentId }: { appointmentId: string; patientId?: string; onSuccess?: () => void }) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}`, {
         method: 'DELETE'
-      }),
+      })
+      return resp
+    },
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
       toast.add({
@@ -214,11 +192,11 @@ const _useUpdateAppointmentStatus = () => {
       appointmentId: string
       patientId?: string
       status: AppointmentStatus
-    }) =>
-      requestFetch(`/api/appointments/${appointmentId}`, {
-        method: 'PUT',
-        body: { status }
-      }),
+    }) => {
+      const resp = requestFetch(`/api/appointments/${appointmentId}`, { method: 'PUT', body: { status } })
+      return resp
+    },
+
     onSuccess: (_, { patientId }) => {
       toast.add({
         title: 'Succès',
@@ -269,18 +247,258 @@ const _useTherapistAppointments = (
         createdAt: parseISO(item.createdAt),
         updatedAt: parseISO(item.updatedAt),
         confirmedAt: safeParseISODate(item.confirmedAt),
-        cancelledAt: safeParseISODate(item.cancelledAt)
+        cancelledAt: safeParseISODate(item.cancelledAt),
+        lockedAt: safeParseISODate(item.lockedAt)
       }))
     },
     enabled: () => !!toValue(therapistId) && !!toValue(date)
   })
 }
 
+function useAppointmentInvalidation() {
+  const queryCache = useQueryCache()
+  return (appointmentId?: string) => {
+    queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })
+    queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.therapistRoot() })
+    if (appointmentId) {
+      queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.single(appointmentId) })
+    }
+  }
+}
+
+const _useStartAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & StartAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/start`, { method: 'POST', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de démarrer la séance').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _usePauseAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & PauseAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/pause`, { method: 'POST', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre la séance en pause').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useResumeAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & ResumeAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/resume`, { method: 'POST', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de reprendre la séance').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useEndAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & EndAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/end`, { method: 'POST', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de terminer la séance').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useCancelAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId }: WithOnSuccess<{ appointmentId: string }>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/cancel`, { method: 'POST' })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, "Impossible d'annuler la séance").message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateAppointmentTags = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & UpdateTagsAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/tags`, { method: 'PATCH', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour les tags').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useExtendAppointment = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & ExtendAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/extend`, { method: 'PATCH', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, "Impossible d'étendre la durée").message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateAppointmentPrice = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & UpdatePriceAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/price`, { method: 'PATCH', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown, { onError }) => {
+      onError?.()
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour le prix').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateAppointmentClinicalNotes = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({
+      appointmentId,
+      ...body
+    }: WithOnSuccess<{ appointmentId: string } & UpdateClinicalNotesAction>) => {
+      const resp = await requestFetch(`/api/appointments/${appointmentId}/clinical-notes`, { method: 'PATCH', body })
+      return resp
+    },
+    onSuccess: (data, { appointmentId, onSuccess }) => {
+      onSuccess?.()
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour les notes cliniques').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
 export const useAppointmentsList = _useAppointmentsList
-export const useAppointmentsListWithSessions = _useAppointmentsListWithSessions
 export const useAppointment = _useAppointment
 export const useCreateAppointment = createSharedComposable(_useCreateAppointment)
 export const useUpdateAppointment = createSharedComposable(_useUpdateAppointment)
 export const useDeleteAppointment = createSharedComposable(_useDeleteAppointment)
 export const useUpdateAppointmentStatus = createSharedComposable(_useUpdateAppointmentStatus)
+export const useStartAppointment = createSharedComposable(_useStartAppointment)
+export const usePauseAppointment = createSharedComposable(_usePauseAppointment)
+export const useResumeAppointment = createSharedComposable(_useResumeAppointment)
+export const useEndAppointment = createSharedComposable(_useEndAppointment)
+export const useCancelAppointment = createSharedComposable(_useCancelAppointment)
+export const useUpdateAppointmentTags = createSharedComposable(_useUpdateAppointmentTags)
+export const useExtendAppointment = createSharedComposable(_useExtendAppointment)
+export const useUpdateAppointmentPrice = createSharedComposable(_useUpdateAppointmentPrice)
+export const useUpdateAppointmentClinicalNotes = createSharedComposable(_useUpdateAppointmentClinicalNotes)
 export const useTherapistAppointments = _useTherapistAppointments

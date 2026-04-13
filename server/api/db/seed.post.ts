@@ -1164,9 +1164,11 @@ function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
 
   if (isPastDate) {
     const rand = Math.random()
-    if (rand < 0.7) return 'completed'
-    if (rand < 0.85) return 'cancelled'
-    if (rand < 0.95) return 'no_show'
+    if (rand < 0.5) return 'completed'
+    if (rand < 0.65) return 'finished'
+    if (rand < 0.8) return 'cancelled'
+    if (rand < 0.9) return 'no_show'
+    if (rand < 0.95) return 'in_progress'
     return 'completed'
   }
 
@@ -1355,6 +1357,11 @@ function generateAppointments(
       }
     }
 
+    const requiresTimer = status === 'in_progress' || status === 'finished'
+    const actualDurationSeconds = requiresTimer ? (duration ?? 30) * 60 : null
+    const totalPausedSeconds =
+      status === 'in_progress' ? randomInt(60, 600) : status === 'finished' ? randomInt(30, 900) : null
+
     const appointment: any = {
       organizationId,
       patientId,
@@ -1368,10 +1375,8 @@ function generateAppointments(
       type: randomItem(VALID_APPOINTMENT_TYPES) || 'follow_up',
       status,
       location,
-      billed: isPast && status === 'completed' ? date : null,
-      insuranceClaimed: isPast && status === 'completed' ? 1 : 0,
-      priceCent: duration ? duration * 50 : 50,
-      chiefComplaint: randomItem(medicalConditions),
+      priceCents: duration ? duration * 50 : 50,
+      primaryConcern: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       treatmentSummary:
         status === 'completed'
@@ -1381,10 +1386,17 @@ function generateAppointments(
               'Mobilisation articulaire',
               'Rééducation fonctionnelle'
             ])
-          : null
+          : null,
+      ...(requiresTimer
+        ? {
+            actualStartTime: startTime,
+            actualDurationSeconds,
+            totalPausedSeconds
+          }
+        : {})
     }
 
-    if (status === 'completed') {
+    if (status === 'completed' || status === 'finished') {
       const painBefore = randomInt(3, 8)
       appointment.painLevelBefore = painBefore
       appointment.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
@@ -1499,6 +1511,11 @@ function generateAppointments(
 
     const durationValue = duration as number
 
+    const requiresTimer = status === 'in_progress' || status === 'finished'
+    const actualDurationSeconds = requiresTimer ? (durationValue ?? 30) * 60 : null
+    const totalPausedSeconds =
+      status === 'in_progress' ? randomInt(60, 600) : status === 'finished' ? randomInt(30, 900) : null
+
     const appointment: any = {
       organizationId,
       patientId,
@@ -1512,12 +1529,17 @@ function generateAppointments(
       type: randomItem(VALID_APPOINTMENT_TYPES),
       status,
       location,
-      billed: null,
-      insuranceClaimed: 0,
-      priceCent: durationValue * 50,
-      chiefComplaint: randomItem(medicalConditions),
+      priceCents: durationValue * 50,
+      primaryConcern: randomItem(medicalConditions),
       notes: null,
-      treatmentSummary: null
+      treatmentSummary: null,
+      ...(requiresTimer
+        ? {
+            actualStartTime: startTime,
+            actualDurationSeconds,
+            totalPausedSeconds
+          }
+        : {})
     }
 
     appointmentsData.push(appointment)
