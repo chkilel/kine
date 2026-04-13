@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
 
-  const { treatmentSession } = defineProps<{ treatmentSession: TreatmentSession }>()
+  const { appointment } = defineProps<{ appointment: Appointment }>()
 
   const emit = defineEmits<{
     paymentCreated: []
@@ -9,19 +9,18 @@
   }>()
 
   // ─── Composable ─────────────────────────────────────────────────────────────
-  const { data: patientCreditBalance } = usePatientBalance(() => treatmentSession.patientId)
+  const { data: patientCreditBalance } = usePatientBalance(() => appointment.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
 
   // ─── Derived state ─────────────────────────────────────────────────────────
-  const sessionCostCents = computed(() => treatmentSession.priceCent || 0)
-  const sessionId = computed(() => treatmentSession.id)
-  const patientId = computed(() => treatmentSession.patientId)
+  const sessionCostCents = computed(() => appointment.priceCents || 0)
+  const patientId = computed(() => appointment.patientId)
 
   // ─── Form state ─────────────────────────────────────────────────────────────
   const state = reactive<PaymentForm>({
     type: 'session_payment',
     method: 'cash',
-    amount: (treatmentSession.priceCent ?? 0) / 100,
+    amount: (appointment.priceCents ?? 0) / 100,
     notes: ''
   })
 
@@ -75,10 +74,10 @@
       paidOn: getTodayAsString()
     }
 
-    if (event.data.type === 'payment' || event.data.type === 'credit_usage') {
+    if (event.data.type === 'session_payment' || event.data.method === 'deposit') {
       paymentData.sessionItems = [
         {
-          treatmentSessionId: sessionId.value,
+          appointmentId: appointment.id,
           amountCents
         }
       ]
@@ -88,7 +87,7 @@
       paymentData,
       onSuccess: () => {
         emit('paymentCreated')
-        state.amount = (treatmentSession.priceCent ?? 0) / 100
+        state.amount = (appointment.priceCents ?? 0) / 100
         state.notes = ''
       }
     })

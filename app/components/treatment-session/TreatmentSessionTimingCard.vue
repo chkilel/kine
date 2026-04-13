@@ -1,29 +1,29 @@
 <script setup lang="ts">
-  const props = defineProps<{ appointment: AppointmentWithSession }>()
+  // ─── Props ───────────────────────────────────────────────────
+  const props = defineProps<{ appointment: Appointment }>()
 
-  // ─── Derived state (timing info) ────────────────────────────────────────────
+  // ─── Computed state (timing info) ───────────────────────────
   const timingInfo = computed(() => {
     const apt = props.appointment
-    const session = apt.treatmentSession
-    const isSessionFinished = session?.status === 'finished' || session?.status === 'completed'
+    const isSessionFinished = apt.status === 'finished' || apt.status === 'completed'
     return {
       appointmentDate: formatDate(apt.date),
       appointmentStartTime: formatTimeString(apt.startTime),
       appointmentEndTime: formatTimeString(apt.endTime),
-      actualStartTime: session?.actualStartTime ? formatTimeString(session.actualStartTime) : null,
+      actualStartTime: apt.actualStartTime ? formatTimeString(apt.actualStartTime) : null,
       actualEndTime:
-        isSessionFinished && session.actualStartTime && session.actualDurationSeconds
-          ? formatTimeString(addMinutesToTime(session.actualStartTime, Math.floor(session.actualDurationSeconds / 60)))
+        isSessionFinished && apt.actualStartTime && apt.actualDurationSeconds
+          ? formatTimeString(addMinutesToTime(apt.actualStartTime, Math.floor(apt.actualDurationSeconds / 60)))
           : null,
       plannedDurationMinutes: apt.duration,
-      actualDurationMinutes: session?.actualDurationSeconds ? Math.floor(session.actualDurationSeconds / 60) : null,
-      totalPausedMinutes: session?.totalPausedSeconds ? Math.floor(session.totalPausedSeconds / 60) : null,
-      isPaused: !!session?.pauseStartTime,
-      elapsedTimeSincePause: session?.pauseStartTime ? getTimeSincePause(session.pauseStartTime) : null
+      actualDurationMinutes: apt.actualDurationSeconds ? Math.floor(apt.actualDurationSeconds / 60) : null,
+      totalPausedMinutes: apt.totalPausedSeconds ? Math.floor(apt.totalPausedSeconds / 60) : null,
+      isPaused: !!apt.pauseStartTime,
+      elapsedTimeSincePause: apt.pauseStartTime ? getTimeSincePause(apt.pauseStartTime) : null
     }
   })
 
-  // ─── Derived state (duration comparison) ───────────────────────────────────
+  // ─── Computed state (duration comparison) ──────────────────
   const durationComparison = computed(() => {
     const { plannedDurationMinutes, actualDurationMinutes } = timingInfo.value
     if (actualDurationMinutes === null) return null
@@ -35,7 +35,7 @@
 
   const isOverTime = computed(() => durationComparison.value?.isLate ?? false)
 
-  // ─── Derived state (display properties) ────────────────────────────────────
+  // ─── Computed state (display properties) ──────────────────
   const overtimePercentage = computed(() => {
     if (!isOverTime.value || !timingInfo.value.actualDurationMinutes) return 0
     const { plannedDurationMinutes, actualDurationMinutes } = timingInfo.value

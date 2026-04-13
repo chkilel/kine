@@ -1,12 +1,5 @@
 import { eq } from 'drizzle-orm'
-import {
-  payments,
-  paymentSessionItems,
-  organizations,
-  patients,
-  users,
-  treatmentSessions
-} from '~~/server/database/schema'
+import { payments, appointmentPaymentItems, organizations, patients, users, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -54,14 +47,14 @@ export default defineEventHandler(async (event) => {
 
     const sessionItems = await db
       .select({
-        id: paymentSessionItems.id,
-        treatmentSessionId: paymentSessionItems.treatmentSessionId,
-        amountCents: paymentSessionItems.amountCents,
-        treatmentSession: treatmentSessions
+        id: appointmentPaymentItems.id,
+        appointmentId: appointmentPaymentItems.appointmentId,
+        amountCents: appointmentPaymentItems.amountCents,
+        appointment: appointments
       })
-      .from(paymentSessionItems)
-      .leftJoin(treatmentSessions, eq(paymentSessionItems.treatmentSessionId, treatmentSessions.id))
-      .where(eq(paymentSessionItems.paymentId, paymentId))
+      .from(appointmentPaymentItems)
+      .leftJoin(appointments, eq(appointmentPaymentItems.appointmentId, appointments.id))
+      .where(eq(appointmentPaymentItems.paymentId, paymentId))
 
     const html = `
 <!DOCTYPE html>
@@ -222,7 +215,7 @@ export default defineEventHandler(async (event) => {
       .map(
         (item) => `
     <div class="payment-row">
-      <span class="label">${item.treatmentSession ? new Date(item.treatmentSession.createdAt).toLocaleDateString('fr-FR') : '-'}</span>
+      <span class="label">${item.appointment ? new Date(item.appointment.createdAt).toLocaleDateString('fr-FR') : '-'}</span>
       <span>${formatCurrency(item.amountCents)}</span>
     </div>
     `

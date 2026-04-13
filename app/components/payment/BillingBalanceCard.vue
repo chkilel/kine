@@ -1,29 +1,31 @@
 <script setup lang="ts">
-  import type { PaymentStatus } from '~~/shared/types/base.types'
+  import type { AppointmentPaymentStatus } from '~~/shared/types/base.types'
 
   // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{ patientId: string }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: balanceData, isLoading: balancePending } = usePatientBalance(computed(() => props.patientId))
-  const { data: sessionsData } = usePatientSessionsPaymentStatus(computed(() => props.patientId))
+  const { data: sessionsData } = useAppointmentsPaymentStatus(computed(() => props.patientId))
   const { openAddDeposit, openRefundBalance } = useBillingSlideover()
 
   // ─── Computed state ──────────────────────────────────────────
   const depositCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unpaidSessions = computed(() => {
-    const items = sessionsData.value?.data as any[] | undefined
+    const items = sessionsData.value
     if (!items) return { count: 0, totalDueCents: 0 }
-    const unpaid = items.filter((s) => {
-      const status: PaymentStatus = s.paymentStatus
-      return status === 'unpaid' || status === 'partial'
+    const unpaid = items.filter((a) => {
+      const status = a.paymentStatus
+      return status === 'unpaid' || status === 'partially_paid'
     })
     const totalDueCents = unpaid.reduce((sum: number, s: any) => {
       return sum + s.priceCent - (s.paidCents || 0)
     }, 0)
     return { count: unpaid.length, totalDueCents }
   })
+
+
 
   // ─── Event handlers ──────────────────────────────────────────
   function handleAddDeposit() {

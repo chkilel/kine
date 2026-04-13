@@ -1,8 +1,10 @@
 <script setup lang="ts">
   import { LazyTreatmentSessionSlideover, LazyAppointmentPlanningSlideover, LazyAppModalConfirm } from '#components'
 
-  const { appointment } = defineProps<{ appointment: AppointmentWithSession }>()
+  // ─── Props ───────────────────────────────────────────────────
+  const { appointment } = defineProps<{ appointment: Appointment }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
   const planningOverlay = overlay.create(LazyAppointmentPlanningSlideover)
@@ -12,31 +14,24 @@
   const { data: patient } = usePatientById(() => appointment.patientId)
   const { treatmentPlans } = usePatientTreatmentPlans(() => appointment.patientId)
 
-  // Get treatment session from appointment relation
-  const treatmentSession = computed(() => appointment.treatmentSession)
-
-  // Computed status flags
+  // ─── Status flags ─────────────────────────────────────────────
   const status = computed(() => ({
     completed: appointment.status === 'completed',
     scheduled: ['scheduled', 'confirmed'].includes(appointment.status),
-    inProgress: treatmentSession.value?.status === 'in_progress',
-    preSession: treatmentSession.value?.status === 'pre_session',
+    inProgress: appointment.status === 'in_progress',
     cancelled: appointment.status === 'cancelled'
   }))
 
-  // Computed property to determine if appointment has started
-  const appointmentHasStarted = computed(() => {
-    return status.value.inProgress || status.value.completed || !!treatmentSession.value
-  })
+  const appointmentHasStarted = computed(() => status.value.inProgress || status.value.completed)
 
-  // Computed text values
+  // ─── Computed state ──────────────────────────────────────────
   const timeLabel = computed(() => formatTimeString(appointment.startTime))
 
   const durationLabel = computed(() => {
     const seconds =
-      status.value.completed && treatmentSession.value?.actualDurationSeconds
-        ? treatmentSession.value.actualDurationSeconds
-        : (appointment.duration + (treatmentSession.value?.extendedDurationMinutes || 0)) * 60
+      status.value.completed && appointment.actualDurationSeconds
+        ? appointment.actualDurationSeconds
+        : (appointment.duration + (appointment.extendedDurationMinutes || 0)) * 60
     return formatSecondsAsDuration(seconds)
   })
 
@@ -66,7 +61,7 @@
     return getAppointmentStatusColor(appointment.status)
   })
 
-  // Dropdown menu items - memoized
+  // ─── Menu items ──────────────────────────────────────────────
   const menuItems = computed(() => {
     if (appointmentHasStarted.value) {
       return [
@@ -111,7 +106,7 @@
     ]
   })
 
-  // Event handlers
+  // ─── Event handlers ──────────────────────────────────────────
   const openSessionSlideover = () => {
     activeConsultationOverlay.open({
       patientId: appointment.patientId,
@@ -215,7 +210,7 @@
 
     <!-- Action Buttons -->
     <UButton
-      v-if="status.scheduled && !status.inProgress && !status.preSession"
+      v-if="status.scheduled && !status.inProgress"
       label="Commencer"
       icon="i-hugeicons-play"
       size="lg"
@@ -224,18 +219,6 @@
       :ui="{ base: 'rounded-xl' }"
       class="shadow-success/10 shrink-0 font-semibold text-white shadow-lg"
       @click="openSessionSlideover"
-    />
-
-    <UButton
-      v-else-if="status.preSession"
-      label="Démarrer"
-      icon="i-hugeicons-play"
-      size="lg"
-      color="warning"
-      variant="solid"
-      :ui="{ base: 'rounded-xl' }"
-      class="shadow-warning/10 shrink-0 font-semibold text-white shadow-lg"
-      @click="handleContinueSession"
     />
 
     <UButton

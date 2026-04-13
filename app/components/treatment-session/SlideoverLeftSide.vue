@@ -1,12 +1,19 @@
 <script setup lang="ts">
+  // ─── Props ───────────────────────────────────────────────────
   const { patient, appointment } = defineProps<{
     patient: Patient
-    appointment: AppointmentWithSession
+    appointment: Appointment
   }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const { treatmentPlans } = usePatientTreatmentPlans(() => patient.id)
-  const { data: allAppointments } = useAppointmentsListWithSessions(() => ({ patientId: patient.id, limit: 6 }))
+  const { data: allAppointments } = useAppointmentsList(() => ({
+    patientId: patient.id,
+    limit: 6,
+    includePaymentStatus: false
+  }))
 
+  // ─── Computed state ──────────────────────────────────────────
   const relatedTreatmentPlan = computed(() => {
     if (!treatmentPlans.value || !appointment?.treatmentPlanId) return null
     return treatmentPlans.value.find((plan) => plan.id === appointment?.treatmentPlanId) || null

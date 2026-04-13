@@ -48,8 +48,10 @@
   const stats = computed(() => {
     const list = appointments.value || []
     const completed = list.filter((a) => a.status === 'completed').length
-    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status) && !a.treatmentSession).length
-    const inProgress = list.filter((a) => a.treatmentSession?.status === 'in_progress').length
+    const upcoming = list.filter(
+      (a) => ['scheduled', 'confirmed'].includes(a.status) && a.status !== 'in_progress'
+    ).length
+    const inProgress = list.filter((a) => a.status === 'in_progress').length
     const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length
     return {
       total: list.length,
@@ -62,14 +64,9 @@
   })
 
   // ─── Filters ────────────────────────────────────────────────────────────────
-  const inProgressAppointments = computed(() =>
-    appointments.value?.filter((a) => a.treatmentSession?.status === 'in_progress')
-  )
+  const inProgressAppointments = computed(() => appointments.value?.filter((a) => a.status === 'in_progress'))
 
-  // Show all appointments except in_progress
-  const nonInProgressAppointments = computed(() =>
-    appointments.value?.filter((a) => a.treatmentSession?.status !== 'in_progress')
-  )
+  const nonInProgressAppointments = computed(() => appointments.value?.filter((a) => a.status !== 'in_progress'))
 </script>
 
 <template>

@@ -1,8 +1,5 @@
 <script setup lang="ts">
-  const { appointment } = defineProps<{ appointment: AppointmentWithSession }>()
-
-  // --- Constants & pure utilities (module scope, not re-created per mount) ---
-
+  // ─── Constants & Utilities ────────────────────────────────────
   const AVAILABLE_TAGS = [
     'Douleur Diminuée',
     'Gain Amplitude',
@@ -13,7 +10,6 @@
 
   type ClinicalNoteField = 'primaryConcern' | 'treatmentSummary' | 'observations' | 'nextSteps'
 
-  // Moved outside component — pure utility, no reactive deps
   function parseTagsSafely(tags: string | null | undefined): string[] {
     if (!tags) return []
     try {
@@ -23,14 +19,14 @@
     }
   }
 
-  // --- Composables ---
+  // ─── Props ───────────────────────────────────────────────────
+  const { appointment } = defineProps<{ appointment: Appointment }>()
 
-  const { mutate: createTreatmentSession } = useCreateTreatmentSession()
-  const { mutateAsync: updateTagsAsync, isLoading: isUpdatingTags } = useUpdateSessionTags()
-  const { mutate: updateClinicalNotes, isLoading: isUpdatingClinicalNotes } = useUpdateClinicalNotes()
+  // ─── Composables ─────────────────────────────────────────────
+  const { mutateAsync: updateTagsAsync, isLoading: isUpdatingTags } = useUpdateAppointmentTags()
+  const { mutate: updateClinicalNotes, isLoading: isUpdatingClinicalNotes } = useUpdateAppointmentClinicalNotes()
 
-  // --- Reactive state ---
-
+  // ─── Base state ──────────────────────────────────────────────
   const painLevelBefore = ref<number | undefined>(undefined)
   const painLevelAfter = ref<number | undefined>(undefined)
   const treatmentSummary = ref('')
@@ -39,41 +35,35 @@
   const nextSteps = ref('')
   const selectedTags = ref<string[]>([])
 
-  // --- Derived state ---
-
-  const sessionStatus = computed(() => appointment.treatmentSession?.status)
+  // ─── Computed state ──────────────────────────────────────────
+  const sessionStatus = computed(() => appointment.status)
   const showPrimaryConcern = computed(() => !appointment.treatmentPlanId)
   const showObservations = computed(() => ['in_progress', 'finished', 'completed'].includes(sessionStatus.value ?? ''))
   const showNextSteps = computed(() => ['finished', 'completed'].includes(sessionStatus.value ?? ''))
   const isObservationsEditable = computed(() => sessionStatus.value === 'in_progress')
   const isNextStepsEditable = computed(() => sessionStatus.value === 'finished')
   const sessionInProgress = computed(() => sessionStatus.value === 'in_progress')
-  const shouldShowEVACards = computed(
-    () => sessionInProgress.value || appointment.treatmentSession?.painLevelAfter != null
-  )
+  const shouldShowEVACards = computed(() => sessionInProgress.value || appointment.painLevelAfter != null)
 
-  // --- Watchers ---
-
+  // ─── Watchers ────────────────────────────────────────────────
   watch(
-    () => appointment.treatmentSession,
-    (session) => {
-      if (!session) return
-      painLevelBefore.value = session.painLevelBefore ?? undefined
-      painLevelAfter.value = session.painLevelAfter ?? undefined
-      treatmentSummary.value = session.treatmentSummary || ''
-      primaryConcern.value = session.primaryConcern || ''
-      observations.value = session.observations || ''
-      nextSteps.value = session.nextSteps || ''
-      selectedTags.value = parseTagsSafely(session.tags)
+    () => appointment,
+    (value) => {
+      if (!value || (value.status !== 'in_progress' && value.status !== 'finished' && value.status !== 'completed'))
+        return
+      painLevelBefore.value = value.painLevelBefore ?? undefined
+      painLevelAfter.value = value.painLevelAfter ?? undefined
+      treatmentSummary.value = value.treatmentSummary || ''
+      primaryConcern.value = value.primaryConcern || ''
+      observations.value = value.observations || ''
+      nextSteps.value = value.nextSteps || ''
+      selectedTags.value = parseTagsSafely(value.tags)
     },
     { immediate: true }
   )
 
-  // --- Handlers ---
-
+  // ─── Event handlers ──────────────────────────────────────────
   function handleSaveClinicalNotes(field: ClinicalNoteField) {
-    const sessionId = appointment.treatmentSession?.id
-
     const fieldValues: Record<ClinicalNoteField, string> = {
       primaryConcern: primaryConcern.value,
       treatmentSummary: treatmentSummary.value,
@@ -81,38 +71,28 @@
       nextSteps: nextSteps.value
     }
 
-    if (!sessionId) {
-      // Only attempt creation for two fields that bootstrap session.
-      // Other fields silently fail without a session — now we guard explicitly.
+    if (appointment.status !== 'in_progress' && appointment.status !== 'finished') {
       if (field !== 'primaryConcern' && field !== 'treatmentSummary') return
-
-      createTreatmentSession({
-        appointmentId: appointment.id,
-        primaryConcern: fieldValues.primaryConcern,
-        treatmentSummary: fieldValues.treatmentSummary
-      })
-      return
     }
 
     updateClinicalNotes({
-      sessionId,
+      appointmentId: appointment.id,
       [field]: fieldValues[field]
     })
   }
 
   async function toggleTag(tag: string) {
-    if (!appointment.treatmentSession || isUpdatingTags.value) return
+    if (appointment.status !== 'in_progress' || isUpdatingTags.value) return
 
     const initialSelectedTags = selectedTags.value
 
-    // Optimistic update
     selectedTags.value = selectedTags.value.includes(tag)
       ? selectedTags.value.filter((t) => t !== tag)
       : [...selectedTags.value, tag]
 
     try {
       await updateTagsAsync({
-        sessionId: appointment.treatmentSession.id,
+        appointmentId: appointment.id,
         tags: selectedTags.value
       })
     } catch {

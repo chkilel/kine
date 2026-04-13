@@ -1,12 +1,10 @@
 /**
  * Réponse de succès avec données et message optionnels
  */
-export interface SuccessResponse<T> {
-  success: true
-  message: string
-  data: T
-}
-export function successResponse<T>(data: T, message: string = 'Opération réussie'): SuccessResponse<T> {
+export function successResponse<T>(
+  data: T,
+  message: string = 'Opération réussie'
+): { success: true; message: string; data: T } {
   return {
     success: true,
     message,
@@ -18,11 +16,7 @@ export function successResponse<T>(data: T, message: string = 'Opération réuss
  * Réponse de liste avec métadonnées de pagination (si paginée)
  */
 
-export interface ListResponse<T> {
-  data: T[]
-  pagination?: any
-}
-export function listResponse<T>(data: T[], pagination?: any): ListResponse<T> {
+export function listResponse<T>(data: T[], pagination?: any): { data: T[]; pagination?: any } {
   return {
     data,
     ...(pagination && { pagination })
@@ -36,7 +30,10 @@ export interface DeletedResponse {
   success: true
   message: string
 }
-export function deletedResponse(message: string = 'Ressource supprimée avec succès'): DeletedResponse {
+export function deletedResponse(message: string = 'Ressource supprimée avec succès'): {
+  success: true
+  message: string
+} {
   return {
     success: true,
     message

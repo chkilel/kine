@@ -1,23 +1,19 @@
 <script setup lang="ts">
-  const props = defineProps<{
-    treatmentSession: TreatmentSession
-    appointment: AppointmentWithSession
-  }>()
+  const props = defineProps<{ appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const { viewPaymentReceipt } = useBillingSlideover()
-  const { data: sessionPayments } = useTreatmentSessionPayments(() => props.treatmentSession.id ?? '')
+  const { data: sessionPayments } = useAppointmentPayments(() => props.appointment.id)
 
   // ─── Computed state ──────────────────────────────────────────
   const latestPayment = computed(() => {
-    const payments = sessionPayments.value as Payment[] | undefined
-    if (!payments?.length) return null
-    return payments[payments.length - 1]
+    const payments = sessionPayments.value?.data
+    return payments?.length ? payments[payments.length - 1] : null
   })
 
   // ─── Event handlers ──────────────────────────────────────────
   function handleViewReceipt() {
-    if (props.treatmentSession.status !== 'completed' || !latestPayment.value) return
+    if (props.appointment.status !== 'completed' || !latestPayment.value) return
     viewPaymentReceipt(latestPayment.value.id)
   }
 </script>

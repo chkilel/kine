@@ -1,9 +1,21 @@
 # treatment-session Specification
 
 ## Purpose
-TBD - created by archiving change migrate-to-split-appointment-session. Update Purpose after archive.
+
+**DEPRECATED** - This functionality has been merged into `unified-appointment-session` spec. All treatment session data is now stored directly on the appointment record. The separate treatment_sessions table no longer exists.
+
 ## Requirements
-### Requirement: Treatment Session Creation
+
+### Requirement: Treatment Session Migration to Unified Appointment Model
+
+The treatment session functionality has been merged into the appointment model. All clinical, timer, and billing fields are now stored directly on the appointment record. The following requirements are retained for historical reference only - see `unified-appointment-session` spec for current implementation.
+
+#### Scenario: Legacy treatment session references
+
+- **GIVEN** existing code references treatment session endpoints
+- **WHEN** the code is updated
+- **THEN** all references to `/api/treatment-sessions` are replaced with `/api/appointments` equivalents
+- **AND** all references to `appointment.treatmentSession` are replaced with direct appointment fields
 
 The system SHALL provide ability to create a treatment session from an existing appointment, establishing a 1:1 relationship between appointment and treatment session. The session is created in `pre_session` status to allow preparation before starting. Pain level is not captured at creation. Sessions can be created either via explicit save button click on clinical notes fields, or directly when starting a session.
 
@@ -1220,4 +1232,3 @@ The system SHALL determine session payment status by querying `payment_session_i
 - **THEN** status is "paid"
 - **AND** multiple payments do not affect paid status (existence of any valid payment suffices)
 - **AND** refund does not negate paid status
-

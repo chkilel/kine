@@ -1,29 +1,22 @@
 <script setup lang="ts">
   import { LazyAppModalEVA, LazyTreatmentSessionSlideover } from '#components'
 
+  // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{
     patient: Patient
     treatmentPlan?: TreatmentPlanWithProgress | null
-    appointment?: AppointmentWithSession
+    appointment?: Appointment
   }>()
 
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const evaModal = overlay.create(LazyAppModalEVA)
   const treatmentSesionOverlay = overlay.create(LazyTreatmentSessionSlideover)
-  const createTreatmentSession = useCreateTreatmentSession()
+  const { mutateAsync: startAppointment, isLoading: isStartingSession } = useStartAppointment()
 
-  const slideoverTitle = computed(() => (props.appointment ? 'Modifier la séance' : 'Planification des séances'))
-
-  const slideoverDescription = computed(() => {
-    if (!props.appointment) {
-      const planInfo = props.treatmentPlan ? ` - Plan: ${props.treatmentPlan.title}` : ''
-      return `Patient: ${formatFullName(props.patient)}${planInfo}`
-    }
-    return `Modifier la séance du ${formatDate(props.appointment.date)} pour ${formatFullName(props.patient)}`
-  })
-
+  // ─── Base state ──────────────────────────────────────────────
   const treatmentPlanStats = ref<{
     total: number
     completed: number
@@ -37,14 +30,26 @@
     enableReminders: true
   })
 
+  // ─── Computed state ──────────────────────────────────────────
+  const slideoverTitle = computed(() => (props.appointment ? 'Modifier la séance' : 'Planification des séances'))
+
+  const slideoverDescription = computed(() => {
+    if (!props.appointment) {
+      const planInfo = props.treatmentPlan ? ` - Plan: ${props.treatmentPlan.title}` : ''
+      return `Patient: ${formatFullName(props.patient)}${planInfo}`
+    }
+    return `Modifier la séance du ${formatDate(props.appointment.date)} pour ${formatFullName(props.patient)}`
+  })
+
   const canStartSession = computed(() => {
     return props.appointment && ['scheduled', 'confirmed'].includes(props.appointment.status)
   })
 
+  // ─── Event handlers ──────────────────────────────────────────
   const handleStartSession = async () => {
-    if (!props.appointment || createTreatmentSession.isLoading.value) return
+    if (!props.appointment || isStartingSession.value) return
 
-    if (props.appointment.treatmentSession?.id) {
+    if (props.appointment.status === 'in_progress') {
       treatmentSesionOverlay.open({
         patientId: props.patient.id,
         appointmentId: props.appointment.id
@@ -64,19 +69,19 @@
     if (evaValue === null) return
 
     try {
-      const result = await createTreatmentSession.mutateAsync({
-        appointmentId: props.appointment.id
+      await startAppointment({
+        appointmentId: props.appointment.id,
+        actualStartTime: getCurrentTimeHHMMSS(),
+        painLevelBefore: evaValue
       })
 
-      if (result?.data?.id) {
-        treatmentSesionOverlay.open({
-          patientId: props.patient.id,
-          appointmentId: props.appointment.id
-        })
-        emit('close')
-      }
+      treatmentSesionOverlay.open({
+        patientId: props.patient.id,
+        appointmentId: props.appointment.id
+      })
+      emit('close')
     } catch (error) {
-      const parsedError = parseError(error, 'Impossible de créer la séance de traitement')
+      const parsedError = parseError(error, 'Impossible de démarrer la séance')
       if (parsedError.statusCode === 409) {
         treatmentSesionOverlay.open({
           patientId: props.patient.id,
@@ -177,7 +182,7 @@
             icon="i-hugeicons-play-circle"
             color="primary"
             size="lg"
-            :loading="createTreatmentSession.isLoading.value"
+            :loading="isStartingSession"
             @click="handleStartSession"
           >
             Démarrer

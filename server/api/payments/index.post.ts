@@ -1,5 +1,5 @@
 import { eq, and, sql, isNull, inArray } from 'drizzle-orm'
-import { payments, paymentSessionItems, treatmentSessions } from '~~/server/database/schema'
+import { payments, appointmentPaymentItems, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -65,22 +65,22 @@ export default defineEventHandler(async (event) => {
     }
 
     if (hasManySessionItems) {
-      const sessionPrices = await db
-        .select({ id: treatmentSessions.id, priceCent: treatmentSessions.priceCent })
-        .from(treatmentSessions)
+      const appointmentPrices = await db
+        .select({ id: appointments.id, priceCents: appointments.priceCents })
+        .from(appointments)
         .where(
           and(
-            eq(treatmentSessions.organizationId, organizationId),
+            eq(appointments.organizationId, organizationId),
             inArray(
-              treatmentSessions.id,
-              sessionItems.map((i) => i.treatmentSessionId)
+              appointments.id,
+              sessionItems.map((i) => i.appointmentId)
             )
           )
         )
 
       for (const item of sessionItems) {
-        const session = sessionPrices.find((s) => s.id === item.treatmentSessionId)
-        if (session && item.amountCents < session.priceCent) {
+        const appt = appointmentPrices.find((a) => a.id === item.appointmentId)
+        if (appt && item.amountCents < appt.priceCents) {
           throw createError({
             statusCode: 409,
             message: 'Credit payment must cover the full cost of each session'
@@ -114,25 +114,25 @@ export default defineEventHandler(async (event) => {
 
   try {
     await db.batch([
-      db.insert(paymentSessionItems).values(
+      db.insert(appointmentPaymentItems).values(
         sessionItems.map((item) => ({
           paymentId: payment.id,
-          treatmentSessionId: item.treatmentSessionId,
+          appointmentId: item.appointmentId,
           amountCents: item.amountCents
         }))
       ),
       ...(requiresSessionItems
         ? [
             db
-              .update(treatmentSessions)
+              .update(appointments)
               .set({ status: 'completed' })
               .where(
                 and(
                   inArray(
-                    treatmentSessions.id,
-                    sessionItems.map((i) => i.treatmentSessionId)
+                    appointments.id,
+                    sessionItems.map((i) => i.appointmentId)
                   ),
-                  eq(treatmentSessions.status, 'finished')
+                  eq(appointments.status, 'finished')
                 )
               )
           ]

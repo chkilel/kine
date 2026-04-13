@@ -1,7 +1,7 @@
 <script setup lang="ts">
   // ─── Props ───────────────────────────────────────────────────
   const props = defineProps<{
-    sessions: TreatmentSessionWithPaymentStatus[]
+    sessions: AppointmentWithPaymentStatus[]
     patientId: string
   }>()
 
@@ -9,7 +9,7 @@
   const { data: balanceData } = usePatientBalance(() => props.patientId)
 
   // ─── Computed state ──────────────────────────────────────────
-  const totalBilledCents = computed(() => props.sessions.reduce((sum, s) => sum + (s.priceCent || 0), 0))
+  const totalBilledCents = computed(() => props.sessions.reduce((sum, s) => sum + (s.priceCents || 0), 0))
 
   const totalCollectedCents = computed(() => props.sessions.reduce((sum, s) => sum + (s.paidCents || 0), 0))
 

@@ -1,5 +1,5 @@
 import { eq, and, asc, sql, getColumns } from 'drizzle-orm'
-import { appointments, rooms, patients, treatmentPlans, treatmentSessions } from '~~/server/database/schema'
+import { appointments, rooms, patients, treatmentPlans } from '~~/server/database/schema'
 import { z } from 'zod'
 
 export default defineEventHandler(async (event) => {
@@ -22,14 +22,12 @@ export default defineEventHandler(async (event) => {
         ...getColumns(appointments),
         roomName: rooms.name,
         patientName: sql<string>`(${patients.firstName} || ' ' || ${patients.lastName})`,
-        planTitle: treatmentPlans.title,
-        treatmentSession: treatmentSessions
+        planTitle: treatmentPlans.title
       })
       .from(appointments)
       .leftJoin(rooms, eq(appointments.roomId, rooms.id))
       .leftJoin(patients, eq(appointments.patientId, patients.id))
       .leftJoin(treatmentPlans, eq(appointments.treatmentPlanId, treatmentPlans.id))
-      .leftJoin(treatmentSessions, eq(appointments.id, treatmentSessions.appointmentId))
       .where(
         and(
           eq(appointments.organizationId, organizationId),

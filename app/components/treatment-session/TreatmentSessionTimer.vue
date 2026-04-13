@@ -1,8 +1,9 @@
 <script setup lang="ts">
   import { LazyAppModalEVA } from '#components'
 
+  // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{
-    appointment: AppointmentWithSession
+    appointment: Appointment
     compact?: boolean
   }>()
 
@@ -11,31 +12,30 @@
     pause: [isPaused: boolean]
   }>()
 
-  // ─── Composable ─────────────────────────────────────────────────────────────
-  const { mutate: pauseSession, isLoading: isPausing } = usePauseTreatmentSession()
-  const { mutate: resumeSession, isLoading: isResuming } = useResumeTreatmentSession()
-  const { mutate: extendSession } = useExtendSession()
-  const { mutate: endSession } = useEndTreatmentSession()
+  // ─── Composables ─────────────────────────────────────────────
+  const { mutate: pauseAppointment, isLoading: isPausing } = usePauseAppointment()
+  const { mutate: resumeAppointment, isLoading: isResuming } = useResumeAppointment()
+  const { mutate: extendAppointment } = useExtendAppointment()
+  const { mutate: endAppointment } = useEndAppointment()
   const evaModal = useOverlay().create(LazyAppModalEVA)
   const queryCache = useQueryCache()
 
-  // ─── Timer state (derived from treatment session) ──────────────────────────
+  // ─── Timer state ────────────────────────────────────────────
   const timerSeconds = ref(0)
   const actualStartTime = ref<string | null>(null)
   const pauseStartTime = ref<string | null>(null)
   const totalPausedSeconds = ref(0)
   const timeSincePause = ref('')
 
-  // ─── Derived state ─────────────────────────────────────────────────────────
-  const session = computed(() => props.appointment.treatmentSession)
-  const sessionStatus = computed(() => session.value?.status)
+  // ─── Computed state ──────────────────────────────────────────
+  const sessionStatus = computed(() => props.appointment.status)
   const isPaused = computed(() => pauseStartTime.value !== null)
   const isInProgress = computed(() => sessionStatus.value === 'in_progress')
   const isEnded = computed(() => sessionStatus.value === 'finished' || sessionStatus.value === 'completed')
 
   const consultationDurationSeconds = computed(() => {
     const base = props.appointment.duration ?? 0
-    const extended = session.value?.extendedDurationMinutes ?? 0
+    const extended = props.appointment.extendedDurationMinutes ?? 0
     return (base + extended) * 60
   })
 
@@ -60,7 +60,7 @@
       remainingSeconds.value <= 300
   )
 
-  // ─── Timer calculations ────────────────────────────────────────────────────
+  // ─── Timer calculations ───────────────────────────────────────
   function calculateElapsedTime() {
     if (!actualStartTime.value) {
       timerSeconds.value = 0
@@ -78,7 +78,7 @@
     timeSincePause.value = getTimeSincePause(pauseStartTime.value)
   }
 
-  // ─── Interval management ───────────────────────────────────────────────────
+  // ─── Interval management ─────────────────────────────────────
   const { pause: stopMainTimer, resume: startMainTimer } = useIntervalFn(
     () => {
       if (actualStartTime.value && !isPaused.value) calculateElapsedTime()
@@ -92,18 +92,18 @@
     immediate: false
   })
 
-  // Auto-refresh session data every 30s
   useIntervalFn(() => {
-    if (session.value?.status === 'in_progress') {
-      queryCache.invalidateQueries({ key: ['treatment-sessions', session.value.id] })
+    if (props.appointment.status === 'in_progress') {
+      queryCache.invalidateQueries({ key: ['appointments', props.appointment.id] })
     }
   }, 30_000)
 
-  // ─── Sync local timer state from session prop ──────────────────────────────
+  // ─── Watchers ────────────────────────────────────────────────
   watch(
-    session,
+    () => props.appointment,
     (value) => {
-      if (!value) return
+      if (!value || (value.status !== 'in_progress' && value.status !== 'finished' && value.status !== 'completed'))
+        return
 
       actualStartTime.value = value.actualStartTime ?? null
       pauseStartTime.value = value.pauseStartTime ?? null
@@ -129,7 +129,6 @@
     { immediate: true }
   )
 
-  // Sync timer intervals when pause state changes locally
   watch(isPaused, (paused) => {
     if (paused) {
       stopMainTimer()
@@ -141,11 +140,11 @@
     }
   })
 
-  // ─── Actions ───────────────────────────────────────────────────────────────
+  // ─── Event handlers ──────────────────────────────────────────
   function handlePauseTimer() {
-    if (!session.value) return
-    pauseSession({
-      sessionId: session.value.id,
+    if (sessionStatus.value !== 'in_progress') return
+    pauseAppointment({
+      appointmentId: props.appointment.id,
       pauseStartTime: getCurrentTimeHHMMSS(),
       onSuccess() {
         emit('pause', true)
@@ -154,10 +153,10 @@
   }
 
   function handleResumeTimer() {
-    if (!session.value?.pauseStartTime) return
-    const pauseDurationSeconds = calculateTimeDifference(session.value.pauseStartTime, getCurrentTimeHHMMSS())
-    resumeSession({
-      sessionId: session.value.id,
+    if (!pauseStartTime.value) return
+    const pauseDurationSeconds = calculateTimeDifference(pauseStartTime.value, getCurrentTimeHHMMSS())
+    resumeAppointment({
+      appointmentId: props.appointment.id,
       pauseDurationSeconds,
       onSuccess() {
         emit('pause', false)
@@ -166,9 +165,9 @@
   }
 
   function handleExtendFiveMinutes() {
-    if (!session.value) return
-    extendSession({
-      sessionId: session.value.id,
+    if (sessionStatus.value !== 'in_progress') return
+    extendAppointment({
+      appointmentId: props.appointment.id,
       extendedDurationMinutes: 5
     })
   }
@@ -182,10 +181,10 @@
       initialValue: 0
     })
 
-    if (evaValue === null || !session.value) return
+    if (evaValue === null || sessionStatus.value !== 'in_progress') return
 
-    endSession({
-      sessionId: session.value.id,
+    endAppointment({
+      appointmentId: props.appointment.id,
       actualDurationSeconds: Math.max(0, timerSeconds.value),
       painLevelAfter: evaValue
     })
@@ -195,7 +194,7 @@
     isPaused.value ? handleResumeTimer() : handlePauseTimer()
   }
 
-  // ─── SVG progress ring ─────────────────────────────────────────────────────
+  // ─── SVG progress ring ────────────────────────────────────────
   const RING_RADIUS = 54
   const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 

@@ -16,11 +16,11 @@ export default defineEventHandler(async (event) => {
       with: {
         sessionItems: {
           with: {
-            treatmentSession: {
+            appointment: {
               columns: {
                 id: true,
                 treatmentPlanId: true,
-                priceCent: true
+                priceCents: true
               }
             }
           }

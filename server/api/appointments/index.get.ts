@@ -1,5 +1,5 @@
-import { eq, and, asc, isNull, gte, lte, getColumns } from 'drizzle-orm'
-import { appointments, rooms, treatmentSessions } from '~~/server/database/schema'
+import { eq, and, asc, isNull, gte, lte, getColumns, sql, inArray } from 'drizzle-orm'
+import { appointments, rooms, appointmentPaymentItems, treatmentPlans } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -26,8 +26,12 @@ export default defineEventHandler(async (event) => {
       conditions.push(isNull(appointments.treatmentPlanId))
     }
 
-    if (validatedQuery.status) {
-      conditions.push(eq(appointments.status, validatedQuery.status))
+    if (validatedQuery.status && validatedQuery.status.length > 0) {
+      if (validatedQuery.status.length === 1) {
+        conditions.push(eq(appointments.status, validatedQuery.status[0] as any))
+      } else {
+        conditions.push(inArray(appointments.status, validatedQuery.status as any))
+      }
     }
 
     if (validatedQuery.type) {
@@ -46,19 +50,21 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const includeTreatmentSession = validatedQuery.include === 'treatmentSession'
-
-    if (includeTreatmentSession) {
+    if (validatedQuery.includePaymentStatus) {
       const query = db
         .select({
           ...getColumns(appointments),
           roomName: rooms.name,
-          treatmentSession: treatmentSessions
+          planTitle: treatmentPlans.title,
+          paidCents: sql<number>`COALESCE(SUM(${appointmentPaymentItems.amountCents}), 0)`.as('paidCents')
         })
         .from(appointments)
         .leftJoin(rooms, eq(appointments.roomId, rooms.id))
-        .leftJoin(treatmentSessions, eq(appointments.id, treatmentSessions.appointmentId))
+        .leftJoin(treatmentPlans, eq(appointments.treatmentPlanId, treatmentPlans.id))
+        .leftJoin(appointmentPaymentItems, eq(appointments.id, appointmentPaymentItems.appointmentId))
+        .leftJoin(sql`payments`, sql`payments.id = ${appointmentPaymentItems.paymentId} AND payments.voidedAt IS NULL`)
         .where(and(...conditions))
+        .groupBy(appointments.id, rooms.name)
         .orderBy(asc(appointments.date))
 
       if (validatedQuery.limit) {
@@ -67,16 +73,24 @@ export default defineEventHandler(async (event) => {
 
       const appointmentsList = await query
 
-      return appointmentsList
+      const appointmentsWithPayments = appointmentsList.map((a) => ({
+        ...a,
+        paymentStatus:
+          a.paidCents >= a.priceCents && a.priceCents > 0 ? 'paid' : a.paidCents > 0 ? 'partially_paid' : 'unpaid'
+      }))
+
+      return appointmentsWithPayments
     }
 
     const query = db
       .select({
         ...getColumns(appointments),
-        roomName: rooms.name
+        roomName: rooms.name,
+        planTitle: treatmentPlans.title
       })
       .from(appointments)
       .leftJoin(rooms, eq(appointments.roomId, rooms.id))
+      .leftJoin(treatmentPlans, eq(appointments.treatmentPlanId, treatmentPlans.id))
       .where(and(...conditions))
       .orderBy(asc(appointments.date))
 
@@ -85,7 +99,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const appointmentsList = await query
-
     return appointmentsList
   } catch (error: unknown) {
     handleApiError(error, 'Erreur lors de la récupération des rendez-vous')

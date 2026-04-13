@@ -1,13 +1,11 @@
 <script setup lang="ts">
   // ─── Props ───────────────────────────────────────────────────
-  const props = defineProps<{ session: TreatmentSessionWithPaymentStatus }>()
+  const props = defineProps<{ session: AppointmentWithPaymentStatus }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const { openRecordPayment, viewPaymentReceipt } = useBillingSlideover()
 
-  const { data: sessionPayments, isLoading: paymentsLoading } = useTreatmentSessionPayments(
-    computed(() => props.session.id)
-  )
+  const { data: sessionPayments, isLoading: paymentsLoading } = useAppointmentPayments(computed(() => props.session.id))
 
   const patientId = computed(() => props.session.patientId)
 
@@ -15,11 +13,11 @@
   const isExpanded = ref(false)
 
   watchEffect(() => {
-    isExpanded.value = props.session.paymentStatus === 'unpaid' || props.session.paymentStatus === 'partial'
+    isExpanded.value = props.session.paymentStatus === 'unpaid' || props.session.paymentStatus === 'partially_paid'
   })
 
   // ─── Computed state ──────────────────────────────────────────
-  const remainingCents = computed(() => props.session.priceCent - props.session.paidCents)
+  const remainingCents = computed(() => props.session.priceCents - props.session.paidCents)
 
   const statusConfig = computed(() => ({
     label: getPaymentStatusLabel(props.session.paymentStatus),
@@ -31,7 +29,7 @@
     switch (props.session.paymentStatus) {
       case 'unpaid':
         return 'Enregistrer le paiement'
-      case 'partial':
+      case 'partially_paid':
         return 'Compléter paiement'
       default:
         return ''
@@ -44,16 +42,16 @@
   })
 
   const sessionLocation = computed(() => {
-    const loc = props.session.appointmentLocation
+    const loc = props.session.location
     return loc ? getLocationLabel(loc) : ''
   })
 
   const sessionDate = computed(() => {
-    return props.session.appointmentDate || ''
+    return props.session.date || ''
   })
 
   const isPaid = computed(() => props.session.paymentStatus === 'paid')
-  const isPartial = computed(() => props.session.paymentStatus === 'partial')
+  const isPartial = computed(() => props.session.paymentStatus === 'partially_paid')
   const needsPayment = computed(() => props.session.paymentStatus === 'unpaid' || isPartial.value)
 
   const paymentDetails = computed(() => {
@@ -110,7 +108,7 @@
 
       <div class="flex flex-col items-end gap-2">
         <span class="text-default text-sm font-bold tabular-nums">
-          {{ formatCurrency(session.priceCent) }}
+          {{ formatCurrency(session.priceCents) }}
         </span>
         <UButton
           v-if="needsPayment"

@@ -1,15 +1,23 @@
 <script setup lang="ts">
+  // ─── Props ───────────────────────────────────────────────────
   const props = defineProps<{ activePlanningTab: string; patientId: string }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const deleteAppointmentMutation = useDeleteAppointment()
-  const { data: appointmentsData } = useAppointmentsListWithSessions(() => ({ patientId: props.patientId }))
+  const { data: appointmentsData } = useAppointmentsList(() => ({
+    patientId: props.patientId,
+    includePaymentStatus: false
+  }))
 
+  // ─── Base state ──────────────────────────────────────────────
+  const selectedAppointments = ref<string[]>([])
+
+  // ─── Event handlers ──────────────────────────────────────────
   const deleteAppointment = async (appointmentId: string) => {
     await deleteAppointmentMutation.mutateAsync({
       appointmentId
     })
   }
-  const selectedAppointments = ref<string[]>([])
 
   const toggleAppointmentSelection = (appointmentId: string) => {
     const index = selectedAppointments.value.indexOf(appointmentId)
@@ -51,7 +59,7 @@
                       formatTimeString(
                         addMinutesToTime(
                           appointment.startTime,
-                          appointment.duration + (appointment.treatmentSession?.extendedDurationMinutes || 0)
+                          appointment.duration + (appointment.extendedDurationMinutes || 0)
                         )
                       )
                     }}
@@ -59,7 +67,7 @@
                 </div>
                 <div class="text-muted text-xs">
                   {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }} ·
-                  {{ appointment.duration + (appointment.treatmentSession?.extendedDurationMinutes || 0) }} min
+                  {{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
             </div>

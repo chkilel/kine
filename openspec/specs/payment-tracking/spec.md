@@ -1,18 +1,20 @@
 # payment-tracking Specification
 
 ## Purpose
-TBD - created by archiving change implement-payment-ledger-system. Update Purpose after archive.
+
+Payment tracking using unified appointment model. Payments are now linked to appointments via `appointmentId` instead of `treatmentSessionId`.
+
 ## Requirements
+
 ### Requirement: Payment Recording
 
-The system SHALL record financial events as immutable ledger entries in the `payments` table. Payment types are: `session_payment` (paying for therapy sessions), `session_refund` (refunding a session payment), `deposit_add` (adding funds to patient deposit), and `deposit_refund` (refunding unused deposit balance). Payment methods are: `deposit` (using deposit balance as funding source), `cash`, `bank-card`, `check`, and `bank-transfer`. Every payment SHALL have both a type and a method (method is NOT NULL).
+The system SHALL record financial events as immutable ledger entries. Payment session items reference `appointmentId` instead of `treatmentSessionId`. All other payment recording behavior is unchanged.
 
 #### Scenario: Record cash payment for session
 
-- **GIVEN** a treatment session exists with id "session-123"
+- **GIVEN** an appointment exists with id "appointment-123" and status "finished"
+- **AND** appointment priceCents is 5000 cents (50.00 Dh)
 - **AND** patient has id "patient-456"
-- **AND** session priceCent is 5000 cents (50.00 Dh)
-- **AND** therapist records payment for this session
 - **WHEN** POST /payments is called with body {
   patientId: "patient-456",
   amountCents: 5000,
@@ -20,34 +22,73 @@ The system SHALL record financial events as immutable ledger entries in the `pay
   method: "cash",
   paidOn: "2026-03-24",
   sessionItems: [{
-  treatmentSessionId: "session-123",
+  appointmentId: "appointment-123",
   amountCents: 5000
   }]
   }
 - **THEN** a payment record is created with type="session_payment", method="cash"
-- **AND** payment_session_items record links payment to session-123
-- **AND** receiptNumber is generated (e.g. "REC-2026-0001")
-- **AND** amountCents is 5000 (positive)
+- **AND** payment_session_items record links payment to appointment "appointment-123" via appointmentId
+- **AND** receiptNumber is generated
 - **AND** HTTP response is 201 Created
-- **AND** response includes payment object and receiptNumber
 
-#### Scenario: Record card payment for session
+### Requirement: Payment-to-Session Linking
 
-- **GIVEN** a treatment session exists with id "session-123"
-- **AND** patient has id "patient-456"
-- **AND** session cost is 7000 cents
-- **WHEN** POST /payments is called with body {
-  patientId: "patient-456",
-  amountCents: 7000,
-  type: "session_payment",
-  method: "bank-card",
-  paidOn: "2026-03-24",
-  sessionItems: [{
-  treatmentSessionId: "session-123",
-  amountCents: 7000
-  }]
-  }
-- **THEN** a payment record is created with type="session_payment", method="bank-card"
+The system SHALL link payments to appointments exclusively through the `payment_session_items` table using `appointmentId` column.
+
+#### Scenario: Link session payment to appointment
+
+- **GIVEN** a payment is created with type="session_payment"
+- **AND** sessionItems contains one item with appointmentId
+- **WHEN** payment is saved
+- **THEN** one payment_session_items record exists
+- **AND** record links paymentId to appointmentId
+
+#### Scenario: Query appointments with payment status
+
+- **GIVEN** a session_payment exists linked to appointment "appointment-123"
+- **AND** no session_refund exists for appointment "appointment-123"
+- **WHEN** appointment payment status is queried
+- **THEN** appointment is considered paid
+- **AND** query joins payment_session_items on appointmentId
+
+### Requirement: Session Payment Status Enrichment
+
+The system SHALL enrich the `GET /api/appointments` endpoint with per-appointment payment status when `patientId` and `includePaymentStatus=true` query parameters are provided.
+
+#### Scenario: Enrich appointments with payment status
+
+- **GIVEN** a patient has appointments with payment status: apt-1 fully paid (15000/15000), apt-2 unpaid (0/15000)
+- **WHEN** GET /api/appointments?patientId=patient-456&includePaymentStatus=true is called
+- **THEN** apt-1 response includes paidCents=15000 and paymentStatus="paid"
+- **AND** apt-2 response includes paidCents=0 and paymentStatus="unpaid"
+
+#### Scenario: Default behavior without includePaymentStatus
+
+- **GIVEN** a patient has appointments with payments
+- **WHEN** GET /api/appointments?patientId=patient-456 is called without includePaymentStatus
+- **THEN** appointments are returned without paidCents or paymentStatus fields
+
+### Requirement: Payment Voiding
+
+The system SHALL void payments and recalculate appointment payment status using the `appointmentId` column in `payment_session_items`.
+
+#### Scenario: Void session_payment updates appointment payment status
+
+- **GIVEN** a session_payment exists linked to appointment "appointment-456"
+- **AND** appointment is currently considered paid
+- **WHEN** POST /payments/payment-123/void is called
+- **THEN** payment is voided
+- **AND** appointment "appointment-456" is recalculated as NOT paid
+
+### Requirement: Patient Payment Listing
+
+The system SHALL return payment_session_items with appointmentId references instead of treatmentSessionId.
+
+#### Scenario: List payments with appointment references
+
+- **GIVEN** a patient has payments
+- **WHEN** GET /api/patients/patient-456/payments is called
+- **THEN** each payment includes sessionItems array with appointmentId references
 - **AND** payment_session_items record links payment to session
 - **AND** receiptNumber is generated
 - **AND** HTTP response is 201 Created
@@ -881,4 +922,3 @@ The system SHALL provide a `useVoidPayment` composable that wraps `POST /api/pay
 - **WHEN** useVoidPayment composable is called
 - **THEN** an error toast is displayed with the server error message
 - **AND** no cache invalidation occurs
-

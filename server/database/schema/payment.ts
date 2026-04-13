@@ -44,18 +44,18 @@ export const payments = sqliteTable(
   ]
 )
 
-export const paymentSessionItems = sqliteTable(
-  'payment_session_items',
+export const appointmentPaymentItems = sqliteTable(
+  'appointment_payment_items',
   {
     id: text().primaryKey().$defaultFn(uuidv7),
     paymentId: text()
       .notNull()
       .references(() => payments.id, { onDelete: 'cascade' }),
-    treatmentSessionId: text().notNull(),
+    appointmentId: text().notNull(),
     amountCents: integer().notNull()
   },
   (table) => [
-    index('idx_payment_session_items_payment').on(table.paymentId),
-    index('idx_payment_session_items_session').on(table.treatmentSessionId)
+    index('idx_appointment_payment_items_payment').on(table.paymentId),
+    index('idx_appointment_payment_items_appointment').on(table.appointmentId)
   ]
 )
