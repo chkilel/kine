@@ -1,4 +1,4 @@
-import { treatmentPlans, patients, organizations } from '~~/server/database/schema'
+import { treatmentPlans, patients, organizations, insuranceCompanies } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
 // POST /api/treatment-plans - Create new treatment plan
@@ -30,7 +30,36 @@ export default defineEventHandler(async (event) => {
 
     let pricing: RateCent
 
-    //4. Determine pricing: use provided pricing or fall back to org defaults
+    // 4. Validate insurance company if provided
+    if (body.insuranceCompanyId) {
+      const [insuranceCompany] = await db
+        .select()
+        .from(insuranceCompanies)
+        .where(
+          and(
+            eq(insuranceCompanies.id, body.insuranceCompanyId),
+            eq(insuranceCompanies.organizationId, organizationId),
+            isNull(insuranceCompanies.deletedAt)
+          )
+        )
+        .limit(1)
+
+      if (!insuranceCompany) {
+        throw createError({
+          statusCode: 400,
+          message: "Compagnie d'assurance introuvable ou n'appartient pas à cette organisation"
+        })
+      }
+
+      if (insuranceCompany.status !== 'active') {
+        throw createError({
+          statusCode: 400,
+          message: "Seules les compagnies d'assurance actives peuvent être associées aux plans de traitement"
+        })
+      }
+    }
+
+    // 5. Determine pricing: use provided pricing or fall back to org defaults
     if (body.pricing) {
       pricing = body.pricing
     } else {

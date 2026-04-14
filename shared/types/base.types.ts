@@ -162,6 +162,10 @@ export const VALID_COVERAGE_STATUSES = [
 export const insuranceCoverageSchema = z.enum(VALID_COVERAGE_STATUSES)
 export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
 
+export const VALID_CONVENTION_STATUSES = ['active', 'suspended', 'terminated'] as const
+export const conventionStatusSchema = z.enum(VALID_CONVENTION_STATUSES)
+export type ConventionStatus = z.infer<typeof conventionStatusSchema>
+
 // =============================================================================
 // Treatment Plan Status Constants
 // =============================================================================

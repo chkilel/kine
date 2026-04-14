@@ -52,6 +52,7 @@
     sessionFrequency: props.treatmentPlan?.sessionFrequency || undefined,
     coverageStatus: props.treatmentPlan?.coverageStatus || 'not_required',
     insuranceInfo: props.treatmentPlan?.insuranceInfo || '',
+    insuranceCompanyId: props.treatmentPlan?.insuranceCompanyId || null,
     pricing: props.treatmentPlan?.pricing
       ? {
           clinic: centsToCurrency(props.treatmentPlan.pricing.clinic),
@@ -143,6 +144,7 @@
       sessionFrequency: undefined,
       coverageStatus: 'not_required',
       insuranceInfo: '',
+      insuranceCompanyId: null,
       pricing: getDefaultPricing(),
       notes: undefined
     })
@@ -200,6 +202,9 @@
               </UFormField>
               <UFormField label="Informations assurance / mutuelle" name="insuranceInfo">
                 <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+              </UFormField>
+              <UFormField label="Compagnie d'assurance" name="insuranceCompanyId">
+                <InsuranceCompanySelect v-model="formState.insuranceCompanyId" />
               </UFormField>
               <UFormField label="Statut de couverture">
                 <USelectMenu

@@ -29,7 +29,13 @@ export const appointmentCreateSchema = createInsertSchema(appointments, {
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
   cancelledAt: z.coerce.date().nullable().optional(),
-  noShowReason: z.string().nullable().optional()
+  noShowReason: z.string().nullable().optional(),
+  insuranceCompanyId: z.string().nullable().optional()
+}).omit({
+  expectedCoPayCents: true,
+  expectedInsuranceCents: true,
+  coPayPaidCents: true,
+  insurancePaidCents: true
 })
 
 export const appointmentUpdateSchema = appointmentCreateSchema.partial()

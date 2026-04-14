@@ -94,6 +94,10 @@
             <UIcon name="i-hugeicons-user" />
             <p>{{ getTherapistName(appointment.therapistId) }}</p>
           </div>
+          <div v-if="appointment.insuranceCompanyId" class="flex items-center gap-1 sm:px-2">
+            <UIcon name="i-hugeicons-shield-01" class="text-info" />
+            <p class="font-medium text-info">Assuré (convention)</p>
+          </div>
         </div>
       </div>
     </div>

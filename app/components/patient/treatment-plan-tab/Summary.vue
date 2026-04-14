@@ -9,6 +9,14 @@
   const toast = useToast()
   const { getTherapistName } = useOrganizationMembers()
 
+  const insuranceCompanyId = computed(() => props.treatmentPlan.insuranceCompanyId || null)
+  const { data: insuranceCompany } = useInsuranceCompanyById(() => insuranceCompanyId.value!)
+
+  const insuranceLabel = computed(() => {
+    if (insuranceCompany.value) return insuranceCompany.value.name
+    return props.treatmentPlan.insuranceInfo || 'Non spécifié'
+  })
+
   const planDetails = computed(() => [
     {
       label: 'Fréquence',
@@ -24,9 +32,9 @@
     },
     {
       label: 'Assurance',
-      value: props.treatmentPlan.insuranceInfo || 'Non spécifié',
+      value: insuranceLabel,
       icon: 'i-hugeicons-security-check',
-      color: 'success' as UIColor
+      color: insuranceCompany.value ? ('success' as UIColor) : ('neutral' as UIColor)
     },
     {
       label: 'Date',

@@ -62,6 +62,14 @@
             }
           },
           {
+            label: 'Assurances',
+            to: '/settings/insurance-companies',
+            icon: 'i-hugeicons-shield-01',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
             label: 'Membres',
             to: '/settings/members',
             onSelect: () => {

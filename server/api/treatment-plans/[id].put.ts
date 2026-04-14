@@ -1,4 +1,4 @@
-import { treatmentPlans } from '~~/server/database/schema'
+import { treatmentPlans, insuranceCompanies } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
 // PUT /api/treatment-plans/[id] - Update existing treatment plan
@@ -32,6 +32,39 @@ export default defineEventHandler(async (event) => {
 
     // Validate input
     const body = await readValidatedBody(event, treatmentPlanUpdateSchema.parse)
+
+    // Validate insurance company if provided
+    if (body.insuranceCompanyId !== undefined) {
+      if (body.insuranceCompanyId === null) {
+        // Allowing removal of insurance company
+      } else {
+        const [insuranceCompany] = await db
+          .select()
+          .from(insuranceCompanies)
+          .where(
+            and(
+              eq(insuranceCompanies.id, body.insuranceCompanyId),
+              eq(insuranceCompanies.organizationId, organizationId),
+              isNull(insuranceCompanies.deletedAt)
+            )
+          )
+          .limit(1)
+
+        if (!insuranceCompany) {
+          throw createError({
+            statusCode: 400,
+            message: "Compagnie d'assurance introuvable ou n'appartient pas à cette organisation"
+          })
+        }
+
+        if (insuranceCompany.status !== 'active') {
+          throw createError({
+            statusCode: 400,
+            message: "Seules les compagnies d'assurance actives peuvent être associées aux plans de traitement"
+          })
+        }
+      }
+    }
 
     // Update treatment plan
     const [updatedTreatmentPlan] = await db

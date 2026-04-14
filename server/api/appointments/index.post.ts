@@ -1,5 +1,6 @@
-import { eq, and } from 'drizzle-orm'
-import { appointments, patients, users, rooms } from '~~/server/database/schema'
+import { eq, and, isNull } from 'drizzle-orm'
+import { appointments, patients, users, rooms, treatmentPlans, insuranceCompanies } from '~~/server/database/schema'
+import { calculateInsuranceCoverage } from '~~/server/utils/insurance-calculation'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -68,15 +69,75 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    let insuranceCompanyId = body.insuranceCompanyId || null
+    let expectedCoPayCents = null
+    let expectedInsuranceCents = null
+
+    if (body.treatmentPlanId) {
+      const [treatmentPlan] = await db
+        .select()
+        .from(treatmentPlans)
+        .where(eq(treatmentPlans.id, body.treatmentPlanId))
+        .limit(1)
+
+      if (!treatmentPlan) {
+        throw createError({
+          statusCode: 404,
+          message: 'Plan de traitement introuvable'
+        })
+      }
+
+      if (treatmentPlan.insuranceCompanyId) {
+        if (insuranceCompanyId === null) {
+          insuranceCompanyId = treatmentPlan.insuranceCompanyId
+        } else if (insuranceCompanyId !== treatmentPlan.insuranceCompanyId) {
+          throw createError({
+            statusCode: 400,
+            message: "Le contexte d'assurance doit correspondre à celui du plan de traitement"
+          })
+        }
+      }
+    }
+
+    if (insuranceCompanyId) {
+      const [insuranceCompany] = await db
+        .select()
+        .from(insuranceCompanies)
+        .where(
+          and(
+            eq(insuranceCompanies.id, insuranceCompanyId),
+            eq(insuranceCompanies.organizationId, organizationId),
+            isNull(insuranceCompanies.deletedAt)
+          )
+        )
+        .limit(1)
+
+      if (!insuranceCompany) {
+        throw createError({
+          statusCode: 400,
+          message: "Compagnie d'assurance introuvable"
+        })
+      }
+
+      const coverage = calculateInsuranceCoverage(insuranceCompany)
+      expectedCoPayCents = coverage.coPayCents
+      expectedInsuranceCents = coverage.insuranceCents
+    }
+
     const appointmentData = {
       ...body,
-      organizationId
+      organizationId,
+      insuranceCompanyId,
+      expectedCoPayCents,
+      expectedInsuranceCents,
+      coPayPaidCents: 0,
+      insurancePaidCents: 0
     }
 
     const [newAppointment] = await db.insert(appointments).values(appointmentData).returning()
 
     return successResponse(newAppointment, 'Rendez-vous créé avec succès')
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la création de la rendez-vous') 
+    handleApiError(error, 'Échec de la création de la rendez-vous')
   }
 })

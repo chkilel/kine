@@ -7,6 +7,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
+import { insuranceCompanies } from './insurance-companies'
 import { APPOINTMENT_STATUSES, VALID_APPOINTMENT_TYPES, VALID_LOCATIONS } from '../../../shared/types/base.types'
 
 /**
@@ -69,6 +70,13 @@ export const appointments = sqliteTable(
     // ---- Billing ----
     priceCents: integer().notNull().default(0),
 
+    // ---- Insurance ----
+    insuranceCompanyId: text().references(() => insuranceCompanies.id, { onDelete: 'set null' }),
+    expectedCoPayCents: integer(),
+    expectedInsuranceCents: integer(),
+    coPayPaidCents: integer().default(0),
+    insurancePaidCents: integer().default(0),
+
     // ---- Locking ----
     isLocked: integer({ mode: 'boolean' }).default(false),
     lockedAt: integer({ mode: 'timestamp_ms' }),
@@ -90,6 +98,7 @@ export const appointments = sqliteTable(
     ),
     uniqueIndex('idx_appointments_room_booking_unique').on(table.roomId, table.date, table.startTime),
     index('idx_appointments_room_date').on(table.roomId, table.date),
-    index('idx_appointments_room_date_time').on(table.roomId, table.date, table.startTime)
+    index('idx_appointments_room_date_time').on(table.roomId, table.date, table.startTime),
+    index('idx_appointments_insurance').on(table.insuranceCompanyId)
   ]
 )

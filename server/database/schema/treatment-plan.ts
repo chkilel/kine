@@ -7,6 +7,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '../../../shared/types/base.types'
 import type { RateCent } from '~~/shared/types/org.types'
+import { insuranceCompanies } from './insurance-companies'
 
 /**
  * ================================================================
@@ -48,6 +49,7 @@ export const treatmentPlans = sqliteTable(
     // Insurance and coverage
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
     insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
+    insuranceCompanyId: text().references(() => insuranceCompanies.id, { onDelete: 'set null' }),
 
     // Pricing for sessions (inherited from org at creation, can be overridden)
     pricing: text({ mode: 'json' }).$type<RateCent>().notNull(),
@@ -69,6 +71,7 @@ export const treatmentPlans = sqliteTable(
 
     // ---- Multi-field indexes for common queries ----
     // Find active treatment plans by therapist and status: WHERE organizationId = ? AND deletedAt IS NULL AND therapist = ? AND status = ?
-    index('idx_treatment_plans_org_active_therapist_status').on(table.organizationId, table.therapistId, table.status)
+    index('idx_treatment_plans_org_active_therapist_status').on(table.organizationId, table.therapistId, table.status),
+    index('idx_treatment_plans_insurance').on(table.insuranceCompanyId)
   ]
 )

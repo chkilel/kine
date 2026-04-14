@@ -4,6 +4,7 @@ import { users, sessions, accounts, verifications } from './schema/auth'
 import { weeklyAvailabilityTemplates, availabilityExceptions } from './schema/availability'
 import { appointments } from './schema/appointment'
 import { patientDocuments } from './schema/document'
+import { insuranceCompanies } from './schema/insurance-companies'
 import { organizations, members, invitations, teams, teamMembers } from './schema/organization'
 import { patients } from './schema/patient'
 import { payments, appointmentPaymentItems } from './schema/payment'
@@ -19,6 +20,7 @@ const schema = {
   availabilityExceptions,
   appointments,
   patientDocuments,
+  insuranceCompanies,
   organizations,
   members,
   invitations,
@@ -72,6 +74,10 @@ export const relations = defineRelations(schema, (r) => ({
     room: r.one.rooms({
       from: r.appointments.roomId,
       to: r.rooms.id
+    }),
+    insuranceCompany: r.one.insuranceCompanies({
+      from: r.appointments.insuranceCompanyId,
+      to: r.insuranceCompanies.id
     }),
     lockedBy: r.one.users({
       from: r.appointments.lockedById,
@@ -145,7 +151,19 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.treatmentPlans.organizationId,
       to: r.organizations.id
     }),
+    insuranceCompany: r.one.insuranceCompanies({
+      from: r.treatmentPlans.insuranceCompanyId,
+      to: r.insuranceCompanies.id
+    }),
     appointments: r.many.appointments(),
     documents: r.many.patientDocuments()
+  },
+  insuranceCompanies: {
+    organization: r.one.organizations({
+      from: r.insuranceCompanies.organizationId,
+      to: r.organizations.id
+    }),
+    treatmentPlans: r.many.treatmentPlans(),
+    appointments: r.many.appointments()
   }
 }))

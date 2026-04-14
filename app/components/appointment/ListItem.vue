@@ -22,7 +22,7 @@
     cancelled: appointment.status === 'cancelled'
   }))
 
-  const appointmentHasStarted = computed(() => status.value.inProgress || status.value.completed)
+  const appointmentHasStarted = computed(() => ['in_progress', 'finished', 'completed'].includes(appointment.status))
 
   // ─── Computed state ──────────────────────────────────────────
   const timeLabel = computed(() => formatTimeString(appointment.startTime))

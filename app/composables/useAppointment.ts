@@ -469,7 +469,7 @@ const _useUpdateAppointmentClinicalNotes = () => {
       appointmentId,
       ...body
     }: WithOnSuccess<{ appointmentId: string } & UpdateClinicalNotesAction>) => {
-      const resp = await requestFetch(`/api/appointments/${appointmentId}/clinical-notes`, { method: 'PATCH', body })
+      const resp = requestFetch(`/api/appointments/${appointmentId}/clinical-notes`, { method: 'PATCH', body })
       return resp
     },
     onSuccess: (data, { appointmentId, onSuccess }) => {
@@ -480,6 +480,44 @@ const _useUpdateAppointmentClinicalNotes = () => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, 'Impossible de mettre à jour les notes cliniques').message,
+        color: 'error'
+      })
+    }
+  })
+}
+
+const _useUpdateAppointmentPayments = () => {
+  const toast = useToast()
+  const requestFetch = useRequestFetch()
+  const invalidate = useAppointmentInvalidation()
+
+  return useMutation({
+    mutation: async ({
+      appointmentId,
+      body,
+      onSuccess
+    }: {
+      appointmentId: string
+      body: InsurancePaymentInput
+      patientId?: string
+      onSuccess?: () => void
+    }) => {
+      const resp = requestFetch(`/api/appointments/${appointmentId}/payments`, { method: 'PATCH', body })
+      return resp
+    },
+    onSuccess: (_, { appointmentId, patientId, onSuccess }) => {
+      onSuccess?.()
+      toast.add({
+        title: 'Succès',
+        description: 'Paiements mis à jour avec succès',
+        color: 'success'
+      })
+      invalidate(appointmentId)
+    },
+    onError: (error: unknown) => {
+      toast.add({
+        title: 'Erreur',
+        description: parseError(error, 'Impossible de mettre à jour les paiements').message,
         color: 'error'
       })
     }
@@ -501,4 +539,5 @@ export const useUpdateAppointmentTags = createSharedComposable(_useUpdateAppoint
 export const useExtendAppointment = createSharedComposable(_useExtendAppointment)
 export const useUpdateAppointmentPrice = createSharedComposable(_useUpdateAppointmentPrice)
 export const useUpdateAppointmentClinicalNotes = createSharedComposable(_useUpdateAppointmentClinicalNotes)
+export const useUpdateAppointmentPayments = createSharedComposable(_useUpdateAppointmentPayments)
 export const useTherapistAppointments = _useTherapistAppointments

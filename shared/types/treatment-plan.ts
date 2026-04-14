@@ -17,7 +17,8 @@ const treatmentPlanSchemaShape = {
   pricing: rateCentSchema,
   notes: z.array(noteSchema),
   createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date()
+  updatedAt: z.coerce.date(),
+  insuranceCompanyId: z.string().nullable().optional()
 }
 
 export const treatmentPlanSchema = createSelectSchema(treatmentPlans, treatmentPlanSchemaShape)
@@ -38,6 +39,7 @@ const treatmentPlanCreateShape = {
   status: treatmentPlanStatusSchema.default('planned'),
   insuranceInfo: z.string().optional(),
   coverageStatus: insuranceCoverageSchema.optional(),
+  insuranceCompanyId: z.string().nullable().optional(),
   pricing: rateCentSchema,
   notes: z.array(noteSchema).optional()
 }

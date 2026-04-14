@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalEVA } from '#components'
+  import { LazyAppModalEVA, LazyAppointmentPaymentTrackingForm } from '#components'
 
   // ─── Props / Emits ───────────────────────────────────────────
   const props = defineProps<{
@@ -12,6 +12,7 @@
   // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const evaModal = overlay.create(LazyAppModalEVA)
+  const paymentTrackingOverlay = overlay.create(LazyAppointmentPaymentTrackingForm)
 
   const { mutateAsync: startAppointmentAsync, isLoading: isSessionStarting } = useStartAppointment()
 
@@ -26,6 +27,11 @@
     isPending: appointmentLoading,
     refetch: refetchAppointment
   } = useAppointment(() => props.appointmentId)
+
+  const insuranceCompanyId = computed(() => appointment.value?.insuranceCompanyId || null)
+  const { data: insuranceCompany } = useInsuranceCompanyById(() => insuranceCompanyId.value!)
+
+  const hasInsurance = computed(() => !!insuranceCompanyId.value)
 
   // ─── Base state ──────────────────────────────────────────────
   const isTimerPaused = ref(false)
@@ -78,6 +84,11 @@
   })
 
   // ─── Event handlers ──────────────────────────────────────────
+  function openPaymentTracking() {
+    if (!appointment.value) return
+    paymentTrackingOverlay.open({ appointment: appointment.value })
+  }
+
   async function handleStartSession() {
     if (isSessionStarting.value) return
 
@@ -113,7 +124,7 @@
 </script>
 
 <template>
-  <USlideover :dismissible="true" :close="false" :ui="{ content: 'w-full max-w-[1500px]' }" @close="emit('close')">
+  <USlideover :dismissible="true" :close="false" :ui="{ content: 'w-full max-w-375' }" @close="emit('close')">
     <template #header>
       <div class="flex w-full items-center justify-between gap-4">
         <div class="flex items-center gap-4">
@@ -205,6 +216,27 @@
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
           <!-- Session Timing Information Card -->
           <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
+
+          <!-- Insurance Coverage Card -->
+          <InsuranceInfoCard v-if="appointment && hasInsurance" :appointment="appointment" :insurance-company />
+
+          <!-- Payment tracking button for insured appointments -->
+          <UButton
+            v-if="
+              appointment &&
+              hasInsurance &&
+              (appointment.status === 'in_progress' ||
+                appointment.status === 'finished' ||
+                appointment.status === 'completed')
+            "
+            icon="i-hugeicons-payment-01"
+            color="primary"
+            variant="outline"
+            block
+            @click="openPaymentTracking"
+          >
+            Enregistrer les paiements
+          </UButton>
 
           <!-- Payment and summary cards -->
           <template
