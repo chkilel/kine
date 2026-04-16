@@ -39,6 +39,23 @@
         }
       },
       {
+        label: 'Cabinet',
+        to: '/cabinet',
+        icon: 'i-hugeicons-customize',
+        defaultOpen: true,
+        type: 'trigger',
+        children: [
+          {
+            label: 'Assurances',
+            to: '/cabinet/insurances',
+            exact: true,
+            onSelect: () => {
+              open.value = false
+            }
+          }
+        ]
+      },
+      {
         label: 'Paramètres',
         to: '/settings',
         icon: 'i-hugeicons-customize',
@@ -49,14 +66,6 @@
             label: 'Général',
             to: '/settings',
             exact: true,
-            onSelect: () => {
-              open.value = false
-            }
-          },
-          {
-            label: 'Assurances',
-            to: '/settings/insurance-companies',
-            icon: 'i-hugeicons-shield-01',
             onSelect: () => {
               open.value = false
             }

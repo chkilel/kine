@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { LazyInsuranceCompanySelect } from '#components'
-
   interface Props {
     appointment: Appointment
     insuranceCompany?: {
