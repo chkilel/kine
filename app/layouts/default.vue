@@ -6,16 +6,32 @@
   const links = [
     [
       {
-        label: 'Accueil',
-        icon: 'i-lucide-house',
+        label: 'Acceuil',
+        icon: 'i-hugeicons-home-03',
         to: '/',
         onSelect: () => {
           open.value = false
         }
       },
       {
+        label: 'Patients',
+        icon: 'i-hugeicons-user-multiple',
+        to: '/patients',
+        onSelect: () => {
+          open.value = false
+        }
+      },
+      {
+        label: 'Cabinets',
+        icon: 'i-hugeicons-building-06',
+        to: '/organizations',
+        onSelect: () => {
+          open.value = false
+        }
+      },
+      {
         label: 'Messagerie',
-        icon: 'i-lucide-message-square',
+        icon: 'i-hugeicons-mail-01',
         to: '/inbox',
         badge: '4',
         onSelect: () => {
@@ -23,33 +39,9 @@
         }
       },
       {
-        label: 'Patients',
-        icon: 'i-lucide-users',
-        to: '/patients',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Planning quotidien',
-        icon: 'i-lucide-calendar',
-        to: '/therapists/day',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Cabinets',
-        icon: 'i-lucide-building-2',
-        to: '/organizations',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
         label: 'Paramètres',
         to: '/settings',
-        icon: 'i-lucide-settings',
+        icon: 'i-hugeicons-customize',
         defaultOpen: true,
         type: 'trigger',
         children: [
@@ -96,7 +88,7 @@
     [
       {
         label: 'Support',
-        icon: 'i-lucide-help-circle',
+        icon: 'i-hugeicons-help-circle',
         to: 'mailto:support@kine.com',
         target: '_blank'
       }
@@ -116,7 +108,7 @@
         {
           id: 'support',
           label: 'Contacter le support',
-          icon: 'i-lucide-mail',
+          icon: 'i-hugeicons-mail-01',
           to: 'mailto:support@kine.com',
           target: '_blank'
         }
