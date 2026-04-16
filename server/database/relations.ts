@@ -7,7 +7,13 @@ import { patientDocuments } from './schema/document'
 import { insuranceCompanies } from './schema/insurance-companies'
 import { organizations, members, invitations, teams, teamMembers } from './schema/organization'
 import { patients } from './schema/patient'
-import { payments, appointmentPaymentItems } from './schema/payment'
+import {
+  payments,
+  appointmentPaymentItems,
+  paymentAllocations,
+  creditNotes,
+  creditNoteAllocations
+} from './schema/payment'
 import { rooms } from './schema/rooms'
 import { treatmentPlans } from './schema/treatment-plan'
 
@@ -29,6 +35,9 @@ const schema = {
   patients,
   payments,
   appointmentPaymentItems: appointmentPaymentItems,
+  paymentAllocations,
+  creditNotes,
+  creditNoteAllocations,
   rooms,
   treatmentPlans
 }
@@ -124,7 +133,12 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.payments.voidedById,
       to: r.users.id
     }),
-    sessionItems: r.many.appointmentPaymentItems()
+    payerInsuranceCompany: r.one.insuranceCompanies({
+      from: r.payments.payerInsuranceCompanyId,
+      to: r.insuranceCompanies.id
+    }),
+    sessionItems: r.many.appointmentPaymentItems(),
+    allocations: r.many.paymentAllocations()
   },
   appointmentPaymentItems: {
     payment: r.one.payments({
@@ -134,6 +148,37 @@ export const relations = defineRelations(schema, (r) => ({
     appointment: r.one.appointments({
       from: r.appointmentPaymentItems.appointmentId,
       to: r.appointments.id
+    })
+  },
+  paymentAllocations: {
+    payment: r.one.payments({
+      from: r.paymentAllocations.paymentId,
+      to: r.payments.id
+    }),
+    appointment: r.one.appointments({
+      from: r.paymentAllocations.appointmentId,
+      to: r.appointments.id
+    })
+  },
+  creditNotes: {
+    organization: r.one.organizations({
+      from: r.creditNotes.organizationId,
+      to: r.organizations.id
+    }),
+    patient: r.one.patients({
+      from: r.creditNotes.patientId,
+      to: r.patients.id
+    }),
+    issuedBy: r.one.users({
+      from: r.creditNotes.issuedById,
+      to: r.users.id
+    }),
+    allocations: r.many.creditNoteAllocations()
+  },
+  creditNoteAllocations: {
+    creditNote: r.one.creditNotes({
+      from: r.creditNoteAllocations.creditNoteId,
+      to: r.creditNotes.id
     })
   },
   rooms: {
