@@ -71,27 +71,31 @@ describe('constants-invoicing', () => {
   })
 
   describe('PAYMENT_METHOD_OPTIONS', () => {
-    it('contains all 5 method entries', () => {
-      expect(PAYMENT_METHOD_OPTIONS).toHaveLength(5)
+    it('contains all 6 method entries', () => {
+      expect(PAYMENT_METHOD_OPTIONS).toHaveLength(6)
       expect(PAYMENT_METHOD_OPTIONS.map((o) => o.value)).toContain('deposit')
     })
   })
 
   describe('PAYMENT_FUNDING_METHOD_OPTIONS', () => {
-    it('contains 4 entries (excludes deposit)', () => {
-      expect(PAYMENT_FUNDING_METHOD_OPTIONS).toHaveLength(4)
+    it('contains 5 entries (excludes deposit)', () => {
+      expect(PAYMENT_FUNDING_METHOD_OPTIONS).toHaveLength(5)
       expect(PAYMENT_FUNDING_METHOD_OPTIONS.map((o) => o.value)).not.toContain('deposit')
     })
   })
 
   describe('PAYMENT_TYPE_OPTIONS', () => {
-    it('contains all 4 type entries', () => {
-      expect(PAYMENT_TYPE_OPTIONS).toHaveLength(4)
+    it('contains all 8 type entries', () => {
+      expect(PAYMENT_TYPE_OPTIONS).toHaveLength(8)
       const values = PAYMENT_TYPE_OPTIONS.map((o) => o.value)
       expect(values).toContain('session_payment')
       expect(values).toContain('session_refund')
       expect(values).toContain('deposit_add')
       expect(values).toContain('deposit_refund')
+      expect(values).toContain('insurance_payment')
+      expect(values).toContain('insurance_refund')
+      expect(values).toContain('credit_note_applied')
+      expect(values).toContain('write_off')
     })
   })
 })

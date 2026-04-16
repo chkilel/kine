@@ -95,7 +95,7 @@ describe('invoicing-schemas', () => {
         amountCents: 5000,
         type: 'session_payment',
         method: 'cash',
-        sessionItems: [{ treatmentSessionId: 'session-1', amountCents: 5000 }]
+        sessionItems: [{ appointmentId: 'session-1', amountCents: 5000 }]
       })
       expect(result.success).toBe(true)
     })

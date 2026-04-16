@@ -29,6 +29,11 @@ export const PAYMENT_METHODS_CONFIG = {
     label: 'Solde patient',
     icon: 'i-hugeicons-wallet-02',
     color: 'neutral'
+  },
+  'insurance-electronic': {
+    label: 'Assurance électronique',
+    icon: 'i-hugeicons-shield-01',
+    color: 'info'
   }
 } as const
 
@@ -84,7 +89,7 @@ export const PAYMENT_TYPE_CONFIG = {
     submitLabel: 'Enregistrer le paiement',
     bannerMessage: '',
     color: 'success',
-    icon: 'i-hugeicons-credit-card' // or 'cash-01'
+    icon: 'i-hugeicons-credit-card'
   },
   session_refund: {
     label: 'Remboursement de séance',
@@ -92,7 +97,7 @@ export const PAYMENT_TYPE_CONFIG = {
     submitLabel: 'Enregistrer le remboursement',
     bannerMessage: '',
     color: 'error',
-    icon: 'i-hugeicons-cashback' // or 'return-request'
+    icon: 'i-hugeicons-cashback'
   },
   deposit_add: {
     label: 'Avance',
@@ -100,7 +105,7 @@ export const PAYMENT_TYPE_CONFIG = {
     submitLabel: "Enregistrer l'avance",
     bannerMessage: 'Cette avance sera disponible pour les futures séances.',
     color: 'info',
-    icon: 'i-hugeicons-money-bag-02' // or 'savings' or 'piggy-bank'
+    icon: 'i-hugeicons-money-bag-02'
   },
   deposit_refund: {
     label: 'Remboursement',
@@ -108,7 +113,39 @@ export const PAYMENT_TYPE_CONFIG = {
     submitLabel: 'Enregistrer le remboursement',
     bannerMessage: "Le remboursement réduit le solde d'avance du patient.",
     color: 'warning',
-    icon: 'i-hugeicons-cashback' // or 'return-request'
+    icon: 'i-hugeicons-cashback'
+  },
+  insurance_payment: {
+    label: 'Paiement assurance',
+    description: 'Enregistrer un paiement de la mutuelle',
+    submitLabel: 'Enregistrer le paiement assurance',
+    bannerMessage: '',
+    color: 'info',
+    icon: 'i-hugeicons-shield-01'
+  },
+  insurance_refund: {
+    label: 'Remboursement assurance',
+    description: 'Rembourser un paiement de la mutuelle',
+    submitLabel: 'Enregistrer le remboursement assurance',
+    bannerMessage: '',
+    color: 'error',
+    icon: 'i-hugeicons-cashback'
+  },
+  credit_note_applied: {
+    label: 'Avoir appliqué',
+    description: 'Appliquer un avoir à une facture',
+    submitLabel: 'Appliquer avoir',
+    bannerMessage: '',
+    color: 'neutral',
+    icon: 'i-hugeicons-invoice-03'
+  },
+  write_off: {
+    label: 'Annulation',
+    description: 'Annuler une créance irrécouvrable',
+    submitLabel: 'Annuler la créance',
+    bannerMessage: '',
+    color: 'error',
+    icon: 'i-hugeicons-delete-02'
   }
 } as const
 

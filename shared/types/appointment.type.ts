@@ -51,10 +51,10 @@ export const appointmentQuerySchema = z.object({
   therapistId: z.string().optional(),
   patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
-  onlyIndependent: z
-    .enum(['true', 'false'])
-    .transform((v) => v === 'true')
-    .optional(),
+  onlyIndependent: z.preprocess(
+    (v) => (v === 'true' || v === true ? true : v === 'false' || v === false ? false : undefined),
+    z.boolean().optional()
+  ),
   status: z
     .string()
     .transform((v) => v?.split(',').filter(Boolean))

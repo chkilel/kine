@@ -9,23 +9,28 @@ import {
 
 describe('payment-types', () => {
   describe('PAYMENT_METHODS', () => {
-    it('includes all 5 values', () => {
+    it('includes all 6 values', () => {
       expect(PAYMENT_METHODS).toContain('deposit')
       expect(PAYMENT_METHODS).toContain('cash')
       expect(PAYMENT_METHODS).toContain('bank-card')
       expect(PAYMENT_METHODS).toContain('check')
       expect(PAYMENT_METHODS).toContain('bank-transfer')
-      expect(PAYMENT_METHODS).toHaveLength(5)
+      expect(PAYMENT_METHODS).toContain('insurance-electronic')
+      expect(PAYMENT_METHODS).toHaveLength(6)
     })
   })
 
   describe('PAYMENT_TYPES', () => {
-    it('includes all 4 values', () => {
+    it('includes all 8 values', () => {
       expect(PAYMENT_TYPES).toContain('session_payment')
       expect(PAYMENT_TYPES).toContain('session_refund')
       expect(PAYMENT_TYPES).toContain('deposit_add')
       expect(PAYMENT_TYPES).toContain('deposit_refund')
-      expect(PAYMENT_TYPES).toHaveLength(4)
+      expect(PAYMENT_TYPES).toContain('insurance_payment')
+      expect(PAYMENT_TYPES).toContain('insurance_refund')
+      expect(PAYMENT_TYPES).toContain('credit_note_applied')
+      expect(PAYMENT_TYPES).toContain('write_off')
+      expect(PAYMENT_TYPES).toHaveLength(8)
     })
   })
 
