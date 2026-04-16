@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const { userId, organizationId } = await requireAuthWithOrg(event)
 
   const body = await readValidatedBody(event, paymentRequestBodySchema.parse)
-  const { type, amountCents, method, sessionItems, patientId } = body
+  const { type, amountCents, method, sessionItems, patientId, payerType, payerInsuranceCompanyId } = body
 
   const requiresSessionItems = type === 'session_payment' || type === 'session_refund'
   const forbidsSessionItems = type === 'deposit_add' || type === 'deposit_refund'
@@ -101,6 +101,8 @@ export default defineEventHandler(async (event) => {
       amountCents,
       type,
       method,
+      payerType: payerType || 'patient',
+      payerInsuranceCompanyId: payerType === 'insurance_company' ? payerInsuranceCompanyId : null,
       notes: body.notes,
       paidOn: body.paidOn || getTodayAsString(),
       receiptNumber,

@@ -24,6 +24,14 @@ export default defineEventHandler(async (event) => {
               }
             }
           }
+        },
+        allocations: true,
+        payerInsuranceCompany: {
+          columns: {
+            id: true,
+            name: true,
+            code: true
+          }
         }
       }
     })
