@@ -215,10 +215,10 @@
         <!-- Right Sidebar - Timer, payment & History -->
         <div class="flex h-full flex-col gap-4 lg:col-span-3">
           <!-- Session Timing Information Card -->
-          <TreatmentSessionTimingCard v-if="appointment" :appointment="appointment" />
+          <TreatmentSessionTimingCard v-if="appointment" :appointment />
 
           <!-- Insurance Coverage Card -->
-          <InsuranceInfoCard v-if="appointment && hasInsurance" :appointment="appointment" :insurance-company />
+          <TreatmentSessionInsuranceInfo v-if="appointment && hasInsurance" :appointment :insurance-company />
 
           <!-- Payment tracking button for insured appointments -->
           <UButton

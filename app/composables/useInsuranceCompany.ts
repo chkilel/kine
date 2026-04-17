@@ -1,6 +1,4 @@
 import { createSharedComposable } from '@vueuse/core'
-import type { MaybeRefOrGetter, Ref } from 'vue'
-import { toValue } from 'vue'
 
 export const INSURANCE_COMPANY_KEYS = {
   root: ['insuranceCompanies'] as const,

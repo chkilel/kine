@@ -9,7 +9,8 @@ import {
   weeklyAvailabilityTemplates,
   availabilityExceptions,
   appointments,
-  rooms
+  rooms,
+  insuranceCompanies
 } from '~~/server/database/schema'
 import { members } from '~~/server/database/schema/organization'
 import { hasTimeConflict } from '~~/shared/utils/availability-utils'
@@ -24,7 +25,8 @@ import {
   VALID_RELATIONSHIP_TYPES,
   VALID_PHONE_CATEGORIES,
   VALID_COVERAGE_STATUSES,
-  VALID_TREATMENT_PLAN_STATUSES
+  VALID_TREATMENT_PLAN_STATUSES,
+  VALID_CONVENTION_STATUSES
 } from '~~/shared/types/base.types'
 import { MINIMUM_APPOINTMENT_GAP_MINUTES, APPOINTMENT_DURATIONS } from '~~/shared/utils/constants.appointment'
 
@@ -43,6 +45,7 @@ type SeedResults = {
     organizations: number
     memberships: number
     patients: number
+    insuranceCompanies: number
     treatmentPlans: number
     weeklyTemplates: number
     availabilityExceptions: number
@@ -555,6 +558,63 @@ const roomDescriptions = [
   'Zone de rééducation cardiovasculaire'
 ]
 
+const insuranceCompanyData = [
+  {
+    name: 'AXA Assurance Maroc',
+    code: 'AXA',
+    coveragePercentage: 80,
+    sessionPriceCents: 14400,
+    coPayRule: 'percentage' as const,
+    coPayPercentage: 20,
+    coPayAmountCents: null
+  },
+  {
+    name: 'Wafa Assurance',
+    code: 'WAFA',
+    coveragePercentage: 75,
+    sessionPriceCents: 14400,
+    coPayRule: 'percentage' as const,
+    coPayPercentage: 25,
+    coPayAmountCents: null
+  },
+  {
+    name: 'Saham Assurance',
+    code: 'SAHAM',
+    coveragePercentage: 70,
+    sessionPriceCents: 14400,
+    coPayRule: 'fixed' as const,
+    coPayPercentage: null,
+    coPayAmountCents: 4320
+  },
+  {
+    name: 'CNSS (Caisse Nationale)',
+    code: 'CNSS',
+    coveragePercentage: 100,
+    sessionPriceCents: 10000,
+    coPayRule: 'fixed' as const,
+    coPayPercentage: null,
+    coPayAmountCents: 0
+  },
+  {
+    name: 'RMA (Royale Marocaine)',
+    code: 'RMA',
+    coveragePercentage: 85,
+    sessionPriceCents: 14400,
+    coPayRule: 'percentage' as const,
+    coPayPercentage: 15,
+    coPayAmountCents: null
+  },
+  {
+    name: 'Atlanta Assurance',
+    code: 'ATL',
+    coveragePercentage: 72,
+    sessionPriceCents: 14400,
+    coPayRule: 'fixed' as const,
+    coPayPercentage: null,
+    coPayAmountCents: 4032
+  }
+]
+
 // =============================================================================
 // Utility Functions
 // =============================================================================
@@ -624,6 +684,7 @@ async function resetDatabase(db: DrizzleDB): Promise<void> {
   await db.delete(appointments)
   await db.delete(rooms)
   await db.delete(treatmentPlans)
+  await db.delete(insuranceCompanies)
   await db.delete(patients)
   await db.delete(availabilityExceptions)
   await db.delete(weeklyAvailabilityTemplates)
@@ -1070,7 +1131,12 @@ function generateAvailabilityExceptions(userId: string, organizationId: string):
 // Treatment Plan & Appointment Generation
 // =============================================================================
 
-function generateTreatmentPlans(patientId: string, organizationId: string, therapistId: string): any[] {
+function generateTreatmentPlans(
+  patientId: string,
+  organizationId: string,
+  therapistId: string,
+  insuranceCompanyIds: string[]
+): any[] {
   const count = SEED_CONFIG.treatmentPlans.minPerPatient
   const statuses: string[] = []
 
@@ -1098,9 +1164,12 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
 
   const shuffledStatuses = shuffleArray(statuses)
 
-  return shuffledStatuses.map((status) => {
+  return shuffledStatuses.map((status, index) => {
     const startDate = format(addDays(new Date(), -randomInt(30, 180)), 'yyyy-MM-dd')
     const endDate = status === 'completed' ? format(addDays(new Date(), -randomInt(1, 30)), 'yyyy-MM-dd') : null
+
+    const shouldLinkToInsurance = index < Math.floor(count * 0.8) && insuranceCompanyIds.length > 0
+    const selectedInsuranceId = shouldLinkToInsurance ? randomItem(insuranceCompanyIds) : null
 
     return {
       patientId,
@@ -1116,8 +1185,11 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       status,
       prescribingDoctor: 'Dr. Smith',
       prescriptionDate: startDate,
-      coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
-      insuranceInfo: 'Insurance Co. Ltd.',
+      coverageStatus: shouldLinkToInsurance
+        ? randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]])
+        : 'none',
+      insuranceInfo: shouldLinkToInsurance ? 'Insurance Co. Ltd.' : null,
+      insuranceCompanyId: selectedInsuranceId,
       pricing: {
         clinic: randomInt(10000, 15000),
         home: randomInt(20000, 30000),
@@ -1179,15 +1251,31 @@ function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
 // Appointment Generation
 // =============================================================================
 
+type InsuranceCompanyRecord = {
+  id: string
+  sessionPriceCents: number
+  coPayRule: 'fixed' | 'percentage'
+  coPayAmountCents: number | null
+  coPayPercentage: number | null
+}
+
 function generateAppointments(
   patientId: string,
   organizationId: string,
   therapistId: string,
-  treatmentPlansMeta: { id: string; startDate: string; endDate: string | null; status: string }[],
+  treatmentPlansMeta: {
+    id: string
+    startDate: string
+    endDate: string | null
+    status: string
+    insuranceCompanyId: string | null
+  }[],
   availableRoomIds: string[],
   roomBookings: Map<string, string>,
   therapistTemplates: any[],
-  therapistExceptions: any[]
+  therapistExceptions: any[],
+  orgPricing: { clinic: number; home: number; telehealth: number } | null,
+  insuranceCompanyLookup: Record<string, InsuranceCompanyRecord>
 ): any[] {
   const activePlanIds = new Set(
     treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
@@ -1362,11 +1450,51 @@ function generateAppointments(
     const totalPausedSeconds =
       status === 'in_progress' ? randomInt(60, 600) : status === 'finished' ? randomInt(30, 900) : null
 
+    let insuranceCompanyId: string | null = null
+    if (treatmentPlanId) {
+      const linkedPlan = treatmentPlansMeta.find((plan) => plan.id === treatmentPlanId)
+      if (linkedPlan?.insuranceCompanyId) {
+        insuranceCompanyId = linkedPlan.insuranceCompanyId
+      }
+    }
+
+    let priceCents = 0
+    if (orgPricing) {
+      const locationKey = location as keyof typeof orgPricing
+      priceCents = orgPricing[locationKey] ?? orgPricing.clinic
+    } else {
+      priceCents = randomInt(10000, 20000)
+    }
+
+    let expectedCoPayCents: number | null = null
+    let expectedInsuranceCents: number | null = null
+    let coPayPaidCents = 0
+    let insurancePaidCents = 0
+
+    if (insuranceCompanyId) {
+      const insCo = insuranceCompanyLookup[insuranceCompanyId]
+      if (insCo) {
+        priceCents = insCo.sessionPriceCents
+        if (insCo.coPayRule === 'fixed') {
+          expectedCoPayCents = insCo.coPayAmountCents ?? 0
+        } else {
+          expectedCoPayCents = Math.round(insCo.sessionPriceCents * ((insCo.coPayPercentage ?? 0) / 100))
+        }
+        expectedInsuranceCents = insCo.sessionPriceCents - expectedCoPayCents
+
+        if (status === 'completed' || status === 'finished') {
+          coPayPaidCents = expectedCoPayCents
+          insurancePaidCents = expectedInsuranceCents
+        }
+      }
+    }
+
     const appointment: any = {
       organizationId,
       patientId,
       therapistId,
       treatmentPlanId,
+      insuranceCompanyId,
       roomId,
       date,
       startTime,
@@ -1375,7 +1503,11 @@ function generateAppointments(
       type: randomItem(VALID_APPOINTMENT_TYPES) || 'follow_up',
       status,
       location,
-      priceCents: duration ? duration * 50 : 50,
+      priceCents,
+      expectedCoPayCents,
+      expectedInsuranceCents,
+      coPayPaidCents,
+      insurancePaidCents,
       primaryConcern: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       treatmentSummary:
@@ -1486,6 +1618,7 @@ function generateAppointments(
     const location = randomItem(VALID_LOCATIONS) || 'clinic'
 
     let treatmentPlanId: string | null = null
+    let insuranceCompanyId: string | null = null
     if (treatmentPlansMeta.length > 0) {
       const nonPlannedPlans = treatmentPlansMeta.filter((plan) => plan.status !== 'planned')
       const activePlans = nonPlannedPlans.filter((plan) => ['ongoing', 'paused'].includes(plan.status))
@@ -1493,6 +1626,7 @@ function generateAppointments(
       const selectedPlan = source.length > 0 ? randomItem(source) : null
       if (selectedPlan) {
         treatmentPlanId = selectedPlan.id
+        insuranceCompanyId = selectedPlan.insuranceCompanyId
       }
     }
 
@@ -1516,11 +1650,38 @@ function generateAppointments(
     const totalPausedSeconds =
       status === 'in_progress' ? randomInt(60, 600) : status === 'finished' ? randomInt(30, 900) : null
 
+    let priceCents = 0
+    if (orgPricing) {
+      const locationKey = location as keyof typeof orgPricing
+      priceCents = orgPricing[locationKey] ?? orgPricing.clinic
+    } else {
+      priceCents = randomInt(10000, 20000)
+    }
+
+    let expectedCoPayCents: number | null = null
+    let expectedInsuranceCents: number | null = null
+    let coPayPaidCents = 0
+    let insurancePaidCents = 0
+
+    if (insuranceCompanyId) {
+      const insCo = insuranceCompanyLookup[insuranceCompanyId]
+      if (insCo) {
+        priceCents = insCo.sessionPriceCents
+        if (insCo.coPayRule === 'fixed') {
+          expectedCoPayCents = insCo.coPayAmountCents ?? 0
+        } else {
+          expectedCoPayCents = Math.round(insCo.sessionPriceCents * ((insCo.coPayPercentage ?? 0) / 100))
+        }
+        expectedInsuranceCents = insCo.sessionPriceCents - expectedCoPayCents
+      }
+    }
+
     const appointment: any = {
       organizationId,
       patientId,
       therapistId,
       treatmentPlanId,
+      insuranceCompanyId,
       roomId,
       date,
       startTime,
@@ -1529,8 +1690,11 @@ function generateAppointments(
       type: randomItem(VALID_APPOINTMENT_TYPES),
       status,
       location,
-      priceCents: durationValue * 50,
-      primaryConcern: randomItem(medicalConditions),
+      priceCents,
+      expectedCoPayCents,
+      expectedInsuranceCents,
+      coPayPaidCents,
+      insurancePaidCents,
       notes: null,
       treatmentSummary: null,
       ...(requiresTimer
@@ -1607,6 +1771,7 @@ export default defineEventHandler(async (event: H3Event) => {
       organizations: 0,
       memberships: 0,
       patients: 0,
+      insuranceCompanies: 0,
       treatmentPlans: 0,
       weeklyTemplates: 0,
       availabilityExceptions: 0,
@@ -1794,6 +1959,41 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
+  // ─── Insurance Companies ──────────────────────────────────────────────────────
+
+  const orgInsuranceIds: Record<string, string[]> = {}
+  for (const orgId of organizationIds) {
+    try {
+      const insuranceData = insuranceCompanyData.map((company) => ({
+        organizationId: orgId,
+        name: company.name,
+        code: company.code,
+        status: 'active' as const,
+        coveragePercentage: company.coveragePercentage,
+        sessionPriceCents: company.sessionPriceCents,
+        coPayRule: company.coPayRule,
+        coPayAmountCents: company.coPayAmountCents,
+        coPayPercentage: company.coPayPercentage,
+        notes: null
+      }))
+
+      if (insuranceData.length > 0) {
+        const insertedInsurance = await db
+          .insert(insuranceCompanies)
+          .values(insuranceData)
+          .returning({ id: insuranceCompanies.id })
+        orgInsuranceIds[orgId] = insertedInsurance.map((ins) => ins.id)
+        results.success.insuranceCompanies += insuranceData.length
+      }
+    } catch (error) {
+      results.errors.push({
+        type: 'insurance_company',
+        message: `Failed to create insurance companies for org ${orgId}`,
+        details: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
   // ─── Patients ───────────────────────────────────────────────────────────────
 
   const totalPatientsToCreate = Math.min(SEED_CONFIG.patients.count, patientData.length)
@@ -1840,7 +2040,8 @@ export default defineEventHandler(async (event: H3Event) => {
         .then((rows) => rows[0])
 
       if (patientRecord && therapistId) {
-        const treatmentPlansData = generateTreatmentPlans(patientRecord.id, orgId, therapistId)
+        const orgInsuranceIdsList = orgInsuranceIds[orgId] || []
+        const treatmentPlansData = generateTreatmentPlans(patientRecord.id, orgId, therapistId, orgInsuranceIdsList)
         for (const plan of treatmentPlansData) {
           await db.insert(treatmentPlans).values(plan)
           results.success.treatmentPlans++
@@ -1860,6 +2061,34 @@ export default defineEventHandler(async (event: H3Event) => {
   // ─── Appointments ──────────────────────────────────────────────────────────
 
   const roomBookings = new Map<string, string>()
+
+  const orgPricingLookup: Record<string, { clinic: number; home: number; telehealth: number }> = {}
+  for (const orgId of organizationIds) {
+    const [org] = await db
+      .select({ pricing: organizations.pricing })
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1)
+    orgPricingLookup[orgId] = (org?.pricing as any)?.rateCent ?? { clinic: 14400, home: 25000, telehealth: 11100 }
+  }
+
+  const insuranceCompanyLookup: Record<string, InsuranceCompanyRecord> = {}
+  for (const orgId of organizationIds) {
+    const insRecords = await db
+      .select({
+        id: insuranceCompanies.id,
+        sessionPriceCents: insuranceCompanies.sessionPriceCents,
+        coPayRule: insuranceCompanies.coPayRule,
+        coPayAmountCents: insuranceCompanies.coPayAmountCents,
+        coPayPercentage: insuranceCompanies.coPayPercentage
+      })
+      .from(insuranceCompanies)
+      .where(eq(insuranceCompanies.organizationId, orgId))
+    for (const rec of insRecords) {
+      insuranceCompanyLookup[rec.id] = rec as InsuranceCompanyRecord
+    }
+  }
+
   for (const patient of patientData) {
     const patientRecords = await db.select().from(patients).where(eq(patients.email, patient.email)).limit(1)
     if (patientRecords.length === 0) continue
@@ -1892,7 +2121,8 @@ export default defineEventHandler(async (event: H3Event) => {
         id: treatmentPlans.id,
         startDate: treatmentPlans.startDate,
         endDate: treatmentPlans.endDate,
-        status: treatmentPlans.status
+        status: treatmentPlans.status,
+        insuranceCompanyId: treatmentPlans.insuranceCompanyId
       })
       .from(treatmentPlans)
       .where(eq(treatmentPlans.patientId, patientRecord.id))
@@ -1908,7 +2138,9 @@ export default defineEventHandler(async (event: H3Event) => {
         availableRoomIds,
         roomBookings,
         therapistTemplates,
-        therapistExceptions
+        therapistExceptions,
+        orgPricingLookup[patientOrgId] ?? null,
+        insuranceCompanyLookup
       )
       if (appointmentsData.length > 0) {
         for (const appointment of appointmentsData) {

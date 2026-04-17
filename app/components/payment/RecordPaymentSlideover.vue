@@ -14,6 +14,7 @@
   const createPayment = useCreatePayment()
   const { data: balanceData } = usePatientBalance(() => props.patientId)
   const { data: sessionsData, isLoading: sessionsLoading } = useAppointmentsPaymentStatus(() => props.patientId)
+  const { data: insuranceCompaniesData } = useInsuranceCompaniesList(ref({ page: 1, limit: 100, status: 'active' }))
 
   // ─── Base state ──────────────────────────────────────────────
   const checkedIds = ref<Set<string>>(new Set(props.preselectedSessionIds))
@@ -25,8 +26,8 @@
 
   const unbilledSessions = computed(() => {
     const items = sessionsData.value ?? []
-    return items.filter((s) => {
-      const status: PaymentStatus = s.paymentStatus
+    return items.filter((s: any) => {
+      const status = s.paymentStatus
       return status === 'unpaid' || status === 'partial'
     })
   })
@@ -42,9 +43,20 @@
     amount: 0,
     useCredit: false,
     method: 'cash' as PaymentMethod,
+    payerType: 'patient' as 'patient' | 'insurance_company',
+    payerInsuranceCompanyId: '',
     date: shallowRef<CalendarDate | null>(today(getLocalTimeZone())),
     notes: ''
   })
+
+  const insuranceCompanyOptions = computed(() =>
+    (insuranceCompaniesData.value?.data ?? []).map((c: any) => ({
+      label: c.name,
+      value: c.id
+    }))
+  )
+
+  const showInsuranceSelect = computed(() => formState.payerType === 'insurance_company')
 
   // ─── UI helpers ──────────────────────────────────────────────
   const methodButtons = computed(() =>
@@ -138,6 +150,10 @@
       const basePayment = {
         patientId: props.patientId,
         type: 'session_payment' as const,
+        payerType: formState.payerType,
+        ...(formState.payerType === 'insurance_company' && formState.payerInsuranceCompanyId
+          ? { payerInsuranceCompanyId: formState.payerInsuranceCompanyId }
+          : {}),
         notes: formState.notes || undefined,
         paidOn: formState.date?.toString()
       }
@@ -253,6 +269,46 @@
         <div>
           <h3 class="text-muted text-[10px] font-bold tracking-wider uppercase">Étape 2 — Détails du paiement</h3>
           <div class="mt-3 space-y-4">
+            <UFormField label="Payeur">
+              <div class="grid w-full grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="flex items-center justify-center gap-2 rounded-lg border p-3 text-sm transition-colors"
+                  :class="
+                    formState.payerType === 'patient'
+                      ? 'border-primary bg-primary/5 text-primary font-bold'
+                      : 'border-default text-muted hover:border-primary/50'
+                  "
+                  @click="formState.payerType = 'patient'"
+                >
+                  <UIcon name="i-hugeicons-user" class="size-4" />
+                  Patient
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-center gap-2 rounded-lg border p-3 text-sm transition-colors"
+                  :class="
+                    formState.payerType === 'insurance_company'
+                      ? 'border-primary bg-primary/5 text-primary font-bold'
+                      : 'border-default text-muted hover:border-primary/50'
+                  "
+                  @click="formState.payerType = 'insurance_company'"
+                >
+                  <UIcon name="i-hugeicons-shield-01" class="size-4" />
+                  Mutuelle
+                </button>
+              </div>
+            </UFormField>
+
+            <UFormField v-if="showInsuranceSelect" label="Mutuelle">
+              <USelect
+                v-model="formState.payerInsuranceCompanyId"
+                variant="subtle"
+                placeholder="Sélectionner une mutuelle"
+                :options="insuranceCompanyOptions"
+              />
+            </UFormField>
+
             <UFormField label="Montant" hint="En dirhams">
               <UInputNumber v-model="formState.amount" :min="0" :step="10" size="md" class="w-full" />
             </UFormField>

@@ -31,7 +31,8 @@
         patientId: props.patientId,
         amountCents: refundCents,
         type: 'deposit_refund',
-        method: formState.method
+        method: formState.method,
+        payerType: 'patient'
       },
       onSuccess: () => emit('close'),
       onError: (error) => (formError.value = parseError(error, 'Erreur lors du remboursement').message)

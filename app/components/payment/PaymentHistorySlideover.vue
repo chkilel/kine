@@ -14,7 +14,7 @@
     viewPaymentReceipt(paymentId)
   }
 
-  function handleCancelPayment(payment: PaymentWithSessions) {
+  function handleCancelPayment(payment: any) {
     openCancelPayment(payment)
   }
 

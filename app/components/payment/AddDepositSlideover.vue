@@ -36,6 +36,7 @@
         amountCents: currencyToCents(formState.amount),
         type: 'deposit_add',
         method: formState.method,
+        payerType: 'patient',
         notes: formState.notes || undefined,
         paidOn: formState.date?.toString()
       },

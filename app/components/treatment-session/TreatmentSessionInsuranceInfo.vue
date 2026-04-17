@@ -110,12 +110,12 @@
 
     <div class="grid grid-cols-1 gap-3">
       <div class="border-default rounded-lg border p-3">
-        <p class="text-toned mb-1 text-xs font-medium">Co-paiement patient</p>
+        <p class="text-toned mb-1 text-xs font-medium">Co-paiement patientiiii</p>
         <div class="flex items-baseline gap-1">
           <span class="text-lg font-bold" :class="statusColors[coPayStatus]">
             {{ coPayPaid.toFixed(2) }}
           </span>
-          <span class="text-xs">/ {{ expectedCoPay ? `${expectedCoPay.toFixed(2)} DH` : '—' }}</span>
+          <span class="text-xs">/ {{ expectedCoPay ? formatCurrency(expectedCoPay) : '—' }}</span>
         </div>
         <div v-if="coPayStatus !== 'none'">
           <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -130,7 +130,7 @@
             />
           </div>
           <p v-if="coPayRemaining && coPayRemaining > 0" class="text-highlighted mt-1 text-xs">
-            Reste: {{ coPayRemaining.toFixed(2) }} DH
+            Reste: {{ formatCurrency(coPayRemaining) }}
           </p>
         </div>
       </div>
@@ -141,7 +141,7 @@
           <span class="text-lg font-bold" :class="statusColors[insuranceStatus]">
             {{ insurancePaid.toFixed(2) }}
           </span>
-          <span class="text-xs">/ {{ expectedInsurance ? `${expectedInsurance.toFixed(2)} DH` : '—' }}</span>
+          <span class="text-xs">/ {{ expectedInsurance ? formatCurrency(expectedInsurance) : '—' }}</span>
         </div>
         <div v-if="insuranceStatus !== 'none'">
           <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -164,7 +164,7 @@
       </div>
       <div class="bg-accented flex items-center justify-between rounded-lg px-3 py-2 text-sm">
         <span class="">Total séance</span>
-        <span class="font-bold">{{ (insuranceCompany?.sessionPriceCents ?? 0) / 100 }} DH</span>
+        <span class="font-bold">{{ formatCurrency(insuranceCompany?.sessionPriceCents ?? 0) }}</span>
       </div>
     </div>
   </UCard>

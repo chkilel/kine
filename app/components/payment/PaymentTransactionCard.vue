@@ -20,6 +20,8 @@
   const state = reactive<PaymentForm>({
     type: 'session_payment',
     method: 'cash',
+    payerType: 'patient',
+    payerInsuranceCompanyId: undefined,
     amount: (appointment.priceCents ?? 0) / 100,
     notes: ''
   })
@@ -70,6 +72,10 @@
       amountCents,
       type: event.data.type,
       method: event.data.method,
+      payerType: event.data.payerType || 'patient',
+      ...(event.data.payerType === 'insurance_company' && event.data.payerInsuranceCompanyId
+        ? { payerInsuranceCompanyId: event.data.payerInsuranceCompanyId }
+        : {}),
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString()
     }

@@ -8,7 +8,7 @@
   // ─── Computed state ──────────────────────────────────────────
   const latestPayment = computed(() => {
     const payments = sessionPayments.value?.data
-    return payments?.length ? payments[payments.length - 1] : null
+    return payments?.length ? (payments[payments.length - 1] as any) : null
   })
 
   // ─── Event handlers ──────────────────────────────────────────
@@ -80,6 +80,13 @@
         <div class="text-right">
           <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Date</span>
           <p class="text-xs font-bold">{{ formatDate(latestPayment.paidOn) }}</p>
+        </div>
+        <div v-if="latestPayment.payerType === 'insurance_company'">
+          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Payeur</span>
+          <p class="text-xs font-bold">
+            <UIcon name="i-hugeicons-shield-01" class="mr-1 size-3" />
+            Mutuelle
+          </p>
         </div>
       </div>
       <UButton

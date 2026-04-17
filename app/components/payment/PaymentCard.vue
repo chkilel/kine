@@ -2,15 +2,14 @@
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = defineProps<{
-    appointment: Appointment
-  }>()
+  const props = defineProps<{ appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: patientCreditBalance } = usePatientBalance(() => props.appointment.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
   const { mutate: updatePriceMutation, isLoading: isUpdating } = useUpdateAppointmentPrice()
   const activeOrganization = authClient.useActiveOrganization()
+  const { data: insuranceCompaniesData } = useInsuranceCompaniesList(ref({ page: 1, limit: 100, status: 'active' }))
 
   // ─── Base state ──────────────────────────────────────────────
   const sessionCostCents = computed(() => props.appointment.priceCents ?? 0)
@@ -18,8 +17,6 @@
   const defaultAmount = computed(() => sessionCostCents.value / 100)
 
   // ─── Pricing ─────────────────────────────────────────────────
-  const treatmentPlan = computed(() => null)
-
   const inheritedPrice = computed<number | null>(() => {
     if (!props.appointment) return null
     const { location } = props.appointment
@@ -33,11 +30,22 @@
   const formState = reactive<PaymentForm>({
     type: 'session_payment',
     method: 'cash',
+    payerType: 'patient',
+    payerInsuranceCompanyId: undefined,
     amount: defaultAmount.value,
     notes: ''
   })
 
   const paymentForm = useTemplateRef('paymentForm')
+
+  const insuranceCompanyOptions = computed(() =>
+    (insuranceCompaniesData.value?.data ?? []).map((c: any) => ({
+      label: c.name,
+      value: c.id
+    }))
+  )
+
+  const showInsuranceSelect = computed(() => formState.payerType === 'insurance_company')
 
   // ─── Credit ──────────────────────────────────────────────────
   const creditBalance = computed(() => patientCreditBalance.value ?? 0)
@@ -161,6 +169,10 @@
       amountCents,
       type: 'session_payment',
       method: event.data.method,
+      payerType: event.data.payerType || 'patient',
+      ...(event.data.payerType === 'insurance_company' && event.data.payerInsuranceCompanyId
+        ? { payerInsuranceCompanyId: event.data.payerInsuranceCompanyId }
+        : {}),
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString(),
       sessionItems: [{ appointmentId: props.appointment.id, amountCents }]
@@ -214,6 +226,7 @@
               @click.stop="handleStartPriceEdit"
             />
           </div>
+          {{ appointment.priceCents }}
 
           <template #content>
             <UCard :ui="{ body: 'p-3 sm:p-4' }">
@@ -248,13 +261,12 @@
                   Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
                   <UButton
                     v-if="hasCustomCost"
+                    label="Réinitialiser"
                     size="xs"
                     variant="link"
                     class="text-primary ml-1 underline underline-offset-2"
                     @click="handleResetPrice"
-                  >
-                    Réinitialiser
-                  </UButton>
+                  />
                 </p>
               </div>
             </UCard>
@@ -276,6 +288,50 @@
           title="Solde insuffisant"
           description="Le solde d'avance du patient est insuffisant pour couvrir le coût de la séance."
         />
+
+        <div v-if="appointment.insuranceCompanyId" class="space-y-3">
+          <label class="text-muted text-[10px] font-bold tracking-wider uppercase">Payeur</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="flex items-center justify-center gap-2 rounded-md border p-2 text-sm transition-colors"
+              :class="
+                formState.payerType === 'patient'
+                  ? 'border-primary bg-primary/5 text-primary font-bold'
+                  : 'border-default text-muted hover:border-primary/50'
+              "
+              @click="formState.payerType = 'patient'"
+            >
+              <UIcon name="i-hugeicons-user" class="size-4" />
+              Patient
+            </button>
+            <button
+              type="button"
+              class="flex items-center justify-center gap-2 rounded-md border p-2 text-sm transition-colors"
+              :class="
+                formState.payerType === 'insurance_company'
+                  ? 'border-primary bg-primary/5 text-primary font-bold'
+                  : 'border-default text-muted hover:border-primary/50'
+              "
+              @click="formState.payerType = 'insurance_company'"
+            >
+              <UIcon name="i-hugeicons-shield-01" class="size-4" />
+              Mutuelle
+            </button>
+          </div>
+        </div>
+
+        <div v-if="showInsuranceSelect" class="space-y-2">
+          <UFormField label="Mutuelle" size="xs">
+            <USelect
+              v-model="formState.payerInsuranceCompanyId"
+              variant="subtle"
+              placeholder="Sélectionner..."
+              :options="insuranceCompanyOptions"
+              size="md"
+            />
+          </UFormField>
+        </div>
 
         <div class="space-y-3">
           <label class="text-muted text-[10px] font-bold tracking-wider uppercase">Mode de règlement</label>
@@ -302,7 +358,7 @@
           </div>
 
           <p v-if="showCreditBalanceHint" class="text-muted text-xs">
-            Solde disponible : {{ centsToCurrency(creditBalance).toFixed(2) }} DH
+            Solde disponible : {{ formatCurrency(creditBalance) }}
             <UButton
               type="button"
               label="Utiliser"
@@ -330,7 +386,7 @@
       <footer class="flex flex-col gap-4">
         <div class="text-muted flex items-center justify-between text-[11px] font-bold">
           <UIcon name="i-hugeicons-shield-01" class="size-3.5" />
-          <span>Solde Patient : {{ centsToCurrency(creditBalance).toFixed(2) }} MAD</span>
+          <span>Solde Patient : {{ formatCurrency(creditBalance) }}</span>
         </div>
         <UButton
           color="primary"
