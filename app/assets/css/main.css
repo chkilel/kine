@@ -1,21 +1,47 @@
-@import "tailwindcss" theme(static);
-@import "@nuxt/ui";
+@import 'tailwindcss' theme(static);
+@import '@nuxt/ui';
 
 @theme static {
   --font-sans: 'Geist', 'Public Sans', sans-serif;
   --font-title: 'Manrope', 'Public Sans', sans-serif;
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
+  --color-green-50: #effdf5;
+  --color-green-100: #d9fbe8;
+  --color-green-200: #b3f5d1;
+  --color-green-300: #75edae;
+  --color-green-400: #00dc82;
+  --color-green-500: #00c16a;
+  --color-green-600: #00a155;
+  --color-green-700: #007f45;
   --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  --color-green-900: #0a5331;
+  --color-green-950: #052e16;
+
+  /* Define new custom color */
+
+  --color-primary-50: #f0f5ff;
+  --color-primary-100: #e1e9ff;
+  --color-primary-200: #c8d7ff;
+  --color-primary-300: #a4bcff;
+  --color-primary-400: #7a99ff;
+  --color-primary-500: #135bec;
+  --color-primary-600: #0047d4;
+  --color-primary-700: #003bb0;
+  --color-primary-800: #00318c;
+  --color-primary-900: #002970;
+  --color-primary-950: #001945;
+
+  --color-base-50: #f8f9ff;
+  --color-base-100: #eff4ff;
+  --color-base-200: #e2e8f0;
+  --color-base-300: #cbd5e1;
+  --color-base-400: #94a3b8;
+  --color-base-500: #64748b;
+  --color-base-600: #475569;
+  --color-base-700: #334155;
+  --color-base-800: #1e293b;
+  --color-base-900: #0f172a;
+  --color-base-950: #0b1c30;
 }
 
 :root {

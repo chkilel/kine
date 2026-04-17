@@ -60,10 +60,15 @@ export default defineNuxtConfig({
       }
     },
     // To exclude /_nuxt/** paths from being handled by the Cloudflare dev worker.
-    routeRules: {
-      '/_nuxt/**': {
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      }
+    // routeRules: {
+    //   '/_nuxt/**': {
+    //     headers: { 'Access-Control-Allow-Origin': '*' }
+    //   }
+    // }
+  },
+  ui: {
+    theme: {
+      colors: ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'base']
     }
   }
 })
