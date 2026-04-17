@@ -2,6 +2,7 @@
   import type { NavigationMenuItem } from '@nuxt/ui'
 
   const open = ref(false)
+  const rightOpen = useState('rightSide', () => true)
 
   const links = [
     [
@@ -147,6 +148,9 @@
     <UDashboardSearch :groups="groups" />
 
     <slot />
+    <USidebar v-model:open="rightOpen" variant="inset" rail collapsible="offcanvas" side="right">
+      <div class="h-full" />
+    </USidebar>
 
     <NotificationsSlideover />
   </UDashboardGroup>

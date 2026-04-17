@@ -28,6 +28,8 @@
     'header-title'?: () => any
     'header-right'?: () => any
   }>()
+
+  const rightOpen = useState('rightSide')
 </script>
 
 <template>
@@ -60,6 +62,14 @@
               </UChip>
             </template>
           </slot>
+
+          <UButton
+            icon="i-lucide-panel-left"
+            color="neutral"
+            variant="ghost"
+            :aria-label="rightOpen ? 'Close sidebar' : 'Open sidebar'"
+            @click="rightOpen = !rightOpen"
+          />
         </template>
       </UDashboardNavbar>
     </template>
