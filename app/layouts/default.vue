@@ -1,9 +1,11 @@
 <script setup lang="ts">
   import type { NavigationMenuItem } from '@nuxt/ui'
 
+  // ─── State ──────────────────────────────────────────────────
   const open = ref(false)
   const rightOpen = useState('rightSide', () => true)
 
+  // ─── Navigation ──────────────────────────────────────────────
   const links = [
     [
       {
@@ -96,6 +98,7 @@
     ]
   ] satisfies NavigationMenuItem[][]
 
+  // ─── Search groups ───────────────────────────────────────────
   const groups = computed(() => [
     {
       id: 'navigation',
@@ -125,7 +128,7 @@
       v-model:open="open"
       collapsible
       resizable
-      class="bg-elevated/25"
+      class="bg-elevated"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
