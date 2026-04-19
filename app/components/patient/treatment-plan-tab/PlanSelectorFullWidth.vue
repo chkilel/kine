@@ -79,7 +79,13 @@
       </div>
     </div>
     <div v-else-if="selectedPlan" class="flex w-full flex-col items-center gap-3">
-      <div class="flex items-center gap-2 text-left">
+      <!-- <AppIconBox -->
+      <!-- :name="getTreatmentPlanStatusIcon(selectedPlan.status)" -->
+      <!-- :color="getTreatmentPlanStatusColor(selectedPlan.status)" -->
+      <!-- size="xl" -->
+      <!-- class="shrink-0 rounded" -->
+      <!-- /> -->
+      <div class="flex gap-2 text-left">
         <AppIconBox
           :name="getTreatmentPlanStatusIcon(selectedPlan.status)"
           :color="getTreatmentPlanStatusColor(selectedPlan.status)"
@@ -92,6 +98,9 @@
           class=""
         />
 
+        <!-- <UBadge :color="getTreatmentPlanStatusColor(selectedPlan.status)" variant="solid" size="sm"> -->
+        <!-- {{ getTreatmentPlanStatusLabel(selectedPlan.status) }} -->
+        <!-- </UBadge> -->
         <h3 class="inline text-sm font-semibold">{{ selectedPlan.title }}</h3>
       </div>
     </div>
