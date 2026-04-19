@@ -11,36 +11,13 @@
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  const items = computed(
-    () =>
-      [
-        {
-          label: "Vue d'Ensemble",
-          icon: 'i-hugeicons-user',
-          value: 'overview'
-        },
-        {
-          label: 'Plan de traitement',
-          icon: 'hugeicons-first-aid-kit',
-          value: 'plan'
-        },
-        {
-          label: 'Hors Plan',
-          icon: 'hugeicons-folder-details',
-          value: 'seances'
-        },
-        {
-          label: 'Documents',
-          icon: 'i-hugeicons-file-02',
-          value: 'documents'
-        },
-        {
-          label: 'Facturation',
-          icon: 'i-hugeicons-wallet-01',
-          value: 'facturation'
-        }
-      ] satisfies TabsItem[]
-  )
+  const items: TabsItem[] = [
+    { label: "Vue d'Ensemble", icon: 'i-hugeicons-user', value: 'overview' },
+    { label: 'Plan de traitement', icon: 'hugeicons-first-aid-kit', value: 'plan' },
+    { label: 'Hors Plan', icon: 'hugeicons-folder-details', value: 'seances' },
+    { label: 'Documents', icon: 'i-hugeicons-file-02', value: 'documents' },
+    { label: 'Facturation', icon: 'i-hugeicons-wallet-01', value: 'facturation' }
+  ]
 
   const activeTab = computed({
     get() {
@@ -87,19 +64,17 @@
       <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
     </div>
     <div v-else-if="patient" class="space-y-6">
-      <UCard :ui="{ root: 'rounded-b', body: 'p-0 sm:p-0 rounded-b-none' }">
+      <UCard :ui="{ body: 'sm:pb-px pb-px' }">
         <!-- Patient Header -->
-        <PatientHeader :patient="patient" class="p-4 sm:p-6" />
-        <USeparator />
+        <PatientHeaderToolbar :patient="patient" class="pb-0 sm:pb-0" />
         <!-- Tabs Navigation -->
         <UTabs
           v-model="activeTab"
           :content="false"
           :items="items"
           variant="link"
-          size="lg"
-          class="bg-muted mb-px w-full"
-          :ui="{ indicator: 'h-[2px]' }"
+          class="-mx-1 mt-6 w-full"
+          :ui="{ indicator: 'h-[2px]', trigger: 'pl-0 pr-6' }"
         />
       </UCard>
 

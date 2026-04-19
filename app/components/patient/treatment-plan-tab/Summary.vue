@@ -4,6 +4,9 @@
     treatmentPlan: TreatmentPlanWithProgress
   }>()
 
+  const route = useRoute()
+  const { latestActiveTreatmentPlan } = usePatientTreatmentPlans(() => route.params.id as string)
+
   const { openCreateSlideover, openEditSlideover } = useTreatmentPlanSlideover()
 
   const toast = useToast()
@@ -63,33 +66,50 @@
       onSelect: () => openCreateSlideover(props.patient)
     }
   ])
+  const selectedPlanId = computed<string>({
+    get: () => {
+      const routePlanId = route.query.planId as string | undefined
+
+      return routePlanId ?? latestActiveTreatmentPlan.value?.id ?? ''
+    },
+    set: async (id) => {
+      await navigateTo({
+        path: route.path,
+        query: { ...route.query, planId: id || undefined }
+      })
+    }
+  })
 </script>
 
 <template>
-  <AppCard title="Détail du plan" class="relative">
-    <template #actions>
+  <AppCard class="relative" :ui="{ header: 'p-0 sm:p-0', body: 'relative' }">
+    <template #header>
+      <PatientTreatmentPlanTabPlanSelector
+        :patient-id="patient.id"
+        v-model:selected-plan-id="selectedPlanId"
+        class="min-h-18"
+      />
+    </template>
+
+    <div class="flex flex-col gap-2 text-xs">
+      <UBadge
+        :color="getTreatmentPlanStatusColor(treatmentPlan.status)"
+        variant="solid"
+        size="md"
+        class="absolute top-3 rounded-full"
+      >
+        {{ getTreatmentPlanStatusLabel(treatmentPlan.status) }}
+      </UBadge>
       <ClientOnly>
         <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }" class="absolute top-3 right-2">
           <UButton icon="i-hugeicons-more-vertical" color="neutral" variant="ghost" size="sm" />
         </UDropdownMenu>
       </ClientOnly>
-    </template>
-    <div class="flex flex-col gap-4 text-xs">
-      <div class="flex items-center justify-between">
-        <div class="text-muted">Début</div>
-        <div class="flex items-center gap-1.5">
-          <UIcon name="i-hugeicons-calendar-02" class="text-[16px]" />
-          <span class="font-semibold">
-            {{ formatDate(treatmentPlan.startDate) }}
-            {{ treatmentPlan.endDate ? ` - ${formatDate(treatmentPlan.endDate)}` : '' }}
-          </span>
-        </div>
-      </div>
 
-      <div class="flex items-center justify-between">
-        <div class="text-muted">Thérapeute</div>
-        <div class="flex items-center gap-1.5">
-          <UIcon name="i-hugeicons-user" class="size-4" />
+      <div class="mt-5 flex items-center justify-between">
+        <div class="flex items-center gap-1">
+          <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
+          <div class="text-muted">Thérapeute</div>
           <span class="font-semibold">
             {{ getTherapistName(treatmentPlan.therapistId) }}
           </span>
@@ -117,7 +137,7 @@
           </span>
         </div>
       </div>
-      <USeparator />
+      <USeparator class="my-1" />
       <div class="space-y-2">
         <h4 class="text-dimmed text-xs font-semibold uppercase">Objectifs thérapeutiques</h4>
         <p class="flex items-baseline gap-2 text-sm leading-relaxed">

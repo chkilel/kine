@@ -97,9 +97,6 @@
 
     <!-- Treatment Plan Content -->
     <div v-else class="space-y-4">
-      <!-- Plan Selector -->
-      <PatientTreatmentPlanTabPlanSelector :patient-id="patient.id" v-model:selected-plan-id="selectedPlanId" />
-
       <!-- Selected Plan Content -->
       <div v-if="selectedTreatmentPlan">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
