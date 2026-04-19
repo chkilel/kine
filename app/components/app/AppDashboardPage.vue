@@ -15,6 +15,7 @@
     'header-leading'?: () => any
     'header-title'?: () => any
     'header-right'?: () => any
+    toolbar?: () => any
   }>()
 
   // ─── State ──────────────────────────────────────────────────
@@ -70,6 +71,7 @@
           />
         </template>
       </UDashboardNavbar>
+      <slot v-if="slots.toolbar" name="toolbar" />
     </template>
 
     <template #body>

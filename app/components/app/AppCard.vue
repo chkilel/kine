@@ -11,7 +11,8 @@
 
   const defaultUi = {
     root: 'divide-y-0',
-    header: 'px-4 sm:px-6  pb-0 sm:pb-0'
+    header: 'px-4 sm:px-6  pb-0 sm:pb-0',
+    body: 'pt-2 sm:pt-3'
   }
 
   // merge strategy: consumer wins
@@ -33,7 +34,10 @@
 
 <template>
   <UCard v-bind="forwardedAttrs" :ui="mergedUi">
-    <template v-if="showHeader" #header>
+    <template v-if="$slots.header" #header>
+      <slot name="header" />
+    </template>
+    <template v-else-if="showHeader" #header>
       <div class="flex flex-wrap items-start gap-2">
         <div>
           <div v-if="icon || $slots.title || title" class="flex items-center gap-1.5">
@@ -41,7 +45,7 @@
             <template v-if="$slots.title">
               <slot name="title" />
             </template>
-            <h3 v-else-if="title" class="font-bold">{{ title }}</h3>
+            <h3 v-else-if="title" class="text-toned text-[13px] font-semibold tracking-wide uppercase">{{ title }}</h3>
           </div>
           <p v-if="description" class="text-muted truncate text-xs" :class="{ 'ml-7': !!icon }">
             {{ description }}
