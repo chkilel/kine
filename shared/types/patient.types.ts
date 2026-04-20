@@ -59,9 +59,38 @@ const patientCreateShape = {
   notes: z.array(noteSchema).default([])
 }
 
-export const patientCreateSchema = createInsertSchema(patients, patientCreateShape)
+export const patientCreateSchema = createInsertSchema(patients, {
+  organizationId: z.string(),
+  firstName: nameSchema,
+  lastName: nameSchema,
+  dateOfBirth: calendarDateSchema,
+  gender: genderSchema,
+  email: z.string().optional(),
+  phone: phoneNumberSchema,
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).default([]),
+  medicalConditions: z.array(z.string()).default([]),
+  surgeries: z.array(z.string()).default([]),
+  allergies: z.array(z.string()).default([]),
+  medications: z.array(z.string()).default([]),
+  insuranceProvider: z.string().optional(),
+  insuranceNumber: z.string().optional(),
+  referralSource: z.string().optional(),
+  status: patientStatusSchema,
+  notes: z.array(noteSchema).default([])
+})
 
-export const patientUpdateSchema = patientCreateSchema.partial()
+export const patientUpdateSchema = createInsertSchema(patients, {
+  emergencyContacts: z.array(emergencyContactSchema).optional(),
+  medicalConditions: z.array(z.string()).optional(),
+  surgeries: z.array(z.string()).optional(),
+  allergies: z.array(z.string()).optional(),
+  medications: z.array(z.string()).optional(),
+  notes: z.array(noteSchema).optional()
+}).partial()
 
 // Query schemas
 export const patientQuerySchema = z.object({

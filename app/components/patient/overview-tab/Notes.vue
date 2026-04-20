@@ -3,26 +3,19 @@
 
   const { patient } = defineProps<{ patient: Patient }>()
 
+  const confirmModal = useOverlay().create(LazyAppModalConfirm)
   const { mutate: updatePatient } = useUpdatePatient()
   const { user } = await useAuth()
 
   const showInput = ref(false)
   const newNoteText = ref('')
   const showAllNotes = ref(false)
-
-  const overlay = useOverlay()
-  const confirmModal = overlay.create(LazyAppModalConfirm)
-
   const editingNoteIndex = ref<number | null>(null)
   const editingNoteText = ref('')
 
   const practitionerNotes = computed(() => {
     if (patient?.notes && patient.notes.length > 0) {
-      const sortedNotes = [...patient.notes].sort((a, b) => {
-        const dateA = typeof a.date === 'string' ? new Date(a.date) : a.date
-        const dateB = typeof b.date === 'string' ? new Date(b.date) : b.date
-        return dateB.getTime() - dateA.getTime()
-      })
+      const sortedNotes = [...patient.notes].sort((a, b) => b.date.getTime() - a.date.getTime())
       return sortedNotes.map((note) => ({
         text: note.content,
         date: formatRelativeDate(note.date),
@@ -34,21 +27,17 @@
 
   function getNoteActions(index: number) {
     return [
-      [
-        {
-          label: 'Modifier',
-          icon: 'i-hugeicons-pencil-edit-01',
-          onSelect: () => startEditNote(index)
-        }
-      ],
-      [
-        {
-          label: 'Supprimer',
-          icon: 'i-hugeicons-delete-02',
-          color: 'error',
-          onSelect: () => confirmDeleteNote(index)
-        }
-      ]
+      {
+        label: 'Modifier',
+        icon: 'i-hugeicons-pencil-edit-01',
+        onSelect: () => startEditNote(index)
+      },
+      {
+        label: 'Supprimer',
+        icon: 'i-hugeicons-delete-02',
+        color: 'error' as const,
+        onSelect: () => confirmDeleteNote(index)
+      }
     ]
   }
 
@@ -65,11 +54,7 @@
   function saveEditNote() {
     if (editingNoteIndex.value === null || !editingNoteText.value.trim()) return
 
-    const sortedNotes = [...patient.notes].sort((a, b) => {
-      const dateA = typeof a.date === 'string' ? new Date(a.date) : a.date
-      const dateB = typeof b.date === 'string' ? new Date(b.date) : b.date
-      return dateB.getTime() - dateA.getTime()
-    })
+    const sortedNotes = [...patient.notes].sort((a, b) => b.date.getTime() - a.date.getTime())
 
     const noteToEdit = sortedNotes[editingNoteIndex.value]
     const updatedNotes = patient.notes.map((note) =>
@@ -81,11 +66,7 @@
   }
 
   async function confirmDeleteNote(index: number) {
-    const sortedNotes = [...patient.notes].sort((a, b) => {
-      const dateA = typeof a.date === 'string' ? new Date(a.date) : a.date
-      const dateB = typeof b.date === 'string' ? new Date(b.date) : b.date
-      return dateB.getTime() - dateA.getTime()
-    })
+    const sortedNotes = [...patient.notes].sort((a, b) => a.date.getTime() - b.date.getTime())
 
     const noteToDelete = sortedNotes[index]
 
@@ -131,7 +112,7 @@
 </script>
 
 <template>
-  <AppCard title="Notes du Patient" description="Notes générales  sur le patient" class="relative">
+  <AppCard title="Notes" description="Notes générales relative au patient" class="relative">
     <template #actions>
       <UButton
         variant="ghost"
@@ -169,9 +150,9 @@
             :rows="3"
             class="mb-2 min-h-16 w-full resize-none"
           />
-          <p v-else class="text-muted text-sm font-medium">{{ note.text }}</p>
-          <div class="mt-1 flex items-center justify-between text-xs capitalize">
-            <div class="text-dimmed text-xs/5">{{ note.date }} • {{ note.author }}</div>
+          <p v-else class="text-highlighted text-[13px]">{{ note.text }}</p>
+          <div class="flex items-end justify-between text-xs capitalize">
+            <div class="text-muted text-[11px]">{{ note.date }} • {{ note.author }}</div>
             <ClientOnly>
               <div v-if="editingNoteIndex === index" class="flex gap-1">
                 <UButton size="xs" variant="ghost" @click="cancelEditNote">Annuler</UButton>
@@ -193,7 +174,7 @@
       </div>
       <UEmpty
         v-else
-        size="sm"
+        size="xs"
         variant="subtle"
         icon="i-hugeicons-note-02"
         title="Aucune note enregistrée"
