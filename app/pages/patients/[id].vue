@@ -64,19 +64,19 @@
       <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
     </div>
     <div v-else-if="patient" class="space-y-6">
-      <UCard :ui="{ body: 'sm:pb-px pb-px' }">
+      <UCard :ui="{ body: 'sm:py-4 py-3' }">
         <!-- Patient Header -->
         <PatientHeaderToolbar :patient="patient" class="pb-0 sm:pb-0" />
-        <!-- Tabs Navigation -->
-        <UTabs
-          v-model="activeTab"
-          :content="false"
-          :items="items"
-          variant="link"
-          class="-mx-1 mt-6 w-full"
-          :ui="{ indicator: 'h-[2px]', trigger: 'pl-0 pr-6' }"
-        />
       </UCard>
+      <!-- Tabs Navigation -->
+      <UTabs
+        v-model="activeTab"
+        :content="false"
+        :items="items"
+        variant="link"
+        class="-mx-1 w-full"
+        :ui="{ indicator: 'h-[2px]', trigger: 'pl-0 pr-6' }"
+      />
 
       <!-- Tab Content -->
       <NuxtPage />

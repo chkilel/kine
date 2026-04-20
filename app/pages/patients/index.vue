@@ -250,7 +250,7 @@
     />
 
     <!-- Patient Table -->
-    <UCard v-else :ui="{ root: 'ring-0', body: 'p-0 sm:p-0' }">
+    <UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
       <UTable
         :data="patients?.data"
         :columns="columns"
@@ -261,7 +261,7 @@
         @select="handleRowClick"
         :ui="{
           tbody: 'divide-y divide-(--ui-bg-muted)',
-          thead: 'bg-elevated',
+          thead: 'bg-muted',
           th: 'uppercase font-semibold text-xs text-muted',
           td: 'hover:cursor-pointer',
           separator: 'bg-muted'
@@ -284,7 +284,7 @@
       <!-- Pagination -->
       <div
         v-if="patients?.pagination && patients?.pagination?.total > 0"
-        class="bg-elevated flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
+        class="bg-muted flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="text-muted text-sm">
           Affichage de
