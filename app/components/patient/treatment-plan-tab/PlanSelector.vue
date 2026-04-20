@@ -87,12 +87,12 @@
           variant="soft"
           :ui="{
             base: 'relative shrink-0 rounded bg-transparent p-0',
-            leadingIcon: 'size-10'
+            leadingIcon: 'size-8'
           }"
           class=""
         />
 
-        <h3 class="inline text-sm font-semibold">{{ selectedPlan.title }}</h3>
+        <h3 class="inline text-sm font-medium">{{ selectedPlan.title }}</h3>
       </div>
     </div>
     <div v-else-if="!selectedPlanId" class="flex w-full items-center gap-3">
