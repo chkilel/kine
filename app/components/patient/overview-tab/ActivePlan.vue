@@ -30,19 +30,15 @@
       },
       {
         label: 'suivi par',
-        value: h('p', { class: '' }, [
-          getTherapistName(therapistId),
-          h('span', { class: 'text-[11px]' }, ` • ${formatDate(startDate)}`)
-        ]),
+        value: getTherapistName(therapistId),
+        suffix: formatDate(startDate),
         icon: 'i-hugeicons-user',
         color: 'info' as UIColor
       },
       {
         label: 'Prescrit par',
-        value: h('p', { class: '' }, [
-          prescribingDoctor || 'Non spécifié',
-          h('span', { class: 'text-[11px]' }, prescriptionDate && ` • ${formatDate(prescriptionDate)}`)
-        ]),
+        value: prescribingDoctor || 'Non spécifié',
+        suffix: prescriptionDate && `${formatDate(prescriptionDate)}`,
         icon: 'i-hugeicons:chat-user',
         color: 'info' as UIColor
       },
@@ -112,9 +108,9 @@
           <AppIconBox size="md" :color="detail.color" :name="detail.icon" class="p-1" />
           <div class="flex-1">
             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
-            <p class="flex w-full items-center justify-between text-[13px] font-medium">
-              <component :is="detail.value" v-if="typeof detail.value !== 'string'" />
-              <span v-else>{{ detail.value }}</span>
+            <p class="text-[13px] font-medium">
+              {{ detail.value }}
+              <span v-if="detail.suffix" class="text-[11px]">• {{ detail.suffix }}</span>
             </p>
           </div>
         </div>
