@@ -1,131 +1,232 @@
 <script setup lang="ts">
-  import { LazyTreatmentPlanCreateSlideover } from '#components'
+  import { LazyTreatmentSessionSlideover, LazyTreatmentPlanCreateSlideover } from '#components'
 
+  // ─── Props ───────────────────────────────────────────────────
   const { patient } = defineProps<{ patient: Patient }>()
 
+  // ─── Composables ─────────────────────────────────────────────
   const overlay = useOverlay()
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
-  const router = useRouter()
+  const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
+  const { loading: treatmentPlansLoading, latestActiveTreatmentPlan } = usePatientTreatmentPlans(() => patient?.id)
+  const { data: appointments } = useAppointmentsList(() => ({
+    patientId: patient.id,
+    treatmentPlanId: latestActiveTreatmentPlan.value?.id,
+    limit: 3
+  }))
+  const { getTherapistName } = useOrganizationMembers()
 
-  const { activeTreatmentPlans, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => patient?.id)
-
-  const displayedPlans = computed(() => {
-    const plans = activeTreatmentPlans.value || []
-    return plans.slice(0, 5)
+  // ─── Computed state ──────────────────────────────────────────
+  const planDetails = computed(() => {
+    if (!latestActiveTreatmentPlan.value) return null
+    const { sessionFrequency, startDate, prescribingDoctor, insuranceInfo, prescriptionDate, therapistId } =
+      latestActiveTreatmentPlan.value
+    return [
+      {
+        label: 'Fréquence',
+        value: `${sessionFrequency || 0}x / semaine`,
+        icon: 'i-hugeicons-transaction-history',
+        color: 'info' as UIColor
+      },
+      {
+        label: 'suivi par',
+        value: h('p', { class: '' }, [
+          getTherapistName(therapistId),
+          h('span', { class: 'text-[11px]' }, ` • ${formatDate(startDate)}`)
+        ]),
+        icon: 'i-hugeicons-user',
+        color: 'info' as UIColor
+      },
+      {
+        label: 'Prescrit par',
+        value: h('p', { class: '' }, [
+          prescribingDoctor || 'Non spécifié',
+          h('span', { class: 'text-[11px]' }, prescriptionDate && ` • ${formatDate(prescriptionDate)}`)
+        ]),
+        icon: 'i-hugeicons:chat-user',
+        color: 'info' as UIColor
+      },
+      {
+        label: 'Assurance',
+        value: insuranceInfo || 'Non spécifié',
+        icon: 'i-hugeicons-security-check',
+        color: 'success' as UIColor
+      }
+    ]
   })
 
-  const hasMorePlans = computed(() => {
-    return (activeTreatmentPlans.value?.length || 0) > 5
-  })
-
-  const remainingCount = computed(() => {
-    return (activeTreatmentPlans.value?.length || 0) - 5
-  })
-
-  const cardTitle = computed(() => {
-    const count = activeTreatmentPlans.value?.length || 0
-    if (count === 0) return 'Plan de Traitement Actif'
-    if (count === 1) return 'Plan de Traitement Actif'
-    return `Plans de Traitement Actifs (${count})`
-  })
+  // ─── Event handlers ──────────────────────────────────────────
+  async function navigateToPlan(planId?: string) {
+    await navigateTo({ path: `/patients/${patient.id}/plan`, query: { planId } })
+  }
 
   function openCreateTreatmentPlan() {
     treatmentPlanCreateOverlay.open({ patient })
   }
 
-  function navigateToTreatmentPlan(planId?: string) {
-    if (planId) {
-      router.push(`/patients/${patient.id}/plan?planId=${planId}`)
-    } else {
-      router.push(`/patients/${patient.id}/plan`)
-    }
+  function openAppointmentSlideover(appointment: Appointment) {
+    activeConsultationOverlay.open({
+      patientId: patient.id,
+      appointmentId: appointment.id
+    })
   }
 </script>
 
 <template>
-  <template v-if="treatmentPlansLoading">
-    <div class="bg-default flex h-full flex-col rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-center py-8">
-        <UIcon name="i-hugeicons-loading-03" class="text-muted animate-spin text-3xl" />
+  <AppCard>
+    <template v-if="treatmentPlansLoading">
+      <div class="bg-default flex h-full flex-col rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-center py-8">
+          <UIcon name="i-hugeicons-loading-03" class="text-muted animate-spin text-3xl" />
+        </div>
       </div>
-    </div>
-  </template>
+    </template>
 
-  <AppCard v-else-if="activeTreatmentPlans && activeTreatmentPlans.length > 0" :title="cardTitle">
-    <UScrollArea orientation="horizontal" class="h-45 w-full" :ui="{ viewport: 'flex gap-3 pb-2' }">
-      <!-- Treatment Plan Cards -->
-      <div
-        v-for="plan in displayedPlans"
-        :key="plan.id"
-        class="group border-default bg-muted relative flex h-40 w-50 shrink-0 cursor-pointer flex-col justify-between rounded-lg border p-4 transition-shadow hover:shadow-md"
-        @click="navigateToTreatmentPlan(plan.id)"
-      >
-        <!-- Header: Status dot + Badge -->
-        <div class="flex items-start justify-between">
-          <UChip standalone inset size="3xl" :color="getTreatmentPlanStatusColor(plan.status)" />
-          <UBadge :color="getTreatmentPlanStatusColor(plan.status)" variant="soft" size="sm" class="text-[10px]">
-            {{ getTreatmentPlanStatusLabel(plan.status) }}
+    <div v-else-if="latestActiveTreatmentPlan" class="flex flex-col gap-4">
+      <div class="flex items-start gap-4">
+        <div>
+          <h4 class="text-base font-semibold">{{ latestActiveTreatmentPlan.title }}</h4>
+
+          <UBadge
+            :color="getTreatmentPlanStatusColor(latestActiveTreatmentPlan.status)"
+            variant="subtle"
+            size="md"
+            class="text-success-600 rounded-full px-5 py-0.5"
+          >
+            {{ getTreatmentPlanStatusLabel(latestActiveTreatmentPlan.status) }}
           </UBadge>
         </div>
+        <UButton
+          size="sm"
+          variant="ghost"
+          color="primary"
+          trailingIcon="i-hugeicons-arrow-right-02"
+          label="Voir Détail"
+          class="ml-auto"
+          :to="`/patients/${patient.id}/plan?planId=${latestActiveTreatmentPlan.id}`"
+        />
+      </div>
 
-        <!-- Content: Title & Diagnosis -->
-        <div class="min-h-0 flex-1">
-          <p class="text-highlighted truncate text-sm font-bold">{{ plan.title }}</p>
-          <p v-if="plan.diagnosis" class="text-muted mt-0.5 truncate text-xs">{{ plan.diagnosis }}</p>
-        </div>
-
-        <!-- Footer: Date, Sessions & Progress -->
-        <div class="space-y-1">
-          <div class="text-muted flex items-center gap-1.5 text-xs">
-            <UIcon name="i-hugeicons-calendar-02" class="size-3.5" />
-            <span>{{ formatDate(plan.startDate) }}</span>
-          </div>
-          <div v-if="plan.numberOfSessions" class="text-muted flex items-center gap-1.5 text-xs">
-            <UIcon name="i-hugeicons-target-02" class="size-3.5" />
-            <span>{{ plan.numberOfSessions }} séance{{ plan.numberOfSessions > 1 ? 's' : '' }}</span>
-          </div>
-          <div v-if="plan.progress !== undefined" class="flex items-center gap-1.5 text-xs">
-            <UIcon name="i-hugeicons-chart-line-data-01" class="text-primary size-3.5" />
-            <span class="text-primary font-medium">{{ plan.progress }}%</span>
+      <div class="grid grid-cols-2 gap-2">
+        <div v-for="detail in planDetails" :key="detail.label" class="flex items-center gap-3">
+          <AppIconBox size="md" :color="detail.color" :name="detail.icon" class="p-1" />
+          <div class="flex-1">
+            <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
+            <p class="flex w-full items-center justify-between text-[13px] font-medium">
+              <component :is="detail.value" v-if="typeof detail.value !== 'string'" />
+              <span v-else>{{ detail.value }}</span>
+            </p>
           </div>
         </div>
       </div>
+      <div class="bg-elevated rounded-lg p-2.5">
+        <div class="mb-2 flex items-end justify-between">
+          <div class="text-muted mt-1.5 flex justify-between gap-1 text-xs font-semibold tracking-wide uppercase">
+            <span>Séances:</span>
+            <span>
+              {{ latestActiveTreatmentPlan.completedAppointments || 0 }} sur
+              {{ latestActiveTreatmentPlan.numberOfSessions || 0 }}
+            </span>
+          </div>
+          <span class="text-primary text-sm font-bold">{{ latestActiveTreatmentPlan.progress || 0 }}%</span>
+        </div>
+        <UProgress
+          :model-value="latestActiveTreatmentPlan.progress || 0"
+          size="md"
+          :ui="{
+            base: 'bg-default ring-default ring'
+          }"
+        />
+      </div>
+    </div>
+    <UEmpty
+      v-else
+      icon="i-hugeicons-note-add"
+      title="Aucun plan de traitement"
+      description="Ce patient n'a pas encore de plan de traitement."
+      variant="naked"
+      :actions="[
+        {
+          label: 'Créer un plan',
+          color: 'primary',
+          size: 'sm',
+          onClick: openCreateTreatmentPlan
+        }
+      ]"
+    />
 
-      <!-- Create New Plan Card -->
+    <div class="mt-6 flex flex-col gap-2">
+      <h4 class="text-toned text-[13px] font-semibold tracking-wide uppercase">Prochaines séances</h4>
+
       <div
-        class="border-primary/30 text-primary/60 hover:text-primary hover:border-primary hover:bg-primary/5 flex h-40 w-50 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-all"
-        @click="openCreateTreatmentPlan"
+        v-if="appointments"
+        v-for="appointment in appointments"
+        :key="appointment.id"
+        class="group border-default bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border p-1 pr-2 transition-colors hover:shadow-md"
+        @click="openAppointmentSlideover(appointment)"
       >
-        <UIcon name="i-hugeicons-add-01" class="size-8" />
-        <span class="text-sm font-medium">Nouveau plan</span>
+        <AppDateBadge :date="appointment.date" color="info" variant="soft" size="lg" class="rounded-r-none" />
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <UIcon :name="getLocationIcon(appointment.location || 'clinic')" />
+              <p class="truncate text-sm font-semibold">
+                {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }}
+              </p>
+            </div>
+            <UBadge
+              :color="getAppointmentStatusColor(appointment.status)"
+              size="sm"
+              variant="subtle"
+              class="rounded-full"
+            >
+              {{ getAppointmentStatusLabel(appointment.status) }}
+            </UBadge>
+          </div>
+
+          <div class="text-muted sm:divide-muted mt-1.5 flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
+            <div class="flex items-center gap-1 sm:pr-2">
+              <UIcon name="i-hugeicons-clock-01" />
+              <p>{{ formatTimeString(appointment.startTime) }}</p>
+            </div>
+            <!-- <div class="flex items-center gap-1 sm:px-2">
+              <UIcon name="i-hugeicons-hourglass" />
+              <p>{{ appointment.duration }} min</p>
+            </div> -->
+
+            <div v-if="appointment.roomName" class="flex items-center gap-1 sm:px-2">
+              <UIcon name="i-hugeicons-door-01" />
+              <p>{{ appointment.roomName }}</p>
+            </div>
+            <div v-if="appointment.therapistId" class="flex items-center gap-1 sm:px-2">
+              <UIcon name="i-hugeicons-user" />
+              <p>{{ getTherapistName(appointment.therapistId) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="group-hover:text-primary text-muted size-5 transition-all group-hover:-mr-1"
+        />
       </div>
-    </UScrollArea>
-
-    <!-- Show More Link -->
+      <UEmpty
+        v-else
+        icon="hugeicons-calendar-remove-02"
+        title="Aucune séance planifiée"
+        description="Ce patient n'a pas encore de séance planifiée."
+      />
+    </div>
     <UButton
-      v-if="hasMorePlans"
-      trailing-icon="hugeicons-arrow-right-02"
-      variant="ghost"
       size="sm"
-      class="mt-3 w-full justify-center"
-      @click="navigateToTreatmentPlan()"
-    >
-      Voir {{ remainingCount }} plan{{ remainingCount > 1 ? 's' : '' }} de plus
-    </UButton>
+      variant="ghost"
+      color="primary"
+      trailing-icon="hugeicons-arrow-right-02"
+      label="Voir toutes les séances"
+      block
+      class="mt-4"
+      :ui="{ trailingIcon: 'ms-0' }"
+      @click="navigateToPlan(latestActiveTreatmentPlan?.id || undefined)"
+    />
   </AppCard>
-
-  <UEmpty
-    v-else
-    icon="i-hugeicons-note-add"
-    title="Aucun plan de traitement"
-    description="Ce patient n'a pas encore de plan de traitement."
-    :actions="[
-      {
-        label: 'Créer un plan',
-        color: 'primary',
-        size: 'sm',
-        onClick: openCreateTreatmentPlan
-      }
-    ]"
-  />
 </template>
