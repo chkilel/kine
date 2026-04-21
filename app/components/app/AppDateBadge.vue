@@ -27,7 +27,7 @@
 
 <template>
   <UBadge v-bind="forwardedAttrs" :color="color || 'neutral'" :variant="variant || 'subtle'" :class="defaultClass">
-    <span class="text-lg leading-none font-bold">{{ dateInfo.day }}</span>
+    <span class="text-[16px] leading-none font-bold">{{ dateInfo.day }}</span>
     <span class="text-xs capitalize">{{ dateInfo.month }}</span>
   </UBadge>
 </template>
