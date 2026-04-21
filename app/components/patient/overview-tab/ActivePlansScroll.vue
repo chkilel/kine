@@ -67,7 +67,7 @@
     },
     {
       label: 'Date',
-      value: formatDate(latestActiveTreatmentPlan.value?.prescriptionDate),
+      value: formatDate(latestActiveTreatmentPlan.value?.prescriptionDate ?? null),
       icon: 'i-hugeicons-calendar-02',
       color: 'info' as UIColor
     }
