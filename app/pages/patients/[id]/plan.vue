@@ -96,7 +96,7 @@
     </div>
 
     <!-- Treatment Plan Content -->
-    <div v-else class="space-y-4">
+    <template v-else>
       <!-- Selected Plan Content -->
       <div v-if="selectedTreatmentPlan">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -124,7 +124,7 @@
           <template #description>Le plan de traitement sélectionné n'existe pas ou a été supprimé.</template>
         </UAlert>
       </div>
-    </div>
+    </template>
   </template>
   <!-- <LazyPatientTreatmentPlanTab v-else-if="patient" :patient="patient" /> -->
 </template>

@@ -158,7 +158,7 @@
         v-if="appointments"
         v-for="appointment in appointments"
         :key="appointment.id"
-        class="group border-default bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border p-1 pr-2 transition-colors hover:shadow-md"
+        class="group bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-1 pr-2 transition-colors hover:shadow-sm"
         @click="openAppointmentSlideover(appointment)"
       >
         <AppDateBadge :date="appointment.date" color="info" variant="soft" size="lg" class="rounded-r-none" />
@@ -181,7 +181,7 @@
           </div>
 
           <div class="text-muted sm:divide-muted mt-1.5 flex flex-col text-xs sm:flex-row sm:items-center sm:divide-x">
-            <div class="flex items-center gap-1 sm:pr-2">
+            <div class="text-highlighted flex items-center gap-1 font-medium sm:pr-2">
               <UIcon name="i-hugeicons-clock-01" />
               <p>{{ formatTimeString(appointment.startTime) }}</p>
             </div>

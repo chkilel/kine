@@ -123,32 +123,33 @@
       </div>
     </template>
     <ClientOnly>
-      <div v-if="appointments?.length && appointments?.length > 0" class="space-y-4">
-        <UTabs v-model="activeTab" :items="tabs" variant="pill" class="w-full">
-          <template #upcoming>
-            <div class="mt-4 space-y-2.5">
-              <AppointmentCard
-                v-for="appointment in upcomingAppointments"
-                :key="appointment.id"
-                :appointment
-                @edit="editAppointment($event)"
-                @delete="handleDeleteAppointment($event)"
-              />
-            </div>
-          </template>
-          <template #finished>
-            <div class="mt-4 space-y-2.5">
-              <AppointmentCard
-                v-for="appointment in finishedAppointments"
-                :key="appointment.id"
-                :appointment
-                @edit="editAppointment($event)"
-                @delete="handleDeleteAppointment($event)"
-              />
-            </div>
-          </template>
-        </UTabs>
-      </div>
+      <UTabs
+        v-if="appointments && appointments.length > 0"
+        v-model="activeTab"
+        :items="tabs"
+        variant="pill"
+        :ui="{ content: 'space-y-2', trigger: 'grow' }"
+        class="w-full"
+      >
+        <template #upcoming>
+          <AppointmentCard
+            v-for="appointment in upcomingAppointments"
+            :key="appointment.id"
+            :appointment
+            @edit="editAppointment($event)"
+            @delete="handleDeleteAppointment($event)"
+          />
+        </template>
+        <template #finished>
+          <AppointmentCard
+            v-for="appointment in finishedAppointments"
+            :key="appointment.id"
+            :appointment
+            @edit="editAppointment($event)"
+            @delete="handleDeleteAppointment($event)"
+          />
+        </template>
+      </UTabs>
       <UEmpty
         v-else
         variant="naked"
