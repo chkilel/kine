@@ -141,7 +141,7 @@
         <div
           v-for="(note, index) in practitionerNotes.slice(0, showAllNotes ? undefined : 3)"
           :key="index"
-          class="bg-muted border-default relative gap-4 rounded-md border p-2.5"
+          class="bg-muted hover:border-default rounded-lg border border-transparent p-2 transition-colors hover:shadow-sm"
         >
           <UTextarea
             v-if="editingNoteIndex === index"
@@ -150,7 +150,7 @@
             :rows="3"
             class="mb-2 min-h-16 w-full resize-none"
           />
-          <p v-else class="text-highlighted text-[13px]">{{ note.text }}</p>
+          <p v-else class="text-highlighted text-[13px] whitespace-pre-line">{{ note.text }}</p>
           <div class="flex items-end justify-between text-xs capitalize">
             <div class="text-muted text-[11px]">{{ note.date }} • {{ note.author }}</div>
             <ClientOnly>
@@ -164,13 +164,9 @@
             </ClientOnly>
           </div>
         </div>
-        <div v-if="practitionerNotes.length > 3 && !showAllNotes">
-          <UButton variant="ghost" size="sm" block @click="showAllNotes = true">
-            + {{ practitionerNotes.length - 3 }} note{{ practitionerNotes.length - 3 > 1 ? 's' : '' }} supplémentaire{{
-              practitionerNotes.length - 3 > 1 ? 's' : ''
-            }}
-          </UButton>
-        </div>
+        <UButton v-if="practitionerNotes.length > 3" variant="ghost" size="sm" block @click="showAllNotes = !showAllNotes">
+          {{ showAllNotes ? 'Afficher moins' : `+ ${practitionerNotes.length - 3} note${practitionerNotes.length - 3 > 1 ? 's' : ''} supplémentaire${practitionerNotes.length - 3 > 1 ? 's' : ''}` }}
+        </UButton>
       </div>
       <UEmpty
         v-else

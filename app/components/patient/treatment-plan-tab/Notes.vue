@@ -1,109 +1,193 @@
 <script setup lang="ts">
+  import { LazyAppModalConfirm } from '#components'
+
   const props = defineProps<{
     patient: Patient
     treatmentPlan: TreatmentPlanWithProgress
   }>()
 
-  const toast = useToast()
+  const confirmModal = useOverlay().create(LazyAppModalConfirm)
   const { user } = await useAuth()
   const { getTherapistName } = useOrganizationMembers()
-  const { mutate: updateTreatmentPlan, isLoading: isSubmittingNote } = useUpdateTreatmentPlan()
+  const { mutate: updateTreatmentPlan } = useUpdateTreatmentPlan()
 
-  const newNote = ref('')
+  const showInput = ref(false)
+  const newNoteText = ref('')
+  const showAllNotes = ref(false)
+  const editingNoteIndex = ref<number | null>(null)
+  const editingNoteText = ref('')
 
   const sortedNotes = computed(() => {
-    const notes = (props.treatmentPlan.notes as any[]) || []
+    const notes = props.treatmentPlan.notes || []
     return [...notes]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .map((note, index) => ({
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .map((note) => ({
+        text: note.content,
         date: formatRelativeDate(note.date),
-        description: note.content,
-        author: note.author || 'Auteur inconnu',
-        icon: index === 0 ? 'i-hugeicons-checkmark-circle-02' : 'i-hugeicons-circle'
+        author: note.author || 'Auteur inconnu'
       }))
   })
 
-  const addNote = async () => {
-    if (!user.value) {
-      toast.add({
-        title: 'Erreur',
-        description: 'Utilisateur non connecté.',
-        color: 'error'
-      })
-      return
-    }
+  function getNoteActions(index: number) {
+    return [
+      {
+        label: 'Modifier',
+        icon: 'i-hugeicons-pencil-edit-01',
+        onSelect: () => startEditNote(index)
+      },
+      {
+        label: 'Supprimer',
+        icon: 'i-hugeicons-delete-02',
+        color: 'error' as const,
+        onSelect: () => confirmDeleteNote(index)
+      }
+    ]
+  }
 
-    const content = newNote.value.trim()
-    if (!content) {
-      toast.add({
-        title: 'Erreur',
-        description: 'Veuillez entrer une note.',
-        color: 'error'
-      })
-      return
-    }
+  function startEditNote(index: number) {
+    editingNoteIndex.value = index
+    editingNoteText.value = sortedNotes.value?.[index]?.text || ''
+  }
 
-    const newNoteEntry = {
-      date: new Date(),
-      author: getTherapistName(user.value.id),
-      content
-    }
+  function cancelEditNote() {
+    editingNoteIndex.value = null
+    editingNoteText.value = ''
+  }
 
-    const currentNotes = props.treatmentPlan.notes || []
+  function saveEditNote() {
+    if (editingNoteIndex.value === null || !editingNoteText.value.trim()) return
+
+    const notes = [...(props.treatmentPlan.notes || [])].sort((a, b) => b.date.getTime() - a.date.getTime())
+    const noteToEdit = notes[editingNoteIndex.value]
+
+    const updatedNotes = (props.treatmentPlan.notes || []).map((note) =>
+      note === noteToEdit ? { ...note, content: editingNoteText.value.trim() } : note
+    )
 
     updateTreatmentPlan({
       planId: props.treatmentPlan.id,
-      data: {
-        notes: [...currentNotes, newNoteEntry]
-      },
-      onSuccess: () => {
-        newNote.value = ''
-      }
+      data: { notes: updatedNotes }
     })
+    cancelEditNote()
   }
+
+  async function confirmDeleteNote(index: number) {
+    const notes = [...(props.treatmentPlan.notes || [])].sort((a, b) => a.date.getTime() - b.date.getTime())
+    const noteToDelete = notes[index]
+
+    const confirmed = await confirmModal.open({
+      title: 'Supprimer la note',
+      message: 'Êtes-vous sûr de vouloir supprimer cette note ? Cette action est irréversible.',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      confirmColor: 'error',
+      icon: 'i-hugeicons-delete-02'
+    })
+
+    if (confirmed) {
+      const updatedNotes = (props.treatmentPlan.notes || []).filter((note) => note !== noteToDelete)
+      updateTreatmentPlan({
+        planId: props.treatmentPlan.id,
+        data: { notes: updatedNotes }
+      })
+    }
+  }
+
+  async function addNote() {
+    if (!newNoteText.value.trim()) return
+
+    const newNoteEntry = {
+      date: new Date(),
+      author: user.value ? getTherapistName(user.value.id) : 'Praticien',
+      content: newNoteText.value.trim()
+    }
+
+    const currentNotes = props.treatmentPlan.notes || []
+    updateTreatmentPlan({
+      planId: props.treatmentPlan.id,
+      data: { notes: [...currentNotes, newNoteEntry] }
+    })
+    newNoteText.value = ''
+    showInput.value = false
+  }
+
+  function cancelAddNote() {
+    newNoteText.value = ''
+    showInput.value = false
+  }
+
+  onKeyStroke('Escape', () => {
+    if (editingNoteIndex.value !== null) {
+      cancelEditNote()
+    }
+  })
 </script>
 
 <template>
-  <UCard>
-    <h3 class="mb-4! text-base font-bold">Notes &amp; Suivi</h3>
+  <AppCard title="Notes" description="Notes de suivi du plan de traitement" class="relative">
+    <template #actions>
+      <UButton
+        variant="ghost"
+        color="primary"
+        icon="i-hugeicons-add-01"
+        square
+        @click="showInput = true"
+        class="absolute top-3 right-3"
+      />
+    </template>
     <div class="space-y-4">
-      <UFieldGroup class="w-full">
+      <div v-if="showInput" class="space-y-2">
         <UTextarea
-          v-model="newNote"
+          v-model="newNoteText"
           variant="soft"
           placeholder="Ajouter une note clinique..."
           :rows="3"
           class="min-h-20 w-full resize-none"
         />
-        <UButton
-          icon="i-hugeicons-telegram"
-          size="sm"
-          variant="subtle"
-          color="primary"
-          class="absolute right-2 bottom-2 rounded-md!"
-          :loading="isSubmittingNote"
-          :disabled="!newNote.trim() || isSubmittingNote"
-          @click="addNote"
-        />
-      </UFieldGroup>
-
-      <div class="border-default border-t pt-4">
-        <div v-if="sortedNotes.length === 0" class="text-center">
-          <p class="text-muted text-sm">Aucune note de suivi pour ce plan de traitement</p>
-        </div>
-        <div v-else class="overflow-y-auto">
-          <UTimeline :items="sortedNotes" :default-value="99" size="2xs" :ui="{ wrapper: 'pb-1' }">
-            <template #date="{ item }">
-              <div class="text-dimmed text-xs/5">{{ item.date }} • {{ item.author }}</div>
-            </template>
-            <template #description="{ item }">
-              <div class="text-toned text-sm">
-                {{ item.description }}
-              </div>
-            </template>
-          </UTimeline>
+        <div class="flex gap-2">
+          <UButton size="sm" @click="addNote">Ajouter</UButton>
+          <UButton size="sm" variant="ghost" @click="cancelAddNote">Annuler</UButton>
         </div>
       </div>
+      <div v-if="sortedNotes.length > 0" class="space-y-2">
+        <div
+          v-for="(note, index) in sortedNotes.slice(0, showAllNotes ? undefined : 3)"
+          :key="index"
+          class="bg-muted hover:border-default rounded-lg border border-transparent p-2 transition-colors hover:shadow-sm"
+        >
+          <UTextarea
+            v-if="editingNoteIndex === index"
+            v-model="editingNoteText"
+            variant="soft"
+            :rows="3"
+            class="mb-2 min-h-16 w-full resize-none"
+          />
+          <p v-else class="text-highlighted text-[13px] whitespace-pre-line">{{ note.text }}</p>
+          <div class="flex items-end justify-between text-xs capitalize">
+            <div class="text-muted text-[11px]">{{ note.date }} • {{ note.author }}</div>
+            <ClientOnly>
+              <div v-if="editingNoteIndex === index" class="flex gap-1">
+                <UButton size="xs" variant="ghost" @click="cancelEditNote">Annuler</UButton>
+                <UButton size="xs" @click="saveEditNote">Enregistrer</UButton>
+              </div>
+              <UDropdownMenu v-else size="sm" :items="getNoteActions(index)" :content="{ align: 'end' }">
+                <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="xs" square />
+              </UDropdownMenu>
+            </ClientOnly>
+          </div>
+        </div>
+        <UButton v-if="sortedNotes.length > 3" variant="ghost" size="sm" block @click="showAllNotes = !showAllNotes">
+          {{ showAllNotes ? 'Afficher moins' : `+ ${sortedNotes.length - 3} note${sortedNotes.length - 3 > 1 ? 's' : ''} supplémentaire${sortedNotes.length - 3 > 1 ? 's' : ''}` }}
+        </UButton>
+      </div>
+      <UEmpty
+        v-else
+        size="xs"
+        variant="subtle"
+        icon="i-hugeicons-note-02"
+        title="Aucune note enregistrée"
+        description="Aucune note de suivi pour ce plan de traitement."
+      />
     </div>
-  </UCard>
+  </AppCard>
 </template>

@@ -174,7 +174,7 @@ const _useUpdateTreatmentPlan = () => {
       queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.single(planId) })
       queryCache.invalidateQueries({ key: TREATMENT_PLAN_KEYS.root, exact: false })
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.add({
         title: 'Erreur',
         description: parseError(error, 'Échec de la mise à jour du plan de traitement').message,
