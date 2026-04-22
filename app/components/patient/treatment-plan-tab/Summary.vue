@@ -79,7 +79,7 @@
 
 <template>
   <AppCard title="Plan de traitement" class="relative">
-    <PatientTreatmentPlanTabPlanSelector
+    <TreatmentPlanSelector
       :patient-id="patient.id"
       v-model:selected-plan-id="selectedPlanId"
       class="min-h-18 rounded-lg ring"

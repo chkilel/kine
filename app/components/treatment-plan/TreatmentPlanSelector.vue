@@ -78,7 +78,7 @@
         <p class="text-muted text-xs">{{ allOptionDescription || 'Afficher tous les documents' }}</p>
       </div>
     </div>
-    <div v-else-if="selectedPlan" class="flex w-full flex-col items-center gap-3">
+    <div v-else-if="selectedPlan" class="flex w-full flex-col gap-3">
       <div class="flex items-center gap-2 text-left">
         <AppIconBox
           :name="getTreatmentPlanStatusIcon(selectedPlan.status)"
