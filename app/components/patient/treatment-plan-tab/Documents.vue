@@ -31,13 +31,13 @@
         variant="ghost"
         class="group p-4 sm:px-6 sm:py-4"
         :ui="{
-          base: 'hover:rounded-b-none',
+          base: 'hover:rounded-b-none items-end',
           trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
         }"
         trailing-icon="i-lucide-chevron-down"
         block
       >
-        <h3 class="text-default text-base font-bold">Documents du plan</h3>
+        <h3 class="text-toned text-[13px] font-semibold tracking-wide uppercase">Documents du plan</h3>
       </UButton>
 
       <template #content>
@@ -119,10 +119,10 @@
               <UEmpty
                 v-if="!hasDocuments"
                 icon="i-hugeicons-file-add"
-                size="sm"
+                size="xs"
                 variant="subtle"
                 title="Aucun document"
-                description="Ce patient n'a pas encore de document."
+                description="Aucun document n’est associé à ce plan de traitement."
                 :actions="[
                   {
                     label: 'Ajouter un document',

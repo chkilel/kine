@@ -122,7 +122,7 @@
   <!-- Mini Variant (List Item) -->
   <div
     v-if="variant === 'mini'"
-    class="border-default bg-muted gap-4 space-y-2 rounded-md border p-2"
+    class="bg-muted hover:border-default rounded-lg border border-transparent p-2 transition-colors hover:shadow-sm"
     :class="{ 'ring-neutral ring-2 ring-offset-2': isEditing }"
   >
     <!-- Edit Mode -->
@@ -199,7 +199,7 @@
           </UDropdownMenu>
         </ClientOnly>
       </div>
-      <div class="text-default mt-1 min-w-0 truncate text-sm">
+      <div class="text-default mt-1 min-w-0 truncate text-[13px]">
         {{ patientDocument.description || patientDocument.originalFileName }}
       </div>
     </div>
