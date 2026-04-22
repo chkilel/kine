@@ -48,7 +48,11 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, trea
   updatedAt: true
 })
 
-export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
+export const treatmentPlanUpdateSchema = createInsertSchema(treatmentPlans, {
+  status: treatmentPlanStatusSchema.optional(),
+  pricing: rateCentSchema.optional(),
+  notes: z.array(noteSchema).optional()
+}).partial()
 
 // Query schemas
 

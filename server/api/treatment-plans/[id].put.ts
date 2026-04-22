@@ -36,10 +36,7 @@ export default defineEventHandler(async (event) => {
     // Update treatment plan
     const [updatedTreatmentPlan] = await db
       .update(treatmentPlans)
-      .set({
-        ...body,
-        updatedAt: new Date()
-      })
+      .set(body)
       .where(eq(treatmentPlans.id, planId))
       .returning()
 
