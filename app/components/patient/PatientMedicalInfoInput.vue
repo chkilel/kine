@@ -23,6 +23,10 @@
 <template>
   <UFormField :label="label" :name="name">
     <div class="space-y-2">
+      <UFieldGroup class="w-full">
+        <UInput v-model="input" :placeholder="placeholder" class="w-full flex-1" @keyup.enter="addItem" />
+        <UButton variant="solid" icon="i-hugeicons-plus-sign" @click="addItem" />
+      </UFieldGroup>
       <div v-if="items && items.length > 0" class="flex flex-wrap gap-2">
         <UBadge v-for="(item, index) in items" :key="index" :color="badgeColor" variant="subtle">
           {{ item }}
@@ -30,12 +34,6 @@
             <UButton icon="i-lucide-x" size="xs" :color="badgeColor" variant="ghost" @click="removeItem(index)" />
           </template>
         </UBadge>
-      </div>
-      <div class="flex gap-2">
-        <UInput v-model="input" :placeholder="placeholder" class="w-full flex-1" @keyup.enter="addItem" />
-        <UButton size="sm" @click="addItem">
-          <UIcon name="i-lucide-plus" />
-        </UButton>
       </div>
     </div>
   </UFormField>

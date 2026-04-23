@@ -1,58 +1,42 @@
 <script setup lang="ts">
+  import type { Form } from '@nuxt/ui'
+
   const props = defineProps<{ patient: Patient }>()
   const emit = defineEmits<{ close: [] }>()
 
   const { mutate: updatePatient, isLoading } = useUpdatePatient()
 
-  const formRef = ref<HTMLFormElement>()
+  const formRef = useTemplateRef<Form<PatientUpdate>>('formRef')
 
   function getInitialFormState() {
     return {
-      medicalConditions: props.patient.medicalConditions ?? [],
-      surgeries: props.patient.surgeries ?? [],
-      allergies: props.patient.allergies ?? [],
-      medications: props.patient.medications ?? []
+      medicalConditions: props.patient.medicalConditions,
+      surgeries: props.patient.surgeries,
+      allergies: props.patient.allergies,
+      medications: props.patient.medications
     }
   }
 
   const formState = reactive(getInitialFormState())
 
   async function onSubmit() {
-    if (!formRef.value) return
-
-    const validationResult = await formRef.value.validate()
-    if (!validationResult) return
-
     updatePatient({ patientId: props.patient.id, patientData: formState, onSuccess: () => emit('close') })
-  }
-
-  function handleClose() {
-    emit('close')
-  }
-
-  function onSlideoverOpened() {
-    Object.assign(formState, getInitialFormState())
   }
 </script>
 
 <template>
   <USlideover
-    :open="true"
-    :dismissible="false"
-    @close="emit('close')"
-    @after:enter="onSlideoverOpened"
     title="Modifier les informations médicales"
     :description="`Modifier les informations médicales de ${patient.firstName} ${patient.lastName}`"
     :ui="{
-      content: 'w-full md:w-3/4 lg:w-1/2 max-w-2xl bg-elevated'
+      content: 'w-full lg:w-1/3 max-w-xl bg-elevated'
     }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="patientUpdateSchema" :state="formState" class="space-y-6">
+      <UForm ref="formRef" :schema="patientUpdateSchema" :state="formState" @submit="onSubmit" class="space-y-6">
         <!-- Medical Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Informations Médicales</h3>
-          <div class="space-y-4">
+        <AppCard title="Informations Médicales">
+          <div class="space-y-10">
             <PatientMedicalInfoInput
               v-model="formState.medicalConditions"
               label="Antécédents médicaux"
@@ -89,22 +73,17 @@
       </UForm>
     </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="handleClose">
-          Annuler
-        </UButton>
-        <UButton
-          color="primary"
-          class="h-9 px-3 text-sm font-semibold"
-          type="submit"
-          @click="onSubmit"
-          :loading="isLoading"
-          :disabled="isLoading"
-        >
-          Mettre à jour
-        </UButton>
-      </div>
+    <template #footer="{ close }">
+      <UButton label="Annuler" variant="outline" color="neutral" @click="close" />
+
+      <UButton
+        label="Mettre à jour"
+        color="primary"
+        type="submit"
+        @click="formRef?.submit()"
+        :loading="isLoading"
+        :disabled="isLoading"
+      />
     </template>
   </USlideover>
 </template>
