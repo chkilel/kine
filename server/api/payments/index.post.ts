@@ -138,7 +138,7 @@ export default defineEventHandler(async (event) => {
           ]
         : [])
     ])
-  } catch (error) {
+  } catch {
     await db.delete(payments).where(eq(payments.id, payment.id))
     throw createError({ statusCode: 500, message: 'Failed to record payment details, payment has been rolled back' })
   }

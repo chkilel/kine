@@ -191,7 +191,7 @@
   }
 
   function togglePause() {
-    isPaused.value ? handleResumeTimer() : handlePauseTimer()
+    void (isPaused.value ? handleResumeTimer() : handlePauseTimer())
   }
 
   // ─── SVG progress ring ────────────────────────────────────────

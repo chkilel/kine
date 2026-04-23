@@ -33,10 +33,10 @@ export const isDateDisabled = (date: Date | any): boolean => {
   const dateObj = date instanceof Date ? date : new Date(date.toString())
   const day = dateObj.getDay()
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const todayDate = new Date()
+  todayDate.setHours(0, 0, 0, 0)
 
-  return day === 0 || dateObj < today
+  return day === 0 || dateObj < todayDate
 }
 
 // ============================================================================

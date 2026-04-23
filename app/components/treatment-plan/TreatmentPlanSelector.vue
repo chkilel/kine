@@ -38,14 +38,14 @@
         }
       : null
 
-    const planOptions = treatmentPlans.value.map((plan) => ({
+    const options = treatmentPlans.value.map((plan) => ({
       label: plan.title || 'Plan sans titre',
       value: plan.id,
       description: `${formatDateRange(plan.startDate, plan.endDate)} · ${getTherapistName(plan.therapistId)}`,
       status: plan.status
     }))
 
-    return allOption ? [allOption, ...planOptions] : planOptions
+    return allOption ? [allOption, ...options] : options
   })
 
   const isAllSelected = computed(() => selectedPlanId.value === 'all')

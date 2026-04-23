@@ -52,7 +52,7 @@ export function addMinutesToTime(time: string, minutes: number): string {
     const newTime = parsedTime.add({ minutes })
     return newTime.toString()
   } catch (error) {
-    throw new Error(`Failed to parse time: "${time}"`)
+    throw new Error(`Failed to parse time: "${time}"`, { cause: error })
   }
 }
 
@@ -68,7 +68,7 @@ export function subtractMinutesFromTime(time: string, minutes: number): string {
     const newTime = parsedTime.subtract({ minutes })
     return newTime.toString()
   } catch (error) {
-    throw new Error(`Failed to parse time: "${time}"`)
+    throw new Error(`Failed to parse time: "${time}"`, { cause: error })
   }
 }
 
@@ -84,7 +84,7 @@ export function addHoursToTime(time: string, hours: number): string {
     const newTime = parsedTime.add({ hours })
     return newTime.toString()
   } catch (error) {
-    throw new Error(`Failed to parse time: "${time}"`)
+    throw new Error(`Failed to parse time: "${time}"`, { cause: error })
   }
 }
 
@@ -100,7 +100,7 @@ export function calculateEndTime(startTime: string, durationMinutes: number): st
     const end = start.add({ minutes: durationMinutes })
     return end.toString()
   } catch (error) {
-    throw new Error(`Failed to calculate end time: ${error}`)
+    throw new Error(`Failed to calculate end time: ${error}`, { cause: error })
   }
 }
 
@@ -236,7 +236,7 @@ export function formatTimeString(timeString: string, includeSeconds = false): st
     const time = parseTime(normalizedTime)
     return includeSeconds ? time.toString() : time.toString().slice(0, 5)
   } catch (error) {
-    throw new Error(`Invalid time format: "${timeString}"`)
+    throw new Error(`Invalid time format: "${timeString}"`, { cause: error })
   }
 }
 

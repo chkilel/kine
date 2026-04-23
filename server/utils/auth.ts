@@ -7,7 +7,6 @@ import { createError, getHeaders, getRequestURL } from 'h3'
 
 import { useDrizzle } from './database'
 import * as schemas from '~~/server/database/schema'
-import type { Session } from '~~/shared/types/auth.types'
 
 export const additionalFields = {
   firstName: {
@@ -252,7 +251,7 @@ function createAuthInstance(event: H3Event) {
           before: async (session) => {
             // When activeOrganizationId is being set, also set activeOrganizationSlug
             if (session.activeOrganizationId) {
-              const organization = await db
+              const org = await db
                 .select({
                   slug: schemas.organizations.slug
                 })
@@ -260,11 +259,11 @@ function createAuthInstance(event: H3Event) {
                 .where(eq(schemas.organizations.id, session.activeOrganizationId as string))
                 .limit(1)
 
-              if (organization.length > 0 && organization[0]) {
+              if (org.length > 0 && org[0]) {
                 return {
                   data: {
                     ...session,
-                    activeOrganizationSlug: organization[0].slug
+                    activeOrganizationSlug: org[0].slug
                   }
                 }
               }
@@ -300,7 +299,7 @@ function getBaseURL(event: H3Event) {
   if (!baseURL) {
     try {
       baseURL = getRequestURL(event).origin
-    } catch (e) {
+    } catch {
       throw createError({ statusCode: 500, message: 'Could not determine baseURL.' })
     }
   }

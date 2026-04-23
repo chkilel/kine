@@ -110,7 +110,7 @@ const _useDeleteRoom = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ roomId, onSuccess }: { roomId: string; onSuccess?: () => void }) =>
+    mutation: async ({ roomId, onSuccess: _onSuccess }: { roomId: string; onSuccess?: () => void }) =>
       requestFetch(`/api/rooms/${roomId}`, {
         method: 'DELETE'
       }),

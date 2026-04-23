@@ -1,5 +1,5 @@
 import { treatmentPlans } from '~~/server/database/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 // PUT /api/treatment-plans/[id] - Update existing treatment plan
 export default defineEventHandler(async (event) => {
