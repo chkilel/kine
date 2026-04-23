@@ -29,6 +29,7 @@
       <UButton
         color="primary"
         variant="ghost"
+        size="sm"
         class="group p-4 sm:px-6 sm:py-4"
         :ui="{
           base: 'hover:rounded-b-none items-end',

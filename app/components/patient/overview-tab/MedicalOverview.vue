@@ -29,7 +29,8 @@
     <template #actions>
       <UButton
         variant="ghost"
-        color="primary"
+        color="neutral"
+        size="sm"
         icon="i-hugeicons-more-vertical"
         square
         @click="openEditSlideover"

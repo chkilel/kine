@@ -117,6 +117,7 @@
       <UButton
         variant="ghost"
         color="primary"
+        size="sm"
         icon="i-hugeicons-add-01"
         square
         @click="showInput = true"
@@ -164,8 +165,18 @@
             </ClientOnly>
           </div>
         </div>
-        <UButton v-if="practitionerNotes.length > 3" variant="ghost" size="sm" block @click="showAllNotes = !showAllNotes">
-          {{ showAllNotes ? 'Afficher moins' : `+ ${practitionerNotes.length - 3} note${practitionerNotes.length - 3 > 1 ? 's' : ''} supplémentaire${practitionerNotes.length - 3 > 1 ? 's' : ''}` }}
+        <UButton
+          v-if="practitionerNotes.length > 3"
+          variant="ghost"
+          size="sm"
+          block
+          @click="showAllNotes = !showAllNotes"
+        >
+          {{
+            showAllNotes
+              ? 'Afficher moins'
+              : `+ ${practitionerNotes.length - 3} note${practitionerNotes.length - 3 > 1 ? 's' : ''} supplémentaire${practitionerNotes.length - 3 > 1 ? 's' : ''}`
+          }}
         </UButton>
       </div>
       <UEmpty
