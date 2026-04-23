@@ -92,6 +92,15 @@ export const patientUpdateSchema = createInsertSchema(patients, {
   notes: z.array(noteSchema).optional()
 }).partial()
 
+export const patientInformationUpdateSchema = z.object({
+  address: z.string(),
+  city: z.string(),
+  postalCode: z.string().optional(),
+  referralSource: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).optional()
+})
+
 // Query schemas
 export const patientQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -117,5 +126,6 @@ export const patientPaginatedResponseSchema = z.object({
 export type Patient = z.infer<typeof patientSchema>
 export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
+export type PatientInformationUpdate = z.infer<typeof patientInformationUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
 export type PatientPaginatedResponse = z.infer<typeof patientPaginatedResponseSchema>
