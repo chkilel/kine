@@ -273,9 +273,7 @@
           appointmentData: {
             ...appointmentDetails.value,
             roomId:
-              appointmentDetails.value.location === 'clinic'
-                ? appointmentDetails.value.roomId || undefined
-                : undefined
+              appointmentDetails.value.location === 'clinic' ? appointmentDetails.value.roomId || undefined : undefined
           }
         })
       } else {
@@ -283,9 +281,7 @@
           appointmentData: {
             ...appointmentDetails.value,
             roomId:
-              appointmentDetails.value.location === 'clinic'
-                ? appointmentDetails.value.roomId || undefined
-                : undefined
+              appointmentDetails.value.location === 'clinic' ? appointmentDetails.value.roomId || undefined : undefined
           }
         })
         await fetchAvailableSlots()

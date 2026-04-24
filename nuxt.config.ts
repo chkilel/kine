@@ -58,7 +58,7 @@ export default defineNuxtConfig({
         connector: 'cloudflare-d1',
         options: { bindingName: 'DB' }
       }
-    },
+    }
     // To exclude /_nuxt/** paths from being handled by the Cloudflare dev worker.
     // routeRules: {
     //   '/_nuxt/**': {

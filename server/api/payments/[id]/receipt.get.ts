@@ -1,5 +1,12 @@
 import { eq } from 'drizzle-orm'
-import { payments, appointmentPaymentItems, organizations, patients, users, appointments } from '~~/server/database/schema'
+import {
+  payments,
+  appointmentPaymentItems,
+  organizations,
+  patients,
+  users,
+  appointments
+} from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)

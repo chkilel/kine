@@ -177,7 +177,11 @@
           </div>
         </div>
         <UButton v-if="sortedNotes.length > 3" variant="ghost" size="sm" block @click="showAllNotes = !showAllNotes">
-          {{ showAllNotes ? 'Afficher moins' : `+ ${sortedNotes.length - 3} note${sortedNotes.length - 3 > 1 ? 's' : ''} supplémentaire${sortedNotes.length - 3 > 1 ? 's' : ''}` }}
+          {{
+            showAllNotes
+              ? 'Afficher moins'
+              : `+ ${sortedNotes.length - 3} note${sortedNotes.length - 3 > 1 ? 's' : ''} supplémentaire${sortedNotes.length - 3 > 1 ? 's' : ''}`
+          }}
         </UButton>
       </div>
       <UEmpty

@@ -2,7 +2,7 @@ export default defineAppConfig({
   ui: {
     colors: {
       primary: 'primary',
-      neutral: 'base',
+      neutral: 'base'
     },
     container: {
       base: 'px-0'

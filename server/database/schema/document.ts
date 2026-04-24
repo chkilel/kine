@@ -73,4 +73,3 @@ export const patientDocuments = sqliteTable(
     // Use case: Quick lookup when serving files: WHERE storageKey = ?
   ]
 )
-
