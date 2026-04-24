@@ -80,8 +80,8 @@
           <div class="flex items-center gap-4">
             <AppIconBox name="i-hugeicons-user" color="primary" variant="soft" size="lg" class="rounded-md" />
             <div>
-              <p class="text-sm font-semibold capitalize">{{ contact.name || 'Contact sans nom' }}</p>
-              <p class="text-muted flex gap-4 text-xs">
+              <p class="text-sm font-medium capitalize">{{ contact.name || 'Contact sans nom' }}</p>
+              <div class="text-muted flex gap-4 text-xs">
                 <span class="flex items-center gap-1">
                   <UIcon name="i-hugeicons-call-02" class="h-3 w-3" />
                   {{ formatPhoneNumber(contact.number) }}
@@ -90,7 +90,7 @@
                   <UIcon name="i-hugeicons-user-multiple" class="h-3 w-3" />
                   {{ getRelationshipLabel(contact.relationship) }}
                 </span>
-              </p>
+              </div>
             </div>
           </div>
           <div class="flex items-center gap-2">

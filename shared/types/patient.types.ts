@@ -80,6 +80,16 @@ export const patientInformationUpdateSchema = z.object({
   emergencyContacts: z.array(emergencyContactSchema).optional()
 })
 
+export const patientBasicInfoUpdateSchema = z.object({
+  firstName: nameSchema,
+  lastName: nameSchema,
+  email: z.string().email().optional().or(z.literal('')),
+  phone: phoneNumberSchema,
+  dateOfBirth: calendarDateSchema.optional(),
+  gender: genderSchema,
+  status: patientStatusSchema
+})
+
 // Query schemas
 export const patientQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -106,5 +116,6 @@ export type Patient = z.infer<typeof patientSchema>
 export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
 export type PatientInformationUpdate = z.infer<typeof patientInformationUpdateSchema>
+export type PatientBasicInfoUpdate = z.infer<typeof patientBasicInfoUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
 export type PatientPaginatedResponse = z.infer<typeof patientPaginatedResponseSchema>

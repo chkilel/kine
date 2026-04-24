@@ -43,7 +43,7 @@
     title="Modifier les informations"
     :description="`Modifier les informations de ${patient.firstName} ${patient.lastName}`"
     :ui="{
-      content: 'w-full lg:w-1/3 max-w-xl bg-elevated'
+      content: 'w-full lg:w-1/3 max-w-2xl bg-elevated'
     }"
   >
     <template #body>
