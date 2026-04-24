@@ -1,10 +1,7 @@
 <script setup lang="ts">
   import { LazyAppointmentPlanningSlideover, LazyAppModalConfirm } from '#components'
 
-  const props = defineProps<{
-    patient: Patient
-    treatmentPlan: TreatmentPlanWithProgress
-  }>()
+  const props = defineProps<{ patient: Patient; treatmentPlan: TreatmentPlanWithProgress }>()
 
   const toast = useToast()
   const overlay = useOverlay()
@@ -104,7 +101,7 @@
 <template>
   <AppCard title="Aperçu des séances">
     <template #actions>
-      <div class="flex items-center gap-2">
+      <div v-if="appointments && appointments.length > 0" class="flex items-center gap-2">
         <UButton
           icon="i-hugeicons-reload"
           variant="outline"
@@ -154,7 +151,7 @@
         v-else
         variant="naked"
         icon="i-hugeicons-calendar-remove-01"
-        title="Aucune séance planifiée pour ce plan de traitement."
+        title="Aucune séance planifiée."
         description="Commencez à planifier les séances pour ce patient afin de débuter le suivi."
         :ui="{ body: 'max-w-none' }"
         :actions="[
@@ -163,13 +160,6 @@
             label: 'Planifier les séances du plan',
             size: 'md',
             onClick: openAppointmentPlanning
-          },
-          {
-            icon: 'i-hugeicons-add-01',
-            label: 'Créer une consultation indépendante',
-            color: 'neutral',
-            size: 'md',
-            variant: 'outline'
           }
         ]"
       />
