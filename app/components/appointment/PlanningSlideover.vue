@@ -419,7 +419,7 @@
           <div class="3xl:grid-cols-2 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <!-- LEFT COLUMN -->
             <!-- ─── Treatment plan card (or standalone alert) ─── -->
-            <AppCard title="Plan de traitement">
+            <AppCard :title="treatmentPlan ? 'Plan de traitement' : 'Séance hors plan de traitement'">
               <div class="space-y-4">
                 <template v-if="treatmentPlan">
                   <p class="font-semibold">{{ treatmentPlan.title }}</p>
@@ -612,6 +612,16 @@
                     <span class="bg-success size-1.5 rounded-full" />
                     Disponibilité du thérapeute
                   </h4>
+
+                  <!-- Guard: no therapist selected -->
+                  <UAlert
+                    v-if="!appointmentDetails.therapistId"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-lucide-user"
+                    title="Veuillez sélectionner un thérapeute"
+                  />
+
                   <UAlert
                     v-if="appointmentDetails.location === 'clinic' && !appointmentDetails.roomId"
                     color="error"
@@ -741,15 +751,6 @@
                   color="error"
                   variant="subtle"
                   :title="slotsError?.message || 'Impossible de charger les créneaux'"
-                />
-
-                <!-- Guard: no therapist selected -->
-                <UAlert
-                  v-else-if="!appointmentDetails.therapistId"
-                  color="neutral"
-                  variant="subtle"
-                  icon="i-lucide-user"
-                  title="Veuillez sélectionner un thérapeute"
                 />
 
                 <!-- Guard: no slots available -->
