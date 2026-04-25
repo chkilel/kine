@@ -41,7 +41,7 @@
       <div class="flex flex-wrap items-start gap-2">
         <div class="min-w-0">
           <div v-if="icon || $slots.title || title" class="flex items-center gap-1.5">
-            <UIcon v-if="icon" :name="icon" class="size-5.5" :class="`text-${iconColor}`" />
+            <AppIconBox v-if="icon" :name="icon" :color="iconColor" />
             <template v-if="$slots.title">
               <slot name="title" />
             </template>
