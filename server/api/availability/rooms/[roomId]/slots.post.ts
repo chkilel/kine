@@ -1,6 +1,10 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { rooms } from '~~/server/database/schema/rooms'
 import { availabilityExceptions, appointments, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
+import { roomSlotsRequestSchema } from '~~/shared/types/availability.types'
+import { getDayOfWeek } from '~~/shared/utils/date-utils'
+import { WORKING_HOURS } from '~~/shared/utils/constants.availability'
+import { getEffectiveAvailability, generateTimeSlots, subtractBookedPeriods } from '~~/shared/utils/planning-utils'
 
 export default defineEventHandler(async (event) => {
   const roomId = getRouterParam(event, 'roomId')

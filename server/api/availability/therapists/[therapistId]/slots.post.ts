@@ -1,5 +1,8 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { availabilityExceptions, appointments, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
+import { slotsRequestSchema } from '~~/shared/types/availability.types'
+import { getDayOfWeek } from '~~/shared/utils/date-utils'
+import { getEffectiveAvailability, generateTimeSlots, subtractBookedPeriods } from '~~/shared/utils/planning-utils'
 
 interface SlotsResponse {
   slots: Record<string, { availableSlots: string[]; unavailable: boolean }>
