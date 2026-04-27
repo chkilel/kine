@@ -27,6 +27,8 @@
   const appointmentHasStarted = computed(() => status.value.inProgress || status.value.completed)
 
   // ─── Computed state ──────────────────────────────────────────
+  const isPaused = computed(() => !!appointment.pauseStartTime)
+
   const timeLabel = computed(() => {
     const parsedTime = parseTime(appointment.startTime)
     return {
@@ -51,36 +53,30 @@
           label: 'Patient',
           icon: 'i-hugeicons-profile-02',
           to: `/patients/${appointment.patientId}`
-        },
-        {
-          label: 'Séance',
-          icon: 'i-hugeicons-file-01',
-          onSelect: () => openSessionSlideover()
         }
       ]
     }
 
     return [
-      {
-        label: 'Patient',
-        icon: 'i-hugeicons-profile-02',
-        to: `/patients/${appointment.patientId}`
-      },
-      {
-        label: 'Annuler',
-        icon: 'i-hugeicons-cancel-circle-half-dot',
-        onSelect: () => handleCancelAppointment()
-      },
-      {
-        label: 'Reporter',
-        icon: 'i-hugeicons-calendar-02',
-        onSelect: () => handlePostponeAppointment()
-      },
-      {
-        label: 'Notes pré-séance',
-        icon: 'i-hugeicons-sticky-note-01',
-        onSelect: () => openSessionSlideover()
-      }
+      [
+        {
+          label: 'Patient',
+          icon: 'i-hugeicons-profile-02',
+          to: `/patients/${appointment.patientId}`
+        }
+      ],
+      [
+        {
+          label: 'Annuler',
+          icon: 'i-hugeicons-cancel-circle-half-dot',
+          onSelect: () => handleCancelAppointment()
+        },
+        {
+          label: 'Reporter',
+          icon: 'i-hugeicons-calendar-02',
+          onSelect: () => handlePostponeAppointment()
+        }
+      ]
     ]
   })
 
@@ -126,6 +122,7 @@
 
 <template>
   <div
+    v-if="!status.inProgress"
     :class="[
       'relative flex items-center gap-4 overflow-hidden',
       'rounded-lg p-4 pl-0 hover:shadow-sm',
@@ -171,7 +168,7 @@
         <span v-else>Séance hors plan de traitement</span>
       </div>
 
-      <div class="text-highlighted divide-muted mt-1.5 flex items-center divide-x text-sm">
+      <div class="text-highlighted divide-muted mt-1.5 flex items-center divide-x text-sm leading-none">
         <div class="flex items-center gap-1 font-medium sm:pr-2">
           <UIcon name="i-hugeicons-time-quarter-02" />
           <span>{{ durationLabel }}</span>
@@ -190,7 +187,92 @@
 
     <!-- Dropdown Menu -->
     <UDropdownMenu :items="menuItems" :content="{ align: 'end' }" :ui="{ content: 'min-w-0' }">
-      <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="primary" square @click.stop />
+      <UButton icon="i-hugeicons-more-vertical" size="xl" variant="ghost" color="primary" square @click.stop />
     </UDropdownMenu>
+  </div>
+
+  <!-- In progress session -->
+  <div
+    v-else
+    class="bg-primary group shadow-primary/40 relative cursor-pointer overflow-hidden rounded-xl p-4 pl-0 text-white shadow-md"
+    @click="openSessionSlideover"
+  >
+    <div
+      class="dark:bg-primary-500 absolute -top-8 -right-8 size-32 rounded-full bg-white/40 blur-2xl transition-transform duration-500 group-hover:scale-250 dark:right-auto dark:-left-8"
+    />
+
+    <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <div class="flex gap-4">
+        <!-- Status Indicator -->
+        <div
+          class="w-1.5 self-stretch rounded-r-full"
+          :class="[
+            status.completed && 'bg-inverted',
+            status.scheduled && 'bg-info',
+            isPaused && 'bg-warning',
+            status.inProgress && !isPaused && 'bg-success'
+          ]"
+        />
+
+        <div class="flex w-14 shrink-0 items-center justify-center rounded-xl bg-white/10 ring ring-white/30">
+          <UIcon :name="isPaused ? 'i-hugeicons-pause' : 'i-hugeicons-play'" class="animate-pulse text-3xl" />
+        </div>
+
+        <div>
+          <div class="flex items-center gap-3">
+            <h3 class="mt-1 text-xl font-semibold">{{ appointment.patientName }}</h3>
+            <UBadge
+              :label="isPaused ? 'En pause' : 'En cours'"
+              :color="isPaused ? 'warning' : 'success'"
+              :icon="isPaused ? 'i-hugeicons-pause' : 'i-hugeicons-play'"
+              variant="solid"
+              size="sm"
+              class="animate-pulse rounded-full font-bold uppercase"
+            />
+          </div>
+          <p v-if="appointment.planTitle" class="mt-0.5 flex items-center gap-1 text-xs text-white/90">
+            <UIcon name="i-hugeicons-first-aid-kit" class="text-sm" />
+            {{ appointment.planTitle }}
+          </p>
+          <div class="divide-base mt-1.5 flex items-center divide-x text-sm leading-none">
+            <div class="flex items-center gap-1 font-medium sm:pr-2">
+              <UIcon name="i-hugeicons-time-quarter-02" />
+              <span>
+                {{ formatTimeString(appointment.startTime) }} -
+                {{
+                  formatTimeString(
+                    addMinutesToTime(
+                      appointment.startTime,
+                      appointment.duration + (appointment.extendedDurationMinutes || 0)
+                    )
+                  )
+                }}
+              </span>
+              •
+              <span>{{ durationLabel }}</span>
+            </div>
+            <div v-if="appointment.roomName" class="flex items-center gap-1 sm:px-2">
+              <UIcon name="i-hugeicons-door-01" />
+              <span>{{ appointment.roomName }}</span>
+            </div>
+            <div v-if="appointment.therapistId" class="flex items-center gap-1 sm:px-2">
+              <UIcon name="i-hugeicons-user" />
+              <span>{{ getTherapistName(appointment.therapistId) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Dropdown Menu -->
+      <UDropdownMenu :items="menuItems" :content="{ align: 'end' }" :ui="{ content: 'min-w-0' }">
+        <UButton
+          icon="i-hugeicons-more-vertical"
+          size="xl"
+          color="base"
+          square
+          class="hover:bg-primary/30"
+          @click.stop
+        />
+      </UDropdownMenu>
+    </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppointmentOnGoingCard } from '#components'
+  import { LazyAppointmentListItem } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -15,12 +15,6 @@
     return format(parseISO(currentDate.value), 'EEEE d MMMM yyyy', { locale: fr })
   })
 
-  const relativeDate = computed(() => {
-    const date = parseISO(currentDate.value)
-    const distance = formatRelativeDate(date)
-    return distance
-  })
-
   // ─── Auth ─────────────────────────────────────────────────────────────────────
   const { user } = await useAuth()
   const therapistId = computed(() => user.value?.id)
@@ -34,21 +28,19 @@
   const { data: appointments, isPending } = useTherapistAppointments(therapistId, currentDate)
 
   // ─── Computed ───────────────────────────────────────────────────────────────
-  const stats = computed(() => {
+  const statistics = computed(() => {
     const list = appointments.value || []
-    const completed = list.filter((a) => ['finished', 'completed'].includes(a.status)).length
-    const upcoming = list.filter(
-      (a) => ['scheduled', 'confirmed'].includes(a.status) && a.status !== 'in_progress'
-    ).length
-    const inProgress = list.filter((a) => a.status === 'in_progress').length
-    const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length
+    const completed = list.filter((a) => ['finished', 'completed'].includes(a.status))
+    const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status) && a.status !== 'in_progress')
+    const inProgress = list.filter((a) => a.status === 'in_progress')
+    const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status))
     return {
       total: list.length,
-      completed,
-      completedPercentage: list.length ? Math.round((completed / list.length) * 100) : 0,
-      upcoming,
-      inProgress,
-      cancelled
+      completed: completed.length,
+      completedPercentage: list.length ? Math.round((completed.length / list.length) * 100) : 0,
+      upcoming: upcoming.length,
+      inProgress: inProgress.length,
+      cancelled: cancelled.length
     }
   })
 
@@ -85,10 +77,10 @@
 
 <template>
   <AppDashboardPage id="therapist-day" title="Planning">
-    <div class="space-y-8">
+    <div class="space-y-6">
       <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 class="text-default text-2xl font-bold capitalize">{{ relativeDate }}</h1>
+          <h1 class="text-default text-2xl font-bold capitalize">{{ formatRelativeDate(currentDate) }}</h1>
           <p class="text-muted mt-1 flex items-center gap-2 capitalize">
             <UIcon name="i-hugeicons-calendar-03" class="size-4" />
             {{ formattedDate }}
@@ -104,32 +96,32 @@
       <div v-else class="space-y-6 xl:col-span-4">
         <!-- Day Stats -->
         <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
-          <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
+          <AppStatCard label="RDVs" :value="statistics.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
           <AppStatCard
             label="Terminées"
             color="success"
-            :value="stats.completed"
-            :unit="`${stats.completedPercentage}%`"
+            :value="statistics.completed"
+            :unit="`${statistics.completedPercentage}%`"
             icon="i-hugeicons-checkmark-circle-02"
           />
           <AppStatCard
             label="En cours"
             color="warning"
-            :value="stats.inProgress"
+            :value="statistics.inProgress"
             unit="séances"
             icon="i-hugeicons-hourglass"
           />
           <AppStatCard
             label="À venir"
             color="primary"
-            :value="stats.upcoming"
+            :value="statistics.upcoming"
             unit="RDVs"
             icon="i-hugeicons-clock-02"
           />
           <AppStatCard
             label="Annulées"
             color="error"
-            :value="stats.cancelled"
+            :value="statistics.cancelled"
             unit="RDVs"
             icon="i-hugeicons-cancel-circle-half-dot"
           />
@@ -137,50 +129,44 @@
 
         <!-- In progress treatment sessions -->
         <div class="space-y-4">
-          <LazyAppointmentOnGoingCard
-            v-for="appointment in inProgressAppointments"
-            :key="appointment.id"
-            :appointment
-          />
+          <LazyAppointmentListItem v-for="appointment in inProgressAppointments" :key="appointment.id" :appointment />
         </div>
 
         <AppCard title="Planning de la journée" icon="i-hugeicons-calendar-03">
-          <ClientOnly>
-            <UTabs
-              v-if="appointments && appointments.filter((a) => a.status !== 'in_progress').length > 0"
-              v-model="activeTab"
-              :items="tabs"
-              variant="pill"
-              :ui="{ content: 'space-y-2', trigger: 'grow' }"
-              class="w-full"
-            >
-              <template #upcoming>
-                <AppointmentListItem
-                  v-for="appointment in upcomingAppointments"
-                  :key="appointment.id"
-                  :appointment="appointment"
-                />
-              </template>
-              <template #finished>
-                <AppointmentListItem
-                  v-for="appointment in finishedAppointments"
-                  :key="appointment.id"
-                  :appointment="appointment"
-                />
-              </template>
-            </UTabs>
-            <UEmpty
-              v-else
-              icon="i-hugeicons-calendar-remove-01"
-              title="Aucun RDV"
-              description="Aucun RDV programmé pour cette journée"
-            />
-            <template #fallback>
-              <div class="flex justify-center py-8">
-                <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
-              </div>
+          <UTabs
+            v-if="appointments && appointments.filter((a) => a.status !== 'in_progress').length > 0"
+            v-model="activeTab"
+            :items="tabs"
+            variant="pill"
+            :ui="{ content: 'space-y-2', trigger: 'grow' }"
+            class="w-full"
+          >
+            <template #upcoming>
+              <AppointmentListItem
+                v-for="appointment in upcomingAppointments"
+                :key="appointment.id"
+                :appointment="appointment"
+              />
             </template>
-          </ClientOnly>
+            <template #finished>
+              <AppointmentListItem
+                v-for="appointment in finishedAppointments"
+                :key="appointment.id"
+                :appointment="appointment"
+              />
+            </template>
+          </UTabs>
+          <UEmpty
+            v-else
+            icon="i-hugeicons-calendar-remove-01"
+            title="Aucun RDV"
+            description="Aucun RDV programmé pour cette journée"
+          />
+          <template #fallback>
+            <div class="flex justify-center py-8">
+              <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
+            </div>
+          </template>
         </AppCard>
       </div>
     </div>
