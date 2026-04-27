@@ -3,16 +3,6 @@
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
-  // ─── State ───────────────────────────────────────────────────────────────────
-  const notes = ref('')
-
-  const todoItems = ref([
-    { id: 1, text: 'Relancer factures impayées', done: false },
-    { id: 2, text: 'Préparer bilan J. Dupont', done: true },
-    { id: 3, text: 'Commander matériel', done: false },
-    { id: 4, text: 'Mise à jour logiciel', done: false }
-  ])
-
   // ─── Route & date handling ──────────────────────────────────────────────────
   const route = useRoute()
 
@@ -31,15 +21,14 @@
     return distance
   })
 
+  // ─── Auth ─────────────────────────────────────────────────────────────────────
+  const { user } = await useAuth()
+  const therapistId = computed(() => user.value?.id)
+
   // ─── Actions ───────────────────────────────────────────────────────────────
   const selectDate = async (date: string) => {
     await navigateTo({ path: route.path, query: { date } })
   }
-
-  // ─── Auth ─────────────────────────────────────────────────────────────────────
-  const { user } = await useAuth()
-
-  const therapistId = computed(() => user.value?.id)
 
   // ─── Data fetching ───────────────────────────────────────────────────────────
   const { data: appointments, isPending } = useTherapistAppointments(therapistId, currentDate)
@@ -47,7 +36,7 @@
   // ─── Computed ───────────────────────────────────────────────────────────────
   const stats = computed(() => {
     const list = appointments.value || []
-    const completed = list.filter((a) => a.status === 'completed').length
+    const completed = list.filter((a) => ['finished', 'completed'].includes(a.status)).length
     const upcoming = list.filter(
       (a) => ['scheduled', 'confirmed'].includes(a.status) && a.status !== 'in_progress'
     ).length
@@ -66,7 +55,32 @@
   // ─── Filters ────────────────────────────────────────────────────────────────
   const inProgressAppointments = computed(() => appointments.value?.filter((a) => a.status === 'in_progress'))
 
-  const nonInProgressAppointments = computed(() => appointments.value?.filter((a) => a.status !== 'in_progress'))
+  const upcomingAppointments = computed(
+    () => appointments.value?.filter((a) => ['confirmed', 'scheduled'].includes(a.status)) || []
+  )
+
+  const finishedAppointments = computed(
+    () => appointments.value?.filter((a) => ['finished', 'completed', 'cancelled', 'no_show'].includes(a.status)) || []
+  )
+
+  const activeTab = ref<'upcoming' | 'finished'>('upcoming')
+
+  const tabs = computed(() => [
+    {
+      label: 'À venir',
+      value: 'upcoming',
+      slot: 'upcoming',
+      icon: 'i-hugeicons-calendar-03',
+      badge: upcomingAppointments.value.length
+    },
+    {
+      label: 'Terminé / Annulé',
+      value: 'finished',
+      slot: 'finished',
+      icon: 'i-hugeicons-checkmark-circle-02',
+      badge: finishedAppointments.value.length
+    }
+  ])
 </script>
 
 <template>
@@ -74,7 +88,7 @@
     <div class="space-y-8">
       <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 class="text-default text-3xl font-bold capitalize">{{ relativeDate }}</h1>
+          <h1 class="text-default text-2xl font-bold capitalize">{{ relativeDate }}</h1>
           <p class="text-muted mt-1 flex items-center gap-2 capitalize">
             <UIcon name="i-hugeicons-calendar-03" class="size-4" />
             {{ formattedDate }}
@@ -87,146 +101,87 @@
         <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
       </div>
 
-      <div v-else class="grid grid-cols-1 gap-8 xl:grid-cols-6">
-        <div class="space-y-6 xl:col-span-4">
-          <!-- Day Stats -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
-            <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
-            <AppStatCard
-              label="Terminées"
-              color="success"
-              :value="stats.completed"
-              :unit="`${stats.completedPercentage}%`"
-              icon="i-hugeicons-checkmark-circle-02"
-            />
-            <AppStatCard
-              label="En cours"
-              color="warning"
-              :value="stats.inProgress"
-              unit="séances"
-              icon="i-hugeicons-hourglass"
-            />
-            <AppStatCard
-              label="À venir"
-              color="primary"
-              :value="stats.upcoming"
-              unit="RDVs"
-              icon="i-hugeicons-clock-02"
-            />
-            <AppStatCard
-              label="Annulées"
-              color="error"
-              :value="stats.cancelled"
-              unit="RDVs"
-              icon="i-hugeicons-cancel-circle-half-dot"
-            />
-          </div>
+      <div v-else class="space-y-6 xl:col-span-4">
+        <!-- Day Stats -->
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-5">
+          <AppStatCard label="RDVs" :value="stats.total" unit="RDVs" icon="i-hugeicons-calendar-02" />
+          <AppStatCard
+            label="Terminées"
+            color="success"
+            :value="stats.completed"
+            :unit="`${stats.completedPercentage}%`"
+            icon="i-hugeicons-checkmark-circle-02"
+          />
+          <AppStatCard
+            label="En cours"
+            color="warning"
+            :value="stats.inProgress"
+            unit="séances"
+            icon="i-hugeicons-hourglass"
+          />
+          <AppStatCard
+            label="À venir"
+            color="primary"
+            :value="stats.upcoming"
+            unit="RDVs"
+            icon="i-hugeicons-clock-02"
+          />
+          <AppStatCard
+            label="Annulées"
+            color="error"
+            :value="stats.cancelled"
+            unit="RDVs"
+            icon="i-hugeicons-cancel-circle-half-dot"
+          />
+        </div>
 
-          <!-- In progress treatment sessions -->
-          <div class="space-y-4">
-            <LazyAppointmentOnGoingCard
-              v-for="appointment in inProgressAppointments"
-              :key="appointment.id"
-              :appointment
-            />
-          </div>
+        <!-- In progress treatment sessions -->
+        <div class="space-y-4">
+          <LazyAppointmentOnGoingCard
+            v-for="appointment in inProgressAppointments"
+            :key="appointment.id"
+            :appointment
+          />
+        </div>
 
-          <AppCard title="Planning de la journée" icon="i-hugeicons-task-daily-01">
-            <template #actions>
-              <div class="flex gap-2">
-                <UButton icon="i-hugeicons-list-view" variant="soft" color="primary" square size="sm" />
-                <UButton icon="i-hugeicons-calendar-02" variant="ghost" color="neutral" square size="sm" />
-              </div>
-            </template>
-            <div class="space-y-4">
-              <div v-if="nonInProgressAppointments && nonInProgressAppointments.length > 0" class="space-y-3">
+        <AppCard title="Planning de la journée" icon="i-hugeicons-calendar-03">
+          <ClientOnly>
+            <UTabs
+              v-if="appointments && appointments.filter((a) => a.status !== 'in_progress').length > 0"
+              v-model="activeTab"
+              :items="tabs"
+              variant="pill"
+              :ui="{ content: 'space-y-2', trigger: 'grow' }"
+              class="w-full"
+            >
+              <template #upcoming>
                 <AppointmentListItem
-                  v-for="appointment in nonInProgressAppointments"
+                  v-for="appointment in upcomingAppointments"
                   :key="appointment.id"
                   :appointment="appointment"
                 />
-              </div>
-
-              <UEmpty
-                v-else
-                icon="i-hugeicons-calendar-remove-01"
-                title="Aucun RDV"
-                description="Aucun RDV programmé pour cette journée"
-              />
-            </div>
-          </AppCard>
-        </div>
-
-        <div class="space-y-8 xl:col-span-2">
-          <UCard :ui="{ body: 'p-5', root: 'shadow-sm overflow-hidden flex flex-col' }">
-            <template #header>
-              <div class="border-default bg-warning/10 flex items-center justify-between border-b p-5">
-                <h3 class="text-default flex items-center gap-2 font-bold">
-                  <UIcon name="i-hugeicons-sticky-note-01" class="text-warning" />
-                  Notes du jour
-                </h3>
-                <UButton icon="i-hugeicons-edit-01" variant="ghost" color="neutral" square size="sm" />
-              </div>
-            </template>
-            <div class="p-5">
-              <UTextarea
-                v-model="notes"
-                placeholder="Une note pour aujourd'hui ?"
-                :ui="{
-                  base: 'bg-transparent border-none focus:ring-0 text-sm text-muted resize-none min-h-[120px] scrollbar-hide'
-                }"
-              />
-            </div>
-          </UCard>
-
-          <UCard :ui="{ body: 'p-2', root: 'shadow-sm overflow-hidden flex flex-col' }">
-            <template #header>
-              <div class="border-default flex items-center justify-between border-b p-5">
-                <h3 class="text-default flex items-center gap-2 font-bold">
-                  <UIcon name="i-hugeicons-checkmark-circle-02" class="text-primary" />
-                  À faire
-                </h3>
-                <UButton
-                  icon="i-hugeicons-add-01"
-                  size="xs"
-                  color="primary"
-                  square
-                  class="flex h-8 w-8 items-center justify-center rounded-full"
+              </template>
+              <template #finished>
+                <AppointmentListItem
+                  v-for="appointment in finishedAppointments"
+                  :key="appointment.id"
+                  :appointment="appointment"
                 />
+              </template>
+            </UTabs>
+            <UEmpty
+              v-else
+              icon="i-hugeicons-calendar-remove-01"
+              title="Aucun RDV"
+              description="Aucun RDV programmé pour cette journée"
+            />
+            <template #fallback>
+              <div class="flex justify-center py-8">
+                <UIcon name="i-hugeicons-loading-03" class="animate-spin text-4xl" />
               </div>
             </template>
-            <div class="space-y-1">
-              <div
-                v-for="item in todoItems"
-                :key="item.id"
-                class="group hover:bg-muted flex cursor-pointer items-center gap-3 rounded-xl p-3"
-              >
-                <UCheckbox v-model="item.done" color="primary" size="md" />
-                <span
-                  :class="[
-                    'text-sm transition-colors',
-                    item.done ? 'text-success line-through' : 'group-hover:text-primary text-muted'
-                  ]"
-                >
-                  {{ item.text }}
-                </span>
-              </div>
-            </div>
-          </UCard>
-
-          <div class="border-muted bg-muted rounded-2xl border-2 border-dashed p-6">
-            <div class="mb-4 flex items-center justify-between">
-              <span class="text-toned text-xs font-bold tracking-widest uppercase">Demain</span>
-              <span class="text-primary text-xs font-medium">8 rendez-vous</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="flex -space-x-2">
-                <div v-for="i in 3" :key="i" class="border-default bg-elevated h-8 w-8 rounded-full border-2" />
-              </div>
-              <span class="text-toned text-xs font-medium">+5 patients</span>
-            </div>
-          </div>
-        </div>
+          </ClientOnly>
+        </AppCard>
       </div>
     </div>
   </AppDashboardPage>
