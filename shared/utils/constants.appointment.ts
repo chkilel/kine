@@ -31,7 +31,7 @@ export const APPOINTMENT_STATUS_CONFIG = {
     description: 'Séance en cours de traitement'
   },
   finished: {
-    color: 'primary',
+    color: 'success',
     label: 'Terminée',
     icon: 'i-hugeicons-checkmark-circle-02',
     description: 'Séance terminée (en attente de complétion)'
