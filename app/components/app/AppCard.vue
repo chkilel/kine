@@ -4,6 +4,7 @@
     description?: string
     icon?: string
     iconColor?: UIColor
+    centerHeader?: boolean
   }>()
 
   const attrs = useAttrs()
@@ -11,7 +12,7 @@
 
   const defaultUi = {
     root: 'divide-y-0',
-    header: 'px-4 sm:px-6  pb-0 sm:pb-0',
+    header: 'px-4 sm:px-6 pb-0 sm:pb-0',
     body: 'pt-2 sm:pt-3'
   }
 
@@ -38,19 +39,17 @@
       <slot name="header" />
     </template>
     <template v-else-if="showHeader" #header>
-      <div class="flex flex-wrap items-start gap-2">
-        <div class="min-w-0">
-          <div v-if="icon || $slots.title || title" class="flex items-center gap-1.5">
-            <AppIconBox v-if="icon" :name="icon" :color="iconColor" />
-            <template v-if="$slots.title">
-              <slot name="title" />
-            </template>
-            <h3 v-else-if="title" class="text-toned text-[13px] font-semibold tracking-wide uppercase">{{ title }}</h3>
-          </div>
-          <p v-if="description" class="text-muted truncate text-xs" :class="{ 'ml-7': !!icon }">
-            {{ description }}
-          </p>
-        </div>
+      <div class="flex w-full flex-wrap items-center gap-2" :class="[centerHeader && 'justify-center']">
+        <AppIconBox v-if="icon" :name="icon" :color="iconColor" />
+        <template v-if="$slots.title">
+          <slot name="title" />
+        </template>
+        <h3 v-else-if="title" class="text-toned text-[13px] font-semibold tracking-wide uppercase">
+          {{ title }}
+        </h3>
+        <p v-if="description" class="text-muted w-full truncate text-xs" :class="{ 'ml-7': !!icon }">
+          {{ description }}
+        </p>
         <div v-if="$slots.actions" class="ml-auto">
           <slot name="actions" />
         </div>
