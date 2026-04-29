@@ -2,11 +2,7 @@
   import { LazyAppModalEVA } from '#components'
 
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = defineProps<{
-    patientId: string
-    appointmentId: string
-  }>()
-
+  const props = defineProps<{ patientId: string; appointmentId: string }>()
   const emit = defineEmits<{ close: [] }>()
 
   // ─── Composables ─────────────────────────────────────────────
@@ -14,13 +10,13 @@
   const evaModal = overlay.create(LazyAppModalEVA)
 
   const { mutateAsync: startAppointmentAsync, isLoading: isSessionStarting } = useStartAppointment()
-
   const { data: patient } = usePatientById(() => props.patientId)
   const { data: allAppointments } = useAppointmentsList(() => ({
     patientId: props.patientId,
     limit: 6,
     includePaymentStatus: false
   }))
+
   const {
     data: appointment,
     isPending: appointmentLoading,
@@ -33,9 +29,7 @@
   // ─── Watchers ────────────────────────────────────────────────
   watch(
     () => appointment.value?.pauseStartTime,
-    (pauseStartTime) => {
-      isTimerPaused.value = !!pauseStartTime
-    },
+    (pauseStartTime) => (isTimerPaused.value = !!pauseStartTime),
     { immediate: true }
   )
 
@@ -113,19 +107,10 @@
 </script>
 
 <template>
-  <USlideover :dismissible="true" :close="false" :ui="{ content: 'w-full max-w-[1500px]' }" @close="emit('close')">
+  <USlideover :ui="{ content: 'w-full max-w-7xl bg-elevated' }" @close="emit('close')">
     <template #header>
       <div class="flex w-full items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          <UButton
-            icon="i-hugeicons-panel-left-close"
-            size="xl"
-            color="neutral"
-            variant="ghost"
-            square
-            :ui="{ leadingIcon: 'size-8' }"
-            @click="emit('close')"
-          />
           <div v-if="patient" class="flex items-center gap-3">
             <div class="rounded-full p-1" :class="isTimerPaused ? 'bg-warning-300 animate-pulse' : 'bg-primary-100'">
               <UAvatar :alt="patientfullname" size="xl" />
@@ -168,10 +153,20 @@
             variant="solid"
             icon="i-hugeicons-play-circle"
             :loading="isSessionStarting"
+            class="self-stretch"
             @click="handleStartSession"
           >
             Démarrer la séance
           </UButton>
+          <UButton
+            icon="i-hugeicons-panel-left-close"
+            size="xl"
+            color="neutral"
+            variant="ghost"
+            square
+            :ui="{ leadingIcon: 'size-8' }"
+            @click="emit('close')"
+          />
         </div>
       </div>
     </template>
@@ -182,7 +177,7 @@
       </div>
 
       <!-- Main Content -->
-      <div v-else class="grid h-full gap-6 lg:grid-cols-12">
+      <div v-else class="grid h-full gap-4 lg:grid-cols-12">
         <!-- Left Sidebar - Patient Info -->
         <TreatmentSessionSlideoverLeftSide
           v-if="patient && appointment"

@@ -1,39 +1,38 @@
 <script setup lang="ts">
   // ─── Props ───────────────────────────────────────────────────
-  const { patient, appointment } = defineProps<{
-    patient: Patient
-    appointment: Appointment
-  }>()
+  const { patient, appointment } = defineProps<{ patient: Patient; appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────
-  const { treatmentPlans } = usePatientTreatmentPlans(() => patient.id)
+  const { data: treatmentPlan } = useTreatmentPlan(() => appointment.treatmentPlanId)
   const { data: allAppointments } = useAppointmentsList(() => ({
     patientId: patient.id,
     limit: 6,
     includePaymentStatus: false
   }))
+  const { getTherapistName } = useOrganizationMembers()
 
   // ─── Computed state ──────────────────────────────────────────
-  const relatedTreatmentPlan = computed(() => {
-    if (!treatmentPlans.value || !appointment?.treatmentPlanId) return null
-    return treatmentPlans.value.find((plan) => plan.id === appointment?.treatmentPlanId) || null
-  })
+  const painLevelBefore = computed(() => appointment.painLevelBefore)
+  const painLevelAfter = computed(() => appointment.painLevelAfter)
+  const sessionInProgress = computed(() => appointment.status === 'in_progress')
+  const shouldShowEVACards = computed(() => sessionInProgress.value || appointment.painLevelAfter != null)
 
   const completedSessionsCount = computed(() => {
     if (!allAppointments.value || !appointment) return 0
     const planId = appointment.treatmentPlanId
     if (!planId) return 0
+
     return allAppointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
-  const totalSessionsCount = computed(() => relatedTreatmentPlan.value?.numberOfSessions || 0)
+  const totalSessionsCount = computed(() => treatmentPlan.value?.numberOfSessions || 0)
 
   const progressPercentage = computed(() => {
     if (!totalSessionsCount.value) return 0
     return Math.min(Math.round((completedSessionsCount.value / totalSessionsCount.value) * 100), 100)
   })
 
-  const hasPatientAlerts = computed(() =>
+  const hasMedicalInfo = computed(() =>
     Boolean(
       patient?.allergies?.length ||
       patient?.medicalConditions?.length ||
@@ -41,150 +40,144 @@
       patient?.medications?.length
     )
   )
+
+  const medicalSections = computed(() => [
+    { title: 'Allergies', items: patient.allergies },
+    { title: 'Chirurgies', items: patient.surgeries },
+    { title: 'Antécédents', items: patient.medicalConditions },
+    { title: 'Traitement en cours', items: patient.medications }
+  ])
+
+  watchEffect(() => {
+    console.log('shouldShowEVACards:', shouldShowEVACards.value)
+    console.log('appointment.status:', appointment.status)
+    console.log('appointment.painLevelAfter:', appointment.painLevelAfter)
+  })
 </script>
 
 <template>
-  <aside class="flex flex-col gap-4 lg:col-span-3">
-    <!-- Medical Info Section -->
-    <div class="pb-6">
-      <!-- Treatment Plan -->
-      <div v-if="relatedTreatmentPlan" class="mb-5">
-        <!-- <p class="text-muted mb-3 text-[10px] font-extrabold tracking-widest uppercase">Diagnostic Principal</p> -->
-        <UAlert
-          color="neutral"
-          variant="outline"
-          :ui="{
-            title: 'text-sm leading-snug font-semibold text-default',
-            description: 'text-sm opacity-90',
-            icon: 'size-6'
-          }"
-        >
-          <template #title>
-            <div class="text-default mb-4 flex items-center justify-center gap-2 text-sm font-semibold uppercase">
-              <UIcon name="i-hugeicons-healtcare" class="text-info-800 size-5" />
-              <span>Plan de traitement</span>
-            </div>
-          </template>
-          <template #description>
-            <div v-if="totalSessionsCount > 0" class="flex flex-col items-center text-center">
-              <div class="relative size-32">
-                <svg class="size-full -rotate-90" viewBox="0 0 36 36">
-                  <!-- Plan Progress Ring -->
-                  <circle class="stroke-info-100" cx="18" cy="18" fill="none" r="16" stroke-width="3" />
-                  <circle
-                    class="stroke-info"
-                    cx="18"
-                    cy="18"
-                    fill="none"
-                    r="16"
-                    :stroke-dasharray="`${progressPercentage}, 100`"
-                    stroke-linecap="round"
-                    stroke-width="3"
-                  />
-                </svg>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <span class="text-primary text-xl font-bold">
-                    {{ completedSessionsCount }}/{{ totalSessionsCount }}
-                  </span>
-                  <p class="text-muted text-[10px] font-medium tracking-tight uppercase">Séances</p>
-                </div>
-              </div>
-            </div>
-            <div class="mt-2 flex min-w-0 flex-1 flex-col">
-              <div class="text-info-800 dark:text-info-300 text-sm font-semibold">
-                {{ relatedTreatmentPlan.title }}
-              </div>
-              <div class="mt-1">
-                {{ relatedTreatmentPlan.diagnosis }}
-              </div>
-            </div>
-          </template>
-        </UAlert>
+  <aside class="flex flex-col gap-y-4 lg:col-span-3">
+    <!-- Treatment Plan -->
+    <AppCard
+      v-if="treatmentPlan"
+      title="Plan de traitement"
+      color="neutral"
+      variant="outline"
+      icon="i-hugeicons-healtcare"
+      centerHeader
+      :ui="{
+        root: 'divide-y-0',
+        header: 'px-4 sm:px-6  pb-0 sm:pb-0',
+        body: 'pt-2 sm:pt-2'
+      }"
+    >
+      <div v-if="totalSessionsCount > 0" class="flex flex-col items-center text-center">
+        <div class="relative size-32">
+          <svg class="size-full -rotate-90" viewBox="0 0 36 36">
+            <!-- Plan Progress Ring -->
+            <circle class="stroke-info-100" cx="18" cy="18" fill="none" r="16" stroke-width="3" />
+            <circle
+              class="stroke-info"
+              cx="18"
+              cy="18"
+              fill="none"
+              r="16"
+              :stroke-dasharray="`${progressPercentage}, 100`"
+              stroke-linecap="round"
+              stroke-width="3"
+            />
+          </svg>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <span class="text-primary text-xl font-bold">{{ completedSessionsCount }}/{{ totalSessionsCount }}</span>
+            <p class="text-muted text-[10px] font-medium tracking-tight uppercase">Séances</p>
+          </div>
+        </div>
       </div>
 
-      <UCard
-        v-if="hasPatientAlerts"
-        :ui="{
-          root: 'divide-transparent rounded-md',
-          body: 'p-0 sm:p-0'
-        }"
-      >
-        <UCollapsible :default-open="false">
-          <UButton
-            color="primary"
-            variant="ghost"
-            class="group p-4 sm:px-6 sm:py-4"
-            :ui="{
-              base: 'hover:rounded-b-none',
-              trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-            }"
-            trailing-icon="i-lucide-chevron-down"
-            block
-          >
-            <h3 class="text-default text-sm font-bold">Alertes Médicales</h3>
-          </UButton>
+      <div class="mt-4 flex flex-col gap-2 text-xs">
+        <div class="flex items-center gap-4">
+          <div class="n flex items-center gap-2">
+            <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
+            <h4 class="text-muted text-[10px] font-medium uppercase">Suivi par</h4>
+          </div>
+          <span class="font-semibold">{{ getTherapistName(treatmentPlan.therapistId) }}</span>
+        </div>
 
-          <template #content>
-            <div class="border-default space-y-3 border-t p-4 sm:p-6">
-              <UAlert
-                v-if="patient?.allergies?.length"
-                title="Allergie"
-                :description="patient.allergies.join(', ')"
-                icon="i-hugeicons-alert-01"
-                color="error"
-                variant="subtle"
-                :ui="{
-                  title: 'text-xs leading-snug tracking-wide font-bold uppercase text-error-700',
-                  description: 'text-sm',
-                  icon: 'size-6'
-                }"
-              />
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
+            <h4 class="text-muted text-[10px] font-medium uppercase">Motif de prise en charge</h4>
+          </div>
+          <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
+        </div>
+      </div>
+    </AppCard>
+    <AppCard v-if="shouldShowEVACards" title="Évaluation de la douleur">
+      <div class="divide-default grid grid-cols-2 gap-2 divide-x">
+        <div class="flex items-center gap-3">
+          <p class="text-xl font-bold">{{ painLevelBefore }}/10</p>
+          <UIcon name="i-hugeicons-airplane-take-off-01" class="text-primary size-5" />
+        </div>
 
-              <UAlert
-                v-if="patient?.medicalConditions?.length"
-                title="Antécédents médicaux"
-                :description="patient.medicalConditions.join(', ')"
+        <div v-if="painLevelAfter != null" class="flex items-center gap-3">
+          <p class="text-xl font-bold">{{ painLevelAfter }}/10</p>
+          <UIcon name="i-hugeicons-airplane-landing-01" class="text-primary size-5" />
+        </div>
+        <p v-else class="text-muted text-xs">Sera demandé en fin de séance</p>
+      </div>
+    </AppCard>
+
+    <UCard
+      v-if="hasMedicalInfo"
+      :ui="{
+        root: 'divide-transparent rounded-md',
+        body: 'p-0 sm:p-0'
+      }"
+    >
+      <UCollapsible :default-open="false">
+        <UButton
+          color="primary"
+          variant="ghost"
+          trailing-icon="i-lucide-chevron-down"
+          block
+          class="group p-4 sm:px-6 sm:py-4"
+          :ui="{
+            base: 'rounded-b-none',
+            trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+          }"
+        >
+          <h3 class="text-toned text-[13px] font-semibold tracking-wide uppercase">Alertes Médicales</h3>
+        </UButton>
+
+        <template #content>
+          <div class="border-default border-t p-4 pt-2 sm:p-6 sm:pt-2">
+            <template v-if="!hasMedicalInfo">
+              <UEmpty
+                size="xs"
+                variant="naked"
                 icon="i-hugeicons-medical-file"
-                color="warning"
-                variant="subtle"
-                :ui="{
-                  title: 'text-xs leading-snug tracking-wide font-semibold uppercase text-warning-600',
-                  description: 'text-sm',
-                  icon: 'size-6'
-                }"
+                title="Aucune information médicale"
+                description="Aucune donnée médicale n'a été enregistrée pour ce patient."
               />
+            </template>
 
-              <UAlert
-                v-if="patient?.surgeries?.length"
-                title="Chirurgies"
-                :description="patient.surgeries.join(', ')"
-                icon="i-hugeicons-hospital-02"
-                color="info"
-                variant="subtle"
-                :ui="{
-                  title: 'text-xs leading-snug tracking-wide font-bold uppercase text-info-800 dark:text-info-300',
-                  description: 'text-sm',
-                  icon: 'size-6'
-                }"
-              />
-
-              <UAlert
-                v-if="patient?.medications?.length"
-                title="Médicaments"
-                :description="patient.medications.join(', ')"
-                icon="i-hugeicons-give-pill"
-                color="neutral"
-                variant="subtle"
-                :ui="{
-                  title: 'text-xs leading-snug tracking-wide font-bold uppercase',
-                  description: 'text-sm',
-                  icon: 'size-6'
-                }"
-              />
+            <div v-else class="divide-default grid">
+              <template v-for="(section, index) in medicalSections" :key="index">
+                <div v-if="section.items && section.items.length > 0" :key="section.title" class="not-last:pb-2">
+                  <h4 class="mb-1 text-[11px] tracking-wide uppercase">{{ section.title }}</h4>
+                  <UAlert color="info" variant="soft" :ui="{ root: 'p-2 rounded-sm' }">
+                    <template #description>
+                      <ul class="text-default list-outside">
+                        <li v-for="item in section.items" :key="item" class="text-xs">• {{ item }}</li>
+                      </ul>
+                    </template>
+                  </UAlert>
+                </div>
+              </template>
             </div>
-          </template>
-        </UCollapsible>
-      </UCard>
-    </div>
+          </div>
+        </template>
+      </UCollapsible>
+    </UCard>
   </aside>
 </template>
