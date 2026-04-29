@@ -150,7 +150,7 @@
         </UButton>
 
         <template #content>
-          <div class="border-default border-t p-4 pt-2 sm:p-6 sm:pt-2">
+          <div class="border-default border-t p-4 pt-2 sm:p-6 sm:pt-4">
             <template v-if="!hasMedicalInfo">
               <UEmpty
                 size="xs"

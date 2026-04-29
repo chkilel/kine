@@ -6,7 +6,8 @@ export const APPOINTMENT_KEYS = {
   list: (params: AppointmentQuery) => [...APPOINTMENT_KEYS.root, params],
   single: (id: string) => [...APPOINTMENT_KEYS.root, id],
   therapist: (therapistId: string, date: string) => [...APPOINTMENT_KEYS.root, 'therapist', therapistId, date],
-  therapistRoot: () => [...APPOINTMENT_KEYS.root, 'therapist']
+  therapistRoot: () => [...APPOINTMENT_KEYS.root, 'therapist'],
+  plan: (treatmentPlanId: string, patientId: string) => [...APPOINTMENT_KEYS.root, 'plan', treatmentPlanId, patientId]
 }
 
 const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) => {
@@ -33,6 +34,39 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
         lockedAt: safeParseISODate(item.lockedAt)
       }))
     }
+  })
+}
+
+const _usePlanAppointments = (
+  treatmentPlanId: MaybeRefOrGetter<string | undefined>,
+  patientId: MaybeRefOrGetter<string>,
+  limit: MaybeRefOrGetter<number> = 10
+) => {
+  const requestFetch = useRequestFetch()
+
+  return useQuery({
+    key: () => {
+      const planId = toValue(treatmentPlanId)
+      const pid = toValue(patientId)
+      return planId ? APPOINTMENT_KEYS.plan(planId, pid) : APPOINTMENT_KEYS.root
+    },
+    query: async () => {
+      const planId = toValue(treatmentPlanId)
+      const pid = toValue(patientId)
+      const lim = toValue(limit)
+
+      if (!planId) return []
+
+      const resp = await requestFetch('/api/appointments/plan', {
+        query: {
+          treatmentPlanId: planId,
+          patientId: pid,
+          limit: lim.toString()
+        }
+      })
+      return resp || []
+    },
+    enabled: () => !!toValue(treatmentPlanId)
   })
 }
 
@@ -488,6 +522,9 @@ const _useUpdateAppointmentClinicalNotes = () => {
 
 export const useAppointmentsList = _useAppointmentsList
 export const useAppointment = _useAppointment
+export const useTherapistAppointments = _useTherapistAppointments
+export const usePlanAppointments = _usePlanAppointments
+
 export const useCreateAppointment = createSharedComposable(_useCreateAppointment)
 export const useUpdateAppointment = createSharedComposable(_useUpdateAppointment)
 export const useDeleteAppointment = createSharedComposable(_useDeleteAppointment)
@@ -501,4 +538,3 @@ export const useUpdateAppointmentTags = createSharedComposable(_useUpdateAppoint
 export const useExtendAppointment = createSharedComposable(_useExtendAppointment)
 export const useUpdateAppointmentPrice = createSharedComposable(_useUpdateAppointmentPrice)
 export const useUpdateAppointmentClinicalNotes = createSharedComposable(_useUpdateAppointmentClinicalNotes)
-export const useTherapistAppointments = _useTherapistAppointments
