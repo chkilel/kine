@@ -218,7 +218,34 @@ const _useDeleteTreatmentPlan = () => {
   })
 }
 
+const _useTreatmentPlan = (planId: MaybeRefOrGetter<string | null>) => {
+  const requestFetch = useRequestFetch()
+
+  return useQuery({
+    key: () => {
+      const id = toValue(planId)
+      return id ? TREATMENT_PLAN_KEYS.single(id) : TREATMENT_PLAN_KEYS.root
+    },
+    query: async () => {
+      const data = await requestFetch(`/api/treatment-plans/${toValue(planId)}`)
+      if (!data) return null
+      return {
+        ...data,
+        createdAt: parseISO(data.createdAt),
+        updatedAt: parseISO(data.updatedAt),
+        notes:
+          (data.notes || []).map((note) => ({
+            ...note,
+            date: parseISO(note.date)
+          })) || []
+      }
+    },
+    enabled: () => !!toValue(planId)
+  })
+}
+
 export const usePatientTreatmentPlans = _usePatientTreatmentPlans
+export const useTreatmentPlan = createSharedComposable(_useTreatmentPlan)
 export const useCreateTreatmentPlan = createSharedComposable(_useCreateTreatmentPlan)
 export const useUpdateTreatmentPlan = createSharedComposable(_useUpdateTreatmentPlan)
 export const useDeleteTreatmentPlan = createSharedComposable(_useDeleteTreatmentPlan)
