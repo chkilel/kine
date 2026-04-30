@@ -22,8 +22,7 @@ export default defineEventHandler(async (event) => {
         status: appointments.status,
         painLevelBefore: appointments.painLevelBefore,
         painLevelAfter: appointments.painLevelAfter,
-        treatmentSummary: appointments.treatmentSummary,
-        nextSteps: appointments.nextSteps
+        sessionNotes: appointments.sessionNotes
       })
       .from(appointments)
       .where(

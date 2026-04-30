@@ -50,9 +50,8 @@ export const appointments = sqliteTable(
 
     // ---- Clinical content ----
     primaryConcern: text(),
-    treatmentSummary: text(),
     observations: text(),
-    nextSteps: text(),
+    sessionNotes: text(),
 
     // ---- Clinical assessment (EVA pain scale) ----
     painLevelBefore: integer(),

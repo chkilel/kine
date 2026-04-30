@@ -1378,7 +1378,7 @@ function generateAppointments(
       priceCents: duration ? duration * 50 : 50,
       primaryConcern: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
-      treatmentSummary:
+      sessionNotes:
         status === 'completed'
           ? randomItem([
               'Thérapie manuelle et étirements',
@@ -1532,7 +1532,7 @@ function generateAppointments(
       priceCents: durationValue * 50,
       primaryConcern: randomItem(medicalConditions),
       notes: null,
-      treatmentSummary: null,
+      sessionNotes: null,
       ...(requiresTimer
         ? {
             actualStartTime: startTime,
