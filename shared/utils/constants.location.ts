@@ -8,21 +8,21 @@ export const LOCATIONS_CONFIG = {
   clinic: {
     label: 'Cabinet',
     icon: 'i-hugeicons-hospital-01',
-    color: 'success',
+    color: 'neutral',
     variant: 'subtle',
     desc: 'Consultation en présentiel'
   },
   home: {
     label: 'Domicile',
     icon: 'i-hugeicons-home-03',
-    color: 'warning',
+    color: 'neutral',
     variant: 'subtle',
     desc: 'Déplacement chez le patient'
   },
   telehealth: {
     label: 'Téléconsultation',
     icon: 'i-hugeicons-video-02',
-    color: 'info',
+    color: 'neutral',
     variant: 'subtle',
     desc: 'Consultation à distance'
   }

@@ -15,6 +15,7 @@ Kine is a full-stack physiotherapy practice management platform built for French
 - **Deployment:** Cloudflare Workers (Nitro preset: `cloudflare_module`)
 - **Package Manager:** pnpm
 - **Testing:** Vitest
+- **Linting:** Oxlint
 - **Formatting:** Prettier with Tailwind plugin
 
 ## Commands
@@ -25,6 +26,8 @@ Kine is a full-stack physiotherapy practice management platform built for French
 | `pnpm build` | Production build |
 | `pnpm preview` | Build + wrangler dev |
 | `pnpm deploy` | Build + deploy to Cloudflare |
+| `pnpm lint` | Run oxlint linter |
+| `pnpm lint:fix` | Auto-fix linting issues |
 | `pnpm typecheck` | Run TypeScript type checking |
 | `pnpm test` | Run tests once |
 | `pnpm test:watch` | Run tests in watch mode |
@@ -97,6 +100,12 @@ shared/                 # Shared between client & server
 - Print width: 120
 - Vue indent script and style: true
 
+### Linting (Oxlint)
+- Always run `pnpm lint` before committing changes
+- Use `pnpm lint:fix` to auto-fix issues where possible
+- Configured with TypeScript and Vue plugins for Nuxt 4
+- Categories enabled: `correctness` (error), `suspicious` (warn)
+
 ### Language
 - The UI is in **French**. All user-facing strings, error messages, and comments should be in French.
 - Code identifiers (variables, functions, types) use English.
@@ -144,7 +153,7 @@ shared/                 # Shared between client & server
 
 ## Important Notes
 
-- Always run `pnpm typecheck` after making code changes to verify correctness.
+- Always run `pnpm lint` and `pnpm typecheck` after making code changes to verify correctness.
 - Always run `pnpm test` to check for regressions.
 - Do NOT commit `.env` files. Use `.env.example` as reference.
 - The project uses Nuxt 4 compatibility date `2025-07-15`.

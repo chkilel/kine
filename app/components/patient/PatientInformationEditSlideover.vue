@@ -11,10 +11,10 @@
     return JSON.parse(JSON.stringify(arr))
   }
 
-  function getInitialFormState(): PatientUpdate {
+  function getInitialFormState(): PatientInformationUpdate {
     return {
-      address: props.patient.address || undefined,
-      city: props.patient.city || undefined,
+      address: props.patient.address ?? '',
+      city: props.patient.city ?? '',
       postalCode: props.patient.postalCode || undefined,
       referralSource: props.patient.referralSource || undefined,
       insuranceProvider: props.patient.insuranceProvider || undefined,
@@ -22,7 +22,7 @@
     }
   }
 
-  const formState = reactive<PatientUpdate>(getInitialFormState())
+  const formState = reactive<PatientInformationUpdate>(getInitialFormState())
 
   async function onSubmit() {
     if (!formRef.value) return
@@ -36,35 +36,22 @@
       onSuccess: () => emit('close')
     })
   }
-
-  function handleClose() {
-    emit('close')
-  }
-
-  function onSlideoverOpened() {
-    Object.assign(formState, getInitialFormState())
-  }
 </script>
 
 <template>
   <USlideover
-    :open="true"
-    :dismissible="false"
-    @close="emit('close')"
-    @after:enter="onSlideoverOpened"
     title="Modifier les informations"
     :description="`Modifier les informations de ${patient.firstName} ${patient.lastName}`"
     :ui="{
-      content: 'w-full md:w-3/4 lg:w-1/2 max-w-2xl bg-elevated'
+      content: 'w-full lg:w-1/3 max-w-2xl bg-elevated'
     }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="patientUpdateSchema" :state="formState" class="space-y-6">
+      <UForm ref="formRef" :schema="patientInformationUpdateSchema" :state="formState" class="space-y-6">
         <!-- Address Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Adresse</h3>
+        <AppCard title="Adresse">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Adresse" placeholder="123 rue Principale" name="address" class="md:col-span-2">
+            <UFormField placeholder="123 rue Principale" name="address" class="md:col-span-2">
               <UInput v-model="formState.address" class="w-full" />
             </UFormField>
             <UFormField label="Ville" placeholder="Paris" name="city">
@@ -77,9 +64,7 @@
         </AppCard>
 
         <!-- Referral and Insurance Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Recommandation et couverture</h3>
-
+        <AppCard title="Recommandation et couverture">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UFormField label="Source de recommandation" placeholder="Dr. Martin" name="referralSource">
               <UInput v-model="formState.referralSource" class="w-full" />
@@ -91,20 +76,15 @@
         </AppCard>
 
         <!-- Emergency Contact -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Contact d'urgence</h3>
-          <PatientEmergencyContacts v-model="formState.emergencyContacts" />
-        </AppCard>
+        <PatientEmergencyContacts v-model="formState.emergencyContacts" />
       </UForm>
     </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="" @click="handleClose">Annuler</UButton>
-        <UButton color="primary" class="" type="submit" @click="onSubmit" :loading="isLoading" :disabled="isLoading">
-          Mettre à jour
-        </UButton>
-      </div>
+    <template #footer="{ close }">
+      <UButton variant="outline" color="neutral" class="" @click="close">Annuler</UButton>
+      <UButton color="primary" class="" type="submit" @click="onSubmit" :loading="isLoading" :disabled="isLoading">
+        Mettre à jour
+      </UButton>
     </template>
   </USlideover>
 </template>

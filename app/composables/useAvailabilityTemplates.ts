@@ -124,7 +124,7 @@ const _useDeleteAvailabilityTemplate = () => {
   const requestFetch = useRequestFetch()
 
   return useMutation({
-    mutation: async ({ id, onSuccess }: { id: string; onSuccess?: () => void }) =>
+    mutation: async ({ id, onSuccess: _onSuccess }: { id: string; onSuccess?: () => void }) =>
       requestFetch(`/api/availability/templates/${id}`, {
         method: 'DELETE'
       }),

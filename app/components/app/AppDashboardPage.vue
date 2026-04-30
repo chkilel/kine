@@ -1,46 +1,47 @@
 <script setup lang="ts">
   import type { BreadcrumbItem } from '@nuxt/ui'
 
+  // ─── Props / Slots ───────────────────────────────────────────
   defineProps<{
-    /**
-     * Unique ID for the dashboard panel
-     */
-    id: string
-    /**
-     * Page title for the header
-     */
-    title?: string
-    /**
-     * Breadcrumb items (optional, shows title if not provided)
-     */
-    breadcrumbs?: BreadcrumbItem[]
-    /**
-     * Show notification bell in header
-     * @default true
-     */
-    showNotifications?: boolean
+    id: string // Unique ID for the dashboard panel
+    title?: string //Page title for the header
+    breadcrumbs?: BreadcrumbItem[] // Breadcrumb items (optional, shows title if not provided)
+    showNotifications?: boolean // Show notification bell in header - @default true
   }>()
 
-  defineSlots<{
+  const slots = defineSlots<{
     default: () => any
     footer?: () => any
     'header-leading'?: () => any
     'header-title'?: () => any
     'header-right'?: () => any
+    toolbar?: () => any
   }>()
+
+  // ─── State ──────────────────────────────────────────────────
+  const rightOpen = useState('rightSide')
 </script>
 
 <template>
   <UDashboardPanel :id="id" class="bg-elevated">
     <template #header>
-      <UDashboardNavbar :title="title" class="bg-default">
+      <UDashboardNavbar
+        :title="title"
+        class=""
+        :ui="{
+          root: 'bg-default justify-start',
+          right: 'ml-auto flex items-center shrink-0 gap-1.5',
+          left: 'flex-1'
+        }"
+      >
         <template #leading>
           <slot name="header-leading">
             <UDashboardSidebarCollapse variant="soft" />
+            <PatientSearchModal />
           </slot>
         </template>
 
-        <template #title>
+        <template v-if="slots['header-title']" #title>
           <slot name="header-title">
             <div class="flex items-center">
               <h1 v-if="title" class="font-semibold">{{ title }}</h1>
@@ -60,16 +61,23 @@
               </UChip>
             </template>
           </slot>
+
+          <UButton
+            icon="i-lucide-panel-left"
+            color="neutral"
+            variant="ghost"
+            :aria-label="rightOpen ? 'Close sidebar' : 'Open sidebar'"
+            @click="rightOpen = !rightOpen"
+          />
         </template>
       </UDashboardNavbar>
+      <slot v-if="slots.toolbar" name="toolbar" />
     </template>
 
     <template #body>
-      <UContainer>
-        <div class="flex flex-col gap-6">
-          <slot />
-        </div>
-      </UContainer>
+      <div class="flex flex-col gap-4">
+        <slot />
+      </div>
     </template>
 
     <template v-if="$slots.footer" #footer>

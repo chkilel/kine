@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     const { organizationId } = await requireAuthWithOrg(event)
     const body = await readValidatedBody(event, appointmentUpdateSchema.parse)
 
-    const [existingAppointment] = await db  
+    const [existingAppointment] = await db
       .select()
       .from(appointments)
       .where(and(eq(appointments.id, id), eq(appointments.organizationId, organizationId)))

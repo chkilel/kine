@@ -25,8 +25,6 @@
     return { count: unpaid.length, totalDueCents }
   })
 
-
-
   // ─── Event handlers ──────────────────────────────────────────
   function handleAddDeposit() {
     openAddDeposit(props.patientId)

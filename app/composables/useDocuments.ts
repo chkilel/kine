@@ -1,7 +1,7 @@
 export const DOCUMENT_KEYS = {
   root: ['documents'] as const,
-  byPatient: (patientId: string, treatmentPlanId?: string) =>
-    [...DOCUMENT_KEYS.root, patientId, treatmentPlanId || 'all'] as const,
+  byPatient: (patientId: string) => [...DOCUMENT_KEYS.root, patientId] as const,
+  byTreatmentPlan: (patientId: string, treatmentPlanId: string) => [...DOCUMENT_KEYS.byPatient(patientId), treatmentPlanId] as const,
   downloadUrl: (patientId: string, documentId: string) => ['document-download-url', patientId, documentId] as const
 }
 
@@ -9,7 +9,11 @@ const _useDocumentsList = (patientId: MaybeRefOrGetter<string>, treatmentPlanId?
   const requestFetch = useRequestFetch()
 
   return useQuery({
-    key: () => DOCUMENT_KEYS.byPatient(toValue(patientId), toValue(treatmentPlanId)),
+    key: () => {
+      const pid = toValue(patientId)
+      const tpid = toValue(treatmentPlanId)
+      return tpid ? DOCUMENT_KEYS.byTreatmentPlan(pid, tpid) : DOCUMENT_KEYS.byPatient(pid)
+    },
     query: async () => {
       return requestFetch<PatientDocument[]>(`/api/patients/${toValue(patientId)}/documents`, {
         query: toValue(treatmentPlanId) ? { treatmentPlanId: toValue(treatmentPlanId) } : undefined
@@ -52,10 +56,8 @@ const _useUpdateDocument = () => {
       }),
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
-      queryCache.invalidateQueries({
-        key: DOCUMENT_KEYS.byPatient(patientId),
-        exact: false
-      })
+      queryCache.invalidateQueries({ key: DOCUMENT_KEYS.byPatient(patientId), exact: false })
+
       toast.add({
         title: 'Succès',
         description: 'Le document a été mis à jour avec succès.',
@@ -87,10 +89,7 @@ const _useDeleteDocument = () => {
       requestFetch(`/api/patients/${patientId}/documents/${documentId}`, { method: 'DELETE' }),
     onSuccess: (_, { patientId, onSuccess }) => {
       onSuccess?.()
-      queryCache.invalidateQueries({
-        key: DOCUMENT_KEYS.byPatient(patientId),
-        exact: false
-      })
+      queryCache.invalidateQueries({ key: DOCUMENT_KEYS.byPatient(patientId), exact: false })
       toast.add({
         title: 'Succès',
         description: 'Le document a été supprimé avec succès.',

@@ -40,7 +40,7 @@
       <div class="flex shrink-0 flex-col items-center gap-3 md:items-start">
         <UAvatar
           :alt="formatFullName(patient)"
-          class="ring-muted aspect-square size-22 rounded-2xl bg-cover bg-center bg-no-repeat text-4xl shadow-inner ring-4"
+          class="ring-muted aspect-square size-20 rounded-2xl bg-cover bg-center bg-no-repeat text-4xl shadow-inner ring-4"
         />
       </div>
       <div class="flex-1">

@@ -61,7 +61,34 @@ const patientCreateShape = {
 
 export const patientCreateSchema = createInsertSchema(patients, patientCreateShape)
 
-export const patientUpdateSchema = patientCreateSchema.partial()
+const patientUpdateShape = {
+  emergencyContacts: z.array(emergencyContactSchema).optional(),
+  medicalConditions: z.array(z.string()).optional(),
+  surgeries: z.array(z.string()).optional(),
+  allergies: z.array(z.string()).optional(),
+  medications: z.array(z.string()).optional(),
+  notes: z.array(noteSchema).optional()
+}
+export const patientUpdateSchema = createInsertSchema(patients, patientUpdateShape).partial()
+
+export const patientInformationUpdateSchema = z.object({
+  address: z.string(),
+  city: z.string(),
+  postalCode: z.string().optional(),
+  referralSource: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  emergencyContacts: z.array(emergencyContactSchema).optional()
+})
+
+export const patientBasicInfoUpdateSchema = z.object({
+  firstName: nameSchema,
+  lastName: nameSchema,
+  email: z.string().email().optional().or(z.literal('')),
+  phone: phoneNumberSchema,
+  dateOfBirth: calendarDateSchema.optional(),
+  gender: genderSchema,
+  status: patientStatusSchema
+})
 
 // Query schemas
 export const patientQuerySchema = z.object({
@@ -88,5 +115,7 @@ export const patientPaginatedResponseSchema = z.object({
 export type Patient = z.infer<typeof patientSchema>
 export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
+export type PatientInformationUpdate = z.infer<typeof patientInformationUpdateSchema>
+export type PatientBasicInfoUpdate = z.infer<typeof patientBasicInfoUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
 export type PatientPaginatedResponse = z.infer<typeof patientPaginatedResponseSchema>

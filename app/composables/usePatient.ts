@@ -32,7 +32,8 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
         })),
         pagination: resp.pagination
       }
-    }
+    },
+    placeholderData: (previousData) => previousData
   })
 }
 

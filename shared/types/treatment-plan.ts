@@ -48,7 +48,24 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, trea
   updatedAt: true
 })
 
-export const treatmentPlanUpdateSchema = treatmentPlanCreateSchema.partial()
+export const treatmentPlanUpdateSchema = createInsertSchema(treatmentPlans, {
+  prescribingDoctor: z.string().min(1),
+  prescriptionDate: calendarDateSchema,
+  insuranceInfo: z.string().optional(),
+  coverageStatus: insuranceCoverageSchema.optional(),
+
+  therapistId: z.string().min(1),
+  startDate: calendarDateSchema,
+  numberOfSessions: z.number().min(1),
+  sessionFrequency: z.number().optional(),
+  status: treatmentPlanStatusSchema,
+
+  title: z.string().min(3),
+  diagnosis: z.string().min(3),
+  objective: z.string().optional(),
+
+  pricing: rateCentSchema
+}).partial()
 
 // Query schemas
 

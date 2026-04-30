@@ -191,7 +191,7 @@
   }
 
   function togglePause() {
-    isPaused.value ? handleResumeTimer() : handlePauseTimer()
+    void (isPaused.value ? handleResumeTimer() : handlePauseTimer())
   }
 
   // ─── SVG progress ring ────────────────────────────────────────
@@ -209,7 +209,7 @@
       color="success"
       title="Séance terminée"
       icon="i-hugeicons-checkmark-circle-02"
-      class="w-fit px-3 py-2"
+      class="w-fit items-center self-stretch px-3 py-2"
     />
 
     <div v-else-if="isInProgress" class="flex items-center gap-3">
@@ -243,7 +243,14 @@
           @click="togglePause"
         />
       </div>
-      <UButton color="primary" variant="solid" size="lg" icon="i-hugeicons-checkmark-circle-02" @click="handleComplete">
+      <UButton
+        color="primary"
+        variant="solid"
+        size="lg"
+        icon="i-hugeicons-checkmark-circle-02"
+        @click="handleComplete"
+        class="self-stretch"
+      >
         Terminer
       </UButton>
     </div>

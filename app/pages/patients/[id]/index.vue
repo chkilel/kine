@@ -17,7 +17,6 @@
 
     <div class="flex flex-col gap-6 lg:col-span-3">
       <PatientOverviewTabActivePlan :patient="patient" />
-      <PatientOverviewTabNextAppointment :patient="patient" />
       <PatientOverviewTabPlanHistory :patient="patient" />
     </div>
   </div>

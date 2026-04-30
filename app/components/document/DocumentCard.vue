@@ -8,17 +8,19 @@
     variant?: 'mini' | 'extended'
   }
 
-  const { document: patientDocument, patientId, variant = 'extended' } = defineProps<Props>()
+  const { document: patientDocument, patientId, variant } = defineProps<Props>()
+
+  const isEditing = ref(false)
+  const editingDocument = ref<{ id: string; description: string; category: DocumentCategory } | null>(null)
 
   const overlay = useOverlay()
   const confirmModal = overlay.create(LazyAppModalConfirm)
   const documentViewerModal = overlay.create(LazyDocumentViewerModal)
 
+  // Composables
   const { mutate: updateDocument, isLoading: isUpdating } = useUpdateDocument()
   const { mutate: deleteDocument, isLoading: isDeleting } = useDeleteDocument()
   const { downloadDocument } = useDownloadDocument()
-
-  // Get organization members for uploader name lookup
   const { getTherapistName } = useOrganizationMembers()
 
   // Computed uploader name
@@ -26,9 +28,6 @@
     if (!patientDocument.uploadedById) return 'Inconnu'
     return getTherapistName(patientDocument.uploadedById)
   })
-
-  const isEditing = ref(false)
-  const editingDocument = ref<PatientDocument | null>(null)
 
   // Dropdown menu items for document actions
   const documentActions = computed<DropdownMenuItem[][]>(() => [
@@ -67,7 +66,7 @@
 
   // Edit functions
   function startEdit() {
-    editingDocument.value = { ...patientDocument }
+    editingDocument.value = { ...patientDocument, description: patientDocument.description || '' }
     isEditing.value = true
   }
 
@@ -123,25 +122,25 @@
   <!-- Mini Variant (List Item) -->
   <div
     v-if="variant === 'mini'"
-    class="border-default bg-muted gap-4 space-y-2 rounded-md border p-2.5"
+    class="bg-muted hover:border-default rounded-lg border border-transparent p-2 transition-colors hover:shadow-sm"
     :class="{ 'ring-neutral ring-2 ring-offset-2': isEditing }"
   >
     <!-- Edit Mode -->
     <div v-if="isEditing && editingDocument" class="w-full space-y-3">
-      <div class="flex items-center gap-3">
-        <UBadge
-          :icon="getDocumentIcon(editingDocument.category)"
+      <div class="flex items-center gap-2">
+        <AppIconBox
+          :name="getDocumentIcon(editingDocument.category)"
           :color="getDocumentColor(editingDocument.category)"
           variant="soft"
           size="lg"
-          square
+          class="rounded-md"
         />
         <p class="text-default text-sm font-medium">
           {{ patientDocument.description || patientDocument.originalFileName }}
         </p>
       </div>
       <div class="grid gap-4">
-        <UFormField label="Titre descriptif du patientDocument" size="xs">
+        <UFormField label="Titre descriptif du document" size="xs">
           <UInput
             v-model="editingDocument.description"
             variant="outline"
@@ -150,7 +149,7 @@
             class="w-full"
           />
         </UFormField>
-        <UFormField label="Type de patientDocument" size="xs">
+        <UFormField label="Type de document" size="xs">
           <USelect
             v-model="editingDocument.category"
             value-key="value"
@@ -171,33 +170,37 @@
     </div>
 
     <!-- View Mode -->
-    <div v-else class="flex items-start gap-4">
-      <UBadge
-        :icon="getDocumentIcon(patientDocument.category)"
-        :color="getDocumentColor(patientDocument.category)"
-        variant="soft"
-        size="lg"
-        square
-      />
-      <div class="flex min-w-0 grow flex-col space-y-1">
-        <span class="text-primary text-[10px] leading-none font-semibold uppercase">
-          {{ getDocumentCategoryLabel(patientDocument.category) }}
-        </span>
+    <div v-else>
+      <div class="flex items-start gap-2">
+        <AppIconBox
+          :name="getDocumentIcon(patientDocument.category)"
+          :color="getDocumentColor(patientDocument.category)"
+          variant="soft"
+          size="xl"
+          class="rounded-md"
+        />
 
-        <span class="text-default text-sm font-medium text-pretty">
-          {{ patientDocument.description || patientDocument.originalFileName }}
-        </span>
-
-        <div class="mt-1 flex items-center justify-between text-xs">
-          <time class="text-muted text-xs">
-            {{ formatFrenchDate(patientDocument.createdAt) }}
-          </time>
-          <ClientOnly>
-            <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
-              <UButton icon="i-hugeicons-more-vertical" variant="ghost" color="neutral" size="sm" square />
-            </UDropdownMenu>
-          </ClientOnly>
+        <div>
+          <p class="text-primary text-[10px] leading-none font-semibold tracking-wide uppercase">
+            {{ getDocumentCategoryLabel(patientDocument.category) }}
+          </p>
+          <time class="text-muted text-xs">{{ formatDate(patientDocument.createdAt) }}</time>
         </div>
+        <ClientOnly>
+          <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
+            <UButton
+              icon="i-hugeicons-more-vertical"
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              square
+              class="ml-auto"
+            />
+          </UDropdownMenu>
+        </ClientOnly>
+      </div>
+      <div class="text-default mt-1 min-w-0 truncate text-[13px]">
+        {{ patientDocument.description || patientDocument.originalFileName }}
       </div>
     </div>
   </div>
@@ -216,7 +219,7 @@
           <h3 class="text-default text-sm font-bold">
             {{ patientDocument.description || patientDocument.originalFileName }}
           </h3>
-          <p class="text-muted text-xs">{{ formatFrenchDate(patientDocument.createdAt) }}</p>
+          <p class="text-muted text-xs">{{ formatDate(patientDocument.createdAt) }}</p>
         </div>
       </div>
 
@@ -266,26 +269,26 @@
             </span>
           </div>
           <!-- Description -->
-          <h3 class="text-default truncate text-sm font-bold text-pretty">
+          <h3 class="text-default text-sm font-bold text-pretty">
             {{ patientDocument.description || patientDocument.originalFileName }}
           </h3>
           <UBadge variant="subtle" color="neutral" size="sm">
             {{ getFileType(patientDocument.mimeType) }}
           </UBadge>
         </div>
+        <ClientOnly>
+          <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
+            <UButton
+              icon="i-hugeicons-more-vertical"
+              variant="ghost"
+              color="neutral"
+              size="md"
+              square
+              class="absolute -top-4 -right-4"
+            />
+          </UDropdownMenu>
+        </ClientOnly>
       </div>
-      <ClientOnly>
-        <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
-          <UButton
-            icon="i-hugeicons-more-vertical"
-            variant="ghost"
-            color="neutral"
-            size="md"
-            square
-            class="absolute -top-3 -right-3"
-          />
-        </UDropdownMenu>
-      </ClientOnly>
 
       <!-- Metadata Grid -->
       <div class="text-muted mt-auto grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-xs">
@@ -299,7 +302,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <UIcon name="i-hugeicons-calendar-03" class="text-muted/70" />
-          <span>{{ formatFrenchDate(patientDocument.createdAt) }}</span>
+          <span>{{ formatDate(patientDocument.createdAt) }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <UIcon name="i-hugeicons-clock-01" class="text-muted/70" />

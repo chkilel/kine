@@ -25,6 +25,7 @@ I have successfully created a comprehensive organizations management page with t
 • Set Active: Uses authClient.organization.setActive() for switching organizations
 
 ### ✅ Table Features
+
 • Organization Display: Shows logo (or fallback), name, and slug
 • Member Count: Displays number of members with badge
 • Creation Date: Formatted date display

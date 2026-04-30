@@ -149,7 +149,6 @@ export function generateTimeSlots(
       const endTime = calculateEndTime(startTime, duration)
 
       // Check if end time is within range (calculateEndTime handles overflow)
-      const parsedStart = parseTime(startTime)
       const parsedEnd = parseTime(endTime)
       const parsedRangeEnd = parseTime(range.end)
 

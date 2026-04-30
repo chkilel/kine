@@ -2,11 +2,7 @@
   import { LazyAppModalEVA } from '#components'
 
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = defineProps<{
-    patientId: string
-    appointmentId: string
-  }>()
-
+  const props = defineProps<{ patientId: string; appointmentId: string }>()
   const emit = defineEmits<{ close: [] }>()
 
   // ─── Composables ─────────────────────────────────────────────
@@ -14,18 +10,15 @@
   const evaModal = overlay.create(LazyAppModalEVA)
 
   const { mutateAsync: startAppointmentAsync, isLoading: isSessionStarting } = useStartAppointment()
-
   const { data: patient } = usePatientById(() => props.patientId)
-  const { data: allAppointments } = useAppointmentsList(() => ({
-    patientId: props.patientId,
-    limit: 6,
-    includePaymentStatus: false
-  }))
+
   const {
     data: appointment,
     isPending: appointmentLoading,
     refetch: refetchAppointment
   } = useAppointment(() => props.appointmentId)
+
+  const { data: planAppointments } = usePlanAppointments(() => appointment.value?.treatmentPlanId, () => props.patientId, 10)
 
   // ─── Base state ──────────────────────────────────────────────
   const isTimerPaused = ref(false)
@@ -33,9 +26,7 @@
   // ─── Watchers ────────────────────────────────────────────────
   watch(
     () => appointment.value?.pauseStartTime,
-    (pauseStartTime) => {
-      isTimerPaused.value = !!pauseStartTime
-    },
+    (pauseStartTime) => (isTimerPaused.value = !!pauseStartTime),
     { immediate: true }
   )
 
@@ -55,13 +46,13 @@
   )
 
   const previousAppointments = computed(() => {
-    const list = allAppointments.value
+    const list = planAppointments.value
     const currentAppointment = appointment.value
-    if (!list || !currentAppointment) return []
+    if (!list || !currentAppointment || !currentAppointment.treatmentPlanId) return []
 
     return list
-      .filter((c) => c.id !== currentAppointment.id && c.date <= currentAppointment.date)
-      .slice(-5)
+      .filter((c) => c.id !== currentAppointment.id && c.date < currentAppointment.date)
+      .slice(-3)
       .reverse()
   })
 
@@ -113,19 +104,10 @@
 </script>
 
 <template>
-  <USlideover :dismissible="true" :close="false" :ui="{ content: 'w-full max-w-[1500px]' }" @close="emit('close')">
+  <USlideover :ui="{ content: 'w-full max-w-7xl bg-elevated' }" @close="emit('close')">
     <template #header>
       <div class="flex w-full items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          <UButton
-            icon="i-hugeicons-panel-left-close"
-            size="xl"
-            color="neutral"
-            variant="ghost"
-            square
-            :ui="{ leadingIcon: 'size-8' }"
-            @click="emit('close')"
-          />
           <div v-if="patient" class="flex items-center gap-3">
             <div class="rounded-full p-1" :class="isTimerPaused ? 'bg-warning-300 animate-pulse' : 'bg-primary-100'">
               <UAvatar :alt="patientfullname" size="xl" />
@@ -168,10 +150,20 @@
             variant="solid"
             icon="i-hugeicons-play-circle"
             :loading="isSessionStarting"
+            class="self-stretch"
             @click="handleStartSession"
           >
             Démarrer la séance
           </UButton>
+          <UButton
+            icon="i-hugeicons-panel-left-close"
+            size="xl"
+            color="neutral"
+            variant="ghost"
+            square
+            :ui="{ leadingIcon: 'size-8' }"
+            @click="emit('close')"
+          />
         </div>
       </div>
     </template>
@@ -182,7 +174,7 @@
       </div>
 
       <!-- Main Content -->
-      <div v-else class="grid h-full gap-6 lg:grid-cols-12">
+      <div v-else class="grid h-full gap-4 lg:grid-cols-12">
         <!-- Left Sidebar - Patient Info -->
         <TreatmentSessionSlideoverLeftSide
           v-if="patient && appointment"
@@ -237,25 +229,32 @@
           <!-- <TreatmentSessionTimer v-if="appointment" :appointment="appointment" @close="emit('close')" /> -->
 
           <!-- Previous Appointments Card -->
-          <UCard>
-            <UCollapsible :default-open="false" :ui="{ content: 'space-y-3 pt-3' }">
+          <UCard
+            v-if="previousAppointments.length"
+            :ui="{
+              root: 'divide-transparent rounded-md',
+              body: 'p-0 sm:p-0'
+            }"
+          >
+            <UCollapsible :default-open="false">
               <UButton
-                color="neutral"
+                color="primary"
                 variant="ghost"
-                class="group w-full justify-between"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
                 trailing-icon="i-lucide-chevron-down"
+                block
+                class="group p-4 sm:px-6 sm:py-4"
+                :ui="{
+                  base: 'rounded-b-none',
+                  trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+                }"
               >
-                <span class="flex items-center gap-3 text-sm font-semibold">
-                  <div class="bg-error-5 dark:bg-error-950/20 rounded-lg p-2">
-                    <UIcon name="i-hugeicons-pulse-01" class="text-error animate-pulse" />
-                  </div>
+                <span class="text-toned text-[13px] font-semibold tracking-wide uppercase">
                   Notes des séances précédentes
                 </span>
               </UButton>
 
               <template #content>
-                <div v-if="previousAppointments.length" class="space-y-5 pt-3">
+                <div class="border-default space-y-4 border-t p-4 pt-2 sm:p-6 sm:pt-4">
                   <div v-for="previous in previousAppointments" :key="previous.id">
                     <div class="mb-1 flex items-center justify-between">
                       <span class="text-sm font-bold">{{ formatDate(previous.date) }}</span>
@@ -266,12 +265,20 @@
                         EVA {{ previous.painLevelBefore }}/10
                       </span>
                     </div>
-                    <p class="text-muted line-clamp-3 text-sm leading-relaxed">
-                      {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
-                    </p>
+                    <UPopover mode="hover" :open-delay="200">
+                      <p class="text-muted line-clamp-1 cursor-help text-sm leading-relaxed">
+                        {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
+                      </p>
+                      <template #content>
+                        <div class="max-w-sm p-3">
+                          <p class="text-sm leading-relaxed">
+                            {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
+                          </p>
+                        </div>
+                      </template>
+                    </UPopover>
                   </div>
                 </div>
-                <div v-else class="text-muted pt-3 text-xs">Aucune séance précédente enregistrée.</div>
               </template>
             </UCollapsible>
           </UCard>

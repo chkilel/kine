@@ -77,6 +77,6 @@ export default defineEventHandler(async (event) => {
 
     return successResponse(newAppointment, 'Rendez-vous créé avec succès')
   } catch (error: unknown) {
-    handleApiError(error, 'Échec de la création de la rendez-vous') 
+    handleApiError(error, 'Échec de la création de la rendez-vous')
   }
 })

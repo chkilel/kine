@@ -20,8 +20,6 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
         '@pinia/colada-devtools',
         'better-auth/client/plugins',
         'better-auth/vue',
@@ -39,8 +37,7 @@ export default defineNuxtConfig({
         'date-fns',
         'date-fns/locale',
         '@unovis/vue',
-        '@internationalized/date',
-        '@tanstack/table-core'
+        '@internationalized/date'
       ]
     }
   },
@@ -58,12 +55,17 @@ export default defineNuxtConfig({
         connector: 'cloudflare-d1',
         options: { bindingName: 'DB' }
       }
-    },
+    }
     // To exclude /_nuxt/** paths from being handled by the Cloudflare dev worker.
-    routeRules: {
-      '/_nuxt/**': {
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      }
+    // routeRules: {
+    //   '/_nuxt/**': {
+    //     headers: { 'Access-Control-Allow-Origin': '*' }
+    //   }
+    // }
+  },
+  ui: {
+    theme: {
+      colors: ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'base']
     }
   }
 })

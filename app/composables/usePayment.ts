@@ -54,7 +54,7 @@ const _useCreatePayment = () => {
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientSessionsPaymentStatus(paymentData.patientId) })
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.patientBalance(paymentData.patientId) })
     },
-    onError: (error, { onError, paymentData }) => {
+    onError: (error, { onError, paymentData: _paymentData }) => {
       onError?.(error)
       toast.add({
         title: 'Erreur',

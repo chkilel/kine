@@ -11,11 +11,11 @@ const _useAuth = async () => {
   // Extract the underlying session data and user
   const session = computed(() => sessionData.data.value?.session ?? null)
   const user = computed(() => {
-    const user = sessionData.data.value?.user
-    return user
+    const userData = sessionData.data.value?.user
+    return userData
       ? {
-          ...user,
-          phoneNumbers: user.phoneNumbers as PhoneEntry[] // Phone numbers type casting
+          ...userData,
+          phoneNumbers: userData.phoneNumbers as PhoneEntry[] // Phone numbers type casting
         }
       : null
   })

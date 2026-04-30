@@ -148,10 +148,10 @@
   const columns: TableColumn<any>[] = [
     {
       id: 'select',
-      header: ({ table }) =>
+      header: ({ table: t }) =>
         h(UCheckbox, {
-          modelValue: table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
+          modelValue: t.getIsSomePageRowsSelected() ? 'indeterminate' : t.getIsAllPageRowsSelected(),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => t.toggleAllPageRowsSelected(!!value),
           ariaLabel: 'Tout sélectionner'
         }),
       cell: ({ row }) =>

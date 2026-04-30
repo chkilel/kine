@@ -8,41 +8,22 @@
 
   const formRef = ref<HTMLFormElement>()
 
-  function deepCloneArray<T>(arr: T[] | null): T[] {
-    if (!arr) return []
-    return JSON.parse(JSON.stringify(arr))
-  }
-
-  function getInitialFormState(): PatientUpdate {
+  function getInitialFormState(): PatientBasicInfoUpdate {
     return {
-      organizationId: props.patient.organizationId,
       firstName: props.patient.firstName,
       lastName: props.patient.lastName,
       dateOfBirth: props.patient.dateOfBirth,
       gender: props.patient.gender,
       phone: props.patient.phone,
       status: props.patient.status,
-      address: props.patient.address || undefined,
-      city: props.patient.city || undefined,
-      country: props.patient.country || undefined,
-      postalCode: props.patient.postalCode || undefined,
-      referralSource: props.patient.referralSource || undefined,
-      insuranceProvider: props.patient.insuranceProvider || undefined,
-      insuranceNumber: props.patient.insuranceNumber || undefined,
-      email: props.patient.email || undefined,
-      medicalConditions: props.patient.medicalConditions || undefined,
-      surgeries: props.patient.surgeries,
-      allergies: props.patient.allergies,
-      medications: props.patient.medications,
-      emergencyContacts: deepCloneArray(props.patient.emergencyContacts),
-      notes: deepCloneArray(props.patient.notes)
+      email: props.patient.email ?? undefined
     }
   }
 
-  const formState = reactive<PatientUpdate>(getInitialFormState())
+  const formState = reactive<PatientBasicInfoUpdate>(getInitialFormState())
 
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
-  const dobModel = computed<CalendarDate | null>({
+  const dobModel = computed({
     get: () => (formState.dateOfBirth ? parseDate(formState.dateOfBirth) : null),
     set: (val) => {
       formState.dateOfBirth = val ? val.toString() : undefined
@@ -55,32 +36,22 @@
     const validationResult = await formRef.value.validate()
     if (!validationResult) return
 
-    updatePatient({ patientId: props.patient.id, patientData: formState, onSuccess: () => emit('close') })
-  }
-
-  function handleClose() {
-    emit('close')
-  }
-
-  function onSlideoverOpened() {
-    Object.assign(formState, getInitialFormState())
+    updatePatient({
+      patientId: props.patient.id,
+      patientData: formState as PatientUpdate,
+      onSuccess: () => emit('close')
+    })
   }
 </script>
 
 <template>
   <USlideover
-    :open="true"
-    :dismissible="false"
-    @close="emit('close')"
-    @after:enter="onSlideoverOpened"
     title="Modifier le patient"
     :description="`Modifier les informations de ${patient.firstName} ${patient.lastName}`"
-    :ui="{
-      content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated'
-    }"
+    :ui="{ content: 'w-full lg:w-1/3 max-w-2xl bg-elevated' }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="patientUpdateSchema" :state="formState" class="space-y-6">
+      <UForm ref="formRef" :schema="patientBasicInfoUpdateSchema" :state="formState" class="space-y-6">
         <!-- Basic Information -->
         <AppCard title="Informations de base" variant="outline">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -90,10 +61,10 @@
             <UFormField label="Nom" placeholder="Dupont" name="lastName">
               <UInput v-model="formState.lastName" class="w-full" />
             </UFormField>
-            <UFormField label="E‑mail" placeholder="john.doe@example.com" name="email">
+            <UFormField label="E‑mail" placeholder="john.doe@example.com" name="email" class="col-span-2">
               <UInput v-model="formState.email" class="w-full" type="email" />
             </UFormField>
-            <UFormField label="Téléphone" placeholder="+1 (555) 123-4567" name="phone">
+            <UFormField label="Téléphone" placeholder="+1 (555) 123-4567" name="phone" class="col-span-2">
               <UInput v-model="formState.phone" class="w-full" type="tel" />
             </UFormField>
             <UFormField label="Date de naissance" name="dateOfBirth">
@@ -118,6 +89,7 @@
             </UFormField>
             <UFormField label="Statut" name="status" class="md:col-span-2">
               <URadioGroup
+                size="sm"
                 orientation="horizontal"
                 variant="table"
                 v-model="formState.status"
@@ -126,77 +98,12 @@
             </UFormField>
           </div>
         </AppCard>
-
-        <!-- Address Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Adresse</h3>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Adresse" placeholder="123 rue Principale" name="address" class="md:col-span-2">
-              <UInput v-model="formState.address" class="w-full" />
-            </UFormField>
-            <UFormField label="Ville" placeholder="Paris" name="city">
-              <UInput v-model="formState.city" class="w-full" />
-            </UFormField>
-            <UFormField label="Code postal" placeholder="10001" name="postalCode">
-              <UInput v-model="formState.postalCode" class="w-full" />
-            </UFormField>
-            <UFormField label="Pays" placeholder="France" name="country" class="md:col-span-2">
-              <UInput v-model="formState.country" class="w-full" />
-            </UFormField>
-          </div>
-        </AppCard>
-
-        <!-- Emergency Contact -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Contact d'urgence</h3>
-          <PatientEmergencyContacts v-model="formState.emergencyContacts" />
-        </AppCard>
-
-        <!-- Insurance Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Informations d'assurance</h3>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Assureur" placeholder="Assureur" name="insuranceProvider">
-              <UInput v-model="formState.insuranceProvider" class="w-full" />
-            </UFormField>
-            <UFormField label="Numéro d'assurance" placeholder="123456789" name="insuranceNumber">
-              <UInput v-model="formState.insuranceNumber" class="w-full" />
-            </UFormField>
-          </div>
-        </AppCard>
-
-        <!-- Referral Information -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Informations de recommandation</h3>
-          <UFormField label="Source de recommandation" placeholder="Dr. Martin" name="referralSource">
-            <UInput v-model="formState.referralSource" class="w-full" />
-          </UFormField>
-        </AppCard>
-
-        <!-- Notes -->
-        <AppCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Notes</h3>
-          <PatientNotes v-model="formState.notes" />
-        </AppCard>
       </UForm>
     </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <UButton variant="outline" color="neutral" class="h-9 px-3 text-sm font-semibold" @click="handleClose">
-          Annuler
-        </UButton>
-        <UButton
-          color="primary"
-          class="h-9 px-3 text-sm font-semibold"
-          type="submit"
-          @click="onSubmit"
-          :loading="isLoading"
-          :disabled="isLoading"
-        >
-          Mettre à jour
-        </UButton>
-      </div>
+    <template #footer="{ close }">
+      <UButton label="Annuler" variant="outline" color="neutral" @click="close" />
+      <UButton label="Mettre à jour" type="submit" @click="onSubmit" :loading="isLoading" :disabled="isLoading" />
     </template>
   </USlideover>
 </template>

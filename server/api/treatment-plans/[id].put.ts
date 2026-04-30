@@ -1,5 +1,5 @@
 import { treatmentPlans } from '~~/server/database/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 // PUT /api/treatment-plans/[id] - Update existing treatment plan
 export default defineEventHandler(async (event) => {
@@ -36,10 +36,7 @@ export default defineEventHandler(async (event) => {
     // Update treatment plan
     const [updatedTreatmentPlan] = await db
       .update(treatmentPlans)
-      .set({
-        ...body,
-        updatedAt: new Date()
-      })
+      .set(body)
       .where(eq(treatmentPlans.id, planId))
       .returning()
 

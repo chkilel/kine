@@ -23,28 +23,24 @@
   <USlideover
     :dismissible="false"
     title="Ajouter des documents"
-    description="Téléversez des documents pour ce patient. Tous les documents doivent être associés à un plan de traitement."
-    :ui="{ content: 'w-full md:w-3/4 lg:w-3/4 max-w-4xl bg-elevated' }"
+    description="Téléversez des documents pour ce patient."
+    :ui="{ content: 'w-full md:w-1/2  max-w-4xl bg-elevated' }"
   >
     <template #body>
       <div class="space-y-6">
         <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Plan de traitement</h3>
           <UFormField label="Sélectionner un plan" required>
-            <PatientTreatmentPlanTabPlanSelector
+            <TreatmentPlanSelector
               v-model:selected-plan-id="selectedPlanId"
               :patient-id="patient.id"
               placeholder="Sélectionner un plan de traitement"
-              hint="Tous les documents doivent être associés à un plan de traitement."
+              hint="Les documents doivent être associés à un plan de traitement."
+              class="min-h-18 rounded-lg ring"
             />
           </UFormField>
-        </UCard>
-
-        <UCard variant="outline">
-          <h3 class="text-highlighted mb-4 text-base font-bold">Documents à téléverser</h3>
 
           <div
-            class="border-default bg-muted/30 mb-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors"
+            class="border-default bg-muted/30 mt-6 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors"
             @drop.prevent="handleDrop"
             @dragover.prevent="true"
             @dragleave.prevent="false"
