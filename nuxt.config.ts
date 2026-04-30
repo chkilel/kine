@@ -20,8 +20,6 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
         '@pinia/colada-devtools',
         'better-auth/client/plugins',
         'better-auth/vue',
@@ -39,8 +37,7 @@ export default defineNuxtConfig({
         'date-fns',
         'date-fns/locale',
         '@unovis/vue',
-        '@internationalized/date',
-        '@tanstack/table-core'
+        '@internationalized/date'
       ]
     }
   },
