@@ -100,9 +100,8 @@ export const extendActionSchema = z.object({
 
 export const updateClinicalNotesActionSchema = z.object({
   primaryConcern: z.string().optional(),
-  treatmentSummary: z.string().optional(),
-  observations: z.string().optional(),
-  nextSteps: z.string().optional()
+  sessionNotes: z.string().optional(),
+  observations: z.string().optional()
 })
 
 export const updatePriceActionSchema = z.object({

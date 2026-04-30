@@ -39,17 +39,19 @@
       <slot name="header" />
     </template>
     <template v-else-if="showHeader" #header>
-      <div class="flex w-full flex-wrap items-center gap-2" :class="[centerHeader && 'justify-center']">
+      <div class="flex w-full flex-wrap gap-2" :class="[centerHeader && 'justify-center']">
         <AppIconBox v-if="icon" :name="icon" :color="iconColor" />
-        <template v-if="$slots.title">
-          <slot name="title" />
-        </template>
-        <h3 v-else-if="title" class="text-toned text-[13px] font-semibold tracking-wide uppercase">
-          {{ title }}
-        </h3>
-        <p v-if="description" class="text-muted w-full truncate text-xs" :class="{ 'ml-7': !!icon }">
-          {{ description }}
-        </p>
+        <div>
+          <template v-if="$slots.title">
+            <slot name="title" />
+          </template>
+          <h3 v-else-if="title" class="text-toned text-[13px] font-semibold tracking-wide uppercase">
+            {{ title }}
+          </h3>
+          <p v-if="description" class="text-muted w-full truncate text-xs" :class="{ 'ml-7': !!icon }">
+            {{ description }}
+          </p>
+        </div>
         <div v-if="$slots.actions" class="ml-auto">
           <slot name="actions" />
         </div>

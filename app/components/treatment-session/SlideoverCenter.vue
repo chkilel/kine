@@ -1,6 +1,6 @@
 <script setup lang="ts">
   // ─── Constants & Utilities ────────────────────────────────────
-  type ClinicalNoteField = 'primaryConcern' | 'treatmentSummary' | 'observations' | 'nextSteps'
+  type ClinicalNoteField = 'primaryConcern' | 'sessionNotes' | 'observations'
 
   // ─── Props ───────────────────────────────────────────────────
   const { appointment } = defineProps<{ appointment: Appointment }>()
@@ -9,43 +9,46 @@
   const { mutate: updateClinicalNotes, isLoading: isUpdatingClinicalNotes } = useUpdateAppointmentClinicalNotes()
 
   // ─── Base state ──────────────────────────────────────────────
-  const treatmentSummary = ref('')
+  const sessionNotes = ref('')
   const primaryConcern = ref('')
   const observations = ref('')
-  const nextSteps = ref('')
 
   // ─── Computed state ──────────────────────────────────────────
-  const showPrimaryConcern = computed(() => !appointment.treatmentPlanId)
-  const showObservations = computed(() => ['in_progress', 'finished', 'completed'].includes(appointment.status ?? ''))
-  const showNextSteps = computed(() => ['finished', 'completed'].includes(appointment.status ?? ''))
-  const isObservationsEditable = computed(() => appointment.status === 'in_progress')
-  const isNextStepsEditable = computed(() => appointment.status === 'finished')
+  const showPrimaryConcern = computed(() => !appointment.treatmentPlanId) // only show primary concern if no treatment plan (i.e. individual/independent session)
+  const isObservationsEditable = computed(() => ['confirmed', 'scheduled', 'in_progress'].includes(appointment.status))
+  const sessionNotYetstarted = computed(() => ['confirmed', 'scheduled'].includes(appointment.status))
 
   // ─── Watchers ────────────────────────────────────────────────
   watch(
     () => appointment,
     (value) => {
       if (!value) return
-      treatmentSummary.value = value.treatmentSummary || ''
+      sessionNotes.value = value.sessionNotes || ''
       primaryConcern.value = value.primaryConcern || ''
       observations.value = value.observations || ''
-      nextSteps.value = value.nextSteps || ''
     },
     { immediate: true }
   )
 
   // ─── Event handlers ──────────────────────────────────────────
   function handleSaveClinicalNotes(field: ClinicalNoteField) {
+    console.info('🚀 ~ handleSaveClinicalNotes ~ field:', field)
+
     const fieldValues: Record<ClinicalNoteField, string> = {
       primaryConcern: primaryConcern.value,
-      treatmentSummary: treatmentSummary.value,
-      observations: observations.value,
-      nextSteps: nextSteps.value
+      sessionNotes: sessionNotes.value,
+      observations: observations.value
+    }
+    console.info('🚀 ~ handleSaveClinicalNotes ~ fieldValues:', fieldValues)
+
+    if (['in_progress', 'finished'].includes(appointment.status)) {
     }
 
-    if (appointment.status !== 'in_progress' && appointment.status !== 'finished') {
-      if (field !== 'primaryConcern' && field !== 'treatmentSummary') return
-    }
+    console.info('🚀 ~ handleSaveClinicalNotes ~ appointment.status:', appointment.status)
+
+    // if (appointment.status !== 'in_progress' && appointment.status !== 'finished') {
+    //   if (field !== 'primaryConcern' && field !== 'sessionNotes') return
+    // }
 
     updateClinicalNotes({
       appointmentId: appointment.id,
@@ -56,9 +59,12 @@
 
 <template>
   <div class="flex flex-col gap-4 lg:col-span-6">
-    <UCard v-if="showPrimaryConcern" :ui="{ body: 'p-0 sm:p-0 flex flex-col overflow-hidden' }">
-      <div class="border-default bg-muted flex items-center justify-between border-b p-2">
-        <div class="text-muted ml-2 text-xs font-bold tracking-wider uppercase">Motif de consultation</div>
+    <AppCard
+      v-if="showPrimaryConcern"
+      title="Motif de consultation"
+      description="Raison principale de la consultation, exprimée par le patient."
+    >
+      <template #actions>
         <UButton
           size="xs"
           color="primary"
@@ -69,42 +75,17 @@
         >
           Enregistrer
         </UButton>
-      </div>
+      </template>
       <UTextarea
         v-model="primaryConcern"
         :rows="3"
-        placeholder="Décrivez le motif principal de la consultation..."
-        class="border-none bg-transparent focus:ring-0"
-        :ui="{ root: 'flex-1' }"
+        placeholder="Ex: Douleur lombaire depuis 2 semaines après effort physique."
+        :ui="{ root: 'w-full' }"
       />
-    </UCard>
+    </AppCard>
 
-    <UCard :ui="{ body: 'p-0 sm:p-0 flex flex-col overflow-hidden' }">
-      <div class="border-default bg-muted-50 flex items-center justify-between border-b p-2">
-        <div class="text-muted-500 ml-2 text-xs font-bold tracking-wider uppercase">Résumé de la séance</div>
-        <UButton
-          size="xs"
-          color="primary"
-          variant="ghost"
-          icon="i-hugeicons-floppy-disk"
-          :loading="isUpdatingClinicalNotes"
-          @click="handleSaveClinicalNotes('treatmentSummary')"
-        >
-          Enregistrer
-        </UButton>
-      </div>
-      <UTextarea
-        v-model="treatmentSummary"
-        :rows="8"
-        placeholder="Notes de la séance... Décrivez les exercices effectués, les réactions du patient et les progrès observés."
-        class="border-none bg-transparent focus:ring-0"
-        :ui="{ root: 'flex-1' }"
-      />
-    </UCard>
-
-    <UCard v-if="showObservations" :ui="{ body: 'p-0 sm:p-0 flex flex-col overflow-hidden' }">
-      <div class="border-default bg-muted-50 flex items-center justify-between border-b p-2">
-        <div class="text-muted-500 ml-2 text-xs font-bold tracking-wider uppercase">Observations</div>
+    <AppCard title="Observations" description="Constats objectifs: douleur, mobilité, tests, palpation.">
+      <template #actions>
         <UButton
           v-if="isObservationsEditable"
           size="xs"
@@ -112,44 +93,45 @@
           variant="ghost"
           icon="i-hugeicons-floppy-disk"
           :loading="isUpdatingClinicalNotes"
+          :disabled="!isObservationsEditable"
           @click="handleSaveClinicalNotes('observations')"
         >
           Enregistrer
         </UButton>
-      </div>
+      </template>
       <UTextarea
         v-model="observations"
         :rows="4"
         :disabled="!isObservationsEditable"
-        placeholder="Observations pendant la séance..."
-        class="border-none bg-transparent focus:ring-0"
-        :ui="{ root: 'flex-1' }"
+        placeholder="Ex: Douleur 6/10, mobilité réduite en flexion, contracture lombaire droite"
+        :ui="{ root: 'w-full' }"
       />
-    </UCard>
+    </AppCard>
 
-    <UCard v-if="showNextSteps" :ui="{ body: 'p-0 sm:p-0 flex flex-col overflow-hidden' }">
-      <div class="border-default bg-muted-50 flex items-center justify-between border-b p-2">
-        <div class="text-muted-500 ml-2 text-xs font-bold tracking-wider uppercase">Prochaines étapes</div>
+    <AppCard
+      title="Compte rendu de séance"
+      description="Exercices effectués, réactions du patient, progrès observés et suite à donner."
+    >
+      <template #actions>
         <UButton
-          v-if="isNextStepsEditable"
           size="xs"
           color="primary"
           variant="ghost"
           icon="i-hugeicons-floppy-disk"
           :loading="isUpdatingClinicalNotes"
-          @click="handleSaveClinicalNotes('nextSteps')"
+          :disabled="sessionNotYetstarted"
+          @click="handleSaveClinicalNotes('sessionNotes')"
         >
           Enregistrer
         </UButton>
-      </div>
+      </template>
       <UTextarea
-        v-model="nextSteps"
-        :rows="3"
-        :disabled="!isNextStepsEditable"
-        placeholder="Plan pour la prochaine séance..."
-        class="border-none bg-transparent focus:ring-0"
-        :ui="{ root: 'flex-1' }"
+        v-model="sessionNotes"
+        :disabled="sessionNotYetstarted"
+        :rows="8"
+        placeholder="Ex: Mobilisation lombaire + exercices. Douleur réduite à 4/10. À poursuivre, revoir bientôt"
+        :ui="{ root: 'w-full' }"
       />
-    </UCard>
+    </AppCard>
   </div>
 </template>

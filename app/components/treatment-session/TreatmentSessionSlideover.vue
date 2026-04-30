@@ -267,12 +267,12 @@
                     </div>
                     <UPopover mode="hover" :open-delay="200">
                       <p class="text-muted line-clamp-1 cursor-help text-sm leading-relaxed">
-                        {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
+                        {{ previous.sessionNotes || 'Aucune note enregistrée pour cette séance.' }}
                       </p>
                       <template #content>
                         <div class="max-w-sm p-3">
                           <p class="text-sm leading-relaxed">
-                            {{ previous.treatmentSummary || 'Aucune note enregistrée pour cette séance.' }}
+                            {{ previous.sessionNotes || 'Aucune note enregistrée pour cette séance.' }}
                           </p>
                         </div>
                       </template>

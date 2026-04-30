@@ -23,21 +23,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Rendez-vous non trouvé' })
   }
 
-  if (appointment.status === 'scheduled' && body.observations !== undefined) {
+  if (['scheduled', 'confirmed'].includes(appointment.status) && body.sessionNotes !== undefined) {
     throw createError({
       statusCode: 400,
-      message: 'Impossible de mettre à jour les observations avant le début de la séance'
-    })
-  }
-  if (
-    (appointment.status === 'scheduled' ||
-      appointment.status === 'confirmed' ||
-      appointment.status === 'in_progress') &&
-    body.nextSteps !== undefined
-  ) {
-    throw createError({
-      statusCode: 400,
-      message: 'Impossible de mettre à jour les prochaines étapes avant la fin de la séance'
+      message: 'Impossible de mettre à jour le compte rendu de séance avant le début de la séance'
     })
   }
 
@@ -45,9 +34,8 @@ export default defineEventHandler(async (event) => {
     .update(appointments)
     .set({
       ...(body.primaryConcern !== undefined && { primaryConcern: body.primaryConcern }),
-      ...(body.treatmentSummary !== undefined && { treatmentSummary: body.treatmentSummary }),
-      ...(body.observations !== undefined && { observations: body.observations }),
-      ...(body.nextSteps !== undefined && { nextSteps: body.nextSteps })
+      ...(body.sessionNotes !== undefined && { sessionNotes: body.sessionNotes }),
+      ...(body.observations !== undefined && { observations: body.observations })
     })
     .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
     .returning()

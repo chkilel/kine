@@ -33,9 +33,8 @@ export default defineEventHandler(async (event) => {
     .set({
       status: 'cancelled',
       primaryConcern: null,
-      treatmentSummary: null,
+      sessionNotes: null,
       observations: null,
-      nextSteps: null,
       painLevelBefore: null,
       painLevelAfter: null,
       actualStartTime: null,

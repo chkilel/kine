@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "7d920868-ab38-490d-8d3e-c52d868b5fee",
+  "id": "89c2f2c3-d7db-46d9-a5c2-3b9f1eb6f696",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -924,16 +924,6 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "treatmentSummary",
-      "entityType": "columns",
-      "table": "appointments"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
       "name": "observations",
       "entityType": "columns",
       "table": "appointments"
@@ -944,7 +934,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "nextSteps",
+      "name": "sessionNotes",
       "entityType": "columns",
       "table": "appointments"
     },
