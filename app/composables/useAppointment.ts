@@ -162,7 +162,7 @@ const _useAppointment = (appointmentId: MaybeRefOrGetter<string>) => {
       return id ? APPOINTMENT_KEYS.single(id) : APPOINTMENT_KEYS.root
     },
     query: async () => {
-      const data = await requestFetch(`/api/appointments/${toValue(appointmentId)}`)
+      const data = await requestFetch<AppointmentDetail>(`/api/appointments/${toValue(appointmentId)}`)
       if (!data) return null
 
       return {
