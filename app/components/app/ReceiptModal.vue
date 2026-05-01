@@ -42,6 +42,7 @@
     const scale = availableWidth / receiptWidth
 
     const style = doc.createElement('style')
+
     style.textContent = `html { overflow: hidden; } body { transform-origin: top left; transform: scale(${scale}); width: ${receiptWidth}px; overflow: hidden; } @media print { html { overflow: auto; } body { transform: none; width: auto; overflow: auto; } }`
     doc.head.appendChild(style)
 
@@ -52,7 +53,12 @@
 </script>
 
 <template>
-  <UModal title="Reçu de paiement">
+  <UModal
+    title="Reçu de paiement"
+    :ui="{
+      content: 'w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)]'
+    }"
+  >
     <template #actions>
       <UBadge v-if="paymentTypeLabel" variant="subtle" size="sm">{{ paymentTypeLabel }}</UBadge>
     </template>
