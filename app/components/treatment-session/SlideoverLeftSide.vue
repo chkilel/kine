@@ -89,31 +89,31 @@
         <div class="flex items-center gap-4">
           <div class="n flex items-center gap-2">
             <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Suivi par</h4>
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Suivi par</h4>
           </div>
           <span class="font-semibold">{{ getTherapistName(treatmentPlan.therapistId) }}</span>
         </div>
 
-        <div class="space-y-0.5">
-          <div class="flex items-center gap-2">
-            <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Motif de prise en charge</h4>
+        <div class="flex items-start gap-2">
+          <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
+          <div class="space-y-0.5">
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Motif de prise en charge</h4>
+            <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
           </div>
-          <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
         </div>
       </div>
     </AppCard>
     <AppCard v-if="shouldShowEVACards" compact title="Douleur" centerHeader :ui="{ header: 'pb-0 sm:pb-0' }">
       <div class="divide-default grid grid-cols-2 gap-2 divide-x">
         <div class="flex items-center justify-center gap-3">
-          <p class="text-xl font-bold">{{ painLevelBefore }}/10</p>
+          <p class="text-lg font-semibold">{{ painLevelBefore }}/10</p>
           <UIcon name="i-hugeicons-airplane-take-off-01" class="text-primary size-5" />
         </div>
 
         <div class="flex items-center justify-center gap-3">
           <template v-if="painLevelAfter != null">
             <UIcon name="i-hugeicons-airplane-landing-01" class="text-primary size-5" />
-            <p class="text-xl font-bold">{{ painLevelAfter }}/10</p>
+            <p class="text-lg font-semibold">{{ painLevelAfter }}/10</p>
           </template>
           <p v-else class="text-muted text-xs">Sera demandé en fin de séance</p>
         </div>

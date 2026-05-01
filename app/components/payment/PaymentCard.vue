@@ -249,7 +249,7 @@
     </template>
 
     <UForm ref="paymentForm" :state="formState" :schema="paymentFormSchema" @submit="onSubmit">
-      <div class="space-y-6">
+      <div class="space-y-2">
         <UAlert v-if="showErrorBanner" size="sm" color="neutral" variant="subtle" :description="showErrorBanner" />
 
         <UAlert
@@ -264,7 +264,7 @@
 
         <div class="space-y-3">
           <div class="space-y-1.5">
-            <p class="text-muted text-[10px] leading-none font-bold tracking-wider uppercase">Mode de règlement</p>
+            <p class="text-toned text-[10px] font-medium tracking-wider uppercase">Mode de règlement</p>
             <div class="flex gap-1">
               <button
                 v-for="method in methodButtons"
@@ -300,7 +300,11 @@
           </p>
         </div>
 
-        <UFormField name="notes" label="Note transaction">
+        <UFormField
+          name="notes"
+          label="Note transaction"
+          :ui="{ label: 'text-toned text-[10px] font-medium tracking-wider uppercase' }"
+        >
           <UTextarea
             v-model="formState.notes"
             placeholder="Commentaire optionnel..."

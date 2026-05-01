@@ -34,23 +34,23 @@
 
       <div class="border-default grid grid-cols-2 gap-x-6 gap-y-2 border-t py-1">
         <div>
-          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Montant</span>
+          <span class="text-toned text-[10px] font-medium tracking-wider uppercase">Montant</span>
           <p class="text-sm font-black tabular-nums">
             {{ formatCurrency(latestPayment.amountCents) }}
           </p>
         </div>
         <div class="text-right">
-          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Mode</span>
+          <span class="text-toned text-[10px] font-medium tracking-wider uppercase">Mode</span>
           <p class="text-xs font-bold uppercase">
             {{ getPaymentMethodLabel(latestPayment.method) }}
           </p>
         </div>
         <div>
-          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">N° Reçu</span>
+          <span class="text-toned text-[10px] font-medium tracking-wider uppercase">N° Reçu</span>
           <p class="text-xs font-bold">{{ latestPayment.receiptNumber }}</p>
         </div>
         <div class="text-right">
-          <span class="text-muted text-[9px] font-bold tracking-widest uppercase">Date</span>
+          <span class="text-toned text-[10px] font-medium tracking-wider uppercase">Date</span>
           <p class="text-xs font-bold">{{ formatDate(latestPayment.paidOn) }}</p>
         </div>
       </div>

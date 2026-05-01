@@ -46,42 +46,44 @@
     iconColor="primary"
     variant="outline"
     :compact="true"
-    :ui="{ header: 'bg-primary/5 ' }"
+    :ui="{ header: 'bg-primary/5' }"
   >
     <div class="space-y-2">
-      <div class="grid grid-cols-2 gap-x-2">
-        <p class="text-muted col-span-2 text-[10px] font-bold tracking-wider uppercase">Planifié</p>
-        <div class="flex items-center gap-1">
-          <p class="text-sm font-semibold">{{ timingInfo.appointmentStartTime }}</p>
+      <div class="grid grid-cols-[3fr_2fr] gap-x-2">
+        <p class="text-toned col-span-full text-[10px] font-medium tracking-wider uppercase">Horaire prévu</p>
+        <div class="flex items-center gap-1 font-medium">
+          <p class="text-sm">{{ timingInfo.appointmentStartTime }}</p>
           -
-          <p class="text-sm font-semibold">{{ timingInfo.appointmentEndTime }}</p>
+          <p class="text-sm">{{ timingInfo.appointmentEndTime }}</p>
         </div>
-        <div class="flex items-center gap-3 justify-self-end">
+        <div class="flex items-center justify-self-end">
           <AppIconBox name="i-hugeicons-time-quarter-pass" color="primary" />
-          <p class="text-default text-sm font-bold">{{ timingInfo.plannedDurationMinutes }} min</p>
+          <p class="text-default text-sm font-semibold">
+            <span class="inline-block w-[3ch] text-right">{{ timingInfo.plannedDurationMinutes ?? 0 }}</span>
+            min
+          </p>
         </div>
       </div>
 
       <template v-if="timingInfo.actualStartTime">
-        <USeparator />
-
-        <div class="grid grid-cols-2 gap-x-4">
-          <p class="text-primary col-span-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase">
-            Réel
-            <span v-if="!timingInfo.actualEndTime" class="bg-primary size-1.5 animate-pulse rounded-full"></span>
+        <div class="grid grid-cols-[3fr_2fr] gap-x-2">
+          <p
+            class="text-primary col-span-full flex items-center gap-1.5 text-[10px] font-medium tracking-wider uppercase"
+          >
+            Horaire réel
           </p>
-          <div class="flex items-center gap-1">
-            <p class="text-sm font-semibold">{{ timingInfo.actualStartTime }}</p>
+          <div class="flex items-center gap-1 font-medium">
+            <p class="text-sm">{{ timingInfo.actualStartTime }}</p>
             -
-            <p v-if="timingInfo.actualEndTime" class="text-sm font-semibold">{{ timingInfo.actualEndTime }}</p>
+            <p v-if="timingInfo.actualEndTime" class="text-sm">{{ timingInfo.actualEndTime }}</p>
             <p v-else class="text-muted text-xs">En cours</p>
-            <!-- <UIcon v-else name="hugeicons-timer-02" class="text-primary animate-bounce" /> -->
           </div>
 
-          <div class="flex items-center gap-3 justify-self-end">
+          <div class="flex items-center justify-self-end">
             <AppIconBox name="i-hugeicons-time-quarter-pass" :color="timeColor" />
-            <p class="text-default text-sm font-bold">
-              {{ String(timingInfo.actualDurationMinutes ?? 0).padStart(2, '0') }} min
+            <p class="text-default text-sm font-semibold">
+              <span class="inline-block w-[3ch] text-right">{{ timingInfo.actualDurationMinutes ?? 0 }}</span>
+              min
             </p>
           </div>
         </div>
