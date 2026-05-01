@@ -233,26 +233,31 @@
         </div>
         <UButton
           :icon="isPaused ? 'i-hugeicons-play' : 'i-hugeicons-pause'"
-          size="xl"
+          size="lg"
           variant="solid"
           :color="isPaused ? 'info' : 'warning'"
           square
           class="rounded-full"
+          :class="{ 'ring-info/35 animate-pulse ring-3': isPaused }"
           :loading="isPaused ? isResuming : isPausing"
           :disabled="isPausing || isResuming"
           @click="togglePause"
-        />
+        >
+          <span class="hidden lg:inline">
+            {{ isPaused ? 'Reprendre' : 'Pause' }}
+          </span>
+        </UButton>
+        <UButton
+          color="primary"
+          variant="solid"
+          size="lg"
+          icon="i-hugeicons-checkmark-circle-02"
+          @click="handleComplete"
+          class="self-stretch rounded-full"
+        >
+          Terminer
+        </UButton>
       </div>
-      <UButton
-        color="primary"
-        variant="solid"
-        size="lg"
-        icon="i-hugeicons-checkmark-circle-02"
-        @click="handleComplete"
-        class="self-stretch"
-      >
-        Terminer
-      </UButton>
     </div>
   </template>
 

@@ -18,7 +18,11 @@
     refetch: refetchAppointment
   } = useAppointment(() => props.appointmentId)
 
-  const { data: planAppointments } = usePlanAppointments(() => appointment.value?.treatmentPlanId, () => props.patientId, 10)
+  const { data: planAppointments } = usePlanAppointments(
+    () => appointment.value?.treatmentPlanId,
+    () => props.patientId,
+    10
+  )
 
   // ─── Base state ──────────────────────────────────────────────
   const isTimerPaused = ref(false)
@@ -150,7 +154,6 @@
             variant="solid"
             icon="i-hugeicons-play-circle"
             :loading="isSessionStarting"
-            class="self-stretch"
             @click="handleStartSession"
           >
             Démarrer la séance
@@ -159,9 +162,9 @@
             icon="i-hugeicons-panel-left-close"
             size="xl"
             color="neutral"
-            variant="ghost"
+            variant="subtle"
             square
-            :ui="{ leadingIcon: 'size-8' }"
+            :ui="{ base: 'bg-accented rounded-full', leadingIcon: 'size-5' }"
             @click="emit('close')"
           />
         </div>

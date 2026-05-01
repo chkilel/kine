@@ -39,31 +39,15 @@
 </script>
 
 <template>
-  <UCard
+  <AppCard
+    title="Horaires"
+    :description="timingInfo.appointmentDate"
+    icon="i-hugeicons-date-time"
+    iconColor="primary"
     variant="outline"
-    :ui="{
-      root: 'divide-default',
-      header: 'bg-primary/5 '
-    }"
+    :compact="true"
+    :ui="{ header: 'bg-primary/5 ' }"
   >
-    <template #header>
-      <header class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <AppIconBox
-            name="i-hugeicons-date-time"
-            size="xl"
-            color="primary"
-            variant="solid"
-            :ui="{ base: 'rounded-full p-1.5' }"
-          />
-          <div>
-            <h2 class="text-sm font-black uppercase">Horaires</h2>
-            <p class="text-muted text-[11px] font-semibold">Séance du {{ timingInfo.appointmentDate }}</p>
-          </div>
-        </div>
-      </header>
-    </template>
-
     <div class="space-y-2">
       <div class="grid grid-cols-2 gap-x-2">
         <p class="text-muted col-span-2 text-[10px] font-bold tracking-wider uppercase">Planifié</p>
@@ -103,5 +87,5 @@
         </div>
       </template>
     </div>
-  </UCard>
+  </AppCard>
 </template>

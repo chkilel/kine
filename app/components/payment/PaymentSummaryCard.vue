@@ -19,35 +19,7 @@
 </script>
 
 <template>
-  <UCard
-    :ui="{
-      root: 'divide-default',
-      header: 'bg-primary/5',
-      footer: 'bg-muted'
-    }"
-  >
-    <template #header>
-      <header class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <AppIconBox
-            name="i-hugeicons-wallet-02"
-            size="xl"
-            color="primary"
-            variant="solid"
-            :ui="{ base: 'rounded-xl p-2' }"
-          />
-          <div>
-            <h2 class="text-sm font-black tracking-tight uppercase">Facturation</h2>
-            <p class="text-muted text-[11px] font-semibold">Séance du {{ formatDate(props.appointment.date) }}</p>
-          </div>
-        </div>
-
-        <div v-if="latestPayment" class="flex flex-col items-end">
-          <UBadge size="md" color="success" variant="solid" class="rounded-full uppercase">Payé</UBadge>
-        </div>
-      </header>
-    </template>
-
+  <AppCard compact>
     <div v-if="latestPayment" class="space-y-2">
       <div class="flex flex-col items-center justify-center">
         <AppIconBox
@@ -57,7 +29,7 @@
           variant="soft"
           :ui="{ base: 'rounded-full p-3 mb-2', leadingIcon: 'size-9' }"
         />
-        <h3 class="text-sm font-black tracking-tight uppercase">Paiement effectué</h3>
+        <h3 class="text-sm font-bold tracking-wide uppercase">Paiement effectué</h3>
       </div>
 
       <div class="border-default grid grid-cols-2 gap-x-6 gap-y-2 border-t py-1">
@@ -82,25 +54,9 @@
           <p class="text-xs font-bold">{{ formatDate(latestPayment.paidOn) }}</p>
         </div>
       </div>
-      <UButton
-        color="success"
-        variant="subtle"
-        block
-        size="lg"
-        icon="i-hugeicons-invoice-03"
-        @click="handleViewReceipt"
-      >
+      <UButton color="success" variant="solid" block icon="i-hugeicons-invoice-03" @click="handleViewReceipt">
         Voir le reçu
       </UButton>
     </div>
-
-    <template #footer>
-      <footer class="flex flex-col gap-4">
-        <div class="text-dimmed mt-1 flex items-center justify-center gap-1.5 text-[10px] font-bold">
-          <UIcon name="i-hugeicons-shield-01" class="size-3.5" />
-          <span>Paiement sécurisé • KineDesk</span>
-        </div>
-      </footer>
-    </template>
-  </UCard>
+  </AppCard>
 </template>
