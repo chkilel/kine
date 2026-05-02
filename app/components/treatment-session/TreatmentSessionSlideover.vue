@@ -232,8 +232,80 @@
           <!-- <TreatmentSessionTimer v-if="appointment" :appointment="appointment" @close="emit('close')" /> -->
 
           <!-- Previous Appointments Card -->
+          <AppCard
+            title="Séances précédentes"
+            icon="hugeicons-note-03"
+            compact
+            :ui="{ body: 'pt-0 sm:pt-0 space-y-1' }"
+          >
+            <template v-if="previousAppointments" v-for="appointment in previousAppointments" :key="appointment.id">
+              <UPopover :open-delay="200">
+                <div
+                  class="group bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-1 pr-2 transition-colors hover:shadow-sm"
+                >
+                  <AppDateBadge :date="appointment.date" color="info" variant="soft" size="lg" class="rounded-r-none" />
+
+                  <div class="flex-1">
+                    <p class="line-clamp-2 text-xs text-wrap">
+                      {{ appointment.sessionNotes || 'Aucun compte rendu disponible' }}
+                    </p>
+
+                    <div
+                      v-if="appointment.painLevelAfter != null || appointment.painLevelBefore != null"
+                      class="text-muted mt-1 flex items-center gap-2 text-xs font-medium"
+                    >
+                      <div v-if="appointment.painLevelBefore !== null" class="flex items-center gap-1">
+                        <span>{{ appointment.painLevelBefore }}/10</span>
+                        <UIcon name="i-hugeicons-airplane-take-off-01" />
+                      </div>
+                      <USeparator orientation="vertical" class="h-3" />
+                      <div v-if="appointment.painLevelAfter !== null" class="flex items-center gap-1">
+                        <UIcon name="i-hugeicons-airplane-landing-01" />
+                        <span>{{ appointment.painLevelAfter }}/10</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <UIcon
+                    name="i-lucide-chevron-right"
+                    class="group-hover:text-primary text-muted size-5 transition-all group-hover:-mr-1"
+                  />
+                </div>
+                <template #content>
+                  <AppCard compact :ui="{ root: 'min-w-sm max-w-md', header: 'bg-elevated' }">
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <AppIconBox size="md" color="primary" name="i-hugeicons-calendar-04" />
+                        <span class="text-xs font-semibold">{{ formatShortDate(appointment.date) }}</span>
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <AppIconBox size="md" color="primary" name="i-hugeicons-monocle-01" />
+                        <div>
+                          <h4 class="text-muted text-[10px] tracking-wider uppercase">Observations</h4>
+                          <span class="text-sm">
+                            {{ appointment.observations || 'Aucune observation enregistrée' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <AppIconBox size="md" color="primary" name="i-hugeicons-note-01" />
+                        <div>
+                          <h4 class="text-muted text-[10px] tracking-wide uppercase">Compte rendu de séance</h4>
+                          <span class="text-sm">
+                            {{ appointment.sessionNotes || 'Aucun compte rendu pour cette séance' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </AppCard>
+                </template>
+              </UPopover>
+            </template>
+          </AppCard>
+
+          <!-- collapsible card in the previous design -->
           <UCard
-            v-if="previousAppointments.length"
+            v-if="false"
             :ui="{
               root: 'divide-transparent rounded-md',
               body: 'p-0 sm:p-0'

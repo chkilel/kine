@@ -103,7 +103,14 @@
         </div>
       </div>
     </AppCard>
-    <AppCard v-if="shouldShowEVACards" compact title="Douleur" centerHeader :ui="{ header: 'pb-0 sm:pb-0' }">
+    <AppCard
+      v-if="shouldShowEVACards"
+      compact
+      title="Évaluation douleur"
+      icon="hugeicons-temperature"
+      iconColor="error"
+      :ui="{ header: 'pb-0 sm:pb-0' }"
+    >
       <div class="divide-default grid grid-cols-2 gap-2 divide-x">
         <div class="flex items-center justify-center gap-3">
           <p class="text-lg font-semibold">{{ painLevelBefore }}/10</p>

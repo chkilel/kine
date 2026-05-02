@@ -132,7 +132,7 @@
           <LazyAppointmentListItem v-for="appointment in inProgressAppointments" :key="appointment.id" :appointment />
         </div>
 
-        <AppCard title="Planning de la journée" icon="i-hugeicons-calendar-03">
+        <AppCard :ui="{ body: 'p-4 sm:p-6' }">
           <UTabs
             v-if="appointments && appointments.filter((a) => a.status !== 'in_progress').length > 0"
             v-model="activeTab"

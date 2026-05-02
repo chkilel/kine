@@ -21,15 +21,15 @@
 <template>
   <AppCard compact>
     <div v-if="latestPayment" class="space-y-2">
-      <div class="flex flex-col items-center justify-center">
+      <div class="flex items-center justify-center gap-2">
         <AppIconBox
-          name="i-hugeicons-checkmark-circle-01"
+          name="i-hugeicons-checkmark-circle-02"
           size="xl"
           color="success"
           variant="soft"
-          :ui="{ base: 'rounded-full p-3 mb-2', leadingIcon: 'size-9' }"
+          :ui="{ base: 'rounded-full', leadingIcon: 'size-6' }"
         />
-        <h3 class="text-sm font-bold tracking-wide uppercase">Paiement effectué</h3>
+        <h3 class="text-toned text-[13px] leading-none font-semibold tracking-wide uppercase">Paiement effectué</h3>
       </div>
 
       <div class="border-default grid grid-cols-2 gap-x-6 gap-y-2 border-t py-1">

@@ -6,7 +6,7 @@
 
   type Card = ComponentConfig<typeof cardTheme, AppConfig, 'card'>
 
-  const props = defineProps<{
+  const { title, description, icon, iconColor, centerHeader, compact, ui } = defineProps<{
     title?: string
     description?: string
     icon?: string
@@ -17,10 +17,10 @@
   }>()
 
   const mergedUi = computed(() => ({
-    root: cn('divide-y-0', props.ui?.root),
-    header: cn(props.compact ? 'p-3 px-2 sm:px-3' : 'px-4 sm:px-6', props.ui?.header),
-    body: cn(props.compact ? 'p-2 sm:p-3' : 'pt-2 sm:pt-3', props.ui?.body),
-    footer: cn(props.compact ? 'p-2 sm:p-3' : 'pt-2 sm:pt-3', props.ui?.footer)
+    root: cn('divide-y-0', ui?.root),
+    header: cn(compact ? 'p-3 px-2 sm:px-3' : 'px-4 sm:px-6', ui?.header),
+    body: cn(compact ? 'p-2 sm:p-3' : 'pt-2 sm:pt-3', ui?.body),
+    footer: cn(compact ? 'p-2 sm:p-3' : 'pt-2 sm:pt-3', ui?.footer)
   }))
 
   //p-4 sm:px-6
