@@ -238,6 +238,13 @@
             compact
             :ui="{ body: 'pt-0 sm:pt-0 space-y-1' }"
           >
+            <UEmpty
+              v-if="!previousAppointments || !previousAppointments.length"
+              size="xs"
+              icon="i-hugeicons-transaction-history"
+              title="Aucune séance trouvée"
+              description="Il s'agit de la première séance pour ce patient."
+            />
             <template v-if="previousAppointments" v-for="appointment in previousAppointments" :key="appointment.id">
               <UPopover :open-delay="200">
                 <div
