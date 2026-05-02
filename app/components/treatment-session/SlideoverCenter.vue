@@ -63,6 +63,8 @@
       v-if="showPrimaryConcern"
       title="Motif de consultation"
       description="Raison principale de la consultation, exprimée par le patient."
+      compact
+      :ui="{ body: 'pt-0 sm:pt-0' }"
     >
       <template #actions>
         <UButton
@@ -84,7 +86,12 @@
       />
     </AppCard>
 
-    <AppCard title="Observations" description="Constats objectifs: douleur, mobilité, tests, palpation.">
+    <AppCard
+      title="Observations"
+      description="Constats objectifs: douleur, mobilité, tests, palpation."
+      compact
+      :ui="{ body: 'pt-0 sm:pt-0' }"
+    >
       <template #actions>
         <UButton
           v-if="isObservationsEditable"
@@ -111,6 +118,8 @@
     <AppCard
       title="Compte rendu de séance"
       description="Exercices effectués, réactions du patient, progrès observés et suite à donner."
+      compact
+      :ui="{ body: 'pt-0 sm:pt-0' }"
     >
       <template #actions>
         <UButton

@@ -125,22 +125,16 @@
     v-if="!status.inProgress"
     :class="[
       'relative flex items-center gap-4 overflow-hidden',
-      'rounded-lg p-4 pl-0 hover:shadow-sm',
+      'rounded-lg p-1 pr-2 hover:shadow-sm',
       'bg-muted hover:border-default cursor-pointer border border-transparent transition-colors'
     ]"
     @click="openSessionSlideover"
   >
-    <!-- Status Indicator -->
-    <div
-      class="w-1.5 self-stretch rounded-r-full"
-      :class="[status.completed && 'bg-success', status.scheduled && 'bg-info', status.inProgress && 'bg-warning']"
-    />
-
     <!-- Vertical Time Card -->
     <UBadge
       color="primary"
       variant="subtle"
-      class="flex w-16 flex-col items-center justify-center gap-0 self-stretch rounded-2xl"
+      class="flex w-16 flex-col items-center justify-center gap-0 self-stretch rounded-r-none"
     >
       <span class="text-primary text-2xl leading-none font-bold">{{ timeLabel.h }}</span>
       <div class="bg-primary/20 my-1 h-px w-4"></div>
@@ -148,7 +142,7 @@
     </UBadge>
 
     <!-- Patient Info -->
-    <div class="min-w-0 flex-1">
+    <div class="min-w-0 flex-1 py-1">
       <div class="flex items-center gap-3">
         <h4 class="font-semibold">{{ appointment.patientName }}</h4>
 
@@ -194,7 +188,7 @@
   <!-- In progress session -->
   <div
     v-else
-    class="bg-primary group shadow-primary/40 relative cursor-pointer overflow-hidden rounded-xl p-4 pl-0 text-white shadow-md"
+    class="bg-primary group shadow-primary/40 relative cursor-pointer overflow-hidden rounded-xl p-3 pl-0 text-white shadow-md"
     @click="openSessionSlideover"
   >
     <div

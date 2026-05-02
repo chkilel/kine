@@ -85,7 +85,6 @@ export default defineEventHandler(async (event) => {
       line-height: 1.4;
       color: #000;
       width: 80mm;
-      padding: 8mm 5mm;
       max-width: 80mm;
     }
     .center {

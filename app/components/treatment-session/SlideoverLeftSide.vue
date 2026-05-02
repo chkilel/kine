@@ -47,12 +47,6 @@
     { title: 'Antécédents', items: patient.medicalConditions },
     { title: 'Traitement en cours', items: patient.medications }
   ])
-
-  watchEffect(() => {
-    console.log('shouldShowEVACards:', shouldShowEVACards.value)
-    console.log('appointment.status:', appointment.status)
-    console.log('appointment.painLevelAfter:', appointment.painLevelAfter)
-  })
 </script>
 
 <template>
@@ -65,26 +59,23 @@
       variant="outline"
       icon="i-hugeicons-healtcare"
       centerHeader
-      :ui="{
-        root: 'divide-y-0',
-        header: 'px-4 sm:px-6  pb-0 sm:pb-0',
-        body: 'pt-2 sm:pt-2'
-      }"
+      compact
+      :ui="{ header: 'pb-0 sm:pb-0' }"
     >
       <div v-if="totalSessionsCount > 0" class="flex flex-col items-center text-center">
         <div class="relative size-32">
           <svg class="size-full -rotate-90" viewBox="0 0 36 36">
             <!-- Plan Progress Ring -->
-            <circle class="stroke-info-100" cx="18" cy="18" fill="none" r="16" stroke-width="3" />
+            <circle class="stroke-primary-100" cx="18" cy="18" fill="none" r="16" stroke-width="2.5" />
             <circle
-              class="stroke-info"
+              class="stroke-primary"
               cx="18"
               cy="18"
               fill="none"
               r="16"
               :stroke-dasharray="`${progressPercentage}, 100`"
               stroke-linecap="round"
-              stroke-width="3"
+              stroke-width="2.5"
             />
           </svg>
           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -98,32 +89,41 @@
         <div class="flex items-center gap-4">
           <div class="n flex items-center gap-2">
             <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Suivi par</h4>
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Suivi par</h4>
           </div>
           <span class="font-semibold">{{ getTherapistName(treatmentPlan.therapistId) }}</span>
         </div>
 
-        <div class="space-y-0.5">
-          <div class="flex items-center gap-2">
-            <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Motif de prise en charge</h4>
+        <div class="flex items-start gap-2">
+          <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
+          <div class="space-y-0.5">
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Motif de prise en charge</h4>
+            <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
           </div>
-          <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
         </div>
       </div>
     </AppCard>
-    <AppCard v-if="shouldShowEVACards" title="Évaluation de la douleur">
+    <AppCard
+      v-if="shouldShowEVACards"
+      compact
+      title="Évaluation douleur"
+      icon="hugeicons-temperature"
+      iconColor="error"
+      :ui="{ header: 'pb-0 sm:pb-0' }"
+    >
       <div class="divide-default grid grid-cols-2 gap-2 divide-x">
-        <div class="flex items-center gap-3">
-          <p class="text-xl font-bold">{{ painLevelBefore }}/10</p>
+        <div class="flex items-center justify-center gap-3">
+          <p class="text-lg font-semibold">{{ painLevelBefore }}/10</p>
           <UIcon name="i-hugeicons-airplane-take-off-01" class="text-primary size-5" />
         </div>
 
-        <div v-if="painLevelAfter != null" class="flex items-center gap-3">
-          <p class="text-xl font-bold">{{ painLevelAfter }}/10</p>
-          <UIcon name="i-hugeicons-airplane-landing-01" class="text-primary size-5" />
+        <div class="flex items-center justify-center gap-3">
+          <template v-if="painLevelAfter != null">
+            <UIcon name="i-hugeicons-airplane-landing-01" class="text-primary size-5" />
+            <p class="text-lg font-semibold">{{ painLevelAfter }}/10</p>
+          </template>
+          <p v-else class="text-muted text-xs">Sera demandé en fin de séance</p>
         </div>
-        <p v-else class="text-muted text-xs">Sera demandé en fin de séance</p>
       </div>
     </AppCard>
 
@@ -140,9 +140,8 @@
           variant="ghost"
           trailing-icon="i-lucide-chevron-down"
           block
-          class="group p-4 sm:px-6 sm:py-4"
           :ui="{
-            base: 'rounded-b-none',
+            base: 'group p-2 sm:p-3 rounded-b-none',
             trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
           }"
         >
@@ -150,7 +149,7 @@
         </UButton>
 
         <template #content>
-          <div class="border-default border-t p-4 pt-2 sm:p-6 sm:pt-4">
+          <div class="border-default border-t p-2 sm:p-3">
             <template v-if="!hasMedicalInfo">
               <UEmpty
                 size="xs"

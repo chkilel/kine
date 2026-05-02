@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
 import type { AppointmentPaymentStatus } from './base.types'
+import type { RateCent } from '~~/shared/types/org.types'
 
 // =============================================================================
 // Appointment Schemas and Types
@@ -113,6 +114,20 @@ export type Appointment = z.infer<typeof appointmentSchema> & {
   roomName?: string | null
   patientName?: string | null
   planTitle?: string | null
+}
+
+export type AppointmentDetail = z.infer<typeof appointmentSchema> & {
+  confirmedAt: string
+  cancelledAt: string
+  createdAt: string
+  updatedAt: string
+  lockedAt: string
+  roomName: string | null
+  treatmentPlan: {
+    id: string
+    title: string
+    pricing: RateCent // Pricing column type
+  } | null // null if leftJoin finds no matching treatmentPlan}
 }
 
 export type AppointmentWithPaymentStatus = Appointment & {

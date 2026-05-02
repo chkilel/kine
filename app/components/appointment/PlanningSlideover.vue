@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LazyAppModalEVA, LazyOrganizationRoomSlideover, LazyTreatmentSessionSlideover } from '#components'
+  import { LazyOrganizationRoomSlideover, LazyTreatmentSessionSlideover } from '#components'
   import { CalendarDate, parseDate, parseTime } from '@internationalized/date'
 
   // ─── Props / Emits ───────────────────────────────────────────
@@ -19,14 +19,10 @@
   // (EVA pain evaluation → treatment session) and to add a room.
   const toast = useToast()
   const overlay = useOverlay()
-  const evaModal = overlay.create(LazyAppModalEVA)
   const treatmentSesionOverlay = overlay.create(LazyTreatmentSessionSlideover)
   const roomAddOverlay = overlay.create(LazyOrganizationRoomSlideover)
 
   // ─── Composables ─────────────────────────────────────────────
-  // Mutations for starting, creating, and updating appointments.
-  // `useOrganizationMembers` provides the list of therapists.
-  const { mutateAsync: startAppointment, isLoading: isStartingSession } = useStartAppointment()
   const { therapists } = useOrganizationMembers()
   const createAppointmentMutation = useCreateAppointment()
   const updateAppointmentMutation = useUpdateAppointment()
@@ -342,63 +338,17 @@
   // Opens the room creation slideover so the user can add a
   // room without leaving this planning view.
   async function handleAddRoom() {
-    await roomAddOverlay.open()
+    roomAddOverlay.open()
   }
 
   // ─── Start session flow ──────────────────────────────────────
-  // Three-step flow:
-  //  1. If the appointment is already `in_progress`, skip the EVA
-  //     and open the treatment session overlay directly.
-  //  2. Otherwise, open the EVA (pain evaluation) modal to get a
-  //     pain level before the session. If the user cancels, bail.
-  //  3. Call `startAppointment` to transition the appointment to
-  //     `in_progress`, then open the treatment session overlay.
-  //     On 409 (conflict — already in progress) we still open the
-  //     session overlay as a fallback.
   const handleStartSession = async () => {
-    if (!props.appointment || isStartingSession.value) return
-
-    if (props.appointment.status === 'in_progress') {
-      treatmentSesionOverlay.open({
-        patientId: props.patient.id,
-        appointmentId: props.appointment.id
-      })
-      emit('close')
-      return
-    }
-
-    const evaValue = await evaModal.open({
-      title: 'Évaluation de la douleur initiale',
-      description: 'Veuillez indiquer le niveau de douleur du patient avant la séance',
-      confirmText: 'Enregistrer et démarrer',
-      cancelText: 'Annuler',
-      initialValue: 0
+    if (!props.appointment) return
+    treatmentSesionOverlay.open({
+      patientId: props.patient.id,
+      appointmentId: props.appointment.id
     })
-
-    if (evaValue === null) return
-
-    try {
-      await startAppointment({
-        appointmentId: props.appointment.id,
-        actualStartTime: getCurrentTimeHHMMSS(),
-        painLevelBefore: evaValue
-      })
-
-      treatmentSesionOverlay.open({
-        patientId: props.patient.id,
-        appointmentId: props.appointment.id
-      })
-      emit('close')
-    } catch (error) {
-      const parsedError = parseError(error, 'Impossible de démarrer la séance')
-      if (parsedError.statusCode === 409) {
-        treatmentSesionOverlay.open({
-          patientId: props.patient.id,
-          appointmentId: props.appointment.id
-        })
-        emit('close')
-      }
-    }
+    emit('close')
   }
 </script>
 
@@ -835,7 +785,6 @@
             icon="i-hugeicons-play-circle"
             color="primary"
             size="lg"
-            :loading="isStartingSession"
             @click="handleStartSession"
           >
             Démarrer

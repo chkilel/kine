@@ -2,27 +2,25 @@
   import type { FormSubmitEvent } from '@nuxt/ui'
 
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = defineProps<{
-    appointment: Appointment
-  }>()
+  const { appointment } = defineProps<{ appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────
-  const { data: patientCreditBalance } = usePatientBalance(() => props.appointment.patientId)
+  const { data: patientCreditBalance } = usePatientBalance(() => appointment.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
   const { mutate: updatePriceMutation, isLoading: isUpdating } = useUpdateAppointmentPrice()
   const activeOrganization = authClient.useActiveOrganization()
 
   // ─── Base state ──────────────────────────────────────────────
-  const sessionCostCents = computed(() => props.appointment.priceCents ?? 0)
-  const patientId = computed(() => props.appointment.patientId)
+  const sessionCostCents = computed(() => appointment.priceCents ?? 0)
+  const patientId = computed(() => appointment.patientId)
   const defaultAmount = computed(() => sessionCostCents.value / 100)
 
   // ─── Pricing ─────────────────────────────────────────────────
   const treatmentPlan = computed(() => null)
 
   const inheritedPrice = computed<number | null>(() => {
-    if (!props.appointment) return null
-    const { location } = props.appointment
+    if (!appointment) return null
+    const { location } = appointment
 
     return activeOrganization.value.data?.pricing.rateCent[location] ?? null
   })
@@ -88,7 +86,7 @@
 
   function updateSessionPrice(newPriceCents: number) {
     updatePriceMutation({
-      appointmentId: props.appointment.id,
+      appointmentId: appointment.id,
       priceCents: newPriceCents,
       onSuccess: () => {
         formState.amount = newPriceCents / 100
@@ -163,7 +161,7 @@
       method: event.data.method,
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString(),
-      sessionItems: [{ appointmentId: props.appointment.id, amountCents }]
+      sessionItems: [{ appointmentId: appointment.id, amountCents }]
     }
 
     createPayment({
@@ -177,94 +175,81 @@
 </script>
 
 <template>
-  <UCard
+  <AppCard
+    title="Paiement"
+    icon="i-hugeicons-wallet-02"
+    compact
     :ui="{
-      root: 'divide-default',
+      root: 'divide-none',
       header: 'bg-primary/5',
       footer: 'bg-muted'
     }"
   >
-    <template #header>
-      <header class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <AppIconBox
-            name="i-hugeicons-wallet-02"
-            size="xl"
-            color="primary"
-            variant="solid"
-            :ui="{ base: 'rounded-xl p-2' }"
-          />
-          <div>
-            <h2 class="text-sm font-black uppercase">Facturation</h2>
-            <p class="text-muted text-[11px] font-semibold">Enregistrer un paiement</p>
+    <template #actions>
+      <UPopover v-model:open="isEditingPrice" :content="{ align: 'end', side: 'bottom', sideOffset: 8 }">
+        <div class="group flex items-center gap-2">
+          <div class="text-right">
+            <span class="text-primary text-lg font-black">
+              {{ centsToCurrency(sessionCostCents).toFixed(2) }}
+            </span>
+            <span class="text-primary/60 ml-1 text-[10px] font-bold">DH</span>
           </div>
+          <UIcon
+            name="i-hugeicons-pencil-edit-01"
+            class="text-primary/40 group-hover:text-primary size-4 cursor-pointer transition-colors"
+            @click.stop="handleStartPriceEdit"
+          />
         </div>
 
-        <UPopover v-model:open="isEditingPrice" :content="{ align: 'end', side: 'bottom', sideOffset: 8 }">
-          <div class="group flex items-center gap-2">
-            <div class="text-right">
-              <span class="text-primary text-lg font-black">
-                {{ centsToCurrency(sessionCostCents).toFixed(2) }}
-              </span>
-              <span class="text-primary/60 ml-1 text-[10px] font-bold">DH</span>
+        <template #content>
+          <UCard :ui="{ body: 'p-3 sm:p-4' }">
+            <UFieldGroup size="xl">
+              <UButton
+                color="primary"
+                variant="subtle"
+                square
+                icon="i-hugeicons-cancel-01"
+                @click="handleCancelPriceEdit"
+              />
+              <UInputNumber
+                ref="priceInputRef"
+                v-model="priceInputRaw"
+                :step="10"
+                :min="10"
+                placeholder="Prix (DH)"
+                class="max-w-42"
+                @keydown="handlePriceKeydown"
+              />
+              <UButton
+                color="primary"
+                icon="i-hugeicons-tick-02"
+                :loading="isUpdating"
+                :disabled="!isValidPriceInput"
+                @click="handleSavePrice"
+              />
+            </UFieldGroup>
+
+            <div v-if="inheritedPrice !== null" class="mt-2">
+              <p class="text-muted text-xs">
+                Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
+                <UButton
+                  v-if="hasCustomCost"
+                  size="xs"
+                  variant="link"
+                  class="text-primary ml-1 underline underline-offset-2"
+                  @click="handleResetPrice"
+                >
+                  Réinitialiser
+                </UButton>
+              </p>
             </div>
-            <UIcon
-              name="i-hugeicons-pencil-edit-01"
-              class="text-primary/40 group-hover:text-primary size-4 cursor-pointer transition-colors"
-              @click.stop="handleStartPriceEdit"
-            />
-          </div>
-
-          <template #content>
-            <UCard :ui="{ body: 'p-3 sm:p-4' }">
-              <UFieldGroup size="xl">
-                <UButton
-                  color="primary"
-                  variant="subtle"
-                  square
-                  icon="i-hugeicons-cancel-01"
-                  @click="handleCancelPriceEdit"
-                />
-                <UInputNumber
-                  ref="priceInputRef"
-                  v-model="priceInputRaw"
-                  :step="10"
-                  :min="10"
-                  placeholder="Prix (DH)"
-                  class="max-w-42"
-                  @keydown="handlePriceKeydown"
-                />
-                <UButton
-                  color="primary"
-                  icon="i-hugeicons-tick-02"
-                  :loading="isUpdating"
-                  :disabled="!isValidPriceInput"
-                  @click="handleSavePrice"
-                />
-              </UFieldGroup>
-
-              <div v-if="inheritedPrice !== null" class="mt-2">
-                <p class="text-muted text-xs">
-                  Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
-                  <UButton
-                    v-if="hasCustomCost"
-                    size="xs"
-                    variant="link"
-                    class="text-primary ml-1 underline underline-offset-2"
-                    @click="handleResetPrice"
-                  >
-                    Réinitialiser
-                  </UButton>
-                </p>
-              </div>
-            </UCard>
-          </template>
-        </UPopover>
-      </header>
+          </UCard>
+        </template>
+      </UPopover>
     </template>
 
     <UForm ref="paymentForm" :state="formState" :schema="paymentFormSchema" @submit="onSubmit">
-      <div class="space-y-6">
+      <div class="space-y-2">
         <UAlert v-if="showErrorBanner" size="sm" color="neutral" variant="subtle" :description="showErrorBanner" />
 
         <UAlert
@@ -278,27 +263,28 @@
         />
 
         <div class="space-y-3">
-          <label class="text-muted text-[10px] font-bold tracking-wider uppercase">Mode de règlement</label>
-
-          <div class="grid grid-cols-5 gap-1">
-            <button
-              v-for="method in methodButtons"
-              :key="method.value"
-              type="button"
-              tabindex="0"
-              :aria-pressed="formState.method === method.value"
-              class="flex flex-col items-center justify-center gap-1.5 rounded-md border p-3 transition-colors"
-              :class="
-                formState.method === method.value
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-default text-muted hover:border-primary/50'
-              "
-              @click="handleMethodSelect(method.value)"
-              @keydown.enter="handleMethodSelect(method.value)"
-            >
-              <UIcon :name="method.icon" class="size-5" />
-              <span class="text-[8px] font-black uppercase">{{ method.label }}</span>
-            </button>
+          <div class="space-y-1.5">
+            <p class="text-toned text-[10px] font-medium tracking-wider uppercase">Mode de règlement</p>
+            <div class="flex gap-1">
+              <button
+                v-for="method in methodButtons"
+                :key="method.value"
+                type="button"
+                tabindex="0"
+                :aria-pressed="formState.method === method.value"
+                class="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-md border p-3 transition-colors"
+                :class="
+                  formState.method === method.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-default text-muted hover:border-primary/50'
+                "
+                @click="handleMethodSelect(method.value)"
+                @keydown.enter="handleMethodSelect(method.value)"
+              >
+                <UIcon :name="method.icon" class="size-5" />
+                <span class="text-[8px] font-black uppercase">{{ method.label }}</span>
+              </button>
+            </div>
           </div>
 
           <p v-if="showCreditBalanceHint" class="text-muted text-xs">
@@ -314,7 +300,11 @@
           </p>
         </div>
 
-        <UFormField name="notes" label="Note transaction">
+        <UFormField
+          name="notes"
+          label="Note transaction"
+          :ui="{ label: 'text-toned text-[10px] font-medium tracking-wider uppercase' }"
+        >
           <UTextarea
             v-model="formState.notes"
             placeholder="Commentaire optionnel..."
@@ -327,16 +317,14 @@
     </UForm>
 
     <template #footer>
-      <footer class="flex flex-col gap-4">
-        <div class="text-muted flex items-center justify-between text-[11px] font-bold">
-          <UIcon name="i-hugeicons-shield-01" class="size-3.5" />
-          <span>Solde Patient : {{ centsToCurrency(creditBalance).toFixed(2) }} MAD</span>
+      <footer class="flex flex-col gap-3">
+        <div class="text-toned flex justify-end text-xs font-semibold">
+          <span>Solde Patient : {{ formatCurrency(creditBalance) }}</span>
         </div>
         <UButton
           color="primary"
           variant="solid"
           block
-          size="xl"
           :loading="isCreating"
           :disabled="insufficientCredit"
           icon="i-hugeicons-invoice-01"
@@ -346,5 +334,5 @@
         </UButton>
       </footer>
     </template>
-  </UCard>
+  </AppCard>
 </template>
