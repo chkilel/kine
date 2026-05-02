@@ -84,7 +84,7 @@
       initialValue: 0
     })
 
-    if (evaValue === null) return
+    if (evaValue == null) return
 
     try {
       if (appointment.value?.status === 'in_progress') {

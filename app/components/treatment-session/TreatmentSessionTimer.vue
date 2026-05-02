@@ -181,7 +181,7 @@
       initialValue: 0
     })
 
-    if (evaValue === null || sessionStatus.value !== 'in_progress') return
+    if (evaValue == null || sessionStatus.value !== 'in_progress') return
 
     endAppointment({
       appointmentId: props.appointment.id,
