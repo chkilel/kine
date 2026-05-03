@@ -3,7 +3,7 @@ import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { VALID_PATIENT_STATUSES, VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '../../../shared/types/base.types'
+import { VALID_PATIENT_STATUSES, VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '~~/shared/types/base.types'
 
 /**
  * ================================================================

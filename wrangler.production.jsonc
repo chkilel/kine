@@ -1,0 +1,49 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kine-prod",
+  "main": "./.output/server/index.mjs",
+  "compatibility_date": "2026-04-05",
+  "upload_source_maps": true,
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./.output/public/"
+  },
+  // production bindings only
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kine-prod",
+      "database_id": "d577b387-cbdd-4389-a1ba-e08f7c3c3055",
+      "migrations_dir": "server/database/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "c7b0aeafb0c4439f957cfae96a8947ef",
+    }
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "kine-prod",
+      "binding": "R2",
+    }
+  ],
+  "vars": {
+    "ENV": "production",
+    "NUXT_PUBLIC_BETTER_AUTH_URL": "https://kine-prod.chkilel.workers.dev",
+    "NUXT_R2_ACCOUNT_ID": "de5e45d1a3c2b107df9fdbc8f1b02238",
+    "NUXT_R2_BUCKET_NAME": "kine-prod",
+    "NUXT_R2_URL": "https://de5e45d1a3c2b107df9fdbc8f1b02238.r2.cloudflarestorage.com/kine-prod"
+  }
+}
