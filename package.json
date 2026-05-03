@@ -55,6 +55,7 @@
     "@iconify-json/lucide": "^1.2.104",
     "@iconify-json/simple-icons": "^1.2.80",
     "@nuxt/ui": "^4.7.1",
+    "@opentelemetry/api": "^1.9.1",
     "@pinia/colada-devtools": "^0.4.5",
     "@vitest/coverage-v8": "^4.1.5",
     "drizzle-kit": "1.0.0-beta.22",
