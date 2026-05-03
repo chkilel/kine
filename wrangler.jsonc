@@ -40,7 +40,7 @@
 	],
 	"vars": {
 		"ENV": "staging",
-		"NUXT_PUBLIC_BETTER_AUTH_URL": "https://kine-stage.chkilel.workers.dev",
+		"NUXT_PUBLIC_BETTER_AUTH_URL": "https://staging.kinedesk.com",
 		"NUXT_R2_ACCOUNT_ID": "de5e45d1a3c2b107df9fdbc8f1b02238",
 		"NUXT_R2_BUCKET_NAME": "kine-stage",
 		"NUXT_R2_URL": "https://de5e45d1a3c2b107df9fdbc8f1b02238.r2.cloudflarestorage.com/kine-stage"
