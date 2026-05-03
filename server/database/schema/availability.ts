@@ -4,7 +4,7 @@ import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqli
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
-import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES, VALID_LOCATIONS } from '../../../shared/types/base.types'
+import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES, VALID_LOCATIONS } from '~~/shared/types/base.types'
 
 /**
  * ================================================================

@@ -7,7 +7,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
-import { APPOINTMENT_STATUSES, VALID_APPOINTMENT_TYPES, VALID_LOCATIONS } from '../../../shared/types/base.types'
+import { APPOINTMENT_STATUSES, VALID_APPOINTMENT_TYPES, VALID_LOCATIONS } from '~~/shared/types/base.types'
 
 /**
  * ================================================================

@@ -1592,15 +1592,15 @@ function generateAppointments(
 // =============================================================================
 
 export default defineEventHandler(async (event: H3Event) => {
-  const isDevelopment = import.meta.dev
+  const cloudflareEnv = event.context.cloudflare?.env
+  const isStaging = cloudflareEnv?.ENV === 'staging'
 
-  if (!isDevelopment) {
+  if (!import.meta.dev && !isStaging) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Seeding is only allowed in development environment'
+      statusMessage: 'Seeding is only allowed in development and staging environments'
     })
   }
-
   const results: SeedResults = {
     success: {
       users: 0,

@@ -16,6 +16,7 @@
     "db:mig:stage": "wrangler d1 migrations apply DB --remote",
     "db:mig:prod": "wrangler d1 migrations apply DB --remote --config wrangler.production.jsonc",
     "db:seed": "curl -X POST http://localhost:3000/api/db/seed",
+    "db:seed:stage": "curl -X POST https://kine-stage.chkilel.workers.dev/api/db/seed",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
