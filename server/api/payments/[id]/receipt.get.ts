@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, message: 'Access denied' })
     }
 
-    const sessionItems = await db
+    const appointmentItems = await db
       .select({
         id: appointmentPaymentItems.id,
         appointmentId: appointmentPaymentItems.appointmentId,
@@ -210,14 +210,14 @@ export default defineEventHandler(async (event) => {
   }
 
   ${
-    sessionItems.length > 0
+    appointmentItems.length > 0
       ? `
   <hr class="separator">
   <div class="session-block">
     <div class="payment-row bold">
       <span>Détail des séances</span>
     </div>
-    ${sessionItems
+    ${appointmentItems
       .map(
         (item) => `
     <div class="payment-row">

@@ -44,7 +44,7 @@ const _useCreatePayment = () => {
 
       queryCache.invalidateQueries({ key: PAYMENT_KEYS.root })
 
-      const appointmentId = paymentData.sessionItems?.[0]?.appointmentId
+      const appointmentId = paymentData.appointmentItems?.[0]?.appointmentId
       if (appointmentId) {
         queryCache.invalidateQueries({ key: PAYMENT_KEYS.appointmentPayments(appointmentId) })
         queryCache.invalidateQueries({ key: APPOINTMENT_KEYS.root })

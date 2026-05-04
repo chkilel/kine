@@ -6,12 +6,12 @@ export default defineEventHandler(async (event) => {
   const { userId, organizationId } = await requireAuthWithOrg(event)
 
   const body = await readValidatedBody(event, paymentRequestBodySchema.parse)
-  const { type, amountCents, method, sessionItems, patientId } = body
+  const { type, amountCents, method, appointmentItems, patientId } = body
 
   const requiresSessionItems = type === 'session_payment' || type === 'session_refund'
   const forbidsSessionItems = type === 'deposit_add' || type === 'deposit_refund'
-  const hasSessionItems = sessionItems && sessionItems.length > 0
-  const hasManySessionItems = sessionItems && sessionItems.length > 1
+  const hasSessionItems = appointmentItems && appointmentItems.length > 0
+  const hasManySessionItems = appointmentItems && appointmentItems.length > 1
 
   if (requiresSessionItems) {
     if (!hasSessionItems) {
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         message: `Session items required for ${type} type`
       })
     }
-    const sessionItemsTotal = sessionItems.reduce((sum, item) => sum + item.amountCents, 0)
+    const sessionItemsTotal = appointmentItems.reduce((sum, item) => sum + item.amountCents, 0)
     if (sessionItemsTotal !== amountCents) {
       throw createError({ statusCode: 400, message: 'Session items total must equal payment amount' })
     }
@@ -73,12 +73,12 @@ export default defineEventHandler(async (event) => {
             eq(appointments.organizationId, organizationId),
             inArray(
               appointments.id,
-              sessionItems.map((i) => i.appointmentId)
+              appointmentItems.map((i) => i.appointmentId)
             )
           )
         )
 
-      for (const item of sessionItems) {
+      for (const item of appointmentItems) {
         const appt = appointmentPrices.find((a) => a.id === item.appointmentId)
         if (appt && item.amountCents < appt.priceCents) {
           throw createError({
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
   try {
     await db.batch([
       db.insert(appointmentPaymentItems).values(
-        sessionItems.map((item) => ({
+        appointmentItems.map((item) => ({
           paymentId: payment.id,
           appointmentId: item.appointmentId,
           amountCents: item.amountCents
@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
                 and(
                   inArray(
                     appointments.id,
-                    sessionItems.map((i) => i.appointmentId)
+                    appointmentItems.map((i) => i.appointmentId)
                   ),
                   eq(appointments.status, 'finished')
                 )

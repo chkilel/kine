@@ -163,7 +163,7 @@
               ...basePayment,
               amountCents: fullCoverItems.reduce((sum, i) => sum + i.amountCents, 0),
               method: 'deposit',
-              sessionItems: fullCoverItems
+              appointmentItems: fullCoverItems
             }
           })
 
@@ -172,7 +172,7 @@
               ...basePayment,
               amountCents: partialItem.amountCents,
               method: 'deposit',
-              sessionItems: [partialItem]
+              appointmentItems: [partialItem]
             }
           })
         } else {
@@ -181,7 +181,7 @@
               ...basePayment,
               amountCents: depositItems.reduce((sum, i) => sum + i.amountCents, 0),
               method: 'deposit',
-              sessionItems: depositItems
+              appointmentItems: depositItems
             }
           })
         }
@@ -195,7 +195,7 @@
             ...basePayment,
             amountCents: cashCents,
             method: formState.method,
-            sessionItems: cashItems
+            appointmentItems: cashItems
           },
           onSuccess: () => emit('close')
         })

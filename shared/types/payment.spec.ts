@@ -95,12 +95,12 @@ describe('invoicing-schemas', () => {
         amountCents: 5000,
         type: 'session_payment',
         method: 'cash',
-        sessionItems: [{ treatmentSessionId: 'session-1', amountCents: 5000 }]
+        appointmentItems: [{ treatmentSessionId: 'session-1', amountCents: 5000 }]
       })
       expect(result.success).toBe(true)
     })
 
-    it('accepts empty sessionItems as optional', () => {
+    it('accepts empty appointmentItems as optional', () => {
       const result = paymentRequestBodySchema.safeParse({
         patientId: 'patient-1',
         amountCents: 5000,

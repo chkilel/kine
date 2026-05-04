@@ -75,7 +75,7 @@
     }
 
     if (event.data.type === 'session_payment' || event.data.method === 'deposit') {
-      paymentData.sessionItems = [
+      paymentData.appointmentItems = [
         {
           appointmentId: appointment.id,
           amountCents

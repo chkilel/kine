@@ -26,9 +26,9 @@ export default defineEventHandler(async (event) => {
     const results = await db.query.payments.findMany({
       where,
       with: {
-        sessionItems: {
+        appointmentPaymentItems: {
           with: {
-            treatmentSession: {
+            appointment: {
               columns: {
                 id: true,
                 treatmentPlanId: true,
@@ -42,7 +42,10 @@ export default defineEventHandler(async (event) => {
       limit
     })
 
-    return results
+    return results.map((payment) => ({
+      ...payment,
+      appointmentItems: payment.appointmentPaymentItems
+    }))
   } catch (error) {
     handleApiError(error, 'Erreur lors de la récupération des paiements')
   }
