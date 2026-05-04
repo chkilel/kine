@@ -42,7 +42,7 @@
     "@vueuse/router": "^14.2.1",
     "better-auth": "^1.6.9",
     "date-fns": "^4.1.0",
-    "drizzle-orm": "1.0.0-beta.22",
+    "drizzle-orm": "^1.0.0-rc.1",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "uuid": "^13.0.1",
@@ -58,7 +58,7 @@
     "@opentelemetry/api": "^1.9.1",
     "@pinia/colada-devtools": "^0.4.5",
     "@vitest/coverage-v8": "^4.1.5",
-    "drizzle-kit": "1.0.0-beta.22",
+    "drizzle-kit": "^1.0.0-rc.1",
     "nitro-cloudflare-dev": "^0.2.2",
     "nitropack": "^2.13.4",
     "oxfmt": "^0.46.0",
@@ -68,7 +68,7 @@
     "vitest": "^4.1.5",
     "wrangler": "^4.86.0"
   },
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.33.2",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",

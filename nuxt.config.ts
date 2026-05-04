@@ -37,7 +37,10 @@ export default defineNuxtConfig({
         'date-fns',
         'date-fns/locale',
         '@unovis/vue',
-        '@internationalized/date'
+        '@internationalized/date',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        'tailwind-variants'
       ]
     }
   },
