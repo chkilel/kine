@@ -310,7 +310,7 @@ export type PaymentType = z.infer<typeof paymentTypeSchema>
 // Payment Status Constants
 // =============================================================================
 
-export const APPOINTMENT_PAYMENT_STATUSES = ['unpaid', 'copay_paid', 'partially_paid', 'paid', 'overpaid'] as const
+export const APPOINTMENT_PAYMENT_STATUSES = ['unpaid', 'copay_paid', 'partially_paid', 'paid'] as const
 export const appointmentPaymentStatusSchema = z.enum(APPOINTMENT_PAYMENT_STATUSES)
 export type AppointmentPaymentStatus = z.infer<typeof appointmentPaymentStatusSchema>
 

@@ -131,7 +131,7 @@ export const getPaymentTypeBannerMessage = (type: PaymentType) => PAYMENT_TYPE_C
 
 export const PAYMENT_STATUS_CONFIG = {
   unpaid: {
-    label: 'Impayé',
+    label: 'Non payé',
     icon: 'i-hugeicons-money-not-found-03',
     color: 'error'
   },
@@ -149,11 +149,6 @@ export const PAYMENT_STATUS_CONFIG = {
     label: 'Part patient payé',
     icon: 'i-hugeicons-tick-02',
     color: 'success'
-  },
-  overpaid: {
-    label: 'Surpayé',
-    icon: 'i-hugeicons-money-add-02',
-    color: 'info'
   }
 } as const
 
