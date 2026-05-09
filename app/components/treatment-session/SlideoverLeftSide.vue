@@ -6,8 +6,7 @@
   const { data: treatmentPlan } = useTreatmentPlan(() => appointment.treatmentPlanId)
   const { data: allAppointments } = useAppointmentsList(() => ({
     patientId: patient.id,
-    limit: 6,
-    includePaymentStatus: false
+    limit: 6
   }))
   const { getTherapistName } = useOrganizationMembers()
 
