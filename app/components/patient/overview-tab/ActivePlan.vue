@@ -9,14 +9,15 @@
   const treatmentPlanCreateOverlay = overlay.create(LazyTreatmentPlanCreateSlideover)
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
   const { loading: treatmentPlansLoading, latestActiveTreatmentPlan } = usePatientTreatmentPlans(() => patient?.id)
-  const { data: appointments } = useAppointmentsList(() => ({
+  const { data } = useAppointmentsList(() => ({
     patientId: patient.id,
     treatmentPlanId: latestActiveTreatmentPlan.value?.id,
-    limit: 3
+    limit: 5
   }))
   const { getTherapistName } = useOrganizationMembers()
 
   // ─── Computed state ──────────────────────────────────────────
+  const appointments = computed(() => data.value?.data)
   const planDetails = computed(() => {
     if (!latestActiveTreatmentPlan.value) return null
     const { sessionFrequency, startDate, prescribingDoctor, insuranceInfo, prescriptionDate, therapistId } =

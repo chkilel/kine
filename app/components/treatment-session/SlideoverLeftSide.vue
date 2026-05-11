@@ -4,9 +4,9 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: treatmentPlan } = useTreatmentPlan(() => appointment.treatmentPlanId)
-  const { data: allAppointments } = useAppointmentsList(() => ({
+  const { data } = useAppointmentsList(() => ({
     patientId: patient.id,
-    limit: 6
+    limit: 5
   }))
   const { getTherapistName } = useOrganizationMembers()
 
@@ -16,12 +16,13 @@
   const sessionInProgress = computed(() => appointment.status === 'in_progress')
   const shouldShowEVACards = computed(() => sessionInProgress.value || appointment.painLevelAfter != null)
 
+  const appointments = computed(() => data.value?.data)
   const completedSessionsCount = computed(() => {
-    if (!allAppointments.value || !appointment) return 0
+    if (!appointments.value || !appointment) return 0
     const planId = appointment.treatmentPlanId
     if (!planId) return 0
 
-    return allAppointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
+    return appointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
   const totalSessionsCount = computed(() => treatmentPlan.value?.numberOfSessions || 0)

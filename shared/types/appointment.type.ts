@@ -10,10 +10,15 @@ import type { RateCent } from '~~/shared/types/org.types'
 const appointmentSchemaShape = {
   confirmedAt: z.coerce.date().nullable(),
   cancelledAt: z.coerce.date().nullable(),
+  lockedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 }
-export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape)
+export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape).extend({
+  roomName: z.string().nullable().optional(),
+  planTitle: z.string().nullable().optional(),
+  patientName: z.string().optional()
+})
 
 export const appointmentCreateSchema = createInsertSchema(appointments, {
   organizationId: z.string().min(1, 'Organization ID is required'),
@@ -178,11 +183,7 @@ export const updatePriceActionSchema = z.object({
 })
 
 // Type inference
-export type Appointment = z.infer<typeof appointmentSchema> & {
-  roomName?: string | null
-  patientName?: string | null
-  planTitle?: string | null
-}
+export type Appointment = z.infer<typeof appointmentSchema>
 
 export type AppointmentDetail = z.infer<typeof appointmentSchema> & {
   confirmedAt: string

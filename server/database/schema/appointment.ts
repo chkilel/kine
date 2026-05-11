@@ -76,6 +76,7 @@ export const appointments = sqliteTable(
     ...creationAndUpdateTimestamps
   },
   (table) => [
+    index('idx_appointments_cursor').on(table.organizationId, table.date, table.id),
     index('idx_appointments_org_patient_date').on(table.organizationId, table.patientId, table.date),
     index('idx_appointments_org_date').on(table.organizationId, table.date),
     index('idx_appointments_org_status_date').on(table.organizationId, table.status, table.date),
