@@ -10,14 +10,18 @@
   // ─── Composables ─────────────────────────────────────────────
   const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance } = useBillingSlideover()
 
-  const { data: sessionsData, isLoading: isSessionsLoading } = useAppointmentsPaymentStatus(patientId)
+  const {
+    data: appointmentsData,
+    isLoading: isAppointmentsLoading,
+    loadNextPage,
+    hasNextPage
+  } = useAppointmentsPaymentStatus()
 
-  // ─── Computed state ──────────────────────────────────────────
-  const sessions = computed(() => sessionsData.value ?? [])
+  const appointments = computed(() => appointmentsData.value?.pages.flatMap((page) => page.data) ?? [])
 
   const plans = computed(() => {
     const planMap = new Map<string, { id: string; name: string; count: number }>()
-    for (const s of sessions.value) {
+    for (const s of appointments.value) {
       if (s.treatmentPlanId && s.planTitle) {
         const existing = planMap.get(s.treatmentPlanId)
         if (existing) {
@@ -30,8 +34,8 @@
     return Array.from(planMap.values())
   })
 
-  const planFilteredSessions = computed(() =>
-    sessions.value.filter((s) => {
+  const planFilteredAppointments = computed(() =>
+    appointments.value.filter((s) => {
       if (selectedPlan.value === 'no-plan' && s.treatmentPlanId !== null) return false
       if (selectedPlan.value !== 'all' && selectedPlan.value !== 'no-plan' && s.treatmentPlanId !== selectedPlan.value)
         return false
@@ -39,19 +43,19 @@
     })
   )
 
-  const filteredSessions = computed(() =>
-    planFilteredSessions.value.filter((s) => {
+  const filteredAppointments = computed(() =>
+    planFilteredAppointments.value.filter((s) => {
       if (selectedStatus.value !== 'all' && s.paymentStatus !== selectedStatus.value) return false
       return true
     })
   )
 
-  const sessionCounts = computed(() => ({
-    total: sessions.value.length,
-    noPlan: sessions.value.filter((s) => s.treatmentPlanId === null).length,
-    unpaid: sessions.value.filter((s) => s.paymentStatus === 'unpaid').length,
-    partial: sessions.value.filter((s) => s.paymentStatus === 'partially_paid').length,
-    paid: sessions.value.filter((s) => s.paymentStatus === 'paid').length
+  const appointmentCounts = computed(() => ({
+    total: appointments.value.length,
+    noPlan: appointments.value.filter((s) => s.treatmentPlanId === null).length,
+    unpaid: appointments.value.filter((s) => s.paymentStatus === 'unpaid').length,
+    partial: appointments.value.filter((s) => s.paymentStatus === 'partially_paid').length,
+    paid: appointments.value.filter((s) => s.paymentStatus === 'paid').length
   }))
 
   const activePlanSegment = computed(() => {
@@ -77,7 +81,7 @@
   }
 
   function handleOpenRecordPayment() {
-    const unpaidIds = sessions.value
+    const unpaidIds = appointments.value
       .filter((s) => s.paymentStatus === 'unpaid' || s.paymentStatus === 'partially_paid')
       .map((s) => s.id)
     openRecordPayment(patientId.value, unpaidIds)
@@ -87,6 +91,16 @@
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <h3 class="flex items-center gap-3 font-bold">
+          <!-- <span class="bg-primary h-8 w-2 rounded-full" /> -->
+          Séances
+        </h3>
+
+        <UBadge color="info" variant="soft" size="lg" class="rounded-full">
+          {{ appointmentCounts.unpaid + appointmentCounts.partial }} en attente
+        </UBadge>
+      </div>
       <div class="bg-muted flex items-center gap-0.5 rounded-xl p-1">
         <UButton
           :variant="activePlanSegment === 'all' ? 'soft' : 'ghost'"
@@ -95,7 +109,7 @@
           class="rounded-lg"
           @click="selectPlanFilter('all')"
         >
-          Toutes ({{ sessionCounts.total }})
+          Toutes ({{ appointmentCounts.total }})
         </UButton>
         <UButton
           :variant="activePlanSegment === 'no-plan' ? 'soft' : 'ghost'"
@@ -104,7 +118,7 @@
           class="rounded-lg"
           @click="selectPlanFilter('no-plan')"
         >
-          Sans plan ({{ sessionCounts.noPlan }})
+          Sans plan ({{ appointmentCounts.noPlan }})
         </UButton>
         <UPopover v-model:open="planPopoverOpen">
           <UButton
@@ -135,37 +149,23 @@
           </template>
         </UPopover>
       </div>
-
-      <div class="bg-muted flex gap-0.5 rounded-xl p-1">
-        <UButton
-          v-for="opt in PAYMENT_STATUS_FILTER_OPTIONS"
-          :key="opt.value"
-          :variant="selectedStatus === opt.value ? 'soft' : 'ghost'"
-          :color="selectedStatus === opt.value ? 'primary' : 'neutral'"
-          size="xs"
-          :label="opt.label"
-          class="rounded-lg"
-          @click="selectedStatus = opt.value"
-        />
-      </div>
     </div>
 
     <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
       <div class="space-y-10 lg:col-span-2">
         <section>
           <div class="mb-6 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <h3 class="flex items-center gap-3 font-bold">
-                <!-- <span class="bg-primary h-8 w-2 rounded-full" /> -->
-                Séances
-              </h3>
+            <UTabs
+              v-model="selectedStatus"
+              :content="false"
+              :items="PAYMENT_STATUS_FILTER_OPTIONS"
+              size="xs"
+              variant="link"
+              :ui="{ list: 'border-b-0 pb-0' }"
+            />
 
-              <UBadge color="info" variant="soft" size="lg" class="rounded-full">
-                {{ sessionCounts.unpaid + sessionCounts.partial }} en attente
-              </UBadge>
-            </div>
             <UButton
-              label="Historique des paiements"
+              label="Historique"
               icon="i-hugeicons-clock-03"
               variant="ghost"
               color="info"
@@ -173,14 +173,28 @@
               @click="openPaymentHistory(patientId)"
             />
           </div>
-          <div v-if="isSessionsLoading" class="py-8 text-center">
+          <div v-if="isAppointmentsLoading" class="py-8 text-center">
             <AppSpinner />
           </div>
-          <div v-else class="space-y-4">
-            <PaymentBillingSessionCard v-for="session in filteredSessions" :key="session.id" :session="session" />
-            <p v-if="filteredSessions.length === 0" class="text-muted py-4 text-center text-sm">
+          <div v-else class="space-y-2">
+            <PaymentBillingSessionCard
+              v-for="appointment in filteredAppointments"
+              :key="appointment.id"
+              :appointment="appointment"
+            />
+            <p v-if="filteredAppointments.length === 0" class="text-muted py-4 text-center text-sm">
               Aucune séance trouvée
             </p>
+            <div v-if="hasNextPage" class="pt-2 text-center">
+              <UButton
+                label="Charger plus"
+                icon="i-hugeicons-arrow-down-01"
+                variant="ghost"
+                color="neutral"
+                :loading="isAppointmentsLoading"
+                @click="loadNextPage()"
+              />
+            </div>
           </div>
         </section>
       </div>
@@ -191,7 +205,6 @@
             label="Enregistrer un paiement"
             icon="i-hugeicons-invoice-03"
             color="primary"
-            size="lg"
             block
             @click="handleOpenRecordPayment"
           />
@@ -201,7 +214,7 @@
           @add-deposit="openAddDeposit(patientId)"
           @refund-balance="openRefundBalance(patientId)"
         />
-        <PaymentBillingFinancialSummaryCard :sessions="planFilteredSessions" :patient-id="patientId" />
+        <PaymentBillingFinancialSummaryCard :sessions="planFilteredAppointments" :patient-id="patientId" />
       </aside>
     </div>
   </div>

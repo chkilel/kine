@@ -142,22 +142,32 @@ const _usePatientPayments = (patientId: MaybeRefOrGetter<string>, filters?: Mayb
   })
 }
 
-const _useAppointmentsPaymentStatus = (patientId: MaybeRefOrGetter<string>) => {
+type AppointmentsPaymentStatusPage = {
+  data: AppointmentWithPaymentStatus[]
+  nextCursor: { date: string; id: string } | null
+}
+
+const _useAppointmentsPaymentStatus = () => {
+  const route = useRoute()
+  const patientId = computed(() => route.params.id as string)
   const requestFetch = useRequestFetch()
-  return useQuery({
-    key: () => PAYMENT_KEYS.patientAppointmentsPaymentStatus(toValue(patientId)),
-    query: async () => {
-      const resp = await requestFetch<AppointmentWithPaymentStatus[]>('/api/appointments', {
+  return useInfiniteQuery<AppointmentsPaymentStatusPage, Error, { date: string; id: string } | null>({
+    key: () => PAYMENT_KEYS.patientAppointmentsPaymentStatus(patientId.value),
+    query: async ({ pageParam }): Promise<AppointmentsPaymentStatusPage> => {
+      return requestFetch<AppointmentsPaymentStatusPage>('/api/appointments/payments', {
         query: {
-          patientId: toValue(patientId),
-          status: 'finished,completed',
-          includePaymentStatus: true,
-          limit: 100
+          patientId: patientId.value,
+          status: ['finished', 'completed'],
+          withPayments: true,
+          limit: 5,
+          cursorDate: pageParam?.date,
+          cursorId: pageParam?.id
         }
       })
-      return resp
     },
-    enabled: () => !!toValue(patientId)
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: () => !!patientId.value
   })
 }
 
@@ -207,5 +217,5 @@ export const useAppointmentPayments = _useAppointmentPayments
 export const usePatientBalance = _usePatientBalance
 export const usePaymentReceipt = _usePaymentReceipt
 export const usePatientPayments = _usePatientPayments
-export const useAppointmentsPaymentStatus = _useAppointmentsPaymentStatus
+export const useAppointmentsPaymentStatus = createSharedComposable(_useAppointmentsPaymentStatus)
 export const useVoidPayment = createSharedComposable(_useVoidPayment)

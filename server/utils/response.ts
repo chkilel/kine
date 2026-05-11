@@ -21,10 +21,10 @@ export interface PaginatedResponse<T> {
   pagination?: any
 }
 
-export function listResponse<T>(data: T[], pagination?: any): PaginatedResponse<T> {
+export function listResponse<T>(data: T[], nextCursor?: any): PaginatedResponse<T> {
   return {
     data,
-    ...(pagination && { pagination })
+    ...(nextCursor && { nextCursor })
   }
 }
 
