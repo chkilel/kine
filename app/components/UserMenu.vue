@@ -9,7 +9,7 @@
   const appConfig = useAppConfig()
 
   const colors = [
-    'black',
+    'slate',
     'red',
     'orange',
     'amber',
@@ -134,9 +134,7 @@
             icon: 'i-lucide-sun',
             type: 'checkbox',
             checked: colorMode.value === 'light',
-            onSelect(e: Event) {
-              e.preventDefault()
-
+            onSelect(_e: Event) {
               colorMode.preference = 'light'
             }
           },
@@ -149,9 +147,6 @@
               if (checked) {
                 colorMode.preference = 'dark'
               }
-            },
-            onSelect(e: Event) {
-              e.preventDefault()
             }
           }
         ]

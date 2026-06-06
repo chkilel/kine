@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { LazyPatientEditSlideover, LazyTreatmentPlanCreateSlideover } from '#components'
-  import type { BreadcrumbItem, TabsItem } from '@nuxt/ui'
+  import type { BreadcrumbItem } from '@nuxt/ui'
 
   const route = useRoute()
 
@@ -25,14 +25,13 @@
     { label: patient.value ? formatFullName(patient.value) : 'Patient' }
   ])
 
-  const items: TabsItem[] = [
+  /*  const items: TabsItem[] = [
     { label: "Vue d'Ensemble", icon: 'i-hugeicons-user', value: 'overview' },
     { label: 'Plan de traitement', icon: 'hugeicons-first-aid-kit', value: 'plan' },
     { label: 'Hors Plan', icon: 'hugeicons-folder-details', value: 'seances' },
     { label: 'Documents', icon: 'i-hugeicons-file-02', value: 'documents' },
     { label: 'Facturation', icon: 'i-hugeicons-wallet-01', value: 'facturation' }
   ]
-
   const activeTab = computed({
     get() {
       const path = route.path
@@ -59,6 +58,7 @@
       await navigateTo(path)
     }
   })
+*/
 
   // Handle error after the query
   watchEffect(() => {
@@ -163,14 +163,14 @@
         </div>
       </UCard>
       <!-- Tabs Navigation -->
-      <UTabs
+      <!-- <UTabs
         v-model="activeTab"
         :content="false"
         :items="items"
         variant="link"
         class="-mx-1 w-full"
         :ui="{ indicator: 'h-[2px]', trigger: 'pl-0 pr-6' }"
-      />
+      /> -->
 
       <!-- Tab Content -->
       <NuxtPage />

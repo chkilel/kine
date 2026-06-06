@@ -1,9 +1,21 @@
 <script setup lang="ts">
   import type { NavigationMenuItem } from '@nuxt/ui'
 
+  // ─── Composables ─────────────────────────────────────────────
+  const route = useRoute()
+
   // ─── State ──────────────────────────────────────────────────
   const open = ref(false)
   const rightOpen = useState('rightSide', () => true)
+
+  // ─── Patient context detection ─────────────────────────────
+  const patientId = computed(() => {
+    return route.params.id as string | undefined
+  })
+
+  const isPatientContext = computed(() => {
+    return !!patientId.value
+  })
 
   // ─── Navigation ──────────────────────────────────────────────
   const links = [
@@ -128,8 +140,12 @@
       v-model:open="open"
       collapsible
       resizable
-      class="bg-elevated"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
+      class="bg-muted"
+      :ui="{
+        root: 'lg:border-r lg:border-muted',
+        footer: 'lg:border-t lg:border-muted',
+        header: 'lg:border-b lg:border-muted'
+      }"
     >
       <template #header="{ collapsed }">
         <OrganizationSwitchMenu :collapsed />
@@ -138,7 +154,16 @@
       <template #default="{ collapsed }">
         <UDashboardSearchButton :collapsed="collapsed" class="ring-default bg-transparent" />
 
-        <UNavigationMenu :collapsed="collapsed" :items="links[0]" orientation="vertical" tooltip popover />
+        <AppPatientContextualMenu :collapsed="collapsed" />
+
+        <UNavigationMenu
+          v-if="!isPatientContext"
+          :collapsed="collapsed"
+          :items="links[0]"
+          orientation="vertical"
+          tooltip
+          popover
+        />
 
         <UNavigationMenu :collapsed="collapsed" :items="links[1]" orientation="vertical" tooltip class="mt-auto" />
       </template>
