@@ -4,10 +4,7 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const deleteAppointmentMutation = useDeleteAppointment()
-  const { data: appointmentsData } = useAppointmentsList(() => ({
-    patientId: props.patientId,
-    includePaymentStatus: false
-  }))
+  const { data: appointmentsData } = useAppointmentsList(() => ({ patientId: props.patientId }))
 
   // ─── Base state ──────────────────────────────────────────────
   const selectedAppointments = ref<string[]>([])

@@ -43,8 +43,8 @@
     return params
   })
 
-  const { data: appointments, isLoading } = useAppointmentsList(queryParams)
-
+  const { data, isLoading } = useAppointmentsList(queryParams)
+  const appointments = computed(() => data.value?.data)
   const appointmentCount = computed(() => appointments.value?.length || 0)
 
   const filteredAppointments = computed(() => {

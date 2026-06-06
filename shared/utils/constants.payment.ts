@@ -7,26 +7,31 @@ import type { PaymentDelay, PaymentMethod, AppointmentPaymentStatus, PaymentType
 export const PAYMENT_METHODS_CONFIG = {
   cash: {
     label: 'Espèces',
+    preposition: 'en',
     icon: 'i-hugeicons-money-01',
     color: 'success'
   },
   'bank-card': {
     label: 'Carte bancaire',
+    preposition: 'par',
     icon: 'i-hugeicons-credit-card',
     color: 'primary'
   },
   check: {
     label: 'Chèque',
+    preposition: 'par',
     icon: 'i-hugeicons-pay-by-check',
     color: 'info'
   },
   'bank-transfer': {
     label: 'Virement',
+    preposition: 'par',
     icon: 'i-hugeicons-bank',
     color: 'warning'
   },
   deposit: {
     label: 'Solde patient',
+    preposition: 'avec le',
     icon: 'i-hugeicons-wallet-02',
     color: 'neutral'
   }
@@ -47,6 +52,8 @@ export const PAYMENT_FUNDING_METHOD_OPTIONS = Object.entries(PAYMENT_METHODS_CON
   }))
 
 export const getPaymentMethodLabel = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].label || method
+export const getPaymentMethodPreposition = (method: PaymentMethod) =>
+  PAYMENT_METHODS_CONFIG[method].preposition || 'par'
 export const getPaymentMethodColor = (method: PaymentMethod) => PAYMENT_METHODS_CONFIG[method].color || 'neutral'
 export const getPaymentMethodIcon = (method: PaymentMethod) =>
   PAYMENT_METHODS_CONFIG[method].icon || 'i-hugeicons-money-01'
@@ -131,7 +138,7 @@ export const getPaymentTypeBannerMessage = (type: PaymentType) => PAYMENT_TYPE_C
 
 export const PAYMENT_STATUS_CONFIG = {
   unpaid: {
-    label: 'Impayé',
+    label: 'Non payé',
     icon: 'i-hugeicons-money-not-found-03',
     color: 'error'
   },
@@ -149,11 +156,6 @@ export const PAYMENT_STATUS_CONFIG = {
     label: 'Part patient payé',
     icon: 'i-hugeicons-tick-02',
     color: 'success'
-  },
-  overpaid: {
-    label: 'Surpayé',
-    icon: 'i-hugeicons-money-add-02',
-    color: 'info'
   }
 } as const
 

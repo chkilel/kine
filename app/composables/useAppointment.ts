@@ -1,5 +1,6 @@
 import { createSharedComposable } from '@vueuse/core'
 import { parseISO } from 'date-fns'
+import z from 'zod'
 
 export const APPOINTMENT_KEYS = {
   root: ['appointments'] as const,
@@ -14,25 +15,18 @@ const _useAppointmentsList = (queryParams?: MaybeRefOrGetter<AppointmentQuery>) 
   const requestFetch = useRequestFetch()
   return useQuery({
     key: () => {
-      const queryParamsValue = toValue(queryParams) || {}
-      return APPOINTMENT_KEYS.list(queryParamsValue)
+      const queryParamsValue = toValue(queryParams)
+      return queryParamsValue ? APPOINTMENT_KEYS.list(queryParamsValue) : APPOINTMENT_KEYS.root
     },
     query: async () => {
       const queryParamsValue = toValue(queryParams) || {}
       const validatedQuery = appointmentQuerySchema.parse(queryParamsValue)
-      const resp = await requestFetch('/api/appointments', {
-        query: Object.fromEntries(
-          Object.entries(validatedQuery).filter(([, v]) => v !== undefined && v !== null && v !== '')
-        )
-      })
-      return resp?.map((item) => ({
-        ...item,
-        createdAt: parseISO(item.createdAt),
-        updatedAt: parseISO(item.updatedAt),
-        confirmedAt: safeParseISODate(item.confirmedAt),
-        cancelledAt: safeParseISODate(item.cancelledAt),
-        lockedAt: safeParseISODate(item.lockedAt)
-      }))
+
+      const resp = await requestFetch<PaginatedResponse<Appointment>>('/api/appointments', { query: validatedQuery })
+
+      const data = z.array(appointmentSchema).parse(resp.data)
+
+      return { pagination: resp?.pagination, data }
     }
   })
 }
@@ -48,14 +42,14 @@ const _usePlanAppointments = (
     key: () => {
       const planId = toValue(treatmentPlanId)
       const pid = toValue(patientId)
-      return planId ? APPOINTMENT_KEYS.plan(planId, pid) : APPOINTMENT_KEYS.root
+      return planId && pid ? APPOINTMENT_KEYS.plan(planId, pid) : APPOINTMENT_KEYS.root
     },
     query: async () => {
       const planId = toValue(treatmentPlanId)
       const pid = toValue(patientId)
       const lim = toValue(limit)
 
-      if (!planId) return []
+      if (!planId || !pid) return []
 
       const resp = await requestFetch('/api/appointments/plan', {
         query: {
@@ -66,7 +60,7 @@ const _usePlanAppointments = (
       })
       return resp || []
     },
-    enabled: () => !!toValue(treatmentPlanId)
+    enabled: () => !!toValue(treatmentPlanId) && !!toValue(patientId)
   })
 }
 
@@ -310,7 +304,7 @@ const _useStartAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/start`, { method: 'POST', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -334,7 +328,7 @@ const _usePauseAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/pause`, { method: 'POST', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -358,7 +352,7 @@ const _useResumeAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/resume`, { method: 'POST', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -382,7 +376,7 @@ const _useEndAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/end`, { method: 'POST', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -406,7 +400,7 @@ const _useCancelAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/cancel`, { method: 'POST' })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -430,7 +424,7 @@ const _useUpdateAppointmentTags = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/tags`, { method: 'PATCH', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -454,7 +448,7 @@ const _useExtendAppointment = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/extend`, { method: 'PATCH', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -478,7 +472,7 @@ const _useUpdateAppointmentPrice = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/price`, { method: 'PATCH', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },
@@ -506,7 +500,7 @@ const _useUpdateAppointmentClinicalNotes = () => {
       const resp = await requestFetch(`/api/appointments/${appointmentId}/clinical-notes`, { method: 'PATCH', body })
       return resp
     },
-    onSuccess: (data, { appointmentId, onSuccess }) => {
+    onSuccess: (_data, { appointmentId, onSuccess }) => {
       onSuccess?.()
       invalidate(appointmentId)
     },

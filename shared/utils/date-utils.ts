@@ -13,7 +13,7 @@ import { fr } from 'date-fns/locale'
 // DATE PARSING & VALIDATION
 // ============================================================================
 
-export function safeParseISODate(dateString: string | null): Date | null {
+export function safeParseISODate(dateString: string | null | undefined): Date | null {
   if (!dateString) return null
 
   try {

@@ -26,7 +26,7 @@ const schema = {
   teamMembers,
   patients,
   payments,
-  appointmentPaymentItems: appointmentPaymentItems,
+  appointmentPaymentItems,
   rooms,
   treatmentPlans
 }
@@ -118,7 +118,7 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.payments.voidedById,
       to: r.users.id
     }),
-    sessionItems: r.many.appointmentPaymentItems()
+    appointmentPaymentItems: r.many.appointmentPaymentItems()
   },
   appointmentPaymentItems: {
     payment: r.one.payments({

@@ -10,10 +10,15 @@ import type { RateCent } from '~~/shared/types/org.types'
 const appointmentSchemaShape = {
   confirmedAt: z.coerce.date().nullable(),
   cancelledAt: z.coerce.date().nullable(),
+  lockedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 }
-export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape)
+export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape).extend({
+  roomName: z.string().nullable().optional(),
+  planTitle: z.string().nullable().optional(),
+  patientName: z.string().optional()
+})
 
 export const appointmentCreateSchema = createInsertSchema(appointments, {
   organizationId: z.string().min(1, 'Organization ID is required'),
@@ -42,7 +47,7 @@ export const appointmentStatusUpdateSchema = z.object({
   noShowReason: z.string().optional()
 })
 
-export const appointmentQuerySchema = z.object({
+/* export const appointmentQuerySchema = z.object({
   therapistId: z.string().optional(),
   patientId: z.string().optional(),
   treatmentPlanId: z.string().optional(),
@@ -55,9 +60,77 @@ export const appointmentQuerySchema = z.object({
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   date: calendarDateSchema.optional(),
-  includePaymentStatus: z.coerce.boolean().optional(),
+  withPayments: z.coerce.boolean().optional(),
   limit: z.coerce.number().optional()
-})
+}) */
+
+export const appointmentQuerySchema = z
+  .object({
+    // =========================
+    // Pagination
+    // =========================
+    limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+    cursorDate: calendarDateSchema.optional(),
+    cursorId: z.string().optional(),
+
+    // =========================
+    // Filters
+    // =========================
+    therapistId: z.string().optional(),
+    patientId: z.string().optional(),
+    treatmentPlanId: z.string().optional(),
+
+    onlyIndependent: z.coerce.boolean().optional(),
+
+    status: z
+      .union([z.enum(APPOINTMENT_STATUSES), z.array(z.enum(APPOINTMENT_STATUSES))])
+      .transform((val) => {
+        if (!val) return undefined
+        return Array.isArray(val) ? val : [val]
+      })
+      .optional(),
+
+    type: appointmentTypeSchema.optional(),
+
+    // ---- Date filtering ----
+    dateFrom: calendarDateSchema.optional(),
+    dateTo: calendarDateSchema.optional(),
+
+    // =========================
+    // Includes (joins)
+    // =========================
+    withPlan: z.coerce.boolean().optional()
+  })
+
+  // =========================
+  // Validation rules
+  // =========================
+  .refine(
+    (data) => {
+      // cursor must be complete
+      if ((data.cursorDate && !data.cursorId) || (!data.cursorDate && data.cursorId)) {
+        return false
+      }
+      return true
+    },
+    {
+      message: 'cursorDate and cursorId must be provided together',
+      path: ['cursorDate']
+    }
+  )
+  .refine(
+    (data) => {
+      // enforce valid range
+      if (data.dateFrom && data.dateTo) {
+        return data.dateFrom <= data.dateTo
+      }
+      return true
+    },
+    {
+      message: 'dateFrom must be <= dateTo',
+      path: ['dateFrom']
+    }
+  )
 
 export const therapistAppointmentsQuerySchema = z.object({
   therapistId: z.string(),
@@ -110,11 +183,7 @@ export const updatePriceActionSchema = z.object({
 })
 
 // Type inference
-export type Appointment = z.infer<typeof appointmentSchema> & {
-  roomName?: string | null
-  patientName?: string | null
-  planTitle?: string | null
-}
+export type Appointment = z.infer<typeof appointmentSchema>
 
 export type AppointmentDetail = z.infer<typeof appointmentSchema> & {
   confirmedAt: string
@@ -133,6 +202,13 @@ export type AppointmentDetail = z.infer<typeof appointmentSchema> & {
 export type AppointmentWithPaymentStatus = Appointment & {
   paidCents: number
   paymentStatus: AppointmentPaymentStatus
+  paymentDetails: Array<{
+    id: string
+    amountCents: number
+    receiptNumber: string
+    method: PaymentMethod
+    paidOn: string
+  }>
 }
 
 export type AppointmentCreate = z.infer<typeof appointmentCreateSchema>
