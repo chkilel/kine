@@ -11,8 +11,10 @@
   const open = ref(false)
 
   // ─── Computed ───
-  const patientId = computed(() => route.params.id as string | undefined)
-  const isPatientContext = computed(() => !!patientId.value)
+const patientId = computed(() => route.params.id as string | undefined)
+const isPatientContext = computed(() => {
+  return !!patientId.value && route.path.startsWith('/patients/')
+})
   const contextualLinks = computed<NavigationMenuItem[][]>(() => {
     if (!patientId.value) return []
 

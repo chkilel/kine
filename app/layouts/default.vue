@@ -13,9 +13,9 @@
     return route.params.id as string | undefined
   })
 
-  const isPatientContext = computed(() => {
-    return !!patientId.value
-  })
+const isPatientContext = computed(() => {
+  return !!patientId.value && route.path.startsWith('/patients/')
+})
 
   // ─── Navigation ──────────────────────────────────────────────
   const links = [
