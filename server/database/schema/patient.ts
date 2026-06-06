@@ -25,7 +25,7 @@ export const patients = sqliteTable(
     firstName: text().notNull(),
     lastName: text().notNull(),
     dateOfBirth: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
-    gender: text({ enum: VALID_SEX_VALUES }).notNull(),
+    sex: text({ enum: VALID_SEX_VALUES }).notNull(),
     email: text(), // Optional
     phone: text().notNull(),
     address: text(),

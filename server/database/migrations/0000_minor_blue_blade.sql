@@ -230,7 +230,7 @@ CREATE TABLE `patients` (
 	`firstName` text NOT NULL,
 	`lastName` text NOT NULL,
 	`dateOfBirth` text NOT NULL,
-	`gender` text NOT NULL,
+	`sex` text NOT NULL,
 	`email` text,
 	`phone` text NOT NULL,
 	`address` text,
@@ -333,6 +333,7 @@ CREATE UNIQUE INDEX `idx_weekly_templates_unique` ON `weekly_availability_templa
 CREATE INDEX `idx_weekly_templates_org_user` ON `weekly_availability_templates` (`organizationId`,`userId`);--> statement-breakpoint
 CREATE INDEX `idx_weekly_templates_org_user_day` ON `weekly_availability_templates` (`organizationId`,`userId`,`dayOfWeek`);--> statement-breakpoint
 CREATE INDEX `idx_weekly_templates_org_location` ON `weekly_availability_templates` (`organizationId`,`location`);--> statement-breakpoint
+CREATE INDEX `idx_appointments_cursor` ON `appointments` (`organizationId`,`date`,`id`);--> statement-breakpoint
 CREATE INDEX `idx_appointments_org_patient_date` ON `appointments` (`organizationId`,`patientId`,`date`);--> statement-breakpoint
 CREATE INDEX `idx_appointments_org_date` ON `appointments` (`organizationId`,`date`);--> statement-breakpoint
 CREATE INDEX `idx_appointments_org_status_date` ON `appointments` (`organizationId`,`status`,`date`);--> statement-breakpoint

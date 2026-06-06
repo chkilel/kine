@@ -209,7 +209,7 @@ const patientData = [
   {
     firstName: 'Ahmed',
     lastName: 'Alami',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1985-03-15',
     phone: '+212651234567',
     email: 'ahmed.alami@email.com',
@@ -218,7 +218,7 @@ const patientData = [
   {
     firstName: 'Fatima',
     lastName: 'Benali',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1990-07-22',
     phone: '+212662345678',
     email: 'fatima.benali@email.com',
@@ -227,7 +227,7 @@ const patientData = [
   {
     firstName: 'Mohammed',
     lastName: 'Chaoui',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1978-11-08',
     phone: '+212673456789',
     email: 'mohammed.chaoui@email.com',
@@ -236,7 +236,7 @@ const patientData = [
   {
     firstName: 'Amina',
     lastName: 'Idrissi',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1995-01-30',
     phone: '+212684567890',
     email: 'amina.idrissi@email.com',
@@ -245,7 +245,7 @@ const patientData = [
   {
     firstName: 'Youssef',
     lastName: 'Jaziri',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1982-09-12',
     phone: '+212695678901',
     email: 'youssef.jaziri@email.com',
@@ -254,7 +254,7 @@ const patientData = [
   {
     firstName: 'Nour',
     lastName: 'Kaddouri',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1988-05-25',
     phone: '+212606789012',
     email: 'nour.kaddouri@email.com',
@@ -263,7 +263,7 @@ const patientData = [
   {
     firstName: 'Karim',
     lastName: 'Mansouri',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1975-12-03',
     phone: '+212617890123',
     email: 'karim.mansouri@email.com',
@@ -272,7 +272,7 @@ const patientData = [
   {
     firstName: 'Laila',
     lastName: 'Ouazzani',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1992-04-18',
     phone: '+212628901234',
     email: 'laila.ouazzani@email.com',
@@ -281,7 +281,7 @@ const patientData = [
   {
     firstName: 'Omar',
     lastName: 'Berrada',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1980-08-07',
     phone: '+212639012345',
     email: 'omar.berrada@email.com',
@@ -290,7 +290,7 @@ const patientData = [
   {
     firstName: 'Salma',
     lastName: 'Chraibi',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1993-06-28',
     phone: '+212640123456',
     email: 'salma.chraibi@email.com',
@@ -299,7 +299,7 @@ const patientData = [
   {
     firstName: 'Hassan',
     lastName: 'Filali',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1976-02-14',
     phone: '+212651234567',
     email: 'hassan.filali@email.com',
@@ -308,7 +308,7 @@ const patientData = [
   {
     firstName: 'Khadija',
     lastName: 'Ghoufrani',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1987-10-20',
     phone: '+212662345678',
     email: 'khadija.ghoufrani@email.com',
@@ -317,7 +317,7 @@ const patientData = [
   {
     firstName: 'Brahim',
     lastName: 'Hilali',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1983-07-05',
     phone: '+212673456789',
     email: 'brahim.hilali@email.com',
@@ -326,7 +326,7 @@ const patientData = [
   {
     firstName: 'Samira',
     lastName: 'Ibrahimi',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1991-03-11',
     phone: '+212684567890',
     email: 'samira.ibrahimi@email.com',
@@ -335,7 +335,7 @@ const patientData = [
   {
     firstName: 'Abdelkrim',
     lastName: 'Joundi',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1979-11-29',
     phone: '+212695678901',
     email: 'abdelkrim.joundi@email.com',
@@ -344,7 +344,7 @@ const patientData = [
   {
     firstName: 'Meryem',
     lastName: 'Laghzali',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1994-09-16',
     phone: '+212606789012',
     email: 'meryem.laghzali@email.com',
@@ -353,7 +353,7 @@ const patientData = [
   {
     firstName: 'Nabil',
     lastName: 'Maaroufi',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1981-05-02',
     phone: '+212617890123',
     email: 'nabil.maaroufi@email.com',
@@ -362,7 +362,7 @@ const patientData = [
   {
     firstName: 'Rajae',
     lastName: 'Najdi',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1989-01-24',
     phone: '+212628901234',
     email: 'rajae.najdi@email.com',
@@ -371,7 +371,7 @@ const patientData = [
   {
     firstName: 'Tariq',
     lastName: 'Ouahmane',
-    gender: VALID_SEX_VALUES[0],
+    sex: VALID_SEX_VALUES[0],
     dateOfBirth: '1977-08-19',
     phone: '+212639012345',
     email: 'tariq.ouahmane@email.com',
@@ -380,7 +380,7 @@ const patientData = [
   {
     firstName: 'Asma',
     lastName: 'Rifai',
-    gender: VALID_SEX_VALUES[1],
+    sex: VALID_SEX_VALUES[1],
     dateOfBirth: '1996-04-08',
     phone: '+212640123456',
     email: 'asma.rifai@email.com',
@@ -1818,7 +1818,7 @@ export default defineEventHandler(async (event: H3Event) => {
           firstName: patient.firstName!,
           lastName: patient.lastName!,
           dateOfBirth: patient.dateOfBirth!,
-          gender: patient.gender!,
+          sex: patient.sex!,
           email: patient.email || null,
           phone: patient.phone!,
           address: '123 Main Street',

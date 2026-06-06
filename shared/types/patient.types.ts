@@ -9,7 +9,7 @@ z.config(fr())
 import {
   nameSchema,
   calendarDateSchema,
-  genderSchema,
+  sexSchema,
   phoneNumberSchema,
   emergencyContactSchema,
   noteSchema,
@@ -40,7 +40,7 @@ const patientCreateShape = {
   firstName: nameSchema,
   lastName: nameSchema,
   dateOfBirth: calendarDateSchema,
-  gender: genderSchema,
+  sex: sexSchema,
   email: z.string().optional(),
   phone: phoneNumberSchema,
   address: z.string().optional(),
