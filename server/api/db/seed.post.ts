@@ -85,7 +85,7 @@ const SEED_CONFIG = {
     userDistribution: [5, 4]
   },
   patients: {
-    count: 30,
+    count: 70,
     distribution: [20, 6]
   },
   availability: {
@@ -385,6 +385,447 @@ const patientData = [
     phone: '+212640123456',
     email: 'asma.rifai@email.com',
     city: 'Al Hoceima'
+  },
+  {
+    firstName: 'Abdellah',
+    lastName: 'Bouazzaoui',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1984-06-15',
+    phone: '+212651111111',
+    email: 'abdellah.bouazzaoui@email.com',
+    city: 'Ksar El Kebir'
+  },
+  {
+    firstName: 'Zineb',
+    lastName: 'Taleb',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1991-12-01',
+    phone: '+212662222222',
+    email: 'zineb.taleb@email.com',
+    city: 'Jerada'
+  },
+  {
+    firstName: 'Said',
+    lastName: 'El Kerroubi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1973-09-22',
+    phone: '+212673333333',
+    email: 'said.elkerroubi@email.com',
+    city: 'Berkane'
+  },
+  {
+    firstName: 'Nadia',
+    lastName: 'Bouchaibiri',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1988-03-28',
+    phone: '+212684444444',
+    email: 'nadia.bouchaibiri@email.com',
+    city: 'Taourirt'
+  },
+  {
+    firstName: 'Reda',
+    lastName: 'Al Maghribi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1980-10-14',
+    phone: '+212695555555',
+    email: 'reda.almaghribi@email.com',
+    city: 'Nouaceur'
+  },
+  {
+    firstName: 'Fatima Zahra',
+    lastName: 'Boukali',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1993-05-19',
+    phone: '+212606666666',
+    email: 'fatima.zahra.boukali@email.com',
+    city: 'Sidi Kacem'
+  },
+  {
+    firstName: 'Yassine',
+    lastName: 'Mansouri',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1986-08-07',
+    phone: '+212617777777',
+    email: 'yassine.mansouri@email.com',
+    city: 'Mdiouna'
+  },
+  {
+    firstName: 'Sanaa',
+    lastName: 'Zahraoui',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1992-11-25',
+    phone: '+212628888888',
+    email: 'sanaa.zahraoui@email.com',
+    city: 'Temara'
+  },
+  {
+    firstName: 'Mustapha',
+    lastName: 'Chichaoui',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1979-04-10',
+    phone: '+212639999999',
+    email: 'mustapha.chichaoui@email.com',
+    city: 'Essaouira'
+  },
+  {
+    firstName: 'Hanane',
+    lastName: 'Gharbi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1990-02-16',
+    phone: '+212601010101',
+    email: 'hanane.gharbi@email.com',
+    city: 'Ouezzane'
+  },
+  {
+    firstName: 'Hamza',
+    lastName: 'Bennani',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1988-07-04',
+    phone: '+212602020202',
+    email: 'hamza.bennani@email.com',
+    city: 'Azrou'
+  },
+  {
+    firstName: 'Imane',
+    lastName: 'Rguibi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1994-10-11',
+    phone: '+212603030303',
+    email: 'imane.rguibi@email.com',
+    city: 'Ben Guerir'
+  },
+  {
+    firstName: 'Anas',
+    lastName: 'Idrissi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1985-12-28',
+    phone: '+212604040404',
+    email: 'anas.idrissi@email.com',
+    city: 'Tiznit'
+  },
+  {
+    firstName: 'Sara',
+    lastName: 'Boussouf',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1991-05-18',
+    phone: '+212605050505',
+    email: 'sara.boussouf@email.com',
+    city: 'Chefchaouen'
+  },
+  {
+    firstName: 'Adam',
+    lastName: 'Kabbaj',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1992-09-03',
+    phone: '+212606060606',
+    email: 'adam.kabbaj@email.com',
+    city: 'Erfoud'
+  },
+  {
+    firstName: 'Noura',
+    lastName: 'Fassi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1989-03-22',
+    phone: '+212607070707',
+    email: 'noura.fassi@email.com',
+    city: 'Ifrane'
+  },
+  {
+    firstName: 'Aymane',
+    lastName: 'Tazi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1986-11-14',
+    phone: '+212608080808',
+    email: 'aymane.tazi@email.com',
+    city: 'El Kelaa des Sraghna'
+  },
+  {
+    firstName: 'Lina',
+    lastName: 'Semlali',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1995-06-27',
+    phone: '+212609090909',
+    email: 'lina.semlali@email.com',
+    city: 'Ouazzazate'
+  },
+  {
+    firstName: 'Zakaria',
+    lastName: 'Aboulfeth',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1983-04-08',
+    phone: '+212610101010',
+    email: 'zakaria.aboulfeth@email.com',
+    city: 'Tan-Tan'
+  },
+  {
+    firstName: 'Hiba',
+    lastName: 'Dkhissi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1993-08-31',
+    phone: '+212611111111',
+    email: 'hiba.dkhissi@email.com',
+    city: 'Layoune'
+  },
+  {
+    firstName: 'Bilal',
+    lastName: 'El Idrissi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1990-01-15',
+    phone: '+212612121212',
+    email: 'bilal.elidrissi@email.com',
+    city: 'Dakhla'
+  },
+  {
+    firstName: 'Mariam',
+    lastName: 'Benjelloun',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1987-10-05',
+    phone: '+212613131313',
+    email: 'mariam.benjelloun@email.com',
+    city: 'Tetouan'
+  },
+  {
+    firstName: 'Walid',
+    lastName: 'Bennani',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1984-02-19',
+    phone: '+212614141414',
+    email: 'walid.bennani@email.com',
+    city: 'Meknes'
+  },
+  {
+    firstName: 'Jihane',
+    lastName: 'Tazi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1996-12-10',
+    phone: '+212615151515',
+    email: 'jihane.tazi@email.com',
+    city: 'Fes'
+  },
+  {
+    firstName: 'Oussama',
+    lastName: 'Kabbaj',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1989-05-24',
+    phone: '+212616161616',
+    email: 'oussama.kabbaj@email.com',
+    city: 'Rabat'
+  },
+  {
+    firstName: 'Nour El Houda',
+    lastName: 'Fassi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1992-07-12',
+    phone: '+212617171717',
+    email: 'nour.elhouda.fassi@email.com',
+    city: 'Casablanca'
+  },
+  {
+    firstName: 'Younes',
+    lastName: 'Alaoui',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1985-09-28',
+    phone: '+212618181818',
+    email: 'younes.alaoui@email.com',
+    city: 'Tangier'
+  },
+  {
+    firstName: 'Ines',
+    lastName: 'Bouazza',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1994-03-16',
+    phone: '+212619191919',
+    email: 'ines.bouazza@email.com',
+    city: 'Agadir'
+  },
+  {
+    firstName: 'Mohammed Amine',
+    lastName: 'Idrissi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1988-11-01',
+    phone: '+212620202020',
+    email: 'mohammed.amine.idrissi@email.com',
+    city: 'Marrakech'
+  },
+  {
+    firstName: 'Sofia',
+    lastName: 'Benjelloun',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1991-06-20',
+    phone: '+212621212121',
+    email: 'sofia.benjelloun@email.com',
+    city: 'Oujda'
+  },
+  {
+    firstName: 'Ilyas',
+    lastName: 'Chraibi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1986-04-13',
+    phone: '+212622222222',
+    email: 'ilyas.chraibi@email.com',
+    city: 'Kenitra'
+  },
+  {
+    firstName: 'Amal',
+    lastName: 'Rguibi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1993-08-07',
+    phone: '+212623232323',
+    email: 'amal.rguibi@email.com',
+    city: 'Safi'
+  },
+  {
+    firstName: 'Ayoub',
+    lastName: 'Laghzali',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1982-10-25',
+    phone: '+212624242424',
+    email: 'ayoub.laghzali@email.com',
+    city: 'El Jadida'
+  },
+  {
+    firstName: 'Khawla',
+    lastName: 'Filali',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1995-02-03',
+    phone: '+212625252525',
+    email: 'khawla.filali@email.com',
+    city: 'Beni Mellal'
+  },
+  {
+    firstName: 'Samir',
+    lastName: 'El Fassi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1990-07-29',
+    phone: '+212626262626',
+    email: 'samir.elfassi@email.com',
+    city: 'Nador'
+  },
+  {
+    firstName: 'Mouna',
+    lastName: 'Hilali',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1987-12-18',
+    phone: '+212627272727',
+    email: 'mouna.hilali@email.com',
+    city: 'Khouribga'
+  },
+  {
+    firstName: 'Karim',
+    lastName: 'Bouazzaoui',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1984-05-11',
+    phone: '+212628282828',
+    email: 'karim.bouazzaoui@email.com',
+    city: 'Settat'
+  },
+  {
+    firstName: 'Nada',
+    lastName: 'Joundi',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1992-09-06',
+    phone: '+212629292929',
+    email: 'nada.joundi@email.com',
+    city: 'Larache'
+  },
+  {
+    firstName: 'Amir',
+    lastName: 'Kaddouri',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1989-01-23',
+    phone: '+212630303030',
+    email: 'amir.kaddouri@email.com',
+    city: 'Guelmim'
+  },
+  {
+    firstName: 'Sawsan',
+    lastName: 'Ghoufrani',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1996-04-14',
+    phone: '+212631313131',
+    email: 'sawsan.ghoufrani@email.com',
+    city: 'Taza'
+  },
+  {
+    firstName: 'Jawad',
+    lastName: 'Ouahmane',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1985-08-16',
+    phone: '+212632323232',
+    email: 'jawad.ouahmane@email.com',
+    city: 'Al Hoceima'
+  },
+  {
+    firstName: 'Hind',
+    lastName: 'Taleb',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1991-11-30',
+    phone: '+212633333333',
+    email: 'hind.taleb@email.com',
+    city: 'Ksar El Kebir'
+  },
+  {
+    firstName: 'Mehdi',
+    lastName: 'Boukali',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1983-06-02',
+    phone: '+212634343434',
+    email: 'mehdi.boukali@email.com',
+    city: 'Jerada'
+  },
+  {
+    firstName: 'Rania',
+    lastName: 'Chichaoui',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1994-03-21',
+    phone: '+212635353535',
+    email: 'rania.chichaoui@email.com',
+    city: 'Berkane'
+  },
+  {
+    firstName: 'Yassir',
+    lastName: 'El Kerroubi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1988-09-09',
+    phone: '+212636363636',
+    email: 'yassir.elkerroubi@email.com',
+    city: 'Taourirt'
+  },
+  {
+    firstName: 'Noor',
+    lastName: 'Bouchaibiri',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1990-05-17',
+    phone: '+212637373737',
+    email: 'noor.bouchaibiri@email.com',
+    city: 'Nouaceur'
+  },
+  {
+    firstName: 'Mohamed',
+    lastName: 'Al Maghribi',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1986-12-12',
+    phone: '+212638383838',
+    email: 'mohamed.almaghribi@email.com',
+    city: 'Sidi Kacem'
+  },
+  {
+    firstName: 'Loubna',
+    lastName: 'Mansouri',
+    sex: VALID_SEX_VALUES[1],
+    dateOfBirth: '1993-07-26',
+    phone: '+212639393939',
+    email: 'loubna.mansouri@email.com',
+    city: 'Mdiouna'
+  },
+  {
+    firstName: 'Sami',
+    lastName: 'Zahraoui',
+    sex: VALID_SEX_VALUES[0],
+    dateOfBirth: '1984-10-19',
+    phone: '+212640404040',
+    email: 'sami.zahraoui@email.com',
+    city: 'Temara'
   }
 ]
 
