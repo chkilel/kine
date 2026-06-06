@@ -1,44 +1,64 @@
 <script setup lang="ts">
-  import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
+  import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
+  import { SEX_OPTIONS } from '~~/shared/utils/constants.patient'
 
+  // --- Props & Emits ---
   const props = defineProps<{ patient: Patient }>()
   const emit = defineEmits<{ close: [] }>()
 
-  const { mutate: updatePatient, isLoading } = useUpdatePatient()
+  // --- Constants ---
+  const DATE_FORMATTER = new DateFormatter('fr-FR', { dateStyle: 'medium' })
 
-  const formRef = ref<HTMLFormElement>()
+  // --- Helpers ---
+  function deepCloneArray<T>(arr: T[] | null): T[] {
+    return arr ? JSON.parse(JSON.stringify(arr)) : []
+  }
 
-  function getInitialFormState(): PatientBasicInfoUpdate {
+  function buildInitialFormState(patient: Patient): PatientUpdate {
     return {
-      firstName: props.patient.firstName,
-      lastName: props.patient.lastName,
-      dateOfBirth: props.patient.dateOfBirth,
-      gender: props.patient.gender,
-      phone: props.patient.phone,
-      status: props.patient.status,
-      email: props.patient.email ?? undefined
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      dateOfBirth: patient.dateOfBirth,
+      sex: patient.sex,
+      phone: patient.phone,
+      status: patient.status,
+      email: patient.email ?? undefined,
+      address: patient.address ?? '',
+      city: patient.city ?? '',
+      postalCode: patient.postalCode || undefined,
+      referralSource: patient.referralSource || undefined,
+      insuranceProvider: patient.insuranceProvider || undefined,
+      emergencyContacts: deepCloneArray(patient.emergencyContacts)
     }
   }
 
-  const formState = reactive<PatientBasicInfoUpdate>(getInitialFormState())
+  // --- Composables ---
+  const { mutate: updatePatient, isLoading } = useUpdatePatient()
 
-  const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
+  // --- State ---
+  const formRef = ref<HTMLFormElement>()
+  const formState = reactive<PatientUpdate>(buildInitialFormState(props.patient))
+
+  // --- Computed ---
   const dobModel = computed({
     get: () => (formState.dateOfBirth ? parseDate(formState.dateOfBirth) : null),
     set: (val) => {
-      formState.dateOfBirth = val ? val.toString() : undefined
+      formState.dateOfBirth = val?.toString()
     }
   })
 
-  async function onSubmit() {
-    if (!formRef.value) return
+  const dobLabel = computed(() =>
+    dobModel.value ? DATE_FORMATTER.format(dobModel.value.toDate(getLocalTimeZone())) : 'Sélectionner une date'
+  )
 
-    const validationResult = await formRef.value.validate()
-    if (!validationResult) return
+  // --- Handlers ---
+  async function onSubmit() {
+    const isValid = await formRef.value?.validate()
+    if (!isValid) return
 
     updatePatient({
       patientId: props.patient.id,
-      patientData: formState as PatientUpdate,
+      patientData: formState,
       onSuccess: () => emit('close')
     })
   }
@@ -48,62 +68,90 @@
   <USlideover
     title="Modifier le patient"
     :description="`Modifier les informations de ${patient.firstName} ${patient.lastName}`"
-    :ui="{ content: 'w-full lg:w-1/3 max-w-2xl bg-elevated' }"
+    :ui="{ content: 'w-full lg:w-2/3 max-w-2xl bg-elevated' }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="patientBasicInfoUpdateSchema" :state="formState" class="space-y-6">
-        <!-- Basic Information -->
+      <UForm ref="formRef" :schema="patientUpdateSchema" :state="formState" class="space-y-6">
         <AppCard title="Informations de base" variant="outline">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Prénom" placeholder="Jean" name="firstName">
-              <UInput v-model="formState.firstName" class="w-full" />
+            <UFormField label="Prénom" name="firstName">
+              <UInput v-model="formState.firstName" placeholder="Yahya" class="w-full" />
             </UFormField>
-            <UFormField label="Nom" placeholder="Dupont" name="lastName">
-              <UInput v-model="formState.lastName" class="w-full" />
+
+            <UFormField label="Nom" name="lastName">
+              <UInput v-model="formState.lastName" placeholder="Doe" class="w-full" />
             </UFormField>
-            <UFormField label="E‑mail" placeholder="john.doe@example.com" name="email" class="col-span-2">
-              <UInput v-model="formState.email" class="w-full" type="email" />
+
+            <UFormField label="E‑mail" name="email" class="col-span-2">
+              <UInput v-model="formState.email" type="email" placeholder="yahya.doe@example.com" class="w-full" />
             </UFormField>
-            <UFormField label="Téléphone" placeholder="+1 (555) 123-4567" name="phone" class="col-span-2">
-              <UInput v-model="formState.phone" class="w-full" type="tel" />
+
+            <UFormField label="Téléphone" name="phone" class="col-span-2">
+              <UInput v-model="formState.phone" type="tel" placeholder="+1 (555) 123-4567" class="w-full" />
             </UFormField>
+
             <UFormField label="Date de naissance" name="dateOfBirth">
               <UPopover>
                 <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start" block>
-                  {{ dobModel ? df.format(dobModel.toDate(getLocalTimeZone())) : 'Sélectionner une date' }}
+                  {{ dobLabel }}
                 </UButton>
                 <template #content>
                   <UCalendar v-model="dobModel" class="p-2" />
                 </template>
               </UPopover>
             </UFormField>
-            <UFormField label="Sexe" name="gender">
-              <USelect
-                v-model="formState.gender"
-                class="w-full"
-                :items="[
-                  { label: 'Homme', value: 'male' },
-                  { label: 'Femme', value: 'female' }
-                ]"
-              />
+
+            <UFormField label="Sexe" name="sex">
+              <USelect v-model="formState.sex" :items="SEX_OPTIONS" class="w-full" />
             </UFormField>
+
             <UFormField label="Statut" name="status" class="md:col-span-2">
               <URadioGroup
+                v-model="formState.status"
+                :items="PATIENT_STATUS_OPTIONS"
                 size="sm"
                 orientation="horizontal"
                 variant="table"
-                v-model="formState.status"
-                :items="PATIENT_STATUS_OPTIONS"
               />
             </UFormField>
           </div>
         </AppCard>
+
+        <AppCard title="Adresse">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <UFormField label="Adresse" name="address" class="md:col-span-2">
+              <UInput v-model="formState.address" placeholder="123 rue Principale" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Ville" name="city">
+              <UInput v-model="formState.city" placeholder="Paris" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Code postal" name="postalCode">
+              <UInput v-model="formState.postalCode" placeholder="10001" class="w-full" />
+            </UFormField>
+          </div>
+        </AppCard>
+
+        <AppCard title="Recommandation et couverture">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <UFormField label="Source de recommandation" name="referralSource">
+              <UInput v-model="formState.referralSource" placeholder="Dr. Martin" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Assureur" name="insuranceProvider">
+              <UInput v-model="formState.insuranceProvider" placeholder="Assurance" class="w-full" />
+            </UFormField>
+          </div>
+        </AppCard>
+
+        <PatientEmergencyContacts v-model="formState.emergencyContacts" />
       </UForm>
     </template>
 
     <template #footer="{ close }">
       <UButton label="Annuler" variant="outline" color="neutral" @click="close" />
-      <UButton label="Mettre à jour" type="submit" @click="onSubmit" :loading="isLoading" :disabled="isLoading" />
+      <UButton label="Mettre à jour" :loading="isLoading" :disabled="isLoading" @click="onSubmit" />
     </template>
   </USlideover>
 </template>
