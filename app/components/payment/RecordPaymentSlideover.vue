@@ -13,7 +13,7 @@
   const df = new DateFormatter('fr-FR', { dateStyle: 'medium' })
   const createPayment = useCreatePayment()
   const { data: balanceData } = usePatientBalance(() => props.patientId)
-  const { data: sessionsData, isLoading: sessionsLoading } = useAppointmentsPaymentStatus(() => props.patientId)
+  const { data: sessionsData, isLoading: sessionsLoading } = useAppointmentsPaymentStatus()
 
   // ─── Base state ──────────────────────────────────────────────
   const checkedIds = ref<Set<string>>(new Set(props.preselectedSessionIds))
@@ -24,16 +24,16 @@
   const creditBalanceCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unbilledSessions = computed(() => {
-    const items = sessionsData.value ?? []
+    const items = sessionsData.value?.data ?? []
     return items.filter((s) => {
-      const status: PaymentStatus = s.paymentStatus
-      return status === 'unpaid' || status === 'partial'
+      const status = s.paymentStatus
+      return status === 'unpaid' || status === 'partially_paid'
     })
   })
 
   const selectedSessions = computed(() => unbilledSessions.value.filter((s: any) => checkedIds.value.has(s.id)))
   const selectedTotalCents = computed(() =>
-    selectedSessions.value.reduce((sum: number, s: any) => sum + ((s.priceCent || 0) - (s.paidCents || 0)), 0)
+    selectedSessions.value.reduce((sum: number, s: any) => sum + ((s.priceCents || 0) - (s.paidCents || 0)), 0)
   )
   const selectedCount = computed(() => selectedSessions.value.length)
 

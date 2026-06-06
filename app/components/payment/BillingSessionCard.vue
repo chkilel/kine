@@ -51,7 +51,9 @@
 <template>
   <!-- Session Cards List -->
   <div class="space-y-4">
-    <div class="bg-default group flex w-full items-stretch gap-3 rounded-lg p-4 pl-0 transition-all">
+    <div
+      class="group bg-muted border-default flex items-stretch gap-4 rounded-lg border p-3 pr-4 pl-0 transition-colors hover:shadow-sm"
+    >
       <div
         class="w-1.5 rounded-r-full"
         :class="[isPaid && 'bg-success', isPartial && 'bg-warning', isUnpaid && 'bg-error']"
@@ -66,7 +68,7 @@
             class="aspect-square"
           />
           <div>
-            <h4 class="font-headline text-on-background text-lg font-bold">
+            <h4 class="font-headline text-on-background font-semibold">
               {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }}
             </h4>
             <div class="text-highlighted flex h-8 items-center text-sm leading-none">
@@ -148,7 +150,7 @@
             {{ statusConfig.label }}
           </UBadge>
 
-          <div class="font-headline text-on-background text-2xl font-extrabold">
+          <div class="font-headline text-on-background text-lg font-bold">
             {{ formatCurrency(appointment.priceCents) }}
           </div>
 
@@ -168,7 +170,7 @@
             :variant="isPartial ? 'link' : 'solid'"
             :trailingIcon="isPartial && 'i-hugeicons-arrow-right-02'"
             size="sm"
-            class="ring-muted mt-4 rounded-full hover:ring"
+            class="ring-muted mt-1 rounded-full hover:ring"
             @click="handleRecordPayment"
           />
         </div>

@@ -158,7 +158,6 @@ const _useAppointmentsPaymentStatus = () => {
         query: {
           patientId: patientId.value,
           status: ['finished', 'completed'],
-          withPayments: true,
           limit: 5,
           cursorDate: pageParam?.date,
           cursorId: pageParam?.id

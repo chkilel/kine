@@ -27,14 +27,11 @@ export default defineEventHandler(async (event) => {
       where,
       with: {
         appointmentPaymentItems: {
-          with: {
-            appointment: {
-              columns: {
-                id: true,
-                treatmentPlanId: true,
-                priceCent: true
-              }
-            }
+          columns: {
+            id: true,
+            paymentId: true,
+            appointmentId: true,
+            amountCents: true
           }
         }
       },
