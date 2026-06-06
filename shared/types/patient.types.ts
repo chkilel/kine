@@ -12,8 +12,7 @@ import {
   sexSchema,
   phoneNumberSchema,
   emergencyContactSchema,
-  noteSchema,
-  patientStatusSchema
+  noteSchema
 } from './base.types'
 
 // =============================================================================
@@ -55,7 +54,6 @@ const patientCreateShape = {
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
   referralSource: z.string().optional(),
-  status: patientStatusSchema,
   notes: z.array(noteSchema).default([])
 }
 
@@ -73,7 +71,6 @@ const patientUpdateShape = {
   postalCode: z.string().optional(),
   insuranceProvider: z.string().optional(),
   referralSource: z.string().optional(),
-  status: patientStatusSchema.optional(),
   emergencyContacts: z.array(emergencyContactSchema).optional(),
   medicalConditions: z.array(z.string()).optional(),
   surgeries: z.array(z.string()).optional(),
@@ -87,8 +84,7 @@ export const patientUpdateSchema = createInsertSchema(patients, patientUpdateSha
 export const patientQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  search: z.string().optional(),
-  status: patientStatusSchema.optional()
+  search: z.string().optional()
 })
 
 // Paginated response type

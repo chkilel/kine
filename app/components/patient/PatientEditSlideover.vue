@@ -21,7 +21,6 @@
       dateOfBirth: patient.dateOfBirth,
       sex: patient.sex,
       phone: patient.phone,
-      status: patient.status,
       email: patient.email ?? undefined,
       address: patient.address ?? '',
       city: patient.city ?? '',
@@ -103,16 +102,6 @@
 
             <UFormField label="Sexe" name="sex">
               <USelect v-model="formState.sex" :items="SEX_OPTIONS" class="w-full" />
-            </UFormField>
-
-            <UFormField label="Statut" name="status" class="md:col-span-2">
-              <URadioGroup
-                v-model="formState.status"
-                :items="PATIENT_STATUS_OPTIONS"
-                size="sm"
-                orientation="horizontal"
-                variant="table"
-              />
             </UFormField>
           </div>
         </AppCard>

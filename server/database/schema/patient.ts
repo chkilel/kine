@@ -3,7 +3,7 @@ import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { VALID_PATIENT_STATUSES, VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '~~/shared/types/base.types'
+import { VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -49,7 +49,6 @@ export const patients = sqliteTable(
     referralSource: text(), // Who referred the patient — e.g., "Dr. Smith" or "Online Ad"
 
     // ---- Record management ----
-    status: text({ enum: VALID_PATIENT_STATUSES }).notNull().default('active'),
     notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().notNull(), // General patient notes, preferences, observations, additional context (e.g.,"Patient prefers morning appointments",... )
 
     // Created, Updated and Soft-delete timestamp (null if active)
@@ -62,7 +61,6 @@ export const patients = sqliteTable(
     index('idx_patients_org_active_last_name').on(table.organizationId, table.deletedAt, table.lastName),
     index('idx_patients_org_active_email').on(table.organizationId, table.deletedAt, table.email),
     index('idx_patients_org_active_phone').on(table.organizationId, table.deletedAt, table.phone),
-    index('idx_patients_org_active_status').on(table.organizationId, table.deletedAt, table.status),
     index('idx_patients_org_active_created_at').on(table.organizationId, table.deletedAt, table.createdAt),
 
     // ---- Multi-field indexes (with deletedAt) ----
@@ -72,13 +70,6 @@ export const patients = sqliteTable(
       table.deletedAt,
       table.lastName,
       table.firstName
-    ),
-    // Active patients by date: WHERE organizationId = ? AND deletedAt IS NULL AND status = 'active' ORDER BY createdAt
-    index('idx_patients_org_active_status_created').on(
-      table.organizationId,
-      table.deletedAt,
-      table.status,
-      table.createdAt
     ),
 
     // ---- Special cases: Soft delete management ----

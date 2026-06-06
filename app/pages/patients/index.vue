@@ -5,12 +5,10 @@
   const page = useRouteQuery('page', 1, { transform: Number })
   const limit = useRouteQuery('limit', 10, { transform: Number })
   const search = useRouteQuery<string>('search', '')
-  const status = useRouteQuery<PatientStatus | undefined>('status', undefined)
 
   const queryParams = computed<PatientQuery>(() => ({
     page: page.value,
     limit: limit.value,
-    status: status.value,
     search: search.value
   }))
 
@@ -36,7 +34,7 @@
   }
 
   // ─── Computed ────────────────────────────────────────────────
-  const hasActiveFilters = computed(() => search.value || status.value)
+  const hasActiveFilters = computed(() => !!search.value)
 
   const emptyStateConfig = computed(() => {
     if (hasActiveFilters.value) {
@@ -73,7 +71,6 @@
   // ─── Actions ─────────────────────────────────────────────────
   function clearFilters() {
     search.value = ''
-    status.value = undefined
     page.value = 1
   }
 
@@ -86,10 +83,6 @@
 
   function handlePageChange(newPage: number) {
     page.value = newPage
-  }
-
-  function handleStatusChange() {
-    page.value = 1
   }
 
   async function handleRowClick(_e: Event, row: TableRow<Patient>) {
@@ -158,22 +151,6 @@
           h(UBadge, { color: 'neutral', variant: 'soft', size: 'sm', class: 'w-fit' }, () => `${age} ans`)
         ])
       }
-    },
-    {
-      accessorKey: 'status',
-      header: 'Statut',
-      cell: ({ row }) => {
-        const patient = row.original
-        return h(
-          UBadge,
-          {
-            color: getPatientStatusColor(patient.status),
-            variant: 'subtle',
-            size: 'md'
-          },
-          () => getPatientStatusLabel(patient.status)
-        )
-      }
     }
   ]
 </script>
@@ -202,16 +179,6 @@
             />
           </template>
         </UInput>
-        <!-- Filters -->
-        <USelect
-          v-model="status"
-          :items="STATUS_FILTER_OPTIONS"
-          size="lg"
-          placeholder="Statut: Tous"
-          class="min-w-40"
-          aria-label="Filtrer par statut"
-          @update:model-value="handleStatusChange"
-        />
 
         <UButton
           icon="i-hugeicons-plus-sign"

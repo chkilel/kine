@@ -19,7 +19,6 @@ import {
   VALID_SCHEDULE_DAYS,
   VALID_SCHEDULE_EXCEPTION_TYPES,
   VALID_LOCATIONS,
-  VALID_PATIENT_STATUSES,
   VALID_SEX_VALUES,
   VALID_RELATIONSHIP_TYPES,
   VALID_PHONE_CATEGORIES,
@@ -2274,7 +2273,6 @@ export default defineEventHandler(async (event: H3Event) => {
           insuranceProvider: 'AXA Assurance',
           insuranceNumber: `INS-${randomInt(100000, 999999)}`,
           referralSource: 'Online',
-          status: VALID_PATIENT_STATUSES[0]!,
           notes: []
         })
         .returning()

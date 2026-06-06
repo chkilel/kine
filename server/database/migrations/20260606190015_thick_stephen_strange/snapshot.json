@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "746c304c-db57-4aaf-86e8-0f2f5b253308",
+  "id": "aecbb02f-bb4d-46df-87af-b40cf92648e5",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -1902,16 +1902,6 @@
       "type": "text",
       "notNull": true,
       "autoincrement": false,
-      "default": "'active'",
-      "generated": null,
-      "name": "status",
-      "entityType": "columns",
-      "table": "patients"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
       "default": null,
       "generated": null,
       "name": "notes",
@@ -3724,28 +3714,6 @@
           "isExpression": false
         },
         {
-          "value": "status",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "idx_patients_org_active_status",
-      "entityType": "indexes",
-      "table": "patients"
-    },
-    {
-      "columns": [
-        {
-          "value": "organizationId",
-          "isExpression": false
-        },
-        {
-          "value": "deletedAt",
-          "isExpression": false
-        },
-        {
           "value": "createdAt",
           "isExpression": false
         }
@@ -3780,32 +3748,6 @@
       "where": null,
       "origin": "manual",
       "name": "idx_patients_org_active_name_search",
-      "entityType": "indexes",
-      "table": "patients"
-    },
-    {
-      "columns": [
-        {
-          "value": "organizationId",
-          "isExpression": false
-        },
-        {
-          "value": "deletedAt",
-          "isExpression": false
-        },
-        {
-          "value": "status",
-          "isExpression": false
-        },
-        {
-          "value": "createdAt",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "idx_patients_org_active_status_created",
       "entityType": "indexes",
       "table": "patients"
     },

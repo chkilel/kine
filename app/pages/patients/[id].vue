@@ -70,9 +70,6 @@
                   <span class="font-bold">{{ patient.lastName }}</span>
                 </h1>
                 <UButton variant="ghost" color="primary" icon="i-hugeicons-edit-04" square @click="openEditSlideover" />
-                <UBadge :color="getPatientStatusColor(patient.status)" size="md" variant="subtle" class="rounded-full">
-                  {{ getPatientStatusLabel(patient.status) }}
-                </UBadge>
               </div>
               <div class="text-muted flex flex-wrap items-start gap-x-5 gap-y-1 text-[13px]">
                 <div class="flex items-center gap-1.5">

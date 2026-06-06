@@ -31,11 +31,6 @@ export default defineEventHandler(async (event) => {
       )
     }
 
-    // Add status filter
-    if (validatedQuery.status) {
-      filters.push(eq(patients.status, validatedQuery.status))
-    }
-
     // 4. Calculate pagination
     const limit = validatedQuery.limit
     const offset = (validatedQuery.page - 1) * limit
