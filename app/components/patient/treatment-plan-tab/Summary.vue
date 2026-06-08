@@ -96,11 +96,8 @@
       </ClientOnly>
 
       <div class="mt-5 space-y-2">
-        <div class="flex items-center justify-between gap-4">
-          <div class="n flex items-center gap-2">
-            <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Suivi par</h4>
-          </div>
+        <div class="flex items-center gap-2">
+          <AppIconBox size="md" color="primary" name="i-hugeicons-user" class="p-1" />
 
           <span class="font-semibold">
             {{ getTherapistName(treatmentPlan.therapistId) }}
@@ -112,23 +109,26 @@
             <AppIconBox size="md" color="primary" name="i-hugeicons-target-02" class="p-1" />
             <h4 class="text-muted text-[10px] font-medium uppercase">Objectifs de rééducation</h4>
           </div>
-          <p class="text-sm">{{ treatmentPlan.objective || 'Non spécifié' }}</p>
+          <p class="pl-8 text-sm">{{ treatmentPlan.objective || 'Non spécifié' }}</p>
         </div>
 
         <div class="space-y-0.5">
           <div class="flex items-center gap-2">
             <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
-            <h4 class="text-muted text-[10px] font-medium uppercase">Motif de prise en charge</h4>
+            <h4 class="text-muted text-[10px] font-medium uppercase">Diagnostic</h4>
           </div>
-          <p class="flex items-baseline gap-2 text-sm leading-relaxed">
+          <p class="pl-8 text-sm leading-relaxed">
             {{ treatmentPlan.diagnosis || 'Non spécifié' }}
           </p>
         </div>
       </div>
 
       <div class="bg-muted rounded-lg p-2.5">
-        <div class="mb-2 flex items-end justify-between">
-          <span class="text-muted text-xs font-semibold tracking-wide uppercase">Progression</span>
+        <div class="mb-1 flex items-end justify-between">
+          <div class="text-xs font-medium uppercase">
+            {{ treatmentPlan.completedAppointments || 0 }}/{{ treatmentPlan.numberOfSessions || 0 }} séances
+          </div>
+
           <span class="text-primary text-sm font-bold">{{ treatmentPlan.progress || 0 }}%</span>
         </div>
         <UProgress
@@ -136,22 +136,13 @@
           size="md"
           :ui="{ base: 'bg-default ring-default ring' }"
         />
-        <div class="text-muted mt-1.5 flex justify-between text-[11px] font-medium">
-          <span>
-            {{ treatmentPlan.completedAppointments || 0 }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
-          </span>
-          <span>
-            Reste:
-            {{ (treatmentPlan.numberOfSessions || 0) - (treatmentPlan.completedAppointments || 0) }}
-          </span>
-        </div>
       </div>
 
       <USeparator class="my-1" />
 
       <div class="grid grid-cols-2 gap-x-2 gap-y-4">
-        <div v-for="detail in planDetails" :key="detail.label" class="flex items-center gap-3">
-          <AppIconBox size="md" :color="detail.color" :name="detail.icon" class="p-1" />
+        <div v-for="detail in planDetails" :key="detail.label" class="flex items-start gap-3">
+          <AppIconBox size="md" color="primary" :name="detail.icon" class="p-1" />
           <div class="flex-1">
             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
             <p class="text-[13px] font-medium">
