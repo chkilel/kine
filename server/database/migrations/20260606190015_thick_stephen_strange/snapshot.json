@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "89c2f2c3-d7db-46d9-a5c2-3b9f1eb6f696",
+  "id": "aecbb02f-bb4d-46df-87af-b40cf92648e5",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -1754,7 +1754,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "gender",
+      "name": "sex",
       "entityType": "columns",
       "table": "patients"
     },
@@ -1895,16 +1895,6 @@
       "default": null,
       "generated": null,
       "name": "referralSource",
-      "entityType": "columns",
-      "table": "patients"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": "'active'",
-      "generated": null,
-      "name": "status",
       "entityType": "columns",
       "table": "patients"
     },
@@ -3340,6 +3330,28 @@
           "isExpression": false
         },
         {
+          "value": "date",
+          "isExpression": false
+        },
+        {
+          "value": "id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "idx_appointments_cursor",
+      "entityType": "indexes",
+      "table": "appointments"
+    },
+    {
+      "columns": [
+        {
+          "value": "organizationId",
+          "isExpression": false
+        },
+        {
           "value": "patientId",
           "isExpression": false
         },
@@ -3702,28 +3714,6 @@
           "isExpression": false
         },
         {
-          "value": "status",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "idx_patients_org_active_status",
-      "entityType": "indexes",
-      "table": "patients"
-    },
-    {
-      "columns": [
-        {
-          "value": "organizationId",
-          "isExpression": false
-        },
-        {
-          "value": "deletedAt",
-          "isExpression": false
-        },
-        {
           "value": "createdAt",
           "isExpression": false
         }
@@ -3758,32 +3748,6 @@
       "where": null,
       "origin": "manual",
       "name": "idx_patients_org_active_name_search",
-      "entityType": "indexes",
-      "table": "patients"
-    },
-    {
-      "columns": [
-        {
-          "value": "organizationId",
-          "isExpression": false
-        },
-        {
-          "value": "deletedAt",
-          "isExpression": false
-        },
-        {
-          "value": "status",
-          "isExpression": false
-        },
-        {
-          "value": "createdAt",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "idx_patients_org_active_status_created",
       "entityType": "indexes",
       "table": "patients"
     },

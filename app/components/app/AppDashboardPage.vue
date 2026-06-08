@@ -23,7 +23,7 @@
 </script>
 
 <template>
-  <UDashboardPanel :id="id" class="bg-elevated">
+  <UDashboardPanel :id="id" class="bg-muted">
     <template #header>
       <UDashboardNavbar
         :title="title"

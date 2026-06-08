@@ -12,7 +12,7 @@
     "deploy:stage": "pnpm run build && wrangler deploy",
     "deploy:prod": "pnpm run build && wrangler deploy --config wrangler.production.jsonc",
     "db:gen": "drizzle-kit generate && node scripts/flatten-migrations.js",
-    "db:mig:local": "wrangler d1 migrations apply DB",
+    "db:mig": "wrangler d1 migrations apply DB",
     "db:mig:stage": "wrangler d1 migrations apply DB --remote",
     "db:mig:prod": "wrangler d1 migrations apply DB --remote --config wrangler.production.jsonc",
     "db:seed": "curl -X POST http://localhost:3000/api/db/seed",
@@ -68,18 +68,5 @@
     "vitest": "^4.1.5",
     "wrangler": "^4.90.0"
   },
-  "packageManager": "pnpm@10.33.2",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "@prisma/engines",
-      "@tailwindcss/oxide",
-      "esbuild",
-      "maplibre-gl",
-      "prisma",
-      "sharp",
-      "vue-demi",
-      "workerd"
-    ]
-  }
+  "packageManager": "pnpm@10.33.2"
 }

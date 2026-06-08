@@ -129,20 +129,12 @@ export const relationshipSchema = z.enum(VALID_RELATIONSHIP_TYPES)
 export type Relationship = z.infer<typeof relationshipSchema>
 
 // =============================================================================
-// Sex/Gender Values Constants
+// Sex Values Constants
 // =============================================================================
 
 export const VALID_SEX_VALUES = ['male', 'female'] as const
-export const genderSchema = z.enum(VALID_SEX_VALUES)
-export type Gender = z.infer<typeof genderSchema>
-
-// =============================================================================
-// Patient Status Constants
-// =============================================================================
-
-export const VALID_PATIENT_STATUSES = ['active', 'inactive', 'discharged', 'archived'] as const
-export const patientStatusSchema = z.enum(VALID_PATIENT_STATUSES)
-export type PatientStatus = z.infer<typeof patientStatusSchema>
+export const sexSchema = z.enum(VALID_SEX_VALUES)
+export type Sex = z.infer<typeof sexSchema>
 
 // =============================================================================
 // Insurance Coverage Status Constants

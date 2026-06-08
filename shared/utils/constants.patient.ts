@@ -1,45 +1,20 @@
-import type { Gender, InsuranceCoverageStatus, PatientStatus, Relationship } from '../types/base.types'
+import type { Sex, InsuranceCoverageStatus, Relationship } from '../types/base.types'
 
 // =============================================================================
-// Gender Configuration
+// Sex Configuration
 // =============================================================================
 
-export const GENDER_CONFIG = {
-  male: 'Homme',
-  female: 'Femme'
+export const SEX_CONFIG = {
+  male: { label: 'Home' },
+  female: { label: 'Femme' }
 } as const
 
-export const getGenderLabel = (sex: Gender) => GENDER_CONFIG[sex]
-
-// =============================================================================
-// Patient Status Configuration
-// =============================================================================
-
-export const STATUS_CONFIG = {
-  active: { color: 'success', label: 'Actif' },
-  inactive: { color: 'warning', label: 'Inactif' },
-  discharged: { color: 'error', label: 'Sorti' },
-  archived: { color: 'neutral', label: 'Archivé' }
-} as const
-
-export const STATUS_FILTER_OPTIONS = [
-  { label: 'Statut: Tous', value: undefined },
-  ...Object.entries(STATUS_CONFIG).map(([key, item]) => ({
-    label: item.label,
-    value: key,
-    color: item.color
-  }))
-]
-
-export const PATIENT_STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(([key, item]) => ({
+export const SEX_OPTIONS = Object.entries(SEX_CONFIG).map(([key, item]) => ({
   label: item.label,
-  value: key,
-  color: item.color
+  value: key
 }))
 
-export const getPatientStatusLabel = (status: PatientStatus) => STATUS_CONFIG[status]?.label || status
-export const getPatientStatusColor = (status: PatientStatus) => STATUS_CONFIG[status].color
-export const getPatientStatusConfig = (status: PatientStatus) => STATUS_CONFIG[status]
+export const getSexLabel = (sex: Sex) => SEX_CONFIG[sex].label
 
 // =============================================================================
 // Insurance Coverage Configuration
