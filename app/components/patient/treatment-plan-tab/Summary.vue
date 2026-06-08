@@ -125,8 +125,8 @@
 
       <div class="bg-muted rounded-lg p-2.5">
         <div class="mb-1 flex items-end justify-between">
-          <div class="text-xs font-medium uppercase">
-            {{ treatmentPlan.completedAppointments || 0 }}/{{ treatmentPlan.numberOfSessions || 0 }} séances
+          <div class="text-xs font-medium tracking-wide uppercase">
+            Séances: {{ treatmentPlan.completedAppointments || 0 }}/{{ treatmentPlan.numberOfSessions || 0 }}
           </div>
 
           <span class="text-primary text-sm font-bold">{{ treatmentPlan.progress || 0 }}%</span>
@@ -140,15 +140,17 @@
 
       <USeparator class="my-1" />
 
-      <div class="grid grid-cols-2 gap-x-2 gap-y-4">
+      <div class="grid grid-cols-1 gap-x-2 gap-y-2">
         <div v-for="detail in planDetails" :key="detail.label" class="flex items-start gap-3">
           <AppIconBox size="md" color="primary" :name="detail.icon" class="p-1" />
           <div class="flex-1">
             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
-            <p class="text-[13px] font-medium">
-              {{ detail.value }}
-            </p>
-            <span v-if="detail.suffix" class="text-[11px]">le {{ detail.suffix }}</span>
+            <div class="flex items-baseline gap-2">
+              <p class="text-[13px] font-medium">
+                {{ detail.value }}
+              </p>
+              <span v-if="detail.suffix" class="text-[11px]">le {{ detail.suffix }}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -117,51 +117,50 @@
       </AppCard>
     </div>
 
-    <div class="space-y-4 lg:col-span-2">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-hugeicons-files-01" class="text-muted text-xl" />
-          <h2 class="text-base font-semibold">Documents</h2>
+    <div class="lg:col-span-2">
+      <AppCard title="Documents" description="Tous les documents du patient." icon="i-hugeicons-files-01">
+        <template #actions>
+          <UButton
+            icon="i-hugeicons-plus-sign"
+            label="Ajouter un document"
+            color="primary"
+            size="sm"
+            @click="handleAddDocument"
+          />
+        </template>
+        <div v-if="isLoading" class="flex justify-center py-8">
+          <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
         </div>
-        <UButton
-          icon="i-hugeicons-plus-sign"
-          label="Ajouter un document"
-          color="primary"
-          size="sm"
-          @click="handleAddDocument"
+        <div
+          v-else-if="filteredDocuments && filteredDocuments.length > 0"
+          class="grid grid-cols-1 gap-6 sm:grid-cols-2"
+        >
+          <DocumentCard
+            v-for="document in filteredDocuments"
+            :key="document.id"
+            :document="document"
+            :patient-id="route.params.id as string"
+            variant="extended"
+          />
+        </div>
+        <UEmpty
+          v-else
+          :title="selectedDocumentType !== 'all' && !hasDocumentsWhenFiltered ? 'Aucun résultat' : 'Aucun document'"
+          :description="
+            selectedDocumentType !== 'all'
+              ? `Aucun document de ce type n'a été trouvé. Essayez d'ajuster le filtre.`
+              : `Aucun document n'a encore été téléversé pour ce plan de traitement.`
+          "
+          :icon="
+            selectedDocumentType !== 'all' && !hasDocumentsWhenFiltered
+              ? 'i-hugeicons-filter-remove'
+              : 'i-hugeicons-files-01'
+          "
+          variant="outline"
+          size="lg"
+          class="py-8"
         />
-      </div>
-      <div v-if="isLoading" class="flex justify-center py-8">
-        <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
-      </div>
-
-      <div v-else-if="filteredDocuments && filteredDocuments.length > 0" class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <DocumentCard
-          v-for="document in filteredDocuments"
-          :key="document.id"
-          :document="document"
-          :patient-id="route.params.id as string"
-          variant="extended"
-        />
-      </div>
-
-      <UEmpty
-        v-else
-        :title="selectedDocumentType !== 'all' && !hasDocumentsWhenFiltered ? 'Aucun résultat' : 'Aucun document'"
-        :description="
-          selectedDocumentType !== 'all'
-            ? `Aucun document de ce type n'a été trouvé. Essayez d'ajuster le filtre.`
-            : `Aucun document n'a encore été téléversé pour ce plan de traitement.`
-        "
-        :icon="
-          selectedDocumentType !== 'all' && !hasDocumentsWhenFiltered
-            ? 'i-hugeicons-filter-remove'
-            : 'i-hugeicons-files-01'
-        "
-        variant="outline"
-        size="lg"
-        class="py-8"
-      />
+      </AppCard>
     </div>
   </div>
 </template>

@@ -42,7 +42,7 @@
       </UButton>
 
       <template #content>
-        <div class="border-default space-y-5 border-t p-4 sm:p-6">
+        <div class="border-default space-y-5 border-t">
           <input
             ref="fileInputRef"
             type="file"
@@ -54,17 +54,17 @@
 
           <div class="space-y-4">
             <!-- Staged Files -->
-            <div v-if="uploadedFiles.length > 0" class="space-y-3">
+            <div v-if="uploadedFiles.length > 0" class="">
               <div
                 v-for="(uploadedFile, index) in uploadedFiles"
                 :key="index"
-                class="border-default bg-muted space-y-3 rounded-lg border p-2"
+                class="border-default bg-muted space-y-3 border-b p-3"
               >
                 <div class="flex w-full items-start gap-10">
                   <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-medium">{{ uploadedFile.file.name }}</p>
                     <p class="text-muted mt-1 text-xs">
-                      Prêt pour le téléversement • {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
+                      Taille: {{ (uploadedFile.file.size / 1024 / 1024).toFixed(2) }} MB
                     </p>
                   </div>
                   <UButton
@@ -98,25 +98,24 @@
                     />
                   </UFormField>
                 </div>
-              </div>
-
-              <!-- Upload Button -->
-              <div class="flex justify-end">
-                <UButton
-                  icon="i-hugeicons-upload-01"
-                  color="primary"
-                  size="sm"
-                  :loading="documentLoading"
-                  :disabled="documentLoading || uploadedFiles.length === 0"
-                  @click="uploadDocuments"
-                >
-                  Téléverser {{ uploadedFiles.length }} document(s)
-                </UButton>
+                <!-- Upload Button -->
+                <div class="flex justify-end">
+                  <UButton
+                    icon="i-hugeicons-upload-01"
+                    color="primary"
+                    size="sm"
+                    :loading="documentLoading"
+                    :disabled="documentLoading || uploadedFiles.length === 0"
+                    @click="uploadDocuments"
+                  >
+                    Téléverser {{ uploadedFiles.length }} document(s)
+                  </UButton>
+                </div>
               </div>
             </div>
 
             <!-- Existing Documents -->
-            <div class="space-y-3">
+            <div>
               <UEmpty
                 v-if="!hasDocuments"
                 icon="i-hugeicons-file-add"
@@ -144,7 +143,7 @@
             </div>
           </div>
 
-          <div v-if="hasDocuments" class="flex w-full justify-end">
+          <div v-if="hasDocuments" class="flex w-full justify-end p-4 pt-0">
             <UButton
               label="Document"
               icon="i-hugeicons-plus-sign"

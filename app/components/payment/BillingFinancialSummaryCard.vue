@@ -24,7 +24,7 @@
 </script>
 
 <template>
-  <AppCard variant="outline" iconColor="info" title="Résumé financier" icon="i-hugeicons-pie-chart-01">
+  <AppCard variant="outline" title="Résumé financier" icon="i-hugeicons-pie-chart-01">
     <div class="space-y-3">
       <div class="flex items-center justify-between text-sm">
         <span class="text-muted">Total facturé</span>

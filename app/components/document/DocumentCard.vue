@@ -122,11 +122,11 @@
   <!-- Mini Variant (List Item) -->
   <div
     v-if="variant === 'mini'"
-    class="bg-muted hover:border-default rounded-lg border border-transparent p-2 transition-colors hover:shadow-sm"
-    :class="{ 'ring-neutral ring-2 ring-offset-2': isEditing }"
+    class="hover:bg-muted border-default border-b px-3 py-2 transition-colors"
+    :class="{ 'bg-elevated': isEditing }"
   >
     <!-- Edit Mode -->
-    <div v-if="isEditing && editingDocument" class="w-full space-y-3">
+    <div v-if="isEditing && editingDocument" class="w-full space-y-4">
       <div class="flex items-center gap-2">
         <AppIconBox
           :name="getDocumentIcon(editingDocument.category)"
@@ -135,7 +135,7 @@
           size="lg"
           class="rounded-md"
         />
-        <p class="text-default text-sm font-medium">
+        <p class="text-default truncate text-sm font-medium">
           {{ patientDocument.description || patientDocument.originalFileName }}
         </p>
       </div>
@@ -176,12 +176,12 @@
           :name="getDocumentIcon(patientDocument.category)"
           :color="getDocumentColor(patientDocument.category)"
           variant="soft"
-          size="xl"
+          size="lg"
           class="rounded-md"
         />
 
-        <div>
-          <p class="text-primary text-[10px] leading-none font-semibold tracking-wide uppercase">
+        <div class="flex flex-col">
+          <p class="text-primary text-[10px] font-semibold tracking-wide uppercase">
             {{ getDocumentCategoryLabel(patientDocument.category) }}
           </p>
           <time class="text-muted text-xs">{{ formatDate(patientDocument.createdAt) }}</time>
@@ -199,14 +199,18 @@
           </UDropdownMenu>
         </ClientOnly>
       </div>
-      <div class="text-default mt-1 min-w-0 truncate text-[13px]">
+      <div class="text-default mt-1 ml-9 min-w-0 truncate text-[13px]">
         {{ patientDocument.description || patientDocument.originalFileName }}
       </div>
     </div>
   </div>
 
   <!-- Extended Variant (Card) -->
-  <UCard v-else :ui="{ body: 'h-full' }" :class="{ 'ring-neutral ring-2 ring-offset-2': isEditing }">
+  <UCard
+    v-else
+    :ui="{ root: 'h-full bg-muted  transition-colors  group hover:shadow-xl', body: 'p-3 sm:p-4' }"
+    :class="{ 'ring-primary ring-2': isEditing }"
+  >
     <!-- Edit Mode -->
     <div v-if="isEditing && editingDocument" class="flex h-full flex-col gap-3">
       <div class="flex items-start gap-3">
@@ -260,6 +264,7 @@
           :name="getDocumentIcon(patientDocument.category)"
           :color="getDocumentColor(patientDocument.category)"
           size="xl"
+          class="rounded-lg"
         />
         <div class="min-w-0">
           <div class="flex items-center gap-2">
@@ -267,14 +272,14 @@
             <span class="text-primary text-[10px] leading-none font-semibold uppercase">
               {{ getDocumentCategoryLabel(patientDocument.category) }}
             </span>
+            <UBadge variant="subtle" color="neutral" size="sm">
+              {{ getFileType(patientDocument.mimeType) }}
+            </UBadge>
           </div>
           <!-- Description -->
-          <h3 class="text-default text-sm font-bold text-pretty">
+          <h3 class="text-default text-sm font-semibold text-pretty">
             {{ patientDocument.description || patientDocument.originalFileName }}
           </h3>
-          <UBadge variant="subtle" color="neutral" size="sm">
-            {{ getFileType(patientDocument.mimeType) }}
-          </UBadge>
         </div>
         <ClientOnly>
           <UDropdownMenu size="md" :items="documentActions" :content="{ align: 'end' }">
@@ -284,7 +289,7 @@
               color="neutral"
               size="md"
               square
-              class="absolute -top-4 -right-4"
+              class="absolute -top-2 -right-2"
             />
           </UDropdownMenu>
         </ClientOnly>
