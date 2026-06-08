@@ -153,7 +153,7 @@
                 </div>
                 <div>
                   <span
-                    v-for="si in payment.sessionItems || []"
+                    v-for="si in payment.appointmentItems || []"
                     :key="si.id"
                     class="text-muted bg-muted rounded px-1.5 py-0.5 text-[10px]"
                   >

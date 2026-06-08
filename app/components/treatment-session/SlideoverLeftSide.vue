@@ -4,10 +4,9 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: treatmentPlan } = useTreatmentPlan(() => appointment.treatmentPlanId)
-  const { data: allAppointments } = useAppointmentsList(() => ({
+  const { data } = useAppointmentsList(() => ({
     patientId: patient.id,
-    limit: 6,
-    includePaymentStatus: false
+    limit: 5
   }))
   const { getTherapistName } = useOrganizationMembers()
 
@@ -17,12 +16,13 @@
   const sessionInProgress = computed(() => appointment.status === 'in_progress')
   const shouldShowEVACards = computed(() => sessionInProgress.value || appointment.painLevelAfter != null)
 
+  const appointments = computed(() => data.value?.data)
   const completedSessionsCount = computed(() => {
-    if (!allAppointments.value || !appointment) return 0
+    if (!appointments.value || !appointment) return 0
     const planId = appointment.treatmentPlanId
     if (!planId) return 0
 
-    return allAppointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
+    return appointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
   })
 
   const totalSessionsCount = computed(() => treatmentPlan.value?.numberOfSessions || 0)
@@ -97,7 +97,7 @@
         <div class="flex items-start gap-2">
           <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
           <div class="space-y-0.5">
-            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Motif de prise en charge</h4>
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Diagnostic</h4>
             <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
           </div>
         </div>

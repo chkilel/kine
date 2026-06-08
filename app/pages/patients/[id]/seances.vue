@@ -43,8 +43,8 @@
     return params
   })
 
-  const { data: appointments, isLoading } = useAppointmentsList(queryParams)
-
+  const { data, isLoading } = useAppointmentsList(queryParams)
+  const appointments = computed(() => data.value?.data)
   const appointmentCount = computed(() => appointments.value?.length || 0)
 
   const filteredAppointments = computed(() => {
@@ -171,17 +171,12 @@
         </AppCard>
       </div>
 
-      <div class="space-y-4 lg:col-span-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <UIcon name="hugeicons-folder-details" class="text-muted text-xl" />
-            <div>
-              <h2 class="text-base font-semibold">
-                Séances Indépendantes
-                <span class="text-muted text-sm">({{ appointmentCount }})</span>
-              </h2>
-            </div>
-          </div>
+      <AppCard
+        :title="`Séances Indépendantes (${appointmentCount})`"
+        icon="hugeicons-folder-details"
+        class="lg:col-span-2"
+      >
+        <template #actions>
           <UButton
             icon="i-lucide-plus"
             color="primary"
@@ -189,12 +184,10 @@
             label="Nouvelle Séance"
             @click="handleCreateSession"
           />
-        </div>
-
+        </template>
         <div v-if="isLoading" class="flex justify-center py-12">
           <UIcon name="i-lucide-loader-2" class="text-muted animate-spin text-4xl" />
         </div>
-
         <div v-else-if="filteredAppointments.length > 0" class="space-y-3">
           <AppointmentCard
             v-for="appointment in filteredAppointments"
@@ -206,7 +199,6 @@
             @delete="handleDeleteSession"
           />
         </div>
-
         <UEmpty
           v-else-if="!searchQuery && statusFilter === 'all' && !dateRange.start && !dateRange.end"
           icon="hugeicons-folder-details"
@@ -229,7 +221,6 @@
             }
           ]"
         />
-
         <UEmpty
           v-else
           icon="i-lucide-search-x"
@@ -237,7 +228,8 @@
           description="Aucune consultation ne correspond à vos critères de recherche."
           :ui="{ body: 'max-w-none' }"
         />
-      </div>
+      </AppCard>
+      <div class="space-y-4 lg:col-span-2"></div>
     </div>
   </div>
 </template>

@@ -6,21 +6,23 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: balanceData, isLoading: balancePending } = usePatientBalance(computed(() => props.patientId))
-  const { data: sessionsData } = useAppointmentsPaymentStatus(computed(() => props.patientId))
+  const { data: sessionsData } = useAppointmentsPaymentStatus()
   const { openAddDeposit, openRefundBalance } = useBillingSlideover()
 
   // ─── Computed state ──────────────────────────────────────────
   const depositCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unpaidSessions = computed(() => {
-    const items = sessionsData.value
+    const items = sessionsData.value?.data
+
     if (!items) return { count: 0, totalDueCents: 0 }
     const unpaid = items.filter((a) => {
       const status = a.paymentStatus
       return status === 'unpaid' || status === 'partially_paid'
     })
-    const totalDueCents = unpaid.reduce((sum: number, s: any) => {
-      return sum + s.priceCent - (s.paidCents || 0)
+
+    const totalDueCents = unpaid.reduce((sum: number, s: AppointmentWithPaymentStatus) => {
+      return sum + s.priceCents - (s.paidCents || 0)
     }, 0)
     return { count: unpaid.length, totalDueCents }
   })
@@ -48,7 +50,7 @@
       <div class="bg-primary/5 rounded-lg p-4 text-center">
         <p class="text-muted text-xs font-semibold uppercase">Avance disponible</p>
         <p v-if="balancePending" class="text-primary mt-1 text-2xl font-black tabular-nums">...</p>
-        <p v-else class="text-primary mt-1 text-2xl font-black tabular-nums">
+        <p v-else class="text-primary mt-1 text-2xl font-black">
           {{ formatCurrency(depositCents) }}
         </p>
       </div>
@@ -56,13 +58,17 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between text-sm">
           <span class="text-muted">Séances impayées</span>
-          <UBadge color="info" variant="solid" size="sm">
+          <span class="font-bold">
             {{ unpaidSessions.count }} {{ unpaidSessions.count > 1 ? 'Séances' : 'Séance' }}
-          </UBadge>
+          </span>
+
+          <!-- <UBadge color="info" variant="subtle" size="sm">
+            {{ unpaidSessions.count }} {{ unpaidSessions.count > 1 ? 'Séances' : 'Séance' }}
+          </UBadge> -->
         </div>
         <div class="flex items-center justify-between text-sm">
           <span class="text-muted">Total à encaisser</span>
-          <span class="text-default font-bold tabular-nums">{{ formatCurrency(unpaidSessions.totalDueCents) }}</span>
+          <span class="font-bold">{{ formatCurrency(unpaidSessions.totalDueCents) }}</span>
         </div>
       </div>
     </div>

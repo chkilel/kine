@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import { LazyAppointmentListItem } from '#components'
   import { format, parseISO } from 'date-fns'
   import { fr } from 'date-fns/locale'
 
@@ -129,7 +128,7 @@
 
         <!-- In progress treatment sessions -->
         <div class="space-y-4">
-          <LazyAppointmentListItem v-for="appointment in inProgressAppointments" :key="appointment.id" :appointment />
+          <AppointmentListItem v-for="appointment in inProgressAppointments" :key="appointment.id" :appointment />
         </div>
 
         <AppCard :ui="{ body: 'p-4 sm:p-6' }">

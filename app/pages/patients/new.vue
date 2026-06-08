@@ -4,6 +4,8 @@
   import { fr } from 'date-fns/locale'
   import { getLocalTimeZone, parseDate } from '@internationalized/date'
 
+  import { SEX_OPTIONS } from '~~/shared/utils/constants.patient'
+
   const breadcrumbItems = [
     { label: 'Dashboard', to: '/' },
     { label: 'Patients', to: '/patients' },
@@ -19,7 +21,7 @@
     firstName: '',
     lastName: '',
     dateOfBirth: '',
-    gender: 'male',
+    sex: 'male',
     phone: '',
     status: 'active',
     medicalConditions: [],
@@ -105,16 +107,8 @@
               </template>
             </UPopover>
           </UFormField>
-          <UFormField label="Sexe" name="gender" required>
-            <USelect
-              v-model="formState.gender"
-              placeholder="Sélectionner..."
-              class="w-full"
-              :items="[
-                { label: 'Homme', value: 'male' },
-                { label: 'Femme', value: 'female' }
-              ]"
-            />
+          <UFormField label="Sexe" name="sex" required>
+            <USelect v-model="formState.sex" placeholder="Sélectionner..." class="w-full" :items="SEX_OPTIONS" />
           </UFormField>
           <div class="md:col-span-2">
             <UFormField label="Téléphone" name="phone" required>

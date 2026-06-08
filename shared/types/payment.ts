@@ -72,7 +72,7 @@ export const paymentRequestBodySchema = z.object({
   method: paymentMethodSchema,
   notes: z.string().optional(),
   paidOn: calendarDateSchema.optional(),
-  sessionItems: z
+  appointmentItems: z
     .array(
       z.object({
         appointmentId: z.string().min(1, 'La séance est requise'),
@@ -83,7 +83,7 @@ export const paymentRequestBodySchema = z.object({
 })
 
 export const paymentResponseSchema = paymentSchema.extend({
-  sessionItems: z.array(appointmentPaymentItemSchema).optional()
+  appointmentItems: z.array(appointmentPaymentItemSchema).optional()
 })
 
 // =============================================================================
@@ -121,7 +121,7 @@ export type PaymentRequestBody = z.infer<typeof paymentRequestBodySchema>
 export type PaymentResponse = z.infer<typeof paymentResponseSchema>
 export type PaymentQuery = z.infer<typeof paymentQuerySchema>
 export type PatientPaymentsQuery = z.infer<typeof patientPaymentsQuerySchema>
-export type PaymentWithSessions = Payment & { sessionItems: AppointmentPaymentItem[] }
+export type PaymentWithSessions = Payment & { appointmentItems: AppointmentPaymentItem[] }
 // =============================================================================
 // Form Schemas
 // =============================================================================

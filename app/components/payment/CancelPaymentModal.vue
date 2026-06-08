@@ -22,7 +22,7 @@
     return props.payment?.paidOn || ''
   })
 
-  const sessionItems = computed(() => props.payment?.sessionItems || [])
+  const appointmentItems = computed(() => props.payment?.appointmentItems || [])
 
   // ─── Submit ──────────────────────────────────────────────────
   async function handleCancel() {
@@ -63,9 +63,9 @@
               <span class="text-muted">Date</span>
               <span class="text-default font-medium">{{ paymentDate }}</span>
             </div>
-            <div v-if="sessionItems.length" class="border-default border-t pt-2">
+            <div v-if="appointmentItems.length" class="border-default border-t pt-2">
               <p class="text-muted mb-1 text-xs font-semibold uppercase">Séances liées</p>
-              <div v-for="si in sessionItems" :key="si.id" class="text-xs">
+              <div v-for="si in appointmentItems" :key="si.id" class="text-xs">
                 <span class="text-default">Séance</span>
                 <span class="text-muted">— {{ formatCurrency(si.amountCents) }}</span>
               </div>

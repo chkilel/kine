@@ -161,7 +161,7 @@
       method: event.data.method,
       ...(event.data.notes ? { notes: event.data.notes } : {}),
       paidOn: getTodayAsString(),
-      sessionItems: [{ appointmentId: appointment.id, amountCents }]
+      appointmentItems: [{ appointmentId: appointment.id, amountCents }]
     }
 
     createPayment({

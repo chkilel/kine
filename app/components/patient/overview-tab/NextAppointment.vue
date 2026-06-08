@@ -8,12 +8,12 @@
   const overlay = useOverlay()
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
-  const { data: appointments } = useAppointmentsList(() => ({ patientId: patient.id }))
+  const { data: paginatedAppointments } = useAppointmentsList(() => ({ patientId: patient.id, limit: 5 }))
 
   // ─── Computed state ──────────────────────────────────────────
   const nextAppointment = computed(() => {
-    if (!appointments.value) return null
-    const upcoming = appointments.value
+    if (!paginatedAppointments.value?.data) return null
+    const upcoming = paginatedAppointments.value.data
       .filter((a) => {
         const appointmentDate = new Date(a.date)
         return !isDateDisabled(appointmentDate)

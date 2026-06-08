@@ -9,11 +9,7 @@
   const confirmModal = overlay.create(LazyAppModalConfirm)
 
   // Fetching/mutating data
-  const {
-    data: appointments,
-    isLoading,
-    refetch
-  } = useAppointmentsList(() => ({
+  const { data, isLoading, refetch } = useAppointmentsList(() => ({
     patientId: props.patient.id,
     treatmentPlanId: props.treatmentPlan.id
   }))
@@ -23,6 +19,7 @@
   // Tab state
   const activeTab = ref<'upcoming' | 'finished'>('upcoming')
 
+  const appointments = computed(() => data.value?.data)
   // Filter appointments by status
   const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled']
   const finishedStatuses: AppointmentStatus[] = ['completed', 'cancelled', 'no_show']
@@ -99,7 +96,7 @@
 </script>
 
 <template>
-  <AppCard title="Aperçu des séances">
+  <AppCard title="Séances">
     <template #actions>
       <div v-if="appointments && appointments.length > 0" class="flex items-center gap-2">
         <UButton
@@ -119,6 +116,7 @@
         />
       </div>
     </template>
+
     <ClientOnly>
       <UTabs
         v-if="appointments && appointments.length > 0"

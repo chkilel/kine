@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
         id: { eq: paymentId }
       },
       with: {
-        sessionItems: {
+        appointmentPaymentItems: {
           with: {
             appointment: {
               columns: {
@@ -32,7 +32,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, message: 'Paiement introuvable' })
     }
 
-    return payment
+    return {
+      ...payment,
+      appointmentItems: payment.appointmentPaymentItems
+    }
   } catch (error) {
     handleApiError(error, 'Erreur lors de la récupération du paiement')
   }

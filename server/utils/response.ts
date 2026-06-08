@@ -16,10 +16,15 @@ export function successResponse<T>(
  * Réponse de liste avec métadonnées de pagination (si paginée)
  */
 
-export function listResponse<T>(data: T[], pagination?: any): { data: T[]; pagination?: any } {
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination?: any
+}
+
+export function listResponse<T>(data: T[], nextCursor?: any): PaginatedResponse<T> {
   return {
     data,
-    ...(pagination && { pagination })
+    ...(nextCursor && { nextCursor })
   }
 }
 

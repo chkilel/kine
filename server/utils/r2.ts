@@ -9,10 +9,11 @@ export function getR2Client(event: H3Event) {
       'R2 credentials are not configured. Please set R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_ACCESS_KEY, R2_URL in .env'
     )
   }
+  const r2URL = r2Url || `https://${r2AccountId}.r2.cloudflarestorage.com`
 
   return new S3Client({
     region: 'auto',
-    endpoint: r2Url,
+    endpoint: r2URL,
     credentials: {
       accessKeyId: r2AccessKey,
       secretAccessKey: r2SecretAccessKey

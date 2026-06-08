@@ -35,15 +35,9 @@
   )
 
   // ─── Computed state ──────────────────────────────────────────
-  const showPaymentCard = computed(() => {
-    if (appointment.value?.status !== 'in_progress' && appointment.value?.status !== 'finished') return false
-    return appointment.value?.status === 'finished'
-  })
+  const showPaymentCard = computed(() => appointment.value?.status === 'finished')
 
-  const showPaymentSummaryCard = computed(() => {
-    if (appointment.value?.status !== 'in_progress' && appointment.value?.status !== 'completed') return false
-    return appointment.value?.status === 'completed'
-  })
+  const showPaymentSummaryCard = computed(() => appointment.value?.status === 'completed')
 
   const sessionNotStarted = computed(
     () => appointment.value?.status === 'confirmed' || appointment.value?.status === 'scheduled'

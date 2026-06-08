@@ -9,11 +9,10 @@ z.config(fr())
 import {
   nameSchema,
   calendarDateSchema,
-  genderSchema,
+  sexSchema,
   phoneNumberSchema,
   emergencyContactSchema,
-  noteSchema,
-  patientStatusSchema
+  noteSchema
 } from './base.types'
 
 // =============================================================================
@@ -40,7 +39,7 @@ const patientCreateShape = {
   firstName: nameSchema,
   lastName: nameSchema,
   dateOfBirth: calendarDateSchema,
-  gender: genderSchema,
+  sex: sexSchema,
   email: z.string().optional(),
   phone: phoneNumberSchema,
   address: z.string().optional(),
@@ -55,13 +54,23 @@ const patientCreateShape = {
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
   referralSource: z.string().optional(),
-  status: patientStatusSchema,
   notes: z.array(noteSchema).default([])
 }
 
 export const patientCreateSchema = createInsertSchema(patients, patientCreateShape)
 
 const patientUpdateShape = {
+  firstName: nameSchema.optional(),
+  lastName: nameSchema.optional(),
+  dateOfBirth: calendarDateSchema.optional(),
+  sex: sexSchema.optional(),
+  email: z.email().optional().or(z.literal('')),
+  phone: phoneNumberSchema.optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  referralSource: z.string().optional(),
   emergencyContacts: z.array(emergencyContactSchema).optional(),
   medicalConditions: z.array(z.string()).optional(),
   surgeries: z.array(z.string()).optional(),
@@ -71,31 +80,11 @@ const patientUpdateShape = {
 }
 export const patientUpdateSchema = createInsertSchema(patients, patientUpdateShape).partial()
 
-export const patientInformationUpdateSchema = z.object({
-  address: z.string(),
-  city: z.string(),
-  postalCode: z.string().optional(),
-  referralSource: z.string().optional(),
-  insuranceProvider: z.string().optional(),
-  emergencyContacts: z.array(emergencyContactSchema).optional()
-})
-
-export const patientBasicInfoUpdateSchema = z.object({
-  firstName: nameSchema,
-  lastName: nameSchema,
-  email: z.string().email().optional().or(z.literal('')),
-  phone: phoneNumberSchema,
-  dateOfBirth: calendarDateSchema.optional(),
-  gender: genderSchema,
-  status: patientStatusSchema
-})
-
 // Query schemas
 export const patientQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  search: z.string().optional(),
-  status: patientStatusSchema.optional()
+  search: z.string().optional()
 })
 
 // Paginated response type
@@ -115,7 +104,5 @@ export const patientPaginatedResponseSchema = z.object({
 export type Patient = z.infer<typeof patientSchema>
 export type PatientCreate = z.infer<typeof patientCreateSchema>
 export type PatientUpdate = z.infer<typeof patientUpdateSchema>
-export type PatientInformationUpdate = z.infer<typeof patientInformationUpdateSchema>
-export type PatientBasicInfoUpdate = z.infer<typeof patientBasicInfoUpdateSchema>
 export type PatientQuery = z.infer<typeof patientQuerySchema>
 export type PatientPaginatedResponse = z.infer<typeof patientPaginatedResponseSchema>
