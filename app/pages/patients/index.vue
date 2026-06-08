@@ -74,13 +74,6 @@
     page.value = 1
   }
 
-  async function handlePatientKeydown(event: KeyboardEvent, patient: Patient) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      await navigateTo(`/patients/${patient.id}`)
-    }
-  }
-
   function handlePageChange(newPage: number) {
     page.value = newPage
   }

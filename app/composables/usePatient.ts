@@ -7,17 +7,17 @@ export const PATIENT_KEYS = {
   single: (id: string) => [...PATIENT_KEYS.root, id]
 }
 
-/**
- * Query for fetching paginated patients list with optional filters
- * @param queryParams - Reactive query parameters for pagination and filtering
- * @returns Query result with data and loading state
- */
-const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
+const _usePatientsList = (queryParams: MaybeRefOrGetter<PatientQuery | undefined>, options?: { enabled?: MaybeRefOrGetter<boolean> }) => {
   const requestFetch = useRequestFetch()
   return useQuery({
-    key: () => PATIENT_KEYS.list(queryParams.value),
+    key: () => {
+      const params = toValue(queryParams)
+      return params ? PATIENT_KEYS.list(params) : PATIENT_KEYS.root
+    },
     query: async () => {
-      const resp = await requestFetch('/api/patients', { query: queryParams.value })
+      const params = toValue(queryParams)
+      if (!params) return
+      const resp = await requestFetch('/api/patients', { query: params })
       if (!resp) return
       return {
         data: resp.data.map((data) => ({
@@ -33,6 +33,7 @@ const _usePatientsList = (queryParams: Ref<PatientQuery>) => {
         pagination: resp.pagination
       }
     },
+    enabled: options?.enabled ?? true,
     placeholderData: (previousData) => previousData
   })
 }
