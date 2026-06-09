@@ -3,6 +3,7 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const route = useRoute()
+  const { activeOrganization } = useOrganization()
 
   // ─── State ──────────────────────────────────────────────────
   const open = ref(false)
@@ -13,109 +14,124 @@
     return route.params.id as string | undefined
   })
 
-const isPatientContext = computed(() => {
-  return !!patientId.value && route.path.startsWith('/patients/')
-})
+  const isPatientContext = computed(() => {
+    return !!patientId.value && route.path.startsWith('/patients/')
+  })
+
+  // ─── Organization link ─────────────────────────────────────
+  const activeOrgId = computed(() => activeOrganization.value?.data?.id)
+  const hasActiveOrg = computed(() => !!activeOrgId.value && !activeOrganization.value?.isPending)
 
   // ─── Navigation ──────────────────────────────────────────────
-  const links = [
-    [
-      {
-        label: 'Accueil',
-        icon: 'i-lucide-house',
-        to: '/',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Messagerie',
-        icon: 'i-lucide-message-square',
-        to: '/inbox',
-        badge: '4',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Patients',
-        icon: 'i-lucide-users',
-        to: '/patients',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Planning quotidien',
-        icon: 'i-lucide-calendar',
-        to: '/therapists/day',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Cabinets',
-        icon: 'i-lucide-building-2',
-        to: '/organizations',
-        onSelect: () => {
-          open.value = false
-        }
-      },
-      {
-        label: 'Paramètres',
-        to: '/settings',
-        icon: 'i-lucide-settings',
-        defaultOpen: true,
-        type: 'trigger',
-        children: [
+  const links = computed(
+    () =>
+      [
+        [
           {
-            label: 'Général',
+            label: 'Accueil',
+            icon: 'i-hugeicons-home-01',
+            to: '/',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Messagerie',
+            icon: 'i-hugeicons-mail-01',
+            to: '/inbox',
+            badge: '4',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Patients',
+            icon: 'i-hugeicons-user-multiple',
+            to: '/patients',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Planning quotidien',
+            icon: 'i-hugeicons-calendar-03',
+            to: '/therapists/day',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Organisations',
+            icon: 'i-hugeicons-building-02',
+            to: '/organizations',
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Cabinet',
+            icon: 'i-hugeicons-hospital-02',
+            to: hasActiveOrg.value ? `/organizations/${activeOrgId.value}` : undefined,
+            onSelect: () => {
+              open.value = false
+            }
+          },
+          {
+            label: 'Paramètres',
             to: '/settings',
-            exact: true,
-            onSelect: () => {
-              open.value = false
-            }
-          },
+            icon: 'i-hugeicons-settings-02',
+            defaultOpen: true,
+            type: 'trigger',
+            children: [
+              {
+                label: 'Général',
+                to: '/settings',
+                exact: true,
+                onSelect: () => {
+                  open.value = false
+                }
+              },
+              {
+                label: 'Membres',
+                to: '/settings/members',
+                onSelect: () => {
+                  open.value = false
+                }
+              },
+              {
+                label: 'Notifications',
+                to: '/settings/notifications',
+                onSelect: () => {
+                  open.value = false
+                }
+              },
+              {
+                label: 'Sécurité',
+                to: '/settings/security',
+                onSelect: () => {
+                  open.value = false
+                }
+              }
+            ]
+          }
+        ],
+        [
           {
-            label: 'Membres',
-            to: '/settings/members',
-            onSelect: () => {
-              open.value = false
-            }
-          },
-          {
-            label: 'Notifications',
-            to: '/settings/notifications',
-            onSelect: () => {
-              open.value = false
-            }
-          },
-          {
-            label: 'Sécurité',
-            to: '/settings/security',
-            onSelect: () => {
-              open.value = false
-            }
+            label: 'Support',
+            icon: 'i-hugeicons-help-circle',
+            to: 'mailto:support@kine.com',
+            target: '_blank'
           }
         ]
-      }
-    ],
-    [
-      {
-        label: 'Support',
-        icon: 'i-lucide-help-circle',
-        to: 'mailto:support@kine.com',
-        target: '_blank'
-      }
-    ]
-  ] satisfies NavigationMenuItem[][]
+      ] as NavigationMenuItem[][]
+  )
 
   // ─── Search groups ───────────────────────────────────────────
   const groups = computed(() => [
     {
       id: 'navigation',
       label: 'Navigation',
-      items: links.flat()
+      items: links.value.flat()
     },
     {
       id: 'help',
@@ -124,7 +140,7 @@ const isPatientContext = computed(() => {
         {
           id: 'support',
           label: 'Contacter le support',
-          icon: 'i-lucide-mail',
+          icon: 'i-hugeicons-mail-01',
           to: 'mailto:support@kine.com',
           target: '_blank'
         }
