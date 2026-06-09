@@ -96,7 +96,7 @@
 </script>
 
 <template>
-  <AppCard title="Aperçu des séances">
+  <AppCard title="Séances">
     <template #actions>
       <div v-if="appointments && appointments.length > 0" class="flex items-center gap-2">
         <UButton

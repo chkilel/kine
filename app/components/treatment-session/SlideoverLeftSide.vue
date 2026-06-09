@@ -97,7 +97,7 @@
         <div class="flex items-start gap-2">
           <AppIconBox size="md" color="primary" name="i-hugeicons-bone-02" class="p-1" />
           <div class="space-y-0.5">
-            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Motif de prise en charge</h4>
+            <h4 class="text-muted text-[10px] font-medium tracking-wider uppercase">Diagnostic</h4>
             <span class="text-sm leading-snug">{{ treatmentPlan.diagnosis || 'Non spécifié' }}</span>
           </div>
         </div>

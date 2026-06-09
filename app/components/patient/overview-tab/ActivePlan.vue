@@ -106,7 +106,7 @@
 
       <div class="grid grid-cols-2 gap-2">
         <div v-for="detail in planDetails" :key="detail.label" class="flex items-center gap-3">
-          <AppIconBox size="md" :color="detail.color" :name="detail.icon" class="p-1" />
+          <AppIconBox size="md" color="primary" :name="detail.icon" class="p-1" />
           <div class="flex-1">
             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
             <p class="text-[13px] font-medium">
@@ -118,7 +118,7 @@
       </div>
       <div class="bg-elevated rounded-lg p-2.5">
         <div class="mb-2 flex items-end justify-between">
-          <div class="text-muted mt-1.5 flex justify-between gap-1 text-xs font-semibold tracking-wide uppercase">
+          <div class="text-xs font-medium tracking-wide uppercase">
             <span>Séances:</span>
             <span>
               {{ latestActiveTreatmentPlan.completedAppointments || 0 }} sur
@@ -162,7 +162,7 @@
         class="group bg-muted hover:border-default flex cursor-pointer items-center gap-4 rounded-lg border border-transparent p-1 pr-2 transition-colors hover:shadow-sm"
         @click="openAppointmentSlideover(appointment)"
       >
-        <AppDateBadge :date="appointment.date" color="info" variant="soft" size="lg" class="rounded-r-none" />
+        <AppDateBadge :date="appointment.date" color="primary" variant="soft" size="lg" class="rounded-r-none" />
         <div class="min-w-0 flex-1">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">

@@ -2,9 +2,11 @@
   const searchOpen = defineModel<boolean>('open', { default: false })
 
   const searchTerm = ref('')
-  const searchQuery = ref<PatientQuery>({ page: 1, limit: 5 })
+  const searchQuery = ref<PatientQuery | undefined>(undefined)
 
-  const { data: patientsResult, isLoading } = usePatientsList(searchQuery)
+  const { data: patientsResult, isLoading } = usePatientsList(searchQuery, {
+    enabled: computed(() => !!searchQuery.value)
+  })
 
   watch(searchOpen, (open) => {
     if (open) searchTerm.value = ''
@@ -13,7 +15,10 @@
   watchDebounced(
     searchTerm,
     (val) => {
-      if (val.length < 3) return
+      if (val.length < 3) {
+        searchQuery.value = undefined
+        return
+      }
       searchQuery.value = {
         page: 1,
         limit: 5,
@@ -51,9 +56,9 @@
 </script>
 
 <template>
-  <UModal v-model:open="searchOpen">
+  <UModal v-model:open="searchOpen" :ui="{ content: 'w-full  max-w-2xl' }">
     <UButton
-      label="Rechercher un patient par nom ou prénom…"
+      label="Patients …"
       color="neutral"
       variant="soft"
       icon="i-hugeicons-user-search-01"
@@ -77,31 +82,27 @@
         :loading="isLoading"
         :groups="groups"
         close
-        placeholder="Rechercher un patient par nom ou prénom…"
+        placeholder="Tapez au moins 3 caractères…"
         @update:open="(open: boolean) => !open && (searchOpen = false)"
       >
         <template #item="{ item }">
-          <UUser
-            :name="item.label"
-            :avatar="{
-              loading: 'lazy',
-              alt: item.label
-            }"
-          >
-            <template #description>
-              <div class="text-muted flex flex-wrap items-center gap-x-2 text-[13px]">
-                <div v-if="item.phone" class="flex items-center gap-1.5 tabular-nums">
-                  <UIcon name="i-hugeicons-call-02" class="size-3" />
-                  <span>{{ item.phone }}</span>
-                </div>
-                <span class="border-accented bg-accented inline-block size-1.5 shrink-0 rounded-full border" />
-                <div v-if="item.email" class="flex items-center gap-1.5">
-                  <UIcon name="i-hugeicons-mail-01" class="size-3" />
-                  <span class="truncate">{{ item.email }}</span>
+          <div class="flex w-full items-center gap-x-2">
+            <UAvatar :alt="item.label" />
+            <div class="min-w-0 flex-1">
+              <div class="flex justify-between">
+                <div class="flex w-full flex-wrap items-center justify-between gap-x-2 text-[13px]">
+                  <div class="font-semibold">
+                    {{ item.label }}
+                  </div>
+                  <!-- <span class="border-accented bg-accented inline-block size-1.5 shrink-0 rounded-full border" /> -->
+                  <div v-if="item.phone" class="text-muted flex items-center gap-1.5 tabular-nums">
+                    <UIcon name="i-hugeicons-call-02" class="size-3" />
+                    <span>{{ item.phone }}</span>
+                  </div>
                 </div>
               </div>
-            </template>
-          </UUser>
+            </div>
+          </div>
         </template>
       </UCommandPalette>
     </template>

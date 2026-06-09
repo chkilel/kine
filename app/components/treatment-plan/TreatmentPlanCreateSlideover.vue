@@ -246,7 +246,7 @@
                 <UInput v-model="formState.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
               </UFormField>
 
-              <UFormField label="Motif de prise en charge" name="diagnosis" required class="col-span-1">
+              <UFormField label="Diagnostic" name="diagnosis" required class="col-span-1">
                 <UTextarea
                   v-model="formState.diagnosis"
                   placeholder="Tendinopathie du supra-épineux..."
