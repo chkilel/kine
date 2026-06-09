@@ -18,6 +18,12 @@
     return !!patientId.value && route.path.startsWith('/patients/')
   })
 
+  // ─── Organization context detection ──────────────────────
+  const isOrganizationContext = computed(() => {
+    const id = route.params.id as string | undefined
+    return !!id && route.path.startsWith('/organizations/') && route.path !== '/organizations'
+  })
+
   // ─── Organization link ─────────────────────────────────────
   const activeOrgId = computed(() => activeOrganization.value?.data?.id)
   const hasActiveOrg = computed(() => !!activeOrgId.value && !activeOrganization.value?.isPending)
@@ -172,8 +178,10 @@
 
         <AppPatientContextualMenu :collapsed="collapsed" />
 
+        <AppOrganizationContextualMenu :collapsed="collapsed" />
+
         <UNavigationMenu
-          v-if="!isPatientContext"
+          v-if="!isPatientContext && !isOrganizationContext"
           :collapsed="collapsed"
           :items="links[0]"
           orientation="vertical"
