@@ -103,16 +103,29 @@ export const orgSchedulingSchema = z.object({
   allowSameDay: z.boolean().default(false),
   requirePaymentUpfront: z.boolean().default(false),
   remindersEnabled: z.boolean().default(true),
-  reminderIntervals: z.array(z.number()).default([24, 48])
+  reminderIntervals: z.array(z.number()).default([24, 48]),
+  defaultAppointmentDuration: z
+    .number()
+    .int()
+    .min(15, 'La durée minimale de séance est de 15 minutes')
+    .max(180, 'La durée maximale de séance est de 180 minutes')
+    .default(30),
+  appointmentGapMinutes: z
+    .number()
+    .int()
+    .min(0, "L'intervalle minimum est de 0 minute")
+    .max(60, "L'intervalle maximum est de 60 minutes")
+    .default(5),
+  slotIncrementMinutes: z
+    .number()
+    .int()
+    .min(5, "L'incrément minimum est de 5 minutes")
+    .max(30, "L'incrément maximum est de 30 minutes")
+    .default(15)
 })
 export type OrgScheduling = z.infer<typeof orgSchedulingSchema>
 
 export const orgClinicalSchema = z.object({
-  defaultDurationMinutes: z
-    .number()
-    .min(15, "La durée doit être d'au moins 15 minutes")
-    .max(120, 'La durée ne peut pas dépasser 120 minutes')
-    .default(30),
   requirePainAssessment: z.boolean().default(true),
   requireGoals: z.boolean().default(true),
   requireNextSteps: z.boolean().default(true),

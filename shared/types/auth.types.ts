@@ -15,24 +15,6 @@ const specializationSchema = z
   .array(z.string().trim().min(1, 'La spécialisation ne peut pas être vide'))
   .min(1, 'Au moins une spécialisation est requise')
 
-const sessionDurationSchema = z
-  .number('La durée doit être un nombre')
-  .int('La durée doit être un nombre entier')
-  .min(15, 'La durée minimale de session est de 15 minutes')
-  .max(180, 'La durée maximale de session est de 180 minutes')
-
-const appointmentGapMinutesSchema = z
-  .number("L'intervalle doit être un nombre")
-  .int("L'intervalle doit être un nombre entier")
-  .min(0, "L'intervalle minimum est de 0 minute")
-  .max(60, "L'intervalle maximum est de 60 minutes")
-
-const slotIncrementMinutesSchema = z
-  .number("L'incrément de créneaux doit être un nombre")
-  .int("L'incrément de créneaux doit être un nombre entier")
-  .min(5, "L'incrément minimum est de 5 minutes")
-  .max(30, "L'incrément maximum est de 30 minutes")
-
 // ============================================================================
 // SignUp Schema
 // ============================================================================
@@ -44,9 +26,6 @@ export const signUpSchema = z
     email: emailSchema,
     specialization: specializationSchema.optional(),
     licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional().or(z.literal('')),
-    defaultAppointmentDuration: sessionDurationSchema.default(60).optional(),
-    appointmentGapMinutes: appointmentGapMinutesSchema.default(5).optional(),
-    slotIncrementMinutes: slotIncrementMinutesSchema.default(15).optional(),
     phoneNumbers: z
       .array(phoneEntrySchema)
       .min(1, 'Au moins un numéro de téléphone est requis')
@@ -97,9 +76,6 @@ export const userUpdateSchema = createUpdateSchema(users, {
   lastName: nameSchema,
   specialization: specializationSchema.optional(),
   licenseNumber: z.string().trim().min(1, 'Le numéro de licence est requis').optional(),
-  defaultAppointmentDuration: sessionDurationSchema.optional(),
-  appointmentGapMinutes: appointmentGapMinutesSchema.optional(),
-  slotIncrementMinutes: slotIncrementMinutesSchema.optional(),
   phoneNumbers: z
     .array(phoneEntrySchema)
     .min(1, 'Au moins un numéro de téléphone est requis')
@@ -158,9 +134,6 @@ export type SignUpSchema = z.output<typeof signUpSchema>
 export type LoginSchema = z.output<typeof loginSchema>
 export type UpdateUser = z.output<typeof userUpdateSchema>
 export type UpdatePassword = z.output<typeof updatePasswordSchema>
-export type AppointmentGapMinutes = z.output<typeof appointmentGapMinutesSchema>
-export type SlotIncrementMinutes = z.output<typeof slotIncrementMinutesSchema>
-
 // User Type
 export type User = NonNullable<SessionData>['user']
 

@@ -31,21 +31,6 @@ export const additionalFields = {
     required: true,
     input: true
   },
-  defaultAppointmentDuration: {
-    type: 'number',
-    required: false,
-    input: true
-  },
-  appointmentGapMinutes: {
-    type: 'number',
-    required: false,
-    input: true
-  },
-  slotIncrementMinutes: {
-    type: 'number',
-    required: false,
-    input: true
-  },
   phoneNumbers: {
     type: 'json',
     required: true,
