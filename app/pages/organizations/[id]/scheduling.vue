@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { FormSubmitEvent } from '@nuxt/ui'
+  import type { FormSubmitEvent, RadioGroupItem } from '@nuxt/ui'
   import {
     APPOINTMENT_DURATIONS,
     APPOINTMENT_GAP,
@@ -36,6 +36,18 @@
   const toast = useToast()
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
+
+  const durationItems = computed<RadioGroupItem[]>(() =>
+    APPOINTMENT_DURATIONS.map((duration) => ({ label: `${duration}`, value: duration }))
+  )
+
+  const gapItems = computed<RadioGroupItem[]>(() =>
+    APPOINTMENT_GAP.map((gap) => ({ label: gap === 0 ? 'Aucun' : `${gap}`, value: gap }))
+  )
+
+  const incrementItems = computed<RadioGroupItem[]>(() =>
+    APPOINTMENT_SLOT_INCREMENT.map((increment) => ({ label: `${increment}`, value: increment }))
+  )
 
   function onSubmit(event: FormSubmitEvent<OrgScheduling>) {
     const organizationId = route.params.id as string
@@ -76,85 +88,44 @@
       <div class="flex w-full flex-col gap-6">
         <AppCard variant="outline" title="Planification">
           <div class="flex flex-col gap-y-4">
-            <UFormField label="Durée par défaut de la séance" name="defaultAppointmentDuration">
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
-                    <USkeleton
-                      v-for="duration in APPOINTMENT_DURATIONS"
-                      :key="duration"
-                      class="border-default h-9 rounded-lg border"
-                    />
-                  </div>
-                </template>
-                <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                  <UButton
-                    v-for="duration in APPOINTMENT_DURATIONS"
-                    :key="duration"
-                    :variant="state.defaultAppointmentDuration === duration ? 'solid' : 'outline'"
-                    :color="state.defaultAppointmentDuration === duration ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.defaultAppointmentDuration = duration"
-                  >
-                    {{ duration }} min
-                  </UButton>
-                </div>
-              </ClientOnly>
+            <UFormField label="Durée par défaut de la séance (en min)" name="defaultAppointmentDuration">
+              <URadioGroup
+                v-model="state.defaultAppointmentDuration"
+                :items="durationItems"
+                variant="table"
+                orientation="horizontal"
+                color="primary"
+                indicator="hidden"
+                :ui="{ fieldset: 'w-full', item: 'flex-1 text-center' }"
+              />
             </UFormField>
 
-            <UFormField label="Intervalle entre séances" name="appointmentGapMinutes">
-              <template #hint>Temps minimum entre deux séances consécutives</template>
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
-                    <USkeleton v-for="gap in APPOINTMENT_GAP" :key="gap" class="border-default h-9 rounded-lg border" />
-                  </div>
-                </template>
-                <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                  <UButton
-                    v-for="gap in APPOINTMENT_GAP"
-                    :key="gap"
-                    :variant="state.appointmentGapMinutes === gap ? 'solid' : 'outline'"
-                    :color="state.appointmentGapMinutes === gap ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.appointmentGapMinutes = gap"
-                  >
-                    {{ gap === 0 ? 'Aucun' : `${gap} min` }}
-                  </UButton>
-                </div>
-              </ClientOnly>
+            <UFormField label="Intervalle entre séances (en min)" name="appointmentGapMinutes">
+              <template #help>Temps minimum entre deux séances consécutives</template>
+              <URadioGroup
+                v-model="state.appointmentGapMinutes"
+                :items="gapItems"
+                variant="table"
+                orientation="horizontal"
+                color="primary"
+                indicator="hidden"
+                :ui="{ fieldset: 'flex-wraps', item: 'flex-1 text-center' }"
+              />
             </UFormField>
 
-            <UFormField label="Incrément de créneaux" name="slotIncrementMinutes">
-              <template #hint>
+            <UFormField label="Incrément de créneaux (en min)" name="slotIncrementMinutes">
+              <template #help>
                 Intervalle entre les heures de début possibles (ex: créneaux toutes les 15 minutes)
               </template>
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-5 gap-2">
-                    <USkeleton
-                      v-for="increment in APPOINTMENT_SLOT_INCREMENT"
-                      :key="increment"
-                      class="border-default h-9 rounded-lg border"
-                    />
-                  </div>
-                </template>
-                <div class="grid grid-cols-5 gap-2">
-                  <UButton
-                    v-for="increment in APPOINTMENT_SLOT_INCREMENT"
-                    :key="increment"
-                    :variant="state.slotIncrementMinutes === increment ? 'solid' : 'outline'"
-                    :color="state.slotIncrementMinutes === increment ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.slotIncrementMinutes = increment"
-                  >
-                    {{ increment }} min
-                  </UButton>
-                </div>
-              </ClientOnly>
+              <URadioGroup
+                v-model="state.slotIncrementMinutes"
+                :items="incrementItems"
+                variant="table"
+                orientation="horizontal"
+                color="primary"
+                indicator="hidden"
+                :ui="{ fieldset: 'flex-wrap -space-x-px', item: 'flex-1 text-center' }"
+              />
             </UFormField>
           </div>
         </AppCard>
