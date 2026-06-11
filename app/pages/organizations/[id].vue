@@ -14,11 +14,13 @@
   const tabLabelMap: Record<string, string> = {
     '': 'Profil',
     legal: 'Informations légales',
-    pricing: 'Tarifs & Réservations',
+    pricing: 'Tarifs',
+    scheduling: 'Planification',
     clinical: 'Configuration clinique',
+    notifications: 'Notifications',
     appearance: 'Apparence',
-    advanced: 'Avancé',
-    rooms: 'Gestion des Salles'
+    rooms: 'Salles',
+    advanced: 'Avancé'
   }
 
   const breadcrumbItems = computed<BreadcrumbItem[]>(() => [

@@ -35,10 +35,16 @@
           ariaCurrent: currentPath === `/organizations/${id}/legal` ? 'page' : undefined
         },
         {
-          label: 'Tarifs & Réservations',
-          icon: 'i-hugeicons-appointment-02',
+          label: 'Tarifs',
+          icon: 'i-hugeicons-dollar-circle',
           to: `/organizations/${id}/pricing`,
           ariaCurrent: currentPath === `/organizations/${id}/pricing` ? 'page' : undefined
+        },
+        {
+          label: 'Planification',
+          icon: 'i-hugeicons-calendar-check-in-01',
+          to: `/organizations/${id}/scheduling`,
+          ariaCurrent: currentPath === `/organizations/${id}/scheduling` ? 'page' : undefined
         },
         {
           label: 'Configuration clinique',
@@ -47,22 +53,28 @@
           ariaCurrent: currentPath === `/organizations/${id}/clinical` ? 'page' : undefined
         },
         {
+          label: 'Notifications',
+          icon: 'i-hugeicons-notification-03',
+          to: `/organizations/${id}/notifications`,
+          ariaCurrent: currentPath === `/organizations/${id}/notifications` ? 'page' : undefined
+        },
+        {
           label: 'Apparence',
           icon: 'i-hugeicons-paint-board',
           to: `/organizations/${id}/appearance`,
           ariaCurrent: currentPath === `/organizations/${id}/appearance` ? 'page' : undefined
         },
         {
+          label: 'Salles',
+          icon: 'i-hugeicons-door-open',
+          to: `/organizations/${id}/rooms`,
+          ariaCurrent: currentPath === `/organizations/${id}/rooms` ? 'page' : undefined
+        },
+        {
           label: 'Avancé',
           icon: 'i-hugeicons-settings-01',
           to: `/organizations/${id}/advanced`,
           ariaCurrent: currentPath === `/organizations/${id}/advanced` ? 'page' : undefined
-        },
-        {
-          label: 'Gestion des Salles',
-          icon: 'i-hugeicons-door-open',
-          to: `/organizations/${id}/rooms`,
-          ariaCurrent: currentPath === `/organizations/${id}/rooms` ? 'page' : undefined
         }
       ]
     ]
