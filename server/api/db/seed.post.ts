@@ -1222,9 +1222,6 @@ async function createOrganization(
           bookingWindowDays: 30,
           cancellationHours: 24,
           allowSameDay: false,
-          requirePaymentUpfront: false,
-          remindersEnabled: true,
-          reminderIntervals: [24, 48],
           defaultAppointmentDuration: 60,
           appointmentGapMinutes: 0,
           slotIncrementMinutes: 30
@@ -1233,9 +1230,6 @@ async function createOrganization(
           bookingWindowDays: 45,
           cancellationHours: 12,
           allowSameDay: true,
-          requirePaymentUpfront: true,
-          remindersEnabled: true,
-          reminderIntervals: [12, 24],
           defaultAppointmentDuration: 45,
           appointmentGapMinutes: 5,
           slotIncrementMinutes: 15
@@ -1293,6 +1287,8 @@ async function createOrganization(
         scheduling: schedulingData,
         clinical: clinicalData,
         notifications: {
+          remindersEnabled: true,
+          reminderIntervals: isClinicA ? [24, 48] : [12, 24],
           patient: {
             appointmentConfirmation: true,
             appointmentReminder: true,

@@ -5,6 +5,8 @@
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
   const defaultForm = (org?: Organization) => ({
+    remindersEnabled: org?.notifications?.remindersEnabled ?? true,
+    reminderIntervals: org?.notifications?.reminderIntervals ?? [24, 48],
     patient: {
       appointmentConfirmation: org?.notifications?.patient?.appointmentConfirmation ?? true,
       appointmentReminder: org?.notifications?.patient?.appointmentReminder ?? true,
@@ -69,6 +71,37 @@
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
+        <AppCard variant="outline" title="Configuration des rappels">
+          <div class="flex flex-col gap-y-4">
+            <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
+              <div>
+                <UFormField label="Rappels (heures avant)" name="reminderIntervals">
+                  <UTextarea
+                    :model-value="state.reminderIntervals?.join(', ') || ''"
+                    @update:model-value="
+                      (value: string) =>
+                        (state.reminderIntervals = value
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter(Boolean)
+                          .map(Number))
+                    "
+                    placeholder="24, 48, 72"
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
+            </div>
+            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
+              <span class="text-highlighted text-sm font-bold">Rappels activés</span>
+              <UFormField name="remindersEnabled">
+                <USwitch v-model="state.remindersEnabled" />
+              </UFormField>
+            </div>
+          </div>
+        </AppCard>
+
+        <!-- Patient notifications section -->
         <AppCard variant="outline" title="Notifications patients">
           <div class="flex flex-col gap-y-4">
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">

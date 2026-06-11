@@ -112,9 +112,6 @@ export const orgSchedulingSchema = z.object({
     .max(168, 'Ne peut pas dépasser 168 heures (1 semaine)')
     .default(24),
   allowSameDay: z.boolean().default(false),
-  requirePaymentUpfront: z.boolean().default(false),
-  remindersEnabled: z.boolean().default(true),
-  reminderIntervals: z.array(z.number()).default([24, 48]),
   defaultAppointmentDuration: z
     .number()
     .int()
@@ -145,6 +142,8 @@ export const orgClinicalSchema = z.object({
 export type OrgClinical = z.infer<typeof orgClinicalSchema>
 
 export const orgNotificationsSchema = z.object({
+  remindersEnabled: z.boolean().default(true),
+  reminderIntervals: z.array(z.number()).default([24, 48]),
   patient: z.object({
     appointmentConfirmation: z.boolean().default(true),
     appointmentReminder: z.boolean().default(true),

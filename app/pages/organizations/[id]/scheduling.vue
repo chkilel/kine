@@ -13,9 +13,6 @@
     bookingWindowDays: org?.scheduling?.bookingWindowDays ?? 30,
     cancellationHours: org?.scheduling?.cancellationHours ?? 24,
     allowSameDay: org?.scheduling?.allowSameDay ?? false,
-    requirePaymentUpfront: org?.scheduling?.requirePaymentUpfront ?? false,
-    remindersEnabled: org?.scheduling?.remindersEnabled ?? true,
-    reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48],
     defaultAppointmentDuration: org?.scheduling?.defaultAppointmentDuration ?? 45,
     appointmentGapMinutes: org?.scheduling?.appointmentGapMinutes ?? 5,
     slotIncrementMinutes: org?.scheduling?.slotIncrementMinutes ?? 15
@@ -142,48 +139,17 @@
                 <UFormField label="Délai d'annulation (heures)" name="cancellationHours">
                   <UInput v-model.number="state.cancellationHours" type="number" class="w-full" />
                 </UFormField>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
-              <div>
-                <UFormField label="Rappels (heures avant)" name="reminderIntervals">
-                  <UTextarea
-                    :model-value="state.reminderIntervals?.join(', ') || ''"
-                    @update:model-value="
-                      (value: string) =>
-                        (state.reminderIntervals = value
-                          .split(',')
-                          .map((v) => v.trim())
-                          .filter(Boolean)
-                          .map(Number))
-                    "
-                    placeholder="24, 48, 72"
-                    class="w-full"
-                  />
+               </div>
+             </div>
+              <div class="bg-elevated/50 border-border mt-2 flex items-center justify-between rounded-md border p-4">
+                <span class="text-highlighted text-sm font-bold">Réservation le jour même</span>
+                <UFormField name="allowSameDay">
+                  <USwitch v-model="state.allowSameDay" />
                 </UFormField>
               </div>
             </div>
-            <div class="bg-elevated/50 border-border mt-2 flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Réservation le jour même</span>
-              <UFormField name="allowSameDay">
-                <USwitch v-model="state.allowSameDay" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Paiement à l'avance requis</span>
-              <UFormField name="requirePaymentUpfront">
-                <USwitch v-model="state.requirePaymentUpfront" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Rappels activés</span>
-              <UFormField name="remindersEnabled">
-                <USwitch v-model="state.remindersEnabled" />
-              </UFormField>
-            </div>
-          </div>
-        </AppCard>
-      </div>
+          </AppCard>
+        </div>
 
       <div class="flex w-full flex-col gap-6">
         <div
