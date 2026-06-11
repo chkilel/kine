@@ -1,26 +1,10 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
-  import {
-    APPOINTMENT_DURATIONS,
-    APPOINTMENT_GAP,
-    APPOINTMENT_SLOT_INCREMENT
-  } from '~~/shared/utils/constants.appointment'
 
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
   const defaultForm = (org?: Organization) => ({
-    scheduling: {
-      bookingWindowDays: org?.scheduling?.bookingWindowDays ?? 30,
-      cancellationHours: org?.scheduling?.cancellationHours ?? 24,
-      allowSameDay: org?.scheduling?.allowSameDay ?? false,
-      requirePaymentUpfront: org?.scheduling?.requirePaymentUpfront ?? false,
-      remindersEnabled: org?.scheduling?.remindersEnabled ?? true,
-      reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48],
-      defaultAppointmentDuration: org?.scheduling?.defaultAppointmentDuration ?? 45,
-      appointmentGapMinutes: org?.scheduling?.appointmentGapMinutes ?? 5,
-      slotIncrementMinutes: org?.scheduling?.slotIncrementMinutes ?? 15
-    },
     clinical: {
       requirePainAssessment: org?.clinical?.requirePainAssessment ?? true,
       requireGoals: org?.clinical?.requireGoals ?? true,
@@ -42,36 +26,16 @@
         financial: org?.intake?.consents?.financial ?? false,
         telehealth: org?.intake?.consents?.telehealth ?? false
       }
-    },
-    notifications: {
-      patient: {
-        appointmentConfirmation: org?.notifications?.patient?.appointmentConfirmation ?? true,
-        appointmentReminder: org?.notifications?.patient?.appointmentReminder ?? true,
-        paymentReminder: org?.notifications?.patient?.paymentReminder ?? true
-      },
-      staff: {
-        newAppointment: org?.notifications?.staff?.newAppointment ?? true,
-        cancellation: org?.notifications?.staff?.cancellation ?? true
-      }
     }
   })
 
-  const state = reactive({
-    scheduling: defaultForm().scheduling,
-    clinical: defaultForm().clinical,
-    intake: defaultForm().intake,
-    notifications: defaultForm().notifications
-  })
+  const state = reactive<OrgClinicalIntake>(defaultForm())
 
   watch(
     organization,
     (org) => {
       if (!org) return
-      const form = defaultForm(org)
-      state.scheduling = form.scheduling
-      state.clinical = form.clinical
-      state.intake = form.intake
-      state.notifications = form.notifications
+      Object.assign(state, defaultForm(org))
     },
     { immediate: true }
   )
@@ -81,16 +45,14 @@
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
 
-  function onSubmit(_event: FormSubmitEvent<UpdateOrganization>) {
+  function onSubmit(event: FormSubmitEvent<OrgClinicalIntake>) {
     const organizationId = route.params.id as string
-    const payload: Record<string, any> = {}
-    if (state.scheduling) payload.scheduling = state.scheduling
-    if (state.clinical) payload.clinical = state.clinical
-    if (state.intake) payload.intake = state.intake
-    if (state.notifications) payload.notifications = state.notifications
     updateOrganization.mutate({
       organizationId,
-      organizationData: payload
+      organizationData: {
+        clinical: event.data.clinical,
+        intake: event.data.intake
+      }
     })
   }
 
@@ -116,96 +78,11 @@
       v-else
       ref="form"
       :state="state"
-      :schema="orgSchedulingSchema.or(orgClinicalIntakeNotificationsSchema)"
+      :schema="orgClinicalIntakeSchema"
       class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
-        <AppCard variant="outline" title="Planification">
-          <div class="flex flex-col gap-y-4">
-            <UFormField label="Durée par défaut de la séance" name="scheduling.defaultAppointmentDuration">
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
-                    <USkeleton
-                      v-for="duration in APPOINTMENT_DURATIONS"
-                      :key="duration"
-                      class="border-default h-9 rounded-lg border"
-                    />
-                  </div>
-                </template>
-                <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                  <UButton
-                    v-for="duration in APPOINTMENT_DURATIONS"
-                    :key="duration"
-                    :variant="state.scheduling.defaultAppointmentDuration === duration ? 'solid' : 'outline'"
-                    :color="state.scheduling.defaultAppointmentDuration === duration ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.scheduling.defaultAppointmentDuration = duration"
-                  >
-                    {{ duration }} min
-                  </UButton>
-                </div>
-              </ClientOnly>
-            </UFormField>
-
-            <UFormField label="Intervalle entre séances" name="scheduling.appointmentGapMinutes">
-              <template #hint>Temps minimum entre deux séances consécutives</template>
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
-                    <USkeleton v-for="gap in APPOINTMENT_GAP" :key="gap" class="border-default h-9 rounded-lg border" />
-                  </div>
-                </template>
-                <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                  <UButton
-                    v-for="gap in APPOINTMENT_GAP"
-                    :key="gap"
-                    :variant="state.scheduling.appointmentGapMinutes === gap ? 'solid' : 'outline'"
-                    :color="state.scheduling.appointmentGapMinutes === gap ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.scheduling.appointmentGapMinutes = gap"
-                  >
-                    {{ gap === 0 ? 'Aucun' : `${gap} min` }}
-                  </UButton>
-                </div>
-              </ClientOnly>
-            </UFormField>
-
-            <UFormField label="Incrément de créneaux" name="scheduling.slotIncrementMinutes">
-              <template #hint>
-                Intervalle entre les heures de début possibles (ex: créneaux toutes les 15 minutes)
-              </template>
-              <ClientOnly>
-                <template #fallback>
-                  <div class="grid w-full grid-cols-5 gap-2">
-                    <USkeleton
-                      v-for="increment in APPOINTMENT_SLOT_INCREMENT"
-                      :key="increment"
-                      class="border-default h-9 rounded-lg border"
-                    />
-                  </div>
-                </template>
-                <div class="grid grid-cols-5 gap-2">
-                  <UButton
-                    v-for="increment in APPOINTMENT_SLOT_INCREMENT"
-                    :key="increment"
-                    :variant="state.scheduling.slotIncrementMinutes === increment ? 'solid' : 'outline'"
-                    :color="state.scheduling.slotIncrementMinutes === increment ? 'primary' : 'neutral'"
-                    size="lg"
-                    block
-                    @click="state.scheduling.slotIncrementMinutes = increment"
-                  >
-                    {{ increment }} min
-                  </UButton>
-                </div>
-              </ClientOnly>
-            </UFormField>
-          </div>
-        </AppCard>
-
         <AppCard variant="outline" title="Documentation clinique">
           <div class="flex flex-col gap-y-4">
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
@@ -274,44 +151,6 @@
       </div>
 
       <div class="flex w-full flex-col gap-6">
-        <AppCard variant="outline" title="Notifications">
-          <div class="flex flex-col gap-y-4">
-            <p class="text-muted mb-2 text-sm">Notifications patients</p>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Confirmation de rendez-vous</span>
-              <UFormField name="notifications.patient.appointmentConfirmation">
-                <USwitch v-model="state.notifications.patient.appointmentConfirmation" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Rappel de rendez-vous</span>
-              <UFormField name="notifications.patient.appointmentReminder">
-                <USwitch v-model="state.notifications.patient.appointmentReminder" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Rappel de paiement</span>
-              <UFormField name="notifications.patient.paymentReminder">
-                <USwitch v-model="state.notifications.patient.paymentReminder" />
-              </UFormField>
-            </div>
-
-            <p class="text-muted mt-4 mb-2 text-sm">Notifications staff</p>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Nouveau rendez-vous</span>
-              <UFormField name="notifications.staff.newAppointment">
-                <USwitch v-model="state.notifications.staff.newAppointment" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Annulation</span>
-              <UFormField name="notifications.staff.cancellation">
-                <USwitch v-model="state.notifications.staff.cancellation" />
-              </UFormField>
-            </div>
-          </div>
-        </AppCard>
-
         <div
           class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
         >
@@ -328,6 +167,25 @@
             </p>
           </div>
         </div>
+
+        <AppCard variant="outline" title="À propos de la configuration clinique">
+          <div class="flex flex-col gap-y-4">
+            <p class="text-muted text-sm">
+              Configurez ici les paramètres de documentation clinique et d'inscription des patients. Ces paramètres
+              s'appliquent à tous les kinésithérapeutes de l'organisation.
+            </p>
+            <div class="bg-primary/5 border-primary/20 flex items-start gap-3 rounded-lg border p-4">
+              <UIcon name="i-lucide-info" class="text-primary mt-0.5 size-5 shrink-0" />
+              <div>
+                <p class="text-primary text-sm font-bold">Conseil</p>
+                <p class="text-muted mt-1 text-xs">
+                  Exiger l'évaluation de la douleur et les objectifs peut améliorer la qualité des soins et le suivi des
+                  patients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </AppCard>
       </div>
     </UForm>
 

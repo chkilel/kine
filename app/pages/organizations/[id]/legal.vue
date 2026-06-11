@@ -62,7 +62,10 @@
     const organizationId = route.params.id as string
     updateOrganization.mutate({
       organizationId,
-      organizationData: event.data
+      organizationData: {
+        fiscal: event.data.fiscal,
+        banking: event.data.banking
+      }
     })
   }
 
@@ -179,6 +182,23 @@
       </div>
 
       <div class="flex w-full flex-col gap-6">
+        <div
+          class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
+        >
+          <UIcon
+            :name="isSaving ? 'i-lucide-loader-2' : 'i-lucide-scale'"
+            :class="['size-16', isSaving ? 'text-primary animate-spin' : 'text-muted']"
+          />
+          <div>
+            <p class="text-highlighted text-sm font-bold">
+              {{ isSaving ? 'Enregistrement en cours…' : 'Informations légales à jour' }}
+            </p>
+            <p class="text-muted mt-2 text-xs">
+              Les modifications seront enregistrées après avoir cliqué sur le bouton Enregistrer.
+            </p>
+          </div>
+        </div>
+
         <AppCard variant="outline" title="Conditions de facturation">
           <div class="flex flex-col gap-y-4">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -189,7 +209,11 @@
               </div>
               <div>
                 <UFormField label="Mode de paiement" name="fiscal.paymentMethod">
-                  <USelect v-model="state.fiscal.paymentMethod" :items="PAYMENT_FUNDING_METHOD_OPTIONS" class="w-full" />
+                  <USelect
+                    v-model="state.fiscal.paymentMethod"
+                    :items="PAYMENT_FUNDING_METHOD_OPTIONS"
+                    class="w-full"
+                  />
                 </UFormField>
               </div>
             </div>
@@ -234,23 +258,6 @@
             </div>
           </div>
         </AppCard>
-
-        <div
-          class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
-        >
-          <UIcon
-            :name="isSaving ? 'i-lucide-loader-2' : 'i-lucide-scale'"
-            :class="['size-16', isSaving ? 'text-primary animate-spin' : 'text-muted']"
-          />
-          <div>
-            <p class="text-highlighted text-sm font-bold">
-              {{ isSaving ? 'Enregistrement en cours…' : 'Informations légales à jour' }}
-            </p>
-            <p class="text-muted mt-2 text-xs">
-              Les modifications seront enregistrées après avoir cliqué sur le bouton Enregistrer.
-            </p>
-          </div>
-        </div>
       </div>
     </UForm>
 

@@ -5,32 +5,19 @@
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
   const defaultForm = (org?: Organization) => ({
-    pricing: {
-      rateCent: {
-        clinic: org?.pricing?.rateCent?.clinic ? centsToCurrency(org.pricing.rateCent.clinic) : 100,
-        home: org?.pricing?.rateCent?.home ? centsToCurrency(org.pricing.rateCent.home) : 100,
-        telehealth: org?.pricing?.rateCent?.telehealth ? centsToCurrency(org.pricing.rateCent.telehealth) : 100
-      },
-      packages:
-        org?.pricing?.packages?.map((pkg: any) => ({
-          ...pkg,
-          priceCent: pkg.priceCent ? centsToCurrency(pkg.priceCent) : 100
-        })) ?? []
+    rateCent: {
+      clinic: org?.pricing?.rateCent?.clinic ? centsToCurrency(org.pricing.rateCent.clinic) : 100,
+      home: org?.pricing?.rateCent?.home ? centsToCurrency(org.pricing.rateCent.home) : 100,
+      telehealth: org?.pricing?.rateCent?.telehealth ? centsToCurrency(org.pricing.rateCent.telehealth) : 100
     },
-    scheduling: {
-      bookingWindowDays: org?.scheduling?.bookingWindowDays ?? 30,
-      cancellationHours: org?.scheduling?.cancellationHours ?? 24,
-      allowSameDay: org?.scheduling?.allowSameDay ?? false,
-      requirePaymentUpfront: org?.scheduling?.requirePaymentUpfront ?? false,
-      remindersEnabled: org?.scheduling?.remindersEnabled ?? true,
-      reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48],
-      defaultAppointmentDuration: org?.scheduling?.defaultAppointmentDuration ?? 45,
-      appointmentGapMinutes: org?.scheduling?.appointmentGapMinutes ?? 0,
-      slotIncrementMinutes: org?.scheduling?.slotIncrementMinutes ?? 15
-    }
+    packages:
+      org?.pricing?.packages?.map((pkg) => ({
+        ...pkg,
+        priceCent: pkg.priceCent ? centsToCurrency(pkg.priceCent) : 100
+      })) ?? []
   })
 
-  const state = reactive<OrgPricingScheduling>(defaultForm())
+  const state = reactive<OrgPricing>(defaultForm())
 
   watch(
     organization,
@@ -46,12 +33,13 @@
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
 
-  function onSubmit(event: FormSubmitEvent<OrgPricingScheduling>) {
+  function onSubmit(event: FormSubmitEvent<OrgPricing>) {
     const organizationId = route.params.id as string
-
     updateOrganization.mutate({
       organizationId,
-      organizationData: event.data
+      organizationData: {
+        pricing: event.data
+      }
     })
   }
 
@@ -77,7 +65,7 @@
       v-else
       ref="form"
       :state="state"
-      :schema="orgPricingSchedulingSchema"
+      :schema="orgPricingSchema"
       class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
@@ -90,68 +78,20 @@
             </p>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <UFormField label="Cabinet (MAD)" name="pricing.rateCent.cabinet">
-                  <UInput v-model.number="state.pricing.rateCent.clinic" type="number" class="w-full" />
+                <UFormField label="Cabinet (MAD)" name="rateCent.clinic">
+                  <UInput v-model.number="state.rateCent.clinic" type="number" class="w-full" />
                 </UFormField>
               </div>
               <div>
-                <UFormField label="Domicile (MAD)" name="pricing.rateCent.domicile">
-                  <UInput v-model.number="state.pricing.rateCent.home" type="number" class="w-full" />
+                <UFormField label="Domicile (MAD)" name="rateCent.home">
+                  <UInput v-model.number="state.rateCent.home" type="number" class="w-full" />
                 </UFormField>
               </div>
               <div>
-                <UFormField label="Téléconsultation (MAD)" name="pricing.rateCent.teleconsultation">
-                  <UInput v-model.number="state.pricing.rateCent.telehealth" type="number" class="w-full" />
+                <UFormField label="Téléconsultation (MAD)" name="rateCent.telehealth">
+                  <UInput v-model.number="state.rateCent.telehealth" type="number" class="w-full" />
                 </UFormField>
               </div>
-            </div>
-          </div>
-        </AppCard>
-
-        <AppCard variant="outline" title="Règles de rendez-vous">
-          <div class="flex flex-col gap-y-4">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <UFormField label="Fenêtre de réservation (jours)" name="scheduling.bookingWindowDays">
-                  <UInput v-model.number="state.scheduling.bookingWindowDays" type="number" class="w-full" />
-                </UFormField>
-              </div>
-              <div>
-                <UFormField label="Délai d'annulation (heures)" name="scheduling.cancellationHours">
-                  <UInput v-model.number="state.scheduling.cancellationHours" type="number" class="w-full" />
-                </UFormField>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2">
-              <div>
-                <UFormField label="Rappels (heures avant)" name="scheduling.reminderIntervals">
-                  <UTextarea
-                    :model-value="state.scheduling.reminderIntervals?.join(', ') || ''"
-                    @update:model-value="
-                      (value: string) =>
-                        (state.scheduling.reminderIntervals = value
-                          .split(',')
-                          .map((v) => v.trim())
-                          .filter(Boolean)
-                          .map(Number))
-                    "
-                    placeholder="24, 48, 72"
-                    class="w-full"
-                  />
-                </UFormField>
-              </div>
-            </div>
-            <div class="bg-elevated/50 border-border mt-2 flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Réservation le jour même</span>
-              <UFormField name="scheduling.allowSameDay">
-                <USwitch v-model="state.scheduling.allowSameDay" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Paiement à l'avance requis</span>
-              <UFormField name="scheduling.requirePaymentUpfront">
-                <USwitch v-model="state.scheduling.requirePaymentUpfront" />
-              </UFormField>
             </div>
           </div>
         </AppCard>
@@ -162,12 +102,12 @@
           class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
         >
           <UIcon
-            :name="isSaving ? 'i-lucide-loader-2' : 'i-lucide-calendar-clock'"
+            :name="isSaving ? 'i-lucide-loader-2' : 'i-hugeicons-dollar-circle'"
             :class="['size-16', isSaving ? 'text-primary animate-spin' : 'text-muted']"
           />
           <div>
             <p class="text-highlighted text-sm font-bold">
-              {{ isSaving ? 'Enregistrement en cours…' : 'Tarifs et réservations à jour' }}
+              {{ isSaving ? 'Enregistrement en cours…' : 'Tarifs à jour' }}
             </p>
             <p class="text-muted mt-2 text-xs">
               Les modifications seront enregistrées après avoir cliqué sur le bouton Enregistrer.
@@ -178,8 +118,12 @@
         <AppCard variant="outline" title="À propos des tarifs">
           <div class="flex flex-col gap-y-4">
             <p class="text-muted text-sm">
-              Les tarifs configurés ici sont les tarifs par défaut pour votre organisation. Vous pouvez les adapter pour
-              chaque plan de traitement ou séance individuelle si nécessaire.
+              Les tarifs configurés ici sont les tarifs par défaut pour votre organisation. Pour configurer les règles
+              de réservation (fenêtre de réservation, délai d'annulation, rappels), rendez-vous sur la page
+              <NuxtLink :to="`/organizations/${route.params.id}/scheduling`" class="text-primary underline">
+                Planification
+              </NuxtLink>
+              .
             </p>
             <div class="bg-primary/5 border-primary/20 flex items-start gap-3 rounded-lg border p-4">
               <UIcon name="i-lucide-info" class="text-primary mt-0.5 size-5 shrink-0" />

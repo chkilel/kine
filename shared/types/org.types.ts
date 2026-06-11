@@ -16,9 +16,20 @@ const orgSlugSchema = z
   .max(50, 'Le slug ne peut pas dépasser 50 caractères')
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (seulement lettres minuscules, chiffres et tirets)')
 
+const websiteSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (value === '') return true
+
+    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`
+
+    return URL.canParse(normalized)
+  }, 'URL invalide')
+
 export const orgContactSchema = z.object({
   email: z.email('Adresse email invalide'),
-  website: z.url('URL invalide').optional(),
+  website: websiteSchema.optional(),
   phones: z.array(phoneEntrySchema).min(1, 'Au moins un numéro de téléphone requis')
 })
 export type OrgContact = z.infer<typeof orgContactSchema>
@@ -259,23 +270,11 @@ export const orgLegalSchema = z.object({
 })
 export type OrgLegal = z.infer<typeof orgLegalSchema>
 
-export const orgPricingSchedulingSchema = z.object({
-  pricing: orgPricingSchema,
-  scheduling: orgSchedulingSchema
-})
-export type OrgPricingScheduling = z.infer<typeof orgPricingSchedulingSchema>
-
-export const orgClinicalIntakeNotificationsSchema = z.object({
+export const orgClinicalIntakeSchema = z.object({
   clinical: orgClinicalSchema,
-  intake: orgIntakeSchema,
-  notifications: orgNotificationsSchema
+  intake: orgIntakeSchema
 })
-export type OrgClinicalIntakeNotifications = z.infer<typeof orgClinicalIntakeNotificationsSchema>
-
-export const orgBrandingOnlySchema = z.object({
-  branding: orgBrandingSchema
-})
-export type OrgBrandingOnly = z.infer<typeof orgBrandingOnlySchema>
+export type OrgClinicalIntake = z.infer<typeof orgClinicalIntakeSchema>
 
 export const orgMetadataSchema = z.object({
   metadataText: z.string().refine(
