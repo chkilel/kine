@@ -1224,7 +1224,10 @@ async function createOrganization(
           allowSameDay: false,
           requirePaymentUpfront: false,
           remindersEnabled: true,
-          reminderIntervals: [24, 48]
+          reminderIntervals: [24, 48],
+          defaultAppointmentDuration: 60,
+          appointmentGapMinutes: 0,
+          slotIncrementMinutes: 30
         }
       : {
           bookingWindowDays: 45,
@@ -1232,12 +1235,14 @@ async function createOrganization(
           allowSameDay: true,
           requirePaymentUpfront: true,
           remindersEnabled: true,
-          reminderIntervals: [12, 24]
+          reminderIntervals: [12, 24],
+          defaultAppointmentDuration: 45,
+          appointmentGapMinutes: 5,
+          slotIncrementMinutes: 15
         }
 
     const clinicalData = isClinicA
       ? {
-          defaultDurationMinutes: 30,
           requirePainAssessment: true,
           requireGoals: true,
           requireNextSteps: true,
@@ -1248,7 +1253,6 @@ async function createOrganization(
           ]
         }
       : {
-          defaultDurationMinutes: 45,
           requirePainAssessment: true,
           requireGoals: false,
           requireNextSteps: true,

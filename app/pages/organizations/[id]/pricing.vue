@@ -23,7 +23,10 @@
       allowSameDay: org?.scheduling?.allowSameDay ?? false,
       requirePaymentUpfront: org?.scheduling?.requirePaymentUpfront ?? false,
       remindersEnabled: org?.scheduling?.remindersEnabled ?? true,
-      reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48]
+      reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48],
+      defaultAppointmentDuration: org?.scheduling?.defaultAppointmentDuration ?? 45,
+      appointmentGapMinutes: org?.scheduling?.appointmentGapMinutes ?? 0,
+      slotIncrementMinutes: org?.scheduling?.slotIncrementMinutes ?? 15
     }
   })
 

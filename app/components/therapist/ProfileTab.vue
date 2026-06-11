@@ -1,23 +1,17 @@
 <script setup lang="ts">
   import type { FormError } from '@nuxt/ui'
-  import { APPOINTMENT_GAP_OPTIONS } from '~~/shared/utils/constants.appointment'
 
   const toast = useToast()
 
-  // Get auth session
   const { sessionData, user } = await useAuth()
 
   const form = useTemplateRef<HTMLFormElement>('form')
 
-  // Form state
   const profile = reactive<UpdateUser>({
     firstName: user.value?.firstName || '',
     lastName: user.value?.lastName || '',
     specialization: user.value?.specialization,
     licenseNumber: user.value?.licenseNumber,
-    defaultAppointmentDuration: user.value?.defaultAppointmentDuration || undefined,
-    appointmentGapMinutes: user.value?.appointmentGapMinutes ?? 15,
-    slotIncrementMinutes: user.value?.slotIncrementMinutes ?? 15,
     phoneNumbers: user.value?.phoneNumbers
   })
 
@@ -39,7 +33,6 @@
     fileRef.value?.click()
   }
 
-  // Update profile function
   async function updateProfile() {
     try {
       const result = await authClient.updateUser({
@@ -48,9 +41,6 @@
         lastName: profile.lastName,
         specialization: profile.specialization,
         licenseNumber: profile.licenseNumber,
-        defaultAppointmentDuration: profile.defaultAppointmentDuration,
-        appointmentGapMinutes: profile.appointmentGapMinutes,
-        slotIncrementMinutes: profile.slotIncrementMinutes,
         phoneNumbers: profile.phoneNumbers
       })
 
@@ -120,95 +110,6 @@
               <UInput v-model="profile.licenseNumber" class="w-full" />
             </UFormField>
           </div>
-
-          <USeparator />
-
-          <UFormField name="defaultAppointmentDuration" label="Durée par défaut de la séance">
-            <ClientOnly>
-              <template #fallback>
-                <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
-                  <USkeleton
-                    v-for="duration in APPOINTMENT_DURATIONS"
-                    :key="duration"
-                    class="border-default h-9 rounded-lg border"
-                  />
-                </div>
-              </template>
-              <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                <UButton
-                  v-for="duration in APPOINTMENT_DURATIONS"
-                  :key="duration"
-                  :variant="profile.defaultAppointmentDuration === duration ? 'solid' : 'outline'"
-                  :color="profile.defaultAppointmentDuration === duration ? 'primary' : 'neutral'"
-                  size="lg"
-                  block
-                  @click="profile.defaultAppointmentDuration = duration"
-                >
-                  {{ duration }} min
-                </UButton>
-              </div>
-            </ClientOnly>
-          </UFormField>
-
-          <USeparator />
-
-          <UFormField name="AppointmentGapMinutes" label="Intervalle entre séances">
-            <template #hint>Temps minimum entre deux Appointments consécutives</template>
-            <ClientOnly>
-              <template #fallback>
-                <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
-                  <USkeleton
-                    v-for="gap in APPOINTMENT_GAP_OPTIONS"
-                    :key="gap"
-                    class="border-default h-9 rounded-lg border"
-                  />
-                </div>
-              </template>
-              <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                <UButton
-                  v-for="gap in APPOINTMENT_GAP_OPTIONS"
-                  :key="gap"
-                  :variant="profile.appointmentGapMinutes === gap ? 'solid' : 'outline'"
-                  :color="profile.appointmentGapMinutes === gap ? 'primary' : 'neutral'"
-                  size="lg"
-                  block
-                  @click="profile.appointmentGapMinutes = gap"
-                >
-                  {{ gap === 0 ? 'Aucun' : `${gap} min` }}
-                </UButton>
-              </div>
-            </ClientOnly>
-          </UFormField>
-
-          <USeparator />
-
-          <UFormField name="slotIncrementMinutes" label="Incrément de créneaux">
-            <template #hint>Interval entre les heures de début possibles (ex: créneaux toutes les 15 minutes)</template>
-            <ClientOnly>
-              <template #fallback>
-                <div class="grid w-full grid-cols-5 gap-2">
-                  <USkeleton
-                    v-for="increment in APPOINTMENT_SLOT_INCREMENT_OPTIONS"
-                    :key="increment"
-                    class="border-default h-9 rounded-lg border"
-                  />
-                </div>
-              </template>
-              <div class="grid grid-cols-5 gap-2">
-                <UButton
-                  v-for="increment in APPOINTMENT_SLOT_INCREMENT_OPTIONS"
-                  :key="increment"
-                  :variant="profile.slotIncrementMinutes === increment ? 'solid' : 'outline'"
-                  :color="profile.slotIncrementMinutes === increment ? 'primary' : 'neutral'"
-                  size="lg"
-                  block
-                  @click="profile.slotIncrementMinutes = increment"
-                >
-                  {{ increment }} min
-                </UButton>
-              </div>
-            </ClientOnly>
-          </UFormField>
 
           <USeparator />
 

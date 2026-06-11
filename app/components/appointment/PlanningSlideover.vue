@@ -27,6 +27,8 @@
   const createAppointmentMutation = useCreateAppointment()
   const updateAppointmentMutation = useUpdateAppointment()
 
+  const { data: activeOrg } = useFullOrganization(() => props.patient.organizationId)
+
   // ─── Edit mode detection ─────────────────────────────────────
   // When an `appointment` prop is provided the slideover operates
   // in edit mode. The session can only be started from an
@@ -184,16 +186,17 @@
     }
   )
 
-  // ─── Default duration from therapist ─────────────────────────
-  // Each therapist can have a `defaultAppointmentDuration`. When
-  // the treatment plan's therapist changes (or on mount), we
-  // apply that default to the form.
+  // ─── Default duration from organization ───────────────────────
+  // The active organization's scheduling config provides the default
+  // appointment duration for new appointments.
   watch(
-    () => props.treatmentPlan?.therapistId,
-    (therapistId) => {
-      const therapist = therapists.value.find((t) => t.id === therapistId)
-      if (therapist?.defaultAppointmentDuration) {
-        appointmentDetails.value.duration = therapist.defaultAppointmentDuration
+    [activeOrg, () => props.treatmentPlan?.therapistId],
+    ([org], [prevOrg]) => {
+      if (isEditMode.value) return
+      const orgDuration = org?.scheduling?.defaultAppointmentDuration
+      const prevOrgDuration = prevOrg?.scheduling?.defaultAppointmentDuration
+      if (orgDuration && orgDuration !== prevOrgDuration) {
+        appointmentDetails.value.duration = orgDuration
       }
     },
     { immediate: true }

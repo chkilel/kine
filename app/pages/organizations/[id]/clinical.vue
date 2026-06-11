@@ -1,12 +1,27 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
+  import {
+    APPOINTMENT_DURATIONS,
+    APPOINTMENT_GAP,
+    APPOINTMENT_SLOT_INCREMENT
+  } from '~~/shared/utils/constants.appointment'
 
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
   const defaultForm = (org?: Organization) => ({
+    scheduling: {
+      bookingWindowDays: org?.scheduling?.bookingWindowDays ?? 30,
+      cancellationHours: org?.scheduling?.cancellationHours ?? 24,
+      allowSameDay: org?.scheduling?.allowSameDay ?? false,
+      requirePaymentUpfront: org?.scheduling?.requirePaymentUpfront ?? false,
+      remindersEnabled: org?.scheduling?.remindersEnabled ?? true,
+      reminderIntervals: org?.scheduling?.reminderIntervals ?? [24, 48],
+      defaultAppointmentDuration: org?.scheduling?.defaultAppointmentDuration ?? 45,
+      appointmentGapMinutes: org?.scheduling?.appointmentGapMinutes ?? 5,
+      slotIncrementMinutes: org?.scheduling?.slotIncrementMinutes ?? 15
+    },
     clinical: {
-      defaultDurationMinutes: org?.clinical?.defaultDurationMinutes ?? 30,
       requirePainAssessment: org?.clinical?.requirePainAssessment ?? true,
       requireGoals: org?.clinical?.requireGoals ?? true,
       requireNextSteps: org?.clinical?.requireNextSteps ?? true,
@@ -41,13 +56,22 @@
     }
   })
 
-  const state = reactive<OrgClinicalIntakeNotifications>(defaultForm())
+  const state = reactive({
+    scheduling: defaultForm().scheduling,
+    clinical: defaultForm().clinical,
+    intake: defaultForm().intake,
+    notifications: defaultForm().notifications
+  })
 
   watch(
     organization,
     (org) => {
       if (!org) return
-      Object.assign(state, defaultForm(org))
+      const form = defaultForm(org)
+      state.scheduling = form.scheduling
+      state.clinical = form.clinical
+      state.intake = form.intake
+      state.notifications = form.notifications
     },
     { immediate: true }
   )
@@ -57,11 +81,16 @@
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
 
-  function onSubmit(event: FormSubmitEvent<OrgClinicalIntakeNotifications>) {
+  function onSubmit(_event: FormSubmitEvent<UpdateOrganization>) {
     const organizationId = route.params.id as string
+    const payload: Record<string, any> = {}
+    if (state.scheduling) payload.scheduling = state.scheduling
+    if (state.clinical) payload.clinical = state.clinical
+    if (state.intake) payload.intake = state.intake
+    if (state.notifications) payload.notifications = state.notifications
     updateOrganization.mutate({
       organizationId,
-      organizationData: event.data as any
+      organizationData: payload
     })
   }
 
@@ -87,18 +116,98 @@
       v-else
       ref="form"
       :state="state"
-      :schema="orgClinicalIntakeNotificationsSchema"
+      :schema="orgSchedulingSchema.or(orgClinicalIntakeNotificationsSchema)"
       class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
+        <AppCard variant="outline" title="Planification">
+          <div class="flex flex-col gap-y-4">
+            <UFormField label="Durée par défaut de la séance" name="scheduling.defaultAppointmentDuration">
+              <ClientOnly>
+                <template #fallback>
+                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-7">
+                    <USkeleton
+                      v-for="duration in APPOINTMENT_DURATIONS"
+                      :key="duration"
+                      class="border-default h-9 rounded-lg border"
+                    />
+                  </div>
+                </template>
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                  <UButton
+                    v-for="duration in APPOINTMENT_DURATIONS"
+                    :key="duration"
+                    :variant="state.scheduling.defaultAppointmentDuration === duration ? 'solid' : 'outline'"
+                    :color="state.scheduling.defaultAppointmentDuration === duration ? 'primary' : 'neutral'"
+                    size="lg"
+                    block
+                    @click="state.scheduling.defaultAppointmentDuration = duration"
+                  >
+                    {{ duration }} min
+                  </UButton>
+                </div>
+              </ClientOnly>
+            </UFormField>
+
+            <UFormField label="Intervalle entre séances" name="scheduling.appointmentGapMinutes">
+              <template #hint>Temps minimum entre deux séances consécutives</template>
+              <ClientOnly>
+                <template #fallback>
+                  <div class="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
+                    <USkeleton v-for="gap in APPOINTMENT_GAP" :key="gap" class="border-default h-9 rounded-lg border" />
+                  </div>
+                </template>
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
+                  <UButton
+                    v-for="gap in APPOINTMENT_GAP"
+                    :key="gap"
+                    :variant="state.scheduling.appointmentGapMinutes === gap ? 'solid' : 'outline'"
+                    :color="state.scheduling.appointmentGapMinutes === gap ? 'primary' : 'neutral'"
+                    size="lg"
+                    block
+                    @click="state.scheduling.appointmentGapMinutes = gap"
+                  >
+                    {{ gap === 0 ? 'Aucun' : `${gap} min` }}
+                  </UButton>
+                </div>
+              </ClientOnly>
+            </UFormField>
+
+            <UFormField label="Incrément de créneaux" name="scheduling.slotIncrementMinutes">
+              <template #hint>
+                Intervalle entre les heures de début possibles (ex: créneaux toutes les 15 minutes)
+              </template>
+              <ClientOnly>
+                <template #fallback>
+                  <div class="grid w-full grid-cols-5 gap-2">
+                    <USkeleton
+                      v-for="increment in APPOINTMENT_SLOT_INCREMENT"
+                      :key="increment"
+                      class="border-default h-9 rounded-lg border"
+                    />
+                  </div>
+                </template>
+                <div class="grid grid-cols-5 gap-2">
+                  <UButton
+                    v-for="increment in APPOINTMENT_SLOT_INCREMENT"
+                    :key="increment"
+                    :variant="state.scheduling.slotIncrementMinutes === increment ? 'solid' : 'outline'"
+                    :color="state.scheduling.slotIncrementMinutes === increment ? 'primary' : 'neutral'"
+                    size="lg"
+                    block
+                    @click="state.scheduling.slotIncrementMinutes = increment"
+                  >
+                    {{ increment }} min
+                  </UButton>
+                </div>
+              </ClientOnly>
+            </UFormField>
+          </div>
+        </AppCard>
+
         <AppCard variant="outline" title="Documentation clinique">
           <div class="flex flex-col gap-y-4">
-            <div>
-              <UFormField label="Durée par défaut (minutes)" name="clinical.defaultDurationMinutes">
-                <UInput v-model.number="state.clinical.defaultDurationMinutes" type="number" class="w-full" />
-              </UFormField>
-            </div>
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
               <span class="text-highlighted text-sm font-bold">Exiger évaluation de la douleur</span>
               <UFormField name="clinical.requirePainAssessment">
