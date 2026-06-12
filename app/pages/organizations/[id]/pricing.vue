@@ -201,8 +201,8 @@
             <UButton
               v-if="priceItems?.length && !isAdding"
               icon="i-hugeicons-add-01"
-              color="neutral"
-              variant="ghost"
+              color="primary"
+              variant="subtle"
               size="sm"
               @click="isAdding = true"
             />
@@ -212,57 +212,75 @@
               <div
                 v-for="(item, index) in priceItems"
                 :key="item.id"
-                class="bg-muted hover:border-default flex items-center justify-between rounded-md border border-transparent p-2 transition-colors hover:shadow-sm"
+                class="bg-muted hover:border-default flex items-start gap-4 rounded-md border border-transparent p-2 transition-colors hover:shadow-sm"
               >
-                <div class="flex items-center gap-4">
-                  <AppIconBox
-                    name="i-hugeicons-dollar-circle"
-                    color="primary"
-                    variant="soft"
-                    size="lg"
-                    class="rounded-md"
-                  />
-                  <div>
+                <AppIconBox
+                  name="i-hugeicons-dollar-circle"
+                  color="primary"
+                  variant="soft"
+                  size="xl"
+                  class="rounded-md"
+                />
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium">{{ item.description }}</p>
+                    <UBadge v-if="item.isDefault" variant="subtle" color="primary" size="xs">Par défaut</UBadge>
+                  </div>
+                  <div class="text-muted flex items-center justify-between gap-4 text-xs">
+                    <span class="font-mono">{{ item.code }}</span>
                     <div class="flex items-center gap-2">
-                      <p class="text-sm font-medium">{{ item.description }}</p>
-                      <UBadge v-if="item.isDefault" variant="subtle" color="primary" size="xs">Par défaut</UBadge>
-                    </div>
-                    <div class="text-muted flex gap-4 text-xs">
-                      <span class="font-mono">{{ item.code }}</span>
-                      <span>{{ item.rateCent.clinic.toFixed(2) }} Dh</span>
-                      <span>{{ item.rateCent.home.toFixed(2) }} Dh</span>
-                      <span>{{ item.rateCent.telehealth.toFixed(2) }} Dh</span>
+                      <UButton
+                        v-if="!item.isDefault"
+                        icon="i-hugeicons-star"
+                        variant="ghost"
+                        color="neutral"
+                        size="sm"
+                        square
+                        title="Définir par défaut"
+                        @click="setAsDefault(index)"
+                      />
+                      <AppIconBox
+                        v-else
+                        name="i-hugeicons-star"
+                        color="primary"
+                        variant="solid"
+                        size="md"
+                        title="Tarif par défaut"
+                      />
+                      <UButton
+                        icon="i-hugeicons-edit-04"
+                        variant="ghost"
+                        color="neutral"
+                        size="sm"
+                        square
+                        @click="startEditItem(index)"
+                      />
+                      <UButton
+                        icon="i-hugeicons-delete-02"
+                        variant="ghost"
+                        color="error"
+                        size="sm"
+                        square
+                        :disabled="priceItems.length <= 1"
+                        @click="removeItem(index)"
+                      />
                     </div>
                   </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <UButton
-                    v-if="!item.isDefault"
-                    icon="i-hugeicons-star"
-                    variant="ghost"
-                    color="neutral"
-                    size="sm"
-                    square
-                    title="Définir par défaut"
-                    @click="setAsDefault(index)"
-                  />
-                  <UButton
-                    icon="i-hugeicons-edit-04"
-                    variant="ghost"
-                    color="neutral"
-                    size="sm"
-                    square
-                    @click="startEditItem(index)"
-                  />
-                  <UButton
-                    icon="i-hugeicons-delete-02"
-                    variant="ghost"
-                    color="error"
-                    size="sm"
-                    square
-                    :disabled="priceItems.length <= 1"
-                    @click="removeItem(index)"
-                  />
+
+                  <div class="text-muted flex gap-4 text-xs max-sm:mt-4">
+                    <span class="flex items-center gap-1">
+                      <UIcon name="i-hugeicons-hospital-01" class="size-3.5" />
+                      {{ item.rateCent.clinic.toFixed(2) }} Dh
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <UIcon name="i-hugeicons-home-03" class="size-3.5" />
+                      {{ item.rateCent.home.toFixed(2) }} Dh
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <UIcon name="i-hugeicons-video-02" class="size-3.5" />
+                      {{ item.rateCent.telehealth.toFixed(2) }} Dh
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
