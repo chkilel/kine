@@ -52,7 +52,7 @@
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 pt-6">
+  <div class="flex flex-col gap-6">
     <UCard>
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -62,9 +62,7 @@
           </div>
           <p class="text-muted mt-1 text-sm">Gérer les salles de traitement et les équipements associés.</p>
         </div>
-        <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="handleAddRoom">
-          Ajouter une nouvelle salle
-        </UButton>
+        <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="handleAddRoom">Salle</UButton>
       </div>
       <div class="divide-default mt-8 grid grid-cols-2 gap-8 lg:grid-cols-4">
         <div class="flex flex-col gap-1 border-r">
