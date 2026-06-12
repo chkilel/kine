@@ -31,7 +31,7 @@ export const organizations = sqliteTable('organizations', {
   logo: text(),
   type: text(),
   description: text(),
-  status: text().default('active'),
+  status: text({ enum: ORGANIZATION_STATUS }).default('active'),
   timezone: text().default('Africa/Casablanca'),
   contact: text({ mode: 'json' }).$type<OrgContact>().notNull(),
   address: text({ mode: 'json' }).$type<OrgAddress>().notNull(),

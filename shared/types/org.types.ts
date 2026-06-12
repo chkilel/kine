@@ -86,8 +86,17 @@ export const rateCentSchema = z.object({
 })
 export type RateCent = z.infer<typeof rateCentSchema>
 
-export const orgPricingSchema = z.object({
+export const priceItemSchema = z.object({
+  id: z.string(),
+  code: z.string().min(1, 'Le code est requis'),
+  description: z.string().min(1, 'La description est requise'),
   rateCent: rateCentSchema,
+  isDefault: z.boolean().default(false)
+})
+export type PriceItem = z.infer<typeof priceItemSchema>
+
+export const orgPricingSchema = z.object({
+  priceItems: z.array(priceItemSchema).min(1, 'Au moins un tarif est requis'),
   packages: z
     .array(
       z.object({
@@ -99,6 +108,8 @@ export const orgPricingSchema = z.object({
     .default([])
 })
 export type OrgPricing = z.infer<typeof orgPricingSchema>
+
+export const RESERVED_PRICE_ITEM_CODE = 'DEFAULT'
 
 export const orgSchedulingSchema = z.object({
   bookingWindowDays: z
@@ -188,8 +199,8 @@ export const organizationResponseSchema = createSelectSchema(organizations, {
   id: z.string(),
   name: orgNameSchema,
   slug: orgSlugSchema,
-  type: organizationTypeSchema,
-  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères'),
+  type: organizationTypeSchema.nullable(),
+  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').nullable(),
   logo: z.string().nullable(),
   contact: orgContactSchema.nullable(),
   address: orgAddressSchema.nullable(),
@@ -203,7 +214,7 @@ export const organizationResponseSchema = createSelectSchema(organizations, {
   intake: orgIntakeSchema.nullable(),
   branding: orgBrandingSchema.nullable(),
   status: z.enum(ORGANIZATION_STATUS).nullable(),
-  timezone: z.string(),
+  timezone: z.string().nullable(),
   metadata: z.any()
 })
 

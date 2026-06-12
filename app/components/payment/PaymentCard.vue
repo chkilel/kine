@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
+  import type { PriceItem } from '~~/shared/types/org.types'
 
   // ─── Props / Emits ───────────────────────────────────────────
   const { appointment } = defineProps<{ appointment: Appointment }>()
@@ -16,13 +17,13 @@
   const defaultAmount = computed(() => sessionCostCents.value / 100)
 
   // ─── Pricing ─────────────────────────────────────────────────
-  const treatmentPlan = computed(() => null)
 
   const inheritedPrice = computed<number | null>(() => {
     if (!appointment) return null
     const { location } = appointment
-
-    return activeOrganization.value.data?.pricing.rateCent[location] ?? null
+    const defaultItem = activeOrganization.value.data?.pricing?.priceItems?.find((item: PriceItem) => item.isDefault)
+    if (!defaultItem?.rateCent) return null
+    return defaultItem.rateCent[location] ?? null
   })
 
   const hasCustomCost = computed(() => inheritedPrice.value !== null && sessionCostCents.value !== inheritedPrice.value)

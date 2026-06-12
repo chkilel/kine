@@ -1,29 +1,30 @@
 <script setup lang="ts">
+  import { v7 as uuidv7 } from 'uuid'
   import type { FormSubmitEvent } from '@nuxt/ui'
+  import type { PriceItem } from '~~/shared/types/org.types'
+  import { RESERVED_PRICE_ITEM_CODE, priceItemSchema } from '~~/shared/types/org.types'
 
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
-  const defaultForm = (org?: Organization) => ({
-    rateCent: {
-      clinic: org?.pricing?.rateCent?.clinic ? centsToCurrency(org.pricing.rateCent.clinic) : 100,
-      home: org?.pricing?.rateCent?.home ? centsToCurrency(org.pricing.rateCent.home) : 100,
-      telehealth: org?.pricing?.rateCent?.telehealth ? centsToCurrency(org.pricing.rateCent.telehealth) : 100
-    },
-    packages:
-      org?.pricing?.packages?.map((pkg) => ({
-        ...pkg,
-        priceCent: pkg.priceCent ? centsToCurrency(pkg.priceCent) : 100
-      })) ?? []
-  })
+  const priceItems = ref<PriceItem[]>([])
 
-  const state = reactive<OrgPricing>(defaultForm())
+  const defaultPriceItems = (org?: Organization): PriceItem[] => {
+    return (org?.pricing?.priceItems || []).map((item) => ({
+      ...item,
+      rateCent: {
+        clinic: item.rateCent.clinic ? centsToCurrency(item.rateCent.clinic) : 100,
+        home: item.rateCent.home ? centsToCurrency(item.rateCent.home) : 100,
+        telehealth: item.rateCent.telehealth ? centsToCurrency(item.rateCent.telehealth) : 100
+      }
+    }))
+  }
 
   watch(
     organization,
     (org) => {
       if (!org) return
-      Object.assign(state, defaultForm(org))
+      priceItems.value = defaultPriceItems(org)
     },
     { immediate: true }
   )
@@ -31,28 +32,118 @@
   const updateOrganization = useUpdateOrganization()
   const toast = useToast()
   const isSaving = computed(() => updateOrganization.isLoading.value)
-  const form = useTemplateRef('form')
+  const formState = computed(() => ({
+    priceItems: priceItems.value.map((item) => ({
+      ...item,
+      rateCent: {
+        clinic: item.rateCent.clinic,
+        home: item.rateCent.home,
+        telehealth: item.rateCent.telehealth
+      }
+    })),
+    packages: organization.value?.pricing?.packages ?? []
+  }))
 
-  function onSubmit(event: FormSubmitEvent<OrgPricing>) {
+  function onSubmit() {
     const organizationId = route.params.id as string
     updateOrganization.mutate({
       organizationId,
       organizationData: {
-        pricing: event.data
+        pricing: formState.value
       }
     })
   }
 
   function handleCancel() {
     if (organization.value) {
-      Object.assign(state, defaultForm(organization.value))
-      form.value?.clear()
+      priceItems.value = defaultPriceItems(organization.value)
       toast.add({
         title: 'Annulation',
         description: 'Modifications annulées',
         color: 'neutral'
       })
     }
+  }
+
+  const priceItemFormSchema = priceItemSchema.omit({ id: true })
+
+  const isAdding = ref(false)
+  const editingIndex = ref<number | null>(null)
+
+  const priceItemFormState = reactive<Omit<PriceItem, 'id'>>({
+    code: '',
+    description: '',
+    rateCent: { clinic: 100, home: 100, telehealth: 100 },
+    isDefault: false
+  })
+
+  const isEditing = computed(() => editingIndex.value !== null)
+
+  const addButtonLabel = computed(() => (isEditing.value ? 'Mettre à jour le tarif' : 'Ajouter le tarif'))
+
+  function onPriceItemSubmit({ data }: FormSubmitEvent<Omit<PriceItem, 'id'>>) {
+    if (!priceItems.value) priceItems.value = []
+
+    if (data.isDefault) {
+      priceItems.value.forEach((item) => {
+        item.isDefault = false
+      })
+    }
+
+    const itemData: PriceItem = {
+      id: editingIndex.value !== null ? priceItems.value[editingIndex.value]!.id : uuidv7(),
+      code: data.code.trim().toUpperCase(),
+      description: data.description.trim(),
+      rateCent: data.rateCent,
+      isDefault: data.isDefault
+    }
+
+    if (editingIndex.value !== null) {
+      priceItems.value[editingIndex.value] = itemData
+    } else {
+      priceItems.value.push(itemData)
+    }
+
+    resetPriceItemForm()
+  }
+
+  function startEditItem(index: number) {
+    const item = priceItems.value?.[index]
+    if (!item) return
+
+    editingIndex.value = index
+    priceItemFormState.code = item.code
+    priceItemFormState.description = item.description
+    priceItemFormState.rateCent = { ...item.rateCent }
+    priceItemFormState.isDefault = item.isDefault
+    isAdding.value = true
+  }
+
+  function removeItem(index: number) {
+    if (!priceItems.value || priceItems.value.length <= 1) return
+
+    const wasDefault = priceItems.value[index]?.isDefault
+    priceItems.value.splice(index, 1)
+
+    if (wasDefault && priceItems.value.length > 0) {
+      priceItems.value[0]!.isDefault = true
+    }
+  }
+
+  function resetPriceItemForm() {
+    editingIndex.value = null
+    priceItemFormState.code = ''
+    priceItemFormState.description = ''
+    priceItemFormState.rateCent = { clinic: 100, home: 100, telehealth: 100 }
+    priceItemFormState.isDefault = false
+    isAdding.value = false
+  }
+
+  function setAsDefault(index: number) {
+    if (!priceItems.value) return
+    priceItems.value.forEach((item, i) => {
+      item.isDefault = i === index
+    })
   }
 </script>
 
@@ -61,60 +152,9 @@
     <div v-if="isPending" class="flex items-center justify-center py-12">
       <UIcon name="i-lucide-loader-2" class="text-muted size-8 animate-spin" />
     </div>
-    <UForm
-      v-else
-      ref="form"
-      :state="state"
-      :schema="orgPricingSchema"
-      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 lg:grid-cols-2"
-      @submit="onSubmit"
-    >
-      <div class="flex w-full flex-col gap-6">
-        <AppCard variant="outline" title="Tarifs de séance">
-          <div class="flex flex-col gap-y-4">
-            <p class="text-muted text-sm">
-              Ces tarifs sont utilisés par défaut pour les séances. Ils peuvent être surchargés au niveau du plan de
-              traitement ou de la séance.
-            </p>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <UFormField label="Cabinet (MAD)" name="rateCent.clinic">
-                  <UInput v-model.number="state.rateCent.clinic" type="number" class="w-full" />
-                </UFormField>
-              </div>
-              <div>
-                <UFormField label="Domicile (MAD)" name="rateCent.home">
-                  <UInput v-model.number="state.rateCent.home" type="number" class="w-full" />
-                </UFormField>
-              </div>
-              <div>
-                <UFormField label="Téléconsultation (MAD)" name="rateCent.telehealth">
-                  <UInput v-model.number="state.rateCent.telehealth" type="number" class="w-full" />
-                </UFormField>
-              </div>
-            </div>
-          </div>
-        </AppCard>
-      </div>
 
-      <div class="flex w-full flex-col gap-6">
-        <div
-          class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
-        >
-          <UIcon
-            :name="isSaving ? 'i-lucide-loader-2' : 'i-hugeicons-dollar-circle'"
-            :class="['size-16', isSaving ? 'text-primary animate-spin' : 'text-muted']"
-          />
-          <div>
-            <p class="text-highlighted text-sm font-bold">
-              {{ isSaving ? 'Enregistrement en cours…' : 'Tarifs à jour' }}
-            </p>
-            <p class="text-muted mt-2 text-xs">
-              Les modifications seront enregistrées après avoir cliqué sur le bouton Enregistrer.
-            </p>
-          </div>
-        </div>
-
+    <template v-else>
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <AppCard variant="outline" title="À propos des tarifs">
           <div class="flex flex-col gap-y-4">
             <p class="text-muted text-sm">
@@ -136,26 +176,190 @@
             </div>
           </div>
         </AppCard>
-      </div>
-    </UForm>
 
-    <div class="border-default border-t pt-4">
-      <div class="flex items-center justify-end gap-3">
-        <UButton
-          label="Annuler les changements"
-          color="neutral"
-          variant="outline"
-          :disabled="isSaving"
-          @click="handleCancel"
-        />
-        <UButton
-          label="Enregistrer les modifications"
-          icon="i-hugeicons-save"
-          :loading="isSaving"
-          :disabled="isSaving"
-          @click="form?.submit()"
-        />
+        <div
+          class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
+        >
+          <UIcon
+            :name="isSaving ? 'i-lucide-loader-2' : 'i-hugeicons-dollar-circle'"
+            :class="['size-16', isSaving ? 'text-primary animate-spin' : 'text-muted']"
+          />
+          <div>
+            <p class="text-highlighted text-sm font-bold">
+              {{ isSaving ? 'Enregistrement en cours…' : 'Tarifs à jour' }}
+            </p>
+            <p class="text-muted mt-2 text-xs">
+              Les modifications seront enregistrées après avoir cliqué sur le bouton Enregistrer.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="flex w-full flex-col gap-6">
+        <AppCard title="Tarifs">
+          <template #actions>
+            <UButton
+              v-if="priceItems?.length && !isAdding"
+              icon="i-hugeicons-add-01"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="isAdding = true"
+            />
+          </template>
+          <div class="space-y-2">
+            <div v-if="priceItems?.length" class="divide-default space-y-2 divide-y">
+              <div
+                v-for="(item, index) in priceItems"
+                :key="item.id"
+                class="bg-muted hover:border-default flex items-center justify-between rounded-md border border-transparent p-2 transition-colors hover:shadow-sm"
+              >
+                <div class="flex items-center gap-4">
+                  <AppIconBox
+                    name="i-hugeicons-dollar-circle"
+                    color="primary"
+                    variant="soft"
+                    size="lg"
+                    class="rounded-md"
+                  />
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-medium">{{ item.description }}</p>
+                      <UBadge v-if="item.isDefault" variant="subtle" color="primary" size="xs">Par défaut</UBadge>
+                    </div>
+                    <div class="text-muted flex gap-4 text-xs">
+                      <span class="font-mono">{{ item.code }}</span>
+                      <span>{{ item.rateCent.clinic.toFixed(2) }} Dh</span>
+                      <span>{{ item.rateCent.home.toFixed(2) }} Dh</span>
+                      <span>{{ item.rateCent.telehealth.toFixed(2) }} Dh</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UButton
+                    v-if="!item.isDefault"
+                    icon="i-hugeicons-star"
+                    variant="ghost"
+                    color="neutral"
+                    size="sm"
+                    square
+                    title="Définir par défaut"
+                    @click="setAsDefault(index)"
+                  />
+                  <UButton
+                    icon="i-hugeicons-edit-04"
+                    variant="ghost"
+                    color="neutral"
+                    size="sm"
+                    square
+                    @click="startEditItem(index)"
+                  />
+                  <UButton
+                    icon="i-hugeicons-delete-02"
+                    variant="ghost"
+                    color="error"
+                    size="sm"
+                    square
+                    :disabled="priceItems.length <= 1"
+                    @click="removeItem(index)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="isAdding" class="border-accented space-y-3 rounded-md border p-4">
+              <div class="flex items-center justify-between">
+                <h4 class="font-medium">
+                  {{ isEditing ? 'Modifier le tarif' : 'Ajouter un tarif' }}
+                </h4>
+                <UButton
+                  icon="i-hugeicons-cancel-01"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  square
+                  @click="resetPriceItemForm"
+                />
+              </div>
+              <UForm
+                ref="priceItemForm"
+                :state="priceItemFormState"
+                :schema="priceItemFormSchema"
+                :validateOn="['input']"
+                class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                @submit="onPriceItemSubmit"
+              >
+                <UFormField label="Code" name="code" required>
+                  <UInput
+                    v-model="priceItemFormState.code"
+                    placeholder="MASSAGE_30"
+                    class="w-full"
+                    :disabled="isEditing && priceItemFormState.code === RESERVED_PRICE_ITEM_CODE"
+                  />
+                </UFormField>
+                <UFormField label="Description" name="description" required>
+                  <UInput v-model="priceItemFormState.description" placeholder="Massage de 30 minutes" class="w-full" />
+                </UFormField>
+                <UFormField label="Cabinet (MAD)" name="rateCent.clinic" required>
+                  <UInput v-model.number="priceItemFormState.rateCent.clinic" type="number" class="w-full" />
+                </UFormField>
+                <UFormField label="Domicile (MAD)" name="rateCent.home" required>
+                  <UInput v-model.number="priceItemFormState.rateCent.home" type="number" class="w-full" />
+                </UFormField>
+                <UFormField label="Téléconsultation (MAD)" name="rateCent.telehealth" required>
+                  <UInput v-model.number="priceItemFormState.rateCent.telehealth" type="number" class="w-full" />
+                </UFormField>
+                <UFormField label="Tarif par défaut" name="isDefault">
+                  <UCheckbox v-model="priceItemFormState.isDefault" label="Définir comme tarif par défaut" />
+                </UFormField>
+                <div class="col-span-1 flex gap-2 md:col-span-2">
+                  <UButton :label="addButtonLabel" color="primary" variant="subtle" size="sm" type="submit" />
+                  <UButton label="Annuler" color="neutral" variant="ghost" size="sm" @click="resetPriceItemForm" />
+                </div>
+              </UForm>
+            </div>
+
+            <UEmpty
+              v-if="!priceItems?.length && !isAdding"
+              variant="naked"
+              size="sm"
+              icon="i-hugeicons-dollar-circle"
+              title="Aucun tarif configuré"
+              description="Ajoutez un tarif pour définir les prix de vos séances."
+              :actions="[
+                {
+                  icon: 'i-hugeicons-add-01',
+                  label: 'Ajouter un tarif',
+                  variant: 'subtle',
+                  onClick(event) {
+                    event.stopPropagation()
+                    isAdding = true
+                  }
+                }
+              ]"
+            />
+          </div>
+        </AppCard>
+      </div>
+
+      <div class="border-default border-t pt-4">
+        <div class="flex items-center justify-end gap-3">
+          <UButton
+            label="Annuler les changements"
+            color="neutral"
+            variant="outline"
+            :disabled="isSaving"
+            @click="handleCancel"
+          />
+          <UButton
+            label="Enregistrer les modifications"
+            icon="i-hugeicons-save"
+            :loading="isSaving"
+            :disabled="isSaving || priceItems.length === 0"
+            @click="onSubmit"
+          />
+        </div>
+      </div>
+    </template>
   </div>
 </template>

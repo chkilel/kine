@@ -1,18 +1,16 @@
 import { treatmentPlans, patients, organizations } from '~~/server/database/schema'
 import { eq, and, isNull } from 'drizzle-orm'
+import { getDefaultPriceItem } from '~~/server/utils/pricing'
 
 // POST /api/treatment-plans - Create new treatment plan
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
   try {
-    // 1. Validate input
     const body = await readValidatedBody(event, treatmentPlanCreateSchema.parse)
 
-    // 2. Require current user and organization from session
     const { organizationId } = await requireAuthWithOrg(event)
 
-    // 3. Verify patient exists and belongs to the organization
     const [patient] = await db
       .select()
       .from(patients)
@@ -30,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
     let pricing: RateCent
 
-    //4. Determine pricing: use provided pricing or fall back to org defaults
+    // Determine pricing: use provided pricing or fall back to org defaults
     if (body.pricing) {
       pricing = body.pricing
     } else {
@@ -42,10 +40,16 @@ export default defineEventHandler(async (event) => {
           message: 'Organisation introuvable'
         })
       }
-      pricing = organization.pricing.rateCent
+      const defaultItem = getDefaultPriceItem(organization)
+      if (!defaultItem?.rateCent) {
+        throw createError({
+          statusCode: 400,
+          message: "Aucun tarif par défaut configuré pour l'organisation"
+        })
+      }
+      pricing = defaultItem.rateCent
     }
 
-    // Use org ID from request body or fallback to session
     const validatedData = {
       ...body,
       organizationId,

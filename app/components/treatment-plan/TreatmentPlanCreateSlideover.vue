@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { PriceItem } from '~~/shared/types/org.types'
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
   import type { Form, FormSubmitEvent } from '@nuxt/ui'
 
@@ -23,11 +24,20 @@
 
   // Get default pricing from organization (in DH for display)
   const getDefaultPricing = () => {
-    const pricing = activeOrganization.value.data?.pricing?.rateCent
+    const orgPricing = activeOrganization.value.data?.pricing
+    if (!orgPricing) {
+      return { clinic: 150, home: 200, telehealth: 100 }
+    }
+
+    const defaultItem =
+      orgPricing.priceItems?.find((item: PriceItem) => item.isDefault) || orgPricing.priceItems?.[0]
+    if (!defaultItem?.rateCent) {
+      return { clinic: 150, home: 200, telehealth: 100 }
+    }
     return {
-      clinic: pricing?.clinic ? centsToCurrency(pricing.clinic) : 100,
-      home: pricing?.home ? centsToCurrency(pricing.home) : 100,
-      telehealth: pricing?.telehealth ? centsToCurrency(pricing.telehealth) : 100
+      clinic: defaultItem.rateCent.clinic ? centsToCurrency(defaultItem.rateCent.clinic) : 150,
+      home: defaultItem.rateCent.home ? centsToCurrency(defaultItem.rateCent.home) : 200,
+      telehealth: defaultItem.rateCent.telehealth ? centsToCurrency(defaultItem.rateCent.telehealth) : 100
     }
   }
 

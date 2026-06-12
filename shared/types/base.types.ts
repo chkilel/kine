@@ -183,7 +183,7 @@ export type OrganizationStatus = z.infer<typeof organizationStatusSchema>
 // =============================================================================
 
 export const ORGANIZATION_TYPES = ['cabinet', 'medical-center', 'clinic', 'rehabilitation-center'] as const
-export const organizationTypeSchema = z.enum(ORGANIZATION_TYPES)
+export const organizationTypeSchema = z.string()
 export type OrganizationType = z.infer<typeof organizationTypeSchema>
 
 // =============================================================================
