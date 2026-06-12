@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "aecbb02f-bb4d-46df-87af-b40cf92648e5",
+  "id": "19b03d08-a76e-4afe-b386-7d5238c67cee",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -395,36 +395,6 @@
       "default": null,
       "generated": null,
       "name": "licenseNumber",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": "30",
-      "generated": null,
-      "name": "defaultAppointmentDuration",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": "5",
-      "generated": null,
-      "name": "appointmentGapMinutes",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": "15",
-      "generated": null,
-      "name": "slotIncrementMinutes",
       "entityType": "columns",
       "table": "users"
     },

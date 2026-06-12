@@ -1,21 +1,19 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
   import type { Organization } from '~~/shared/types/org.types'
-  import { orgBrandingOnlySchema, type OrgBrandingOnly } from '~~/shared/types/org.types'
+  import { orgBrandingSchema, type OrgBranding } from '~~/shared/types/org.types'
 
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)
 
   const defaultForm = (org?: Organization) => ({
-    branding: {
-      primaryColor: org?.branding?.primaryColor ?? '#3B82F6',
-      accentColor: org?.branding?.accentColor ?? '#10B981',
-      customDomain: org?.branding?.customDomain ?? '',
-      logoUrl: org?.branding?.logoUrl
-    }
+    primaryColor: org?.branding?.primaryColor ?? '#3B82F6',
+    accentColor: org?.branding?.accentColor ?? '#10B981',
+    customDomain: org?.branding?.customDomain ?? '',
+    logoUrl: org?.branding?.logoUrl
   })
 
-  const state = reactive<OrgBrandingOnly>(defaultForm())
+  const state = reactive<OrgBranding>(defaultForm())
 
   watch(
     organization,
@@ -31,11 +29,13 @@
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
 
-  function onSubmit(event: FormSubmitEvent<OrgBrandingOnly>) {
+  function onSubmit(event: FormSubmitEvent<OrgBranding>) {
     const organizationId = route.params.id as string
     updateOrganization.mutate({
       organizationId,
-      organizationData: event.data
+      organizationData: {
+        branding: event.data
+      }
     })
   }
 
@@ -61,7 +61,7 @@
       v-else
       ref="form"
       :state="state"
-      :schema="orgBrandingOnlySchema"
+      :schema="orgBrandingSchema"
       class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
@@ -86,19 +86,19 @@
             </div>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <UFormField label="Couleur primaire" name="branding.primaryColor">
-                  <UInput v-model="state.branding.primaryColor" type="color" class="w-full" />
+                <UFormField label="Couleur primaire" name="primaryColor">
+                  <UInput v-model="state.primaryColor" type="color" class="w-full" />
                 </UFormField>
               </div>
               <div>
-                <UFormField label="Couleur secondaire" name="branding.accentColor">
-                  <UInput v-model="state.branding.accentColor" type="color" class="w-full" />
+                <UFormField label="Couleur secondaire" name="accentColor">
+                  <UInput v-model="state.accentColor" type="color" class="w-full" />
                 </UFormField>
               </div>
             </div>
             <div>
-              <UFormField label="Domaine personnalisé (optionnel)" name="branding.customDomain">
-                <UInput v-model="state.branding.customDomain" placeholder="client.monclinique.ma" class="w-full" />
+              <UFormField label="Domaine personnalisé (optionnel)" name="customDomain">
+                <UInput v-model="state.customDomain" placeholder="client.monclinique.ma" class="w-full" />
               </UFormField>
             </div>
           </div>
@@ -111,11 +111,11 @@
             <p class="text-muted text-sm">Voici un aperçu de vos couleurs de marque.</p>
             <div class="flex items-center gap-4">
               <div class="flex flex-col items-center gap-2">
-                <div class="size-16 rounded-xl shadow-sm" :style="{ backgroundColor: state.branding.primaryColor }" />
+                <div class="size-16 rounded-xl shadow-sm" :style="{ backgroundColor: state.primaryColor }" />
                 <span class="text-muted text-xs">Primaire</span>
               </div>
               <div class="flex flex-col items-center gap-2">
-                <div class="size-16 rounded-xl shadow-sm" :style="{ backgroundColor: state.branding.accentColor }" />
+                <div class="size-16 rounded-xl shadow-sm" :style="{ backgroundColor: state.accentColor }" />
                 <span class="text-muted text-xs">Secondaire</span>
               </div>
             </div>

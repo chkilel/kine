@@ -56,12 +56,38 @@
     <UCard>
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-lg font-bold">Salles du cabinet</h2>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-square-chart-gantt" class="text-primary size-6" />
+            <h2 class="text-lg font-bold">Salles du cabinet</h2>
+          </div>
           <p class="text-muted mt-1 text-sm">Gérer les salles de traitement et les équipements associés.</p>
         </div>
         <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="handleAddRoom">
           Ajouter une nouvelle salle
         </UButton>
+      </div>
+      <div class="divide-default mt-8 grid grid-cols-2 gap-8 lg:grid-cols-4">
+        <div class="flex flex-col gap-1 border-r">
+          <span class="text-muted text-sm font-medium">Total Salles</span>
+          <span class="text-2xl font-extrabold">{{ stats.roomCount }}</span>
+        </div>
+        <div class="flex flex-col gap-1 border-r">
+          <span class="text-muted text-sm font-medium">Capacité totale</span>
+          <span class="text-2xl font-extrabold">{{ stats.totalCapacity }}</span>
+          <span class="text-info mt-0.5 text-xs font-medium">patients</span>
+        </div>
+        <div class="flex flex-col gap-1 border-r">
+          <span class="text-muted text-sm font-medium">Salles PMR</span>
+          <span class="text-2xl font-extrabold">{{ stats.accessibleRooms }}</span>
+          <span class="text-success mt-0.5 text-xs font-medium">
+            {{ stats.accessibleRooms > 0 ? 'Accessibles' : 'Non accessibles' }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-muted text-sm font-medium">Équipements</span>
+          <span class="text-2xl font-extrabold">{{ stats.equipmentCount }}</span>
+          <span class="text-muted text-xs">enregistrés</span>
+        </div>
       </div>
     </UCard>
 
@@ -78,7 +104,7 @@
         v-for="room in rooms"
         :key="room.id"
         class="group hover:ring-primary/40 flex h-full min-h-25 flex-col overflow-hidden transition-all duration-200"
-        :ui="{ root: 'divide-y-0', body: 'flex-1', footer: 'border-t border-default bg-muted' }"
+        :ui="{ root: 'divide-y-0', body: 'flex-1', footer: ' pt-0' }"
       >
         <div class="flex flex-col gap-6">
           <div class="flex items-start justify-between gap-4">
@@ -155,35 +181,5 @@
         </div>
       </UCard>
     </div>
-
-    <UCard variant="outline">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-square-chart-gantt" class="text-primary size-6" />
-        <h2 class="text-lg font-bold">Statistiques des Salles</h2>
-      </div>
-      <div class="divide-default mt-6 grid grid-cols-2 gap-8 lg:grid-cols-4">
-        <div class="flex flex-col gap-1 border-r">
-          <span class="text-muted text-sm font-medium">Total Salles</span>
-          <span class="text-2xl font-extrabold">{{ stats.roomCount }}</span>
-        </div>
-        <div class="flex flex-col gap-1 border-r">
-          <span class="text-muted text-sm font-medium">Capacité totale</span>
-          <span class="text-2xl font-extrabold">{{ stats.totalCapacity }}</span>
-          <span class="text-info mt-0.5 text-xs font-medium">patients</span>
-        </div>
-        <div class="flex flex-col gap-1 border-r">
-          <span class="text-muted text-sm font-medium">Salles PMR</span>
-          <span class="text-2xl font-extrabold">{{ stats.accessibleRooms }}</span>
-          <span class="text-success mt-0.5 text-xs font-medium">
-            {{ stats.accessibleRooms > 0 ? 'Accessibles' : 'Non accessibles' }}
-          </span>
-        </div>
-        <div class="flex flex-col gap-1">
-          <span class="text-muted text-sm font-medium">Équipements</span>
-          <span class="text-2xl font-extrabold">{{ stats.equipmentCount }}</span>
-          <span class="text-muted text-xs">enregistrés</span>
-        </div>
-      </div>
-    </UCard>
   </div>
 </template>

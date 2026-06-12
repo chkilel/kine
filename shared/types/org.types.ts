@@ -16,9 +16,20 @@ const orgSlugSchema = z
   .max(50, 'Le slug ne peut pas dépasser 50 caractères')
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (seulement lettres minuscules, chiffres et tirets)')
 
+const websiteSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (value === '') return true
+
+    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`
+
+    return URL.canParse(normalized)
+  }, 'URL invalide')
+
 export const orgContactSchema = z.object({
   email: z.email('Adresse email invalide'),
-  website: z.url('URL invalide').optional(),
+  website: websiteSchema.optional(),
   phones: z.array(phoneEntrySchema).min(1, 'Au moins un numéro de téléphone requis')
 })
 export type OrgContact = z.infer<typeof orgContactSchema>
@@ -101,18 +112,28 @@ export const orgSchedulingSchema = z.object({
     .max(168, 'Ne peut pas dépasser 168 heures (1 semaine)')
     .default(24),
   allowSameDay: z.boolean().default(false),
-  requirePaymentUpfront: z.boolean().default(false),
-  remindersEnabled: z.boolean().default(true),
-  reminderIntervals: z.array(z.number()).default([24, 48])
+  defaultAppointmentDuration: z
+    .number()
+    .int()
+    .min(15, 'La durée minimale de séance est de 15 minutes')
+    .max(180, 'La durée maximale de séance est de 180 minutes')
+    .default(30),
+  appointmentGapMinutes: z
+    .number()
+    .int()
+    .min(0, "L'intervalle minimum est de 0 minute")
+    .max(60, "L'intervalle maximum est de 60 minutes")
+    .default(5),
+  slotIncrementMinutes: z
+    .number()
+    .int()
+    .min(5, "L'incrément minimum est de 5 minutes")
+    .max(30, "L'incrément maximum est de 30 minutes")
+    .default(15)
 })
 export type OrgScheduling = z.infer<typeof orgSchedulingSchema>
 
 export const orgClinicalSchema = z.object({
-  defaultDurationMinutes: z
-    .number()
-    .min(15, "La durée doit être d'au moins 15 minutes")
-    .max(120, 'La durée ne peut pas dépasser 120 minutes')
-    .default(30),
   requirePainAssessment: z.boolean().default(true),
   requireGoals: z.boolean().default(true),
   requireNextSteps: z.boolean().default(true),
@@ -121,6 +142,8 @@ export const orgClinicalSchema = z.object({
 export type OrgClinical = z.infer<typeof orgClinicalSchema>
 
 export const orgNotificationsSchema = z.object({
+  remindersEnabled: z.boolean().default(true),
+  reminderIntervals: z.array(z.number()).default([24, 48]),
   patient: z.object({
     appointmentConfirmation: z.boolean().default(true),
     appointmentReminder: z.boolean().default(true),
@@ -246,23 +269,11 @@ export const orgLegalSchema = z.object({
 })
 export type OrgLegal = z.infer<typeof orgLegalSchema>
 
-export const orgPricingSchedulingSchema = z.object({
-  pricing: orgPricingSchema,
-  scheduling: orgSchedulingSchema
-})
-export type OrgPricingScheduling = z.infer<typeof orgPricingSchedulingSchema>
-
-export const orgClinicalIntakeNotificationsSchema = z.object({
+export const orgClinicalIntakeSchema = z.object({
   clinical: orgClinicalSchema,
-  intake: orgIntakeSchema,
-  notifications: orgNotificationsSchema
+  intake: orgIntakeSchema
 })
-export type OrgClinicalIntakeNotifications = z.infer<typeof orgClinicalIntakeNotificationsSchema>
-
-export const orgBrandingOnlySchema = z.object({
-  branding: orgBrandingSchema
-})
-export type OrgBrandingOnly = z.infer<typeof orgBrandingOnlySchema>
+export type OrgClinicalIntake = z.infer<typeof orgClinicalIntakeSchema>
 
 export const orgMetadataSchema = z.object({
   metadataText: z.string().refine(

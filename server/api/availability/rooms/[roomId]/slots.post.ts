@@ -1,10 +1,12 @@
 import { and, eq, inArray, ne } from 'drizzle-orm'
-import { rooms } from '~~/server/database/schema/rooms'
-import { availabilityExceptions, appointments, users, weeklyAvailabilityTemplates } from '~~/server/database/schema'
-import { roomSlotsRequestSchema } from '~~/shared/types/availability.types'
-import { getDayOfWeek } from '~~/shared/utils/date-utils'
+import {
+  rooms,
+  availabilityExceptions,
+  appointments,
+  organizations,
+  weeklyAvailabilityTemplates
+} from '~~/server/database/schema'
 import { WORKING_HOURS } from '~~/shared/utils/constants.availability'
-import { getEffectiveAvailability, generateTimeSlots, subtractBookedPeriods } from '~~/shared/utils/planning-utils'
 
 export default defineEventHandler(async (event) => {
   const roomId = getRouterParam(event, 'roomId')
@@ -40,17 +42,15 @@ export default defineEventHandler(async (event) => {
   let exceptions: any[] = []
 
   if (body.therapistId) {
-    const therapistData = await db
-      .select({
-        appointmentGapMinutes: users.appointmentGapMinutes,
-        slotIncrementMinutes: users.slotIncrementMinutes
-      })
-      .from(users)
-      .where(eq(users.id, body.therapistId))
+    const [org] = await db
+      .select({ scheduling: organizations.scheduling })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
       .limit(1)
 
-    gapMinutes = therapistData[0]?.appointmentGapMinutes || 15
-    slotIncrementMinutes = therapistData[0]?.slotIncrementMinutes || 15
+    const scheduling = org?.scheduling
+    gapMinutes = scheduling?.appointmentGapMinutes ?? 0
+    slotIncrementMinutes = scheduling?.slotIncrementMinutes ?? 15
 
     templates = await db
       .select()

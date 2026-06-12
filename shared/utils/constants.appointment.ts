@@ -4,13 +4,13 @@ import type { AppointmentStatus, AppointmentType } from '../types/base.types'
 // Appointment Duration Constants
 // =============================================================================
 
-export const APPOINTMENT_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120]
-export const APPOINTMENT_GAP_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60] as const
+export const APPOINTMENT_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120] as const
+export const APPOINTMENT_GAP = [0, 5, 10, 15, 20, 30] as const
 
 //FIXME this is not necessary: Minimum Gap Between Appointments in Minutes
 export const MINIMUM_APPOINTMENT_GAP_MINUTES = 15
 
-export const APPOINTMENT_SLOT_INCREMENT_OPTIONS = [5, 10, 15, 20, 30] as const
+export const APPOINTMENT_SLOT_INCREMENT = [5, 10, 15, 20, 30, 60] as const
 
 // =============================================================================
 // Appointment Status Configuration

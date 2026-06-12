@@ -6,7 +6,6 @@
 
   const defaultForm = (org?: Organization) => ({
     clinical: {
-      defaultDurationMinutes: org?.clinical?.defaultDurationMinutes ?? 30,
       requirePainAssessment: org?.clinical?.requirePainAssessment ?? true,
       requireGoals: org?.clinical?.requireGoals ?? true,
       requireNextSteps: org?.clinical?.requireNextSteps ?? true,
@@ -27,21 +26,10 @@
         financial: org?.intake?.consents?.financial ?? false,
         telehealth: org?.intake?.consents?.telehealth ?? false
       }
-    },
-    notifications: {
-      patient: {
-        appointmentConfirmation: org?.notifications?.patient?.appointmentConfirmation ?? true,
-        appointmentReminder: org?.notifications?.patient?.appointmentReminder ?? true,
-        paymentReminder: org?.notifications?.patient?.paymentReminder ?? true
-      },
-      staff: {
-        newAppointment: org?.notifications?.staff?.newAppointment ?? true,
-        cancellation: org?.notifications?.staff?.cancellation ?? true
-      }
     }
   })
 
-  const state = reactive<OrgClinicalIntakeNotifications>(defaultForm())
+  const state = reactive<OrgClinicalIntake>(defaultForm())
 
   watch(
     organization,
@@ -57,11 +45,14 @@
   const isSaving = computed(() => updateOrganization.isLoading.value)
   const form = useTemplateRef('form')
 
-  function onSubmit(event: FormSubmitEvent<OrgClinicalIntakeNotifications>) {
+  function onSubmit(event: FormSubmitEvent<OrgClinicalIntake>) {
     const organizationId = route.params.id as string
     updateOrganization.mutate({
       organizationId,
-      organizationData: event.data as any
+      organizationData: {
+        clinical: event.data.clinical,
+        intake: event.data.intake
+      }
     })
   }
 
@@ -87,18 +78,13 @@
       v-else
       ref="form"
       :state="state"
-      :schema="orgClinicalIntakeNotificationsSchema"
+      :schema="orgClinicalIntakeSchema"
       class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
         <AppCard variant="outline" title="Documentation clinique">
           <div class="flex flex-col gap-y-4">
-            <div>
-              <UFormField label="Durée par défaut (minutes)" name="clinical.defaultDurationMinutes">
-                <UInput v-model.number="state.clinical.defaultDurationMinutes" type="number" class="w-full" />
-              </UFormField>
-            </div>
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
               <span class="text-highlighted text-sm font-bold">Exiger évaluation de la douleur</span>
               <UFormField name="clinical.requirePainAssessment">
@@ -165,44 +151,6 @@
       </div>
 
       <div class="flex w-full flex-col gap-6">
-        <AppCard variant="outline" title="Notifications">
-          <div class="flex flex-col gap-y-4">
-            <p class="text-muted mb-2 text-sm">Notifications patients</p>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Confirmation de rendez-vous</span>
-              <UFormField name="notifications.patient.appointmentConfirmation">
-                <USwitch v-model="state.notifications.patient.appointmentConfirmation" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Rappel de rendez-vous</span>
-              <UFormField name="notifications.patient.appointmentReminder">
-                <USwitch v-model="state.notifications.patient.appointmentReminder" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Rappel de paiement</span>
-              <UFormField name="notifications.patient.paymentReminder">
-                <USwitch v-model="state.notifications.patient.paymentReminder" />
-              </UFormField>
-            </div>
-
-            <p class="text-muted mt-4 mb-2 text-sm">Notifications staff</p>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Nouveau rendez-vous</span>
-              <UFormField name="notifications.staff.newAppointment">
-                <USwitch v-model="state.notifications.staff.newAppointment" />
-              </UFormField>
-            </div>
-            <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
-              <span class="text-highlighted text-sm font-bold">Annulation</span>
-              <UFormField name="notifications.staff.cancellation">
-                <USwitch v-model="state.notifications.staff.cancellation" />
-              </UFormField>
-            </div>
-          </div>
-        </AppCard>
-
         <div
           class="bg-elevated/50 border-border flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center"
         >
@@ -219,6 +167,25 @@
             </p>
           </div>
         </div>
+
+        <AppCard variant="outline" title="À propos de la configuration clinique">
+          <div class="flex flex-col gap-y-4">
+            <p class="text-muted text-sm">
+              Configurez ici les paramètres de documentation clinique et d'inscription des patients. Ces paramètres
+              s'appliquent à tous les kinésithérapeutes de l'organisation.
+            </p>
+            <div class="bg-primary/5 border-primary/20 flex items-start gap-3 rounded-lg border p-4">
+              <UIcon name="i-lucide-info" class="text-primary mt-0.5 size-5 shrink-0" />
+              <div>
+                <p class="text-primary text-sm font-bold">Conseil</p>
+                <p class="text-muted mt-1 text-xs">
+                  Exiger l'évaluation de la douleur et les objectifs peut améliorer la qualité des soins et le suivi des
+                  patients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </AppCard>
       </div>
     </UForm>
 

@@ -112,88 +112,6 @@
         </div>
       </AppCard>
 
-      <!-- Localisation -->
-      <AppCard variant="outline" title="Localisation" class="mb-6 break-inside-avoid">
-        <div class="flex flex-col gap-y-4">
-          <UFormField label="Adresse complète" name="address.street">
-            <UTextarea v-model="state.address.street" :rows="3" class="w-full" />
-          </UFormField>
-          <div class="grid grid-cols-2 gap-4">
-            <UFormField label="Code postal" name="address.postalCode">
-              <UInput v-model="state.address.postalCode" class="w-full" />
-            </UFormField>
-            <UFormField label="Ville" name="address.city">
-              <UInput v-model="state.address.city" class="w-full" />
-            </UFormField>
-          </div>
-          <UFormField label="Quartier/Secteur" name="address.sector">
-            <UInput v-model="state.address.sector" placeholder="Ex: Centre-ville" class="w-full" />
-          </UFormField>
-          <div
-            class="bg-elevated border-border group relative mt-2 h-32 w-full cursor-pointer overflow-hidden rounded-xl border"
-          >
-            <div class="bg-muted group-hover:bg-elevated absolute inset-0 transition-colors" />
-            <div
-              class="bg-default/90 text-highlighted border-border absolute bottom-3 left-3 flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-bold shadow-sm backdrop-blur"
-            >
-              <UIcon name="i-lucide-map" class="size-3.5" />
-              <span>Voir sur la carte</span>
-            </div>
-          </div>
-        </div>
-      </AppCard>
-
-      <!-- Coordonnées -->
-      <AppCard variant="outline" title="Coordonnées" class="mb-4 break-inside-avoid">
-        <div class="flex flex-col gap-y-4">
-          <UFormField label="Email général" name="contact.email">
-            <UInput v-model="state.contact.email" type="email" icon="i-lucide-mail" class="w-full" />
-          </UFormField>
-
-          <UFormField label="Numéros de téléphone" :ui="{ container: 'grid gap-y-2' }">
-            <TransitionGroup name="phone-list" tag="div" class="grid gap-y-2">
-              <div v-for="(phone, index) in state.contact.phones" :key="phone.id" class="flex items-center gap-2">
-                <UFormField :name="`contact.phones.${index}.number`" class="w-full">
-                  <UFieldGroup class="w-full">
-                    <USelect v-model="phone.category" :items="PHONE_CATEGORIES_OPTIONS" class="w-28" />
-                    <UInput v-model="phone.number" class="flex-1" />
-                    <UButton
-                      icon="i-lucide-trash-2"
-                      color="error"
-                      variant="subtle"
-                      size="sm"
-                      square
-                      @click="removePhone(index)"
-                    />
-                  </UFieldGroup>
-                </UFormField>
-              </div>
-            </TransitionGroup>
-            <UButton
-              label="Ajouter un numéro"
-              icon="i-lucide-plus"
-              color="primary"
-              variant="ghost"
-              class="mt-1 w-fit"
-              @click="addPhone"
-            />
-          </UFormField>
-
-          <UFormField label="Site web" name="contact.website">
-            <UFieldGroup class="w-full">
-              <UBadge color="neutral" variant="outline" size="lg" label="https://" />
-              <UInput
-                v-model="state.contact.website"
-                placeholder="www.example.com"
-                type="url"
-                trailing-icon="i-lucide-globe"
-                class="w-full"
-              />
-            </UFieldGroup>
-          </UFormField>
-        </div>
-      </AppCard>
-
       <!-- Responsable légal -->
       <AppCard variant="outline" title="Responsable légal" class="mb-6 break-inside-avoid">
         <div class="flex flex-col gap-y-4">
@@ -236,6 +154,71 @@
           </p>
         </div>
       </div>
+
+      <!-- Localisation & Coordonnées -->
+      <AppCard variant="outline" title="Coordonnées" class="mb-4 break-inside-avoid">
+        <div class="flex flex-col gap-y-4">
+          <UFormField label="Email général" name="contact.email">
+            <UInput v-model="state.contact.email" type="email" icon="i-lucide-mail" class="w-full" />
+          </UFormField>
+
+          <UFormField label="Numéros de téléphone" :ui="{ container: 'grid gap-y-2' }">
+            <TransitionGroup name="phone-list" tag="div" class="grid gap-y-2">
+              <div v-for="(phone, index) in state.contact.phones" :key="phone.id" class="flex items-center gap-2">
+                <UFormField :name="`contact.phones.${index}.number`" class="w-full">
+                  <UFieldGroup class="w-full">
+                    <USelect v-model="phone.category" :items="PHONE_CATEGORIES_OPTIONS" class="w-28" />
+                    <UInput v-model="phone.number" class="flex-1" />
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      color="error"
+                      variant="subtle"
+                      size="sm"
+                      square
+                      @click="removePhone(index)"
+                    />
+                  </UFieldGroup>
+                </UFormField>
+              </div>
+            </TransitionGroup>
+            <UButton
+              label="Ajouter un numéro"
+              icon="i-lucide-plus"
+              color="primary"
+              variant="ghost"
+              class="mt-1 w-fit"
+              @click="addPhone"
+            />
+          </UFormField>
+
+          <UFormField label="Site web" name="contact.website">
+            <UFieldGroup class="w-full">
+              <UBadge color="neutral" variant="outline" size="lg" label="https://" />
+              <UInput
+                v-model="state.contact.website"
+                placeholder="www.example.com"
+                trailing-icon="i-lucide-globe"
+                class="w-full"
+              />
+            </UFieldGroup>
+          </UFormField>
+
+          <UFormField label="Adresse complète" name="address.street">
+            <UTextarea v-model="state.address.street" :rows="3" class="w-full" />
+          </UFormField>
+          <div class="grid grid-cols-2 gap-4">
+            <UFormField label="Code postal" name="address.postalCode">
+              <UInput v-model="state.address.postalCode" class="w-full" />
+            </UFormField>
+            <UFormField label="Ville" name="address.city">
+              <UInput v-model="state.address.city" class="w-full" />
+            </UFormField>
+          </div>
+          <UFormField label="Quartier/Secteur" name="address.sector">
+            <UInput v-model="state.address.sector" placeholder="Ex: Centre-ville" class="w-full" />
+          </UFormField>
+        </div>
+      </AppCard>
     </UForm>
 
     <div class="border-default border-t pt-4">
