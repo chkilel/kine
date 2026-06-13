@@ -79,7 +79,7 @@
       ref="form"
       :state="state"
       :schema="orgSchedulingSchema"
-      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
+      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
@@ -139,17 +139,17 @@
                 <UFormField label="Délai d'annulation (heures)" name="cancellationHours">
                   <UInput v-model.number="state.cancellationHours" type="number" class="w-full" />
                 </UFormField>
-               </div>
-             </div>
-              <div class="bg-elevated/50 border-border mt-2 flex items-center justify-between rounded-md border p-4">
-                <span class="text-highlighted text-sm font-bold">Réservation le jour même</span>
-                <UFormField name="allowSameDay">
-                  <USwitch v-model="state.allowSameDay" />
-                </UFormField>
               </div>
             </div>
-          </AppCard>
-        </div>
+            <div class="bg-elevated/50 border-border mt-2 flex items-center justify-between rounded-md border p-4">
+              <span class="text-highlighted text-sm font-bold">Réservation le jour même</span>
+              <UFormField name="allowSameDay">
+                <USwitch v-model="state.allowSameDay" />
+              </UFormField>
+            </div>
+          </div>
+        </AppCard>
+      </div>
 
       <div class="flex w-full flex-col gap-6">
         <div

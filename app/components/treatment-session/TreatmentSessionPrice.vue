@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { PriceItem } from '~~/shared/types/org.types'
   const props = defineProps<{ appointment: Appointment }>()
 
   // ─── Composables ─────────────────────────────────────────────────────────────
@@ -14,11 +15,11 @@
 
   // ─── Derived state ──────────────────────────────────────────────────────────
 
-  const organization = computed(() => activeOrganization.value.data)
-
   const inheritedPrice = computed(() => {
     const location = props.appointment.location
-    return activeOrganization.value.data?.pricing.rateCent[location] ?? null
+    const defaultItem = activeOrganization.value.data?.pricing?.priceItems?.find((item: PriceItem) => item.isDefault)
+    if (!defaultItem?.rateCent) return null
+    return defaultItem.rateCent[location] ?? null
   })
 
   const hasCustomCost = computed(() => {

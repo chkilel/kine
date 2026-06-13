@@ -1,8 +1,5 @@
-# treatment-plan Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-invoicing-and-session-pricing. Update Purpose after archive.
-## Requirements
 ### Requirement: Treatment Plan Pricing
 
 The system SHALL store pricing for each treatment plan as a single pricing JSON object. When a treatment plan is created, pricing SHALL be automatically inherited from organization's default session rates. The plan's pricing can be overridden at any time using the standard update endpoint, and changes to organization pricing SHALL NOT affect existing treatment plans. The plan SHALL additionally store an optional `priceItem` JSON object caching the full selected price item snapshot (code, description, rateCent) at creation or update time. This snapshot decouples plan pricing from org price changes — the plan's pricing is only updated when the user explicitly selects a different price item.
@@ -140,4 +137,3 @@ All fields are required and must be numbers >= 100 representing cost in cents (m
 - **THEN** HTTP response is 200 OK
 - **AND** `priceItem` snapshot is updated to the new item
 - **AND** pricing is updated from `priceItem.rateCent`
-

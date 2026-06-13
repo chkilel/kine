@@ -8,12 +8,16 @@ export interface CalculateInheritedPriceParams {
   organization: Organization
 }
 
+export function getDefaultPriceItem(organization: Organization) {
+  return (
+    organization.pricing?.priceItems?.find((item) => item.isDefault) ||
+    organization.pricing?.priceItems?.[0] ||
+    null
+  )
+}
+
 export function calculateInheritedPrice(params: CalculateInheritedPriceParams): number | null {
   const { appointment, treatmentPlan, organization } = params
-
-  if (!organization.pricing?.rateCent) {
-    return null
-  }
 
   const location = appointment.location
 
@@ -21,5 +25,8 @@ export function calculateInheritedPrice(params: CalculateInheritedPriceParams): 
     return treatmentPlan.pricing[location]
   }
 
-  return organization.pricing.rateCent[location] || null
+  const defaultItem = getDefaultPriceItem(organization)
+  if (!defaultItem?.rateCent) return null
+
+  return defaultItem.rateCent[location] || null
 }

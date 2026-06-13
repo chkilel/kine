@@ -1,6 +1,7 @@
 import { v7 as uuidv7 } from 'uuid'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+import { ORGANIZATION_STATUS } from '~~/shared/types/base.types'
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { users } from './auth'
 import type {
@@ -31,7 +32,7 @@ export const organizations = sqliteTable('organizations', {
   logo: text(),
   type: text(),
   description: text(),
-  status: text().default('active'),
+  status: text({ enum: ORGANIZATION_STATUS }).default('active'),
   timezone: text().default('Africa/Casablanca'),
   contact: text({ mode: 'json' }).$type<OrgContact>().notNull(),
   address: text({ mode: 'json' }).$type<OrgAddress>().notNull(),
