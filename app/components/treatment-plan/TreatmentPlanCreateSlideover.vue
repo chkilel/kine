@@ -28,6 +28,27 @@
     return activeOrganization.value.data?.pricing?.priceItems || []
   })
 
+  // Price items with snapshot fallback for edit mode
+  const priceItemOptions = computed<PriceItem[]>(() => {
+    const items = orgPriceItems.value
+    if (isEditMode.value && selectedPriceItem.value) {
+      const exists = items.some((i) => i.code === selectedPriceItem.value!.code)
+      if (!exists) {
+        return [
+          ...items,
+          {
+            id: 'snapshot',
+            code: selectedPriceItem.value.code,
+            description: selectedPriceItem.value.description,
+            rateCent: selectedPriceItem.value.rateCent,
+            isDefault: false
+          }
+        ]
+      }
+    }
+    return items
+  })
+
   // Get default price item from organization
   const getDefaultPriceItem = (): PriceItem | null => {
     return orgPriceItems.value.find((item: PriceItem) => item.isDefault) || orgPriceItems.value[0] || null
@@ -312,10 +333,10 @@
                 />
               </UFormField>
 
-              <UFormField v-if="orgPriceItems.length > 0" label="Tarif" class="md:col-span-2">
+              <UFormField v-if="priceItemOptions.length > 0" label="Tarif" class="md:col-span-2">
                 <USelectMenu
                   v-model="selectedPriceItemCode"
-                  :items="orgPriceItems"
+                  :items="priceItemOptions"
                   value-key="code"
                   label-key="code"
                   class="w-full"
@@ -327,16 +348,16 @@
                       <div class="divide-accented grid grid-cols-3 divide-x">
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-hospital-02" class="size-3.5" />
-                          {{ formatCurrency(orgPriceItems.find((item) => item.code === modelValue)?.rateCent.clinic) }}
+                          {{ formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.clinic) }}
                         </span>
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-home-03" class="size-3.5" />
-                          {{ formatCurrency(orgPriceItems.find((item) => item.code === modelValue)?.rateCent.home) }}
+                          {{ formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.home) }}
                         </span>
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-video-02" class="size-3.5" />
                           {{
-                            formatCurrency(orgPriceItems.find((item) => item.code === modelValue)?.rateCent.telehealth)
+                            formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.telehealth)
                           }}
                         </span>
                       </div>
