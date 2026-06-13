@@ -28,8 +28,10 @@ export default defineEventHandler(async (event) => {
 
     let pricing: RateCent
 
-    // Determine pricing: use provided pricing or fall back to org defaults
-    if (body.pricing) {
+    // Determine pricing: use priceItem snapshot, provided pricing, or fall back to org defaults
+    if (body.priceItem?.rateCent) {
+      pricing = body.priceItem.rateCent
+    } else if (body.pricing) {
       pricing = body.pricing
     } else {
       const [organization] = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)

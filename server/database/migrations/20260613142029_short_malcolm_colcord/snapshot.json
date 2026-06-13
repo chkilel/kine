@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "19b03d08-a76e-4afe-b386-7d5238c67cee",
+  "id": "2e765337-b3d6-450a-9273-13ea1334f6d2",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -2375,6 +2375,16 @@
       "default": null,
       "generated": null,
       "name": "pricing",
+      "entityType": "columns",
+      "table": "treatment_plans"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "priceItem",
       "entityType": "columns",
       "table": "treatment_plans"
     },

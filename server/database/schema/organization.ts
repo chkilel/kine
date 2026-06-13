@@ -1,6 +1,7 @@
 import { v7 as uuidv7 } from 'uuid'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+import { ORGANIZATION_STATUS } from '~~/shared/types/base.types'
 import { creationAndUpdateTimestamps } from './columns.helpers'
 import { users } from './auth'
 import type {

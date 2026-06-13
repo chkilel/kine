@@ -33,10 +33,15 @@ export default defineEventHandler(async (event) => {
     // Validate input
     const body = await readValidatedBody(event, treatmentPlanUpdateSchema.parse)
 
+    // If priceItem is provided, derive pricing from its rateCent
+    const updateData = body.priceItem?.rateCent
+      ? { ...body, pricing: body.priceItem.rateCent }
+      : body
+
     // Update treatment plan
     const [updatedTreatmentPlan] = await db
       .update(treatmentPlans)
-      .set(body)
+      .set(updateData)
       .where(eq(treatmentPlans.id, planId))
       .returning()
 

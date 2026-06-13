@@ -70,6 +70,7 @@ describe('calculateInheritedPrice', () => {
       home: 7000,
       telehealth: 4500
     },
+    priceItem: null,
     notes: [],
     createdAt: new Date(),
     updatedAt: new Date()

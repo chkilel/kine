@@ -312,6 +312,7 @@ CREATE TABLE `treatment_plans` (
 	`coverageStatus` text,
 	`insuranceInfo` text,
 	`pricing` text NOT NULL,
+	`priceItem` text,
 	`notes` text DEFAULT '[]',
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL,
