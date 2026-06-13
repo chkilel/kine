@@ -45,6 +45,7 @@
     "drizzle-orm": "^1.0.0-rc.4",
     "nuxt": "^4.4.8",
     "pinia": "^3.0.4",
+    "tailwind-variants": "^3.2.2",
     "uuid": "^14.0.0",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
@@ -68,5 +69,5 @@
     "vitest": "^4.1.8",
     "wrangler": "^4.100.0"
   },
-  "packageManager": "pnpm@11.5.3"
+  "packageManager": "pnpm@11.6.0"
 }
