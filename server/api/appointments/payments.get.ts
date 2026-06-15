@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const q = await getValidatedQuery(event, appointmentQuerySchema.parse)
     console.log('[payments.get] validated q:', q)
 
-    const limit = Math.min(q.limit ?? 20, 100)
+    const limit = Math.min(q.limit ?? 20, 200)
 
     // =========================
     // 1. CONDITIONS

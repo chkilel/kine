@@ -76,7 +76,7 @@ export const appointmentQuerySchema = z
     // =========================
     // Pagination
     // =========================
-    limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(20).optional(),
     cursorDate: calendarDateSchema.optional(),
     cursorId: z.string().optional(),
 
