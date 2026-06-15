@@ -1,8 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod'
 import { z } from 'zod'
 import { appointments } from '~~/server/database/schema/appointment'
-import type { AppointmentPaymentStatus } from './base.types'
-import type { RateCent } from '~~/shared/types/org.types'
 
 // =============================================================================
 // Appointment Schemas and Types
@@ -17,10 +15,11 @@ const appointmentSchemaShape = {
 export const appointmentSchema = createSelectSchema(appointments, appointmentSchemaShape).extend({
   roomName: z.string().nullable().optional(),
   planTitle: z.string().nullable().optional(),
-  patientName: z.string().optional()
+  patientName: z.string().optional(),
+  priceItem: priceItemSnapshotSchema
 })
 
-export const appointmentCreateSchema = createInsertSchema(appointments, {
+const appointmentCreateSchemaShape = {
   organizationId: z.string().min(1, 'Organization ID is required'),
   patientId: z.string().min(1, 'Patient ID is required'),
   treatmentPlanId: z.string().nullable().optional(),
@@ -35,10 +34,18 @@ export const appointmentCreateSchema = createInsertSchema(appointments, {
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
   cancelledAt: z.coerce.date().nullable().optional(),
-  noShowReason: z.string().nullable().optional()
+  noShowReason: z.string().nullable().optional(),
+  priceItem: priceItemSnapshotSchema.optional()
+}
+
+export const appointmentCreateSchema = createInsertSchema(appointments, appointmentCreateSchemaShape).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lockedAt: true
 })
 
-export const appointmentUpdateSchema = appointmentCreateSchema.partial()
+export const appointmentUpdateSchema = createInsertSchema(appointments).partial()
 
 export const appointmentStatusUpdateSchema = z.object({
   status: appointmentStatusSchema.optional(),
@@ -179,7 +186,7 @@ export const updateClinicalNotesActionSchema = z.object({
 })
 
 export const updatePriceActionSchema = z.object({
-  priceCents: z.number().int().min(0)
+  priceItemCode: z.string().min(1, 'Le code tarif est requis')
 })
 
 // Type inference
@@ -192,16 +199,18 @@ export type AppointmentDetail = z.infer<typeof appointmentSchema> & {
   updatedAt: string
   lockedAt: string
   roomName: string | null
+  priceItem: PriceItemSnapshot | null
   treatmentPlan: {
     id: string
     title: string
-    pricing: RateCent // Pricing column type
-  } | null // null if leftJoin finds no matching treatmentPlan}
+    pricing: RateCent
+  } | null
 }
 
 export type AppointmentWithPaymentStatus = Appointment & {
   paidCents: number
   paymentStatus: AppointmentPaymentStatus
+  priceItemDescription: string | null
   paymentDetails: Array<{
     id: string
     amountCents: number

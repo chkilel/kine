@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { appointments } from '~~/server/database/schema'
+import { appointments, organizations } from '~~/server/database/schema'
+import { toPriceItemSnapshot } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
   const { organizationId } = await requireAuthWithOrg(event)
@@ -27,9 +28,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Impossible de modifier le prix avant le début de la séance' })
   }
 
+  const [organization] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, organizationId))
+    .limit(1)
+
+  if (!organization?.pricing?.priceItems) {
+    throw createError({ statusCode: 400, message: "Aucun tarif configuré pour l'organisation" })
+  }
+
+  const priceItem = organization.pricing.priceItems.find((item) => item.code === body.priceItemCode)
+
+  if (!priceItem) {
+    throw createError({
+      statusCode: 400,
+      message: `Le code tarif "${body.priceItemCode}" n'existe pas dans le catalogue de l'organisation`
+    })
+  }
+
+  const snapshot = toPriceItemSnapshot(priceItem)
+  const priceCents = priceItem.rateCent[appointment.location] ?? 0
+
   const [updated] = await db
     .update(appointments)
-    .set({ priceCents: body.priceCents })
+    .set({
+      priceItem: snapshot,
+      priceCents
+    })
     .where(and(eq(appointments.organizationId, organizationId), eq(appointments.id, id)))
     .returning()
 

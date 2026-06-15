@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import type { PriceItem } from '~~/shared/types/org.types'
-  import type { PriceItemSnapshot } from '~~/shared/types/treatment-plan'
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
   import type { Form, FormSubmitEvent } from '@nuxt/ui'
 
@@ -56,17 +54,8 @@
 
   // Current selected price item snapshot (full object, cached)
   const selectedPriceItem = ref<PriceItemSnapshot | null>(
-    treatmentPlan?.priceItem || (getDefaultPriceItem() ? toSnapshot(getDefaultPriceItem()!) : null)
+    treatmentPlan?.priceItem || (getDefaultPriceItem() ? toPriceItemSnapshot(getDefaultPriceItem()!) : null)
   )
-
-  // Convert PriceItem to PriceItemSnapshot (strip id, isDefault)
-  function toSnapshot(item: PriceItem): PriceItemSnapshot {
-    return {
-      code: item.code,
-      description: item.description,
-      rateCent: item.rateCent
-    }
-  }
 
   // Pricing selector code — used to match selected item in dropdown
   const selectedPriceItemCode = computed({
@@ -78,7 +67,7 @@
       }
       const item = orgPriceItems.value.find((i) => i.code === code)
       if (item) {
-        selectedPriceItem.value = toSnapshot(item)
+        selectedPriceItem.value = toPriceItemSnapshot(item)
       }
     }
   })
@@ -192,7 +181,7 @@
 
   function resetForm() {
     // Reset price item to org default
-    selectedPriceItem.value = getDefaultPriceItem() ? toSnapshot(getDefaultPriceItem()!) : null
+    selectedPriceItem.value = getDefaultPriceItem() ? toPriceItemSnapshot(getDefaultPriceItem()!) : null
 
     Object.assign(formState, {
       patientId: '',
@@ -348,7 +337,9 @@
                       <div class="divide-accented grid grid-cols-3 divide-x">
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-hospital-02" class="size-3.5" />
-                          {{ formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.clinic) }}
+                          {{
+                            formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.clinic)
+                          }}
                         </span>
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-home-03" class="size-3.5" />
@@ -357,7 +348,9 @@
                         <span class="text-muted flex items-center gap-1 px-1.5">
                           <UIcon name="i-hugeicons-video-02" class="size-3.5" />
                           {{
-                            formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.telehealth)
+                            formatCurrency(
+                              priceItemOptions.find((item) => item.code === modelValue)?.rateCent.telehealth
+                            )
                           }}
                         </span>
                       </div>

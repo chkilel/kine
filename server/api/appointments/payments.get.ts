@@ -161,11 +161,13 @@ export default defineEventHandler(async (event) => {
     const data: AppointmentWithPaymentStatus[] = appointmentsRows.map((a) => {
       const paymentData = paymentsMap[a.id] ?? { paidCents: 0, receipts: [], paymentDetails: [] }
       const paid = paymentData.paidCents
+      const priceItemData = a.priceItem
 
       return {
         ...a,
         paidCents: paid,
         paymentStatus: paid >= a.priceCents && a.priceCents > 0 ? 'paid' : paid > 0 ? 'partially_paid' : 'unpaid',
+        priceItemDescription: priceItemData.description,
         paymentDetails: paymentData.paymentDetails
       }
     })

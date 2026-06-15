@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '@nuxt/ui'
-  import type { PriceItem } from '~~/shared/types/org.types'
 
   // ─── Props / Emits ───────────────────────────────────────────
   const { appointment } = defineProps<{ appointment: Appointment }>()
@@ -9,7 +8,7 @@
   const { data: patientCreditBalance } = usePatientBalance(() => appointment.patientId)
   const { mutate: createPayment, isLoading: isCreating } = useCreatePayment()
   const { mutate: updatePriceMutation, isLoading: isUpdating } = useUpdateAppointmentPrice()
-  const activeOrganization = authClient.useActiveOrganization()
+  const { data: fullOrg } = useFullOrganization(() => appointment.organizationId)
 
   // ─── Base state ──────────────────────────────────────────────
   const sessionCostCents = computed(() => appointment.priceCents ?? 0)
@@ -18,15 +17,40 @@
 
   // ─── Pricing ─────────────────────────────────────────────────
 
-  const inheritedPrice = computed<number | null>(() => {
-    if (!appointment) return null
-    const { location } = appointment
-    const defaultItem = activeOrganization.value.data?.pricing?.priceItems?.find((item: PriceItem) => item.isDefault)
-    if (!defaultItem?.rateCent) return null
-    return defaultItem.rateCent[location] ?? null
+  const priceDescription = computed(() => {
+    const snapshot = appointment.priceItem as PriceItemSnapshot | null
+    return snapshot?.description ?? null
   })
 
-  const hasCustomCost = computed(() => inheritedPrice.value !== null && sessionCostCents.value !== inheritedPrice.value)
+  const orgPriceItems = computed(() => fullOrg.value?.pricing?.priceItems ?? [])
+
+  const selectedPriceItem = ref<PriceItemSnapshot | null>(appointment.priceItem)
+
+  const selectedPriceItemCode = computed({
+    get: () => selectedPriceItem.value?.code,
+    set: (code: string | null) => {
+      if (!code) {
+        selectedPriceItem.value = null
+        return
+      }
+      const item = orgPriceItems.value.find((i) => i.code === code)
+      if (item) {
+        selectedPriceItem.value = {
+          code: item.code,
+          description: item.description,
+          rateCent: item.rateCent
+        }
+      }
+    }
+  })
+  const selectMenuOptions = computed(() =>
+    orgPriceItems.value.map((item: PriceItem) => ({
+      label: `${formatCurrency(item.rateCent[appointment.location])} ${item.description}`,
+      value: item.code
+    }))
+  )
+
+  const isPricePopoverOpen = ref(false)
 
   // ─── Form ────────────────────────────────────────────────────
   const formState = reactive<PaymentForm>({
@@ -76,51 +100,15 @@
     formState.method = value as PaymentMethod
   }
 
-  // ─── Price editing ───────────────────────────────────────────
-  const isEditingPrice = ref(false)
-  const priceInputRaw = ref<number | null>(null)
-  const priceInputRef = useTemplateRef('priceInputRef')
-
-  const isValidPriceInput = computed(
-    () => priceInputRaw.value !== null && !isNaN(priceInputRaw.value) && priceInputRaw.value > 0
-  )
-
-  function updateSessionPrice(newPriceCents: number) {
+  function updateSessionPrice(priceItemCode: string | null) {
+    if (!priceItemCode) return
     updatePriceMutation({
       appointmentId: appointment.id,
-      priceCents: newPriceCents,
+      priceItemCode,
       onSuccess: () => {
-        formState.amount = newPriceCents / 100
-        isEditingPrice.value = false
-      },
-      onError: () => {
-        isEditingPrice.value = false
+        isPricePopoverOpen.value = false
       }
     })
-  }
-
-  function handleStartPriceEdit() {
-    priceInputRaw.value = centsToCurrency(sessionCostCents.value)
-    isEditingPrice.value = true
-  }
-
-  function handleSavePrice() {
-    if (!isValidPriceInput.value || priceInputRaw.value === null) return
-    updateSessionPrice(currencyToCents(priceInputRaw.value))
-  }
-
-  function handleCancelPriceEdit() {
-    isEditingPrice.value = false
-  }
-
-  function handleResetPrice() {
-    if (inheritedPrice.value == null) return
-    updateSessionPrice(inheritedPrice.value)
-  }
-
-  function handlePriceKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') handleSavePrice()
-    if (e.key === 'Escape') handleCancelPriceEdit()
   }
 
   // ─── Watchers ────────────────────────────────────────────────
@@ -137,15 +125,8 @@
   )
 
   watch(sessionCostCents, (newCost) => {
-    if (!isEditingPrice.value && !isUsingDeposit.value) {
+    if (!isUsingDeposit.value) {
       formState.amount = newCost / 100
-    }
-  })
-
-  watch(isEditingPrice, async (open) => {
-    if (open) {
-      await nextTick()
-      priceInputRef.value?.inputRef?.focus()
     }
   })
 
@@ -187,62 +168,36 @@
     }"
   >
     <template #actions>
-      <UPopover v-model:open="isEditingPrice" :content="{ align: 'end', side: 'bottom', sideOffset: 8 }">
+      <UPopover v-model:open="isPricePopoverOpen" :content="{ align: 'end', side: 'bottom', sideOffset: 8 }">
         <div class="group flex items-center gap-2">
           <div class="text-right">
             <span class="text-primary text-lg font-black">
               {{ centsToCurrency(sessionCostCents).toFixed(2) }}
             </span>
             <span class="text-primary/60 ml-1 text-[10px] font-bold">DH</span>
+            <p v-if="priceDescription" class="text-muted text-xs">{{ priceDescription }}</p>
           </div>
           <UIcon
             name="i-hugeicons-pencil-edit-01"
             class="text-primary/40 group-hover:text-primary size-4 cursor-pointer transition-colors"
-            @click.stop="handleStartPriceEdit"
+            @click.stop="isPricePopoverOpen = true"
           />
         </div>
 
         <template #content>
           <UCard :ui="{ body: 'p-3 sm:p-4' }">
-            <UFieldGroup size="xl">
-              <UButton
-                color="primary"
-                variant="subtle"
-                square
-                icon="i-hugeicons-cancel-01"
-                @click="handleCancelPriceEdit"
+            <div class="space-y-3">
+              <p class="text-toned text-[10px] font-medium tracking-wider uppercase">Modifier le tarif</p>
+              <USelectMenu
+                v-model="selectedPriceItemCode"
+                :items="selectMenuOptions"
+                ignore-filter
+                :disabled="isUpdating"
+                placeholder="Sélectionner un tarif..."
+                value-key="value"
+                class="max-w-sm min-w-2xs"
+                @update:model-value="updateSessionPrice"
               />
-              <UInputNumber
-                ref="priceInputRef"
-                v-model="priceInputRaw"
-                :step="10"
-                :min="10"
-                placeholder="Prix (DH)"
-                class="max-w-42"
-                @keydown="handlePriceKeydown"
-              />
-              <UButton
-                color="primary"
-                icon="i-hugeicons-tick-02"
-                :loading="isUpdating"
-                :disabled="!isValidPriceInput"
-                @click="handleSavePrice"
-              />
-            </UFieldGroup>
-
-            <div v-if="inheritedPrice !== null" class="mt-2">
-              <p class="text-muted text-xs">
-                Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
-                <UButton
-                  v-if="hasCustomCost"
-                  size="xs"
-                  variant="link"
-                  class="text-primary ml-1 underline underline-offset-2"
-                  @click="handleResetPrice"
-                >
-                  Réinitialiser
-                </UButton>
-              </p>
             </div>
           </UCard>
         </template>

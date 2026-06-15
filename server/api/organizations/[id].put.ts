@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm'
 import { organizations } from '~~/server/database/schema'
-import { RESERVED_PRICE_ITEM_CODE } from '~~/shared/types/org.types'
 
 function validatePriceItems(priceItems: PriceItem[]) {
   const codes = priceItems.map((item) => item.code?.trim())

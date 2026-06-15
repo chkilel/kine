@@ -6,12 +6,6 @@ import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
 
 z.config(fr())
 
-import { calendarDateSchema, noteSchema, treatmentPlanStatusSchema, insuranceCoverageSchema } from './base.types'
-import { rateCentSchema, priceItemSchema } from './org.types'
-
-export const priceItemSnapshotSchema = priceItemSchema.omit({ id: true, isDefault: true })
-export type PriceItemSnapshot = z.infer<typeof priceItemSnapshotSchema>
-
 // =============================================================================
 // Treatment Plan Schemas and Types
 // =============================================================================

@@ -19,8 +19,6 @@
   })
 
   // ─── Computed state ──────────────────────────────────────────
-  const remainingCents = computed(() => props.appointment.priceCents - props.appointment.paidCents)
-
   const statusConfig = computed(() => ({
     label: getPaymentStatusLabel(props.appointment.paymentStatus),
     color: getPaymentStatusColor(props.appointment.paymentStatus),
@@ -153,6 +151,13 @@
           <div class="font-headline text-on-background text-lg font-bold">
             {{ formatCurrency(appointment.priceCents) }}
           </div>
+
+          <p
+            v-if="appointment.priceItemDescription"
+            class="text-highlighted mt-0.5 text-[10px] font-medium tracking-tight uppercase"
+          >
+            {{ appointment.priceItemDescription }}
+          </p>
 
           <p
             v-if="isPaid && appointment.paymentDetails?.[0]"

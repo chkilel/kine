@@ -7,7 +7,12 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
-import { APPOINTMENT_STATUSES, VALID_APPOINTMENT_TYPES, VALID_LOCATIONS } from '~~/shared/types/base.types'
+import {
+  APPOINTMENT_STATUSES,
+  PriceItemSnapshot,
+  VALID_APPOINTMENT_TYPES,
+  VALID_LOCATIONS
+} from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -66,7 +71,8 @@ export const appointments = sqliteTable(
     tags: text(),
 
     // ---- Billing ----
-    priceCents: integer().notNull().default(0),
+    priceCents: integer().notNull().notNull(),
+    priceItem: text({ mode: 'json' }).$type<PriceItemSnapshot>().notNull(),
 
     // ---- Locking ----
     isLocked: integer({ mode: 'boolean' }).default(false),
