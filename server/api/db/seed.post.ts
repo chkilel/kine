@@ -1862,6 +1862,15 @@ function generateAppointments(
       status,
       location,
       priceCents: duration ? duration * 50 : 50,
+      priceItem: {
+        code: 'DEFAULT',
+        description: 'Tarif de séance',
+        rateCent: {
+          clinic: 14400,
+          home: 25000,
+          telehealth: 11100
+        }
+      },
       primaryConcern: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       sessionNotes:
@@ -2016,6 +2025,15 @@ function generateAppointments(
       status,
       location,
       priceCents: durationValue * 50,
+      priceItem: {
+        code: 'DEFAULT',
+        description: 'Tarif de séance',
+        rateCent: {
+          clinic: 14400,
+          home: 25000,
+          telehealth: 11100
+        }
+      },
       primaryConcern: randomItem(medicalConditions),
       notes: null,
       sessionNotes: null,

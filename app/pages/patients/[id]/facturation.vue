@@ -2,90 +2,154 @@
   // ─── Base state ──────────────────────────────────────────────
   const route = useRoute()
   const patientId = computed(() => route.params.id as string)
-
-  const selectedPlan = ref<'all' | 'no-plan' | string>('all')
   const selectedStatus = ref('all')
-  const planPopoverOpen = ref(false)
 
   // ─── Composables ─────────────────────────────────────────────
-  const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance } = useBillingSlideover()
+  const { openRecordPayment, openPaymentHistory, openAddDeposit, openRefundBalance, openPlanPicker } =
+    useBillingSlideover()
 
+  const { latestActiveTreatmentPlan, treatmentPlansGroupedByStatus } = usePatientTreatmentPlans(patientId)
+
+  // ─── Plan selection (URL-synced, defaults to active plan) ────
+  // Accepted values: 'all' | 'no-plan' | '<planId>'
+  const selectedPlanId = computed<string>({
+    get: () => {
+      const q = route.query.planId as string | undefined
+      if (q) return q
+      return latestActiveTreatmentPlan.value?.id ?? 'all'
+    },
+    set: (v) =>
+      navigateTo({
+        path: route.path,
+        query: { ...route.query, planId: v || 'all' }
+      })
+  })
+
+  // Derive the current mode
+  const currentMode = computed<'all' | 'no-plan' | 'plan'>(() => {
+    const v = selectedPlanId.value
+    if (v === 'all' || v === 'no-plan') return v
+    return 'plan'
+  })
+
+  // Detect invalid (deleted) plan ID in URL and reset silently
+  const selectedPlan = computed(() => {
+    if (currentMode.value !== 'plan') return null
+    return treatmentPlansGroupedByStatus.value?.find((p) => p.id === selectedPlanId.value) ?? null
+  })
+
+  // Auto-reset if the URL points to a plan that no longer exists AND plans are loaded
+  watch(
+    [selectedPlan, treatmentPlansGroupedByStatus],
+    ([plan, plans]) => {
+      if (currentMode.value === 'plan' && !plan && plans && plans.length > 0) {
+        selectedPlanId.value = 'all'
+      }
+    },
+    { flush: 'post' }
+  )
+
+  // ─── Data sources ────────────────────────────────────────────
+  // Paginated query for "all" and "no-plan" modes
+  const paginatedMode = computed<'all' | 'no-plan'>(() =>
+    currentMode.value === 'no-plan' ? 'no-plan' : 'all'
+  )
   const {
     data: appointmentsData,
     isLoading: isAppointmentsLoading,
     loadNextPage,
     hasNextPage
-  } = useAppointmentsPaymentStatus()
+  } = useAppointmentsPaymentStatus(paginatedMode)
 
-  const appointments = computed(() => appointmentsData.value?.pages.flatMap((page) => page.data) ?? [])
-
-  const plans = computed(() => {
-    const planMap = new Map<string, { id: string; name: string; count: number }>()
-    for (const s of appointments.value) {
-      if (s.treatmentPlanId && s.planTitle) {
-        const existing = planMap.get(s.treatmentPlanId)
-        if (existing) {
-          existing.count++
-        } else {
-          planMap.set(s.treatmentPlanId, {
-            id: s.treatmentPlanId,
-            name: s.planTitle,
-            count: 1
-          })
-        }
-      }
-    }
-    return Array.from(planMap.values())
-  })
-
-  const planFilteredAppointments = computed(() =>
-    appointments.value.filter((s) => {
-      if (selectedPlan.value === 'no-plan' && s.treatmentPlanId !== null) return false
-      if (selectedPlan.value !== 'all' && selectedPlan.value !== 'no-plan' && s.treatmentPlanId !== selectedPlan.value)
-        return false
-      return true
-    })
+  // Non-paginated "load-all" query for plan-scoped mode
+  const planIdForQuery = computed(() => (currentMode.value === 'plan' ? selectedPlanId.value : null))
+  const { data: planAppointmentsData, isLoading: isPlanAppointmentsLoading } = usePlanBillingSessions(
+    patientId,
+    planIdForQuery
   )
 
+  // Unified current sessions
+  const currentSessions = computed<AppointmentWithPaymentStatus[]>(() => {
+    if (currentMode.value === 'plan') return planAppointmentsData.value ?? []
+    return appointmentsData.value?.pages.flatMap((page) => page.data) ?? []
+  })
+
+  const isLoading = computed(() =>
+    currentMode.value === 'plan' ? isPlanAppointmentsLoading.value : isAppointmentsLoading.value
+  )
+
+  const canLoadMore = computed(() => currentMode.value !== 'plan' && hasNextPage.value)
+
+  // ─── Status filter ───────────────────────────────────────────
   const filteredAppointments = computed(() =>
-    planFilteredAppointments.value.filter((s) => {
+    currentSessions.value.filter((s) => {
       if (selectedStatus.value !== 'all' && s.paymentStatus !== selectedStatus.value) return false
       return true
     })
   )
 
+  // ─── Counts (reflect current filter only) ────────────────────
   const appointmentCounts = computed(() => ({
-    total: appointments.value.length,
-    noPlan: appointments.value.filter((s) => s.treatmentPlanId === null).length,
-    unpaid: appointments.value.filter((s) => s.paymentStatus === 'unpaid').length,
-    partial: appointments.value.filter((s) => s.paymentStatus === 'partially_paid').length,
-    paid: appointments.value.filter((s) => s.paymentStatus === 'paid').length
+    total: currentSessions.value.length,
+    unpaid: currentSessions.value.filter((s) => s.paymentStatus === 'unpaid').length,
+    partial: currentSessions.value.filter((s) => s.paymentStatus === 'partially_paid').length,
+    paid: currentSessions.value.filter((s) => s.paymentStatus === 'paid').length
   }))
 
-  const activePlanSegment = computed(() => {
-    if (selectedPlan.value === 'all') return 'all'
-    if (selectedPlan.value === 'no-plan') return 'no-plan'
-    return 'by-plan'
+  // ─── Trigger button label ────────────────────────────────────
+  const selectedPlanName = computed(() => selectedPlan.value?.title ?? '')
+
+  const triggerLabel = computed(() => {
+    if (currentMode.value === 'all') return 'Toutes les séances'
+    if (currentMode.value === 'no-plan') return 'Sans plan'
+    return selectedPlanName.value || 'Plan inconnu'
   })
 
-  const selectedPlanName = computed(() => {
-    const plan = plans.value.find((p) => p.id === selectedPlan.value)
-    return plan?.name ?? ''
+  const triggerStatusIcon = computed(() => {
+    if (!selectedPlan.value) return null
+    return getTreatmentPlanStatusIcon(selectedPlan.value.status)
+  })
+
+  const triggerStatusColor = computed(() => {
+    if (!selectedPlan.value) return null
+    return getTreatmentPlanStatusColor(selectedPlan.value.status)
+  })
+
+  // ─── Selected plan financials (for slideover row) ────────────
+  const selectedPlanFinancials = computed(() => {
+    if (currentMode.value !== 'plan') return null
+    const sessions = planAppointmentsData.value ?? []
+    const billedCents = sessions.reduce((sum, s) => sum + (s.priceCents || 0), 0)
+    const collectedCents = sessions.reduce((sum, s) => sum + (s.paidCents || 0), 0)
+    return {
+      billedCents,
+      collectedCents,
+      remainingCents: billedCents - collectedCents
+    }
   })
 
   // ─── Event handlers ──────────────────────────────────────────
-  function selectPlanFilter(segment: 'all' | 'no-plan') {
-    selectedPlan.value = segment
-    planPopoverOpen.value = false
+  function handleOpenPlanPicker() {
+    openPlanPicker(
+      patientId.value,
+      currentMode.value === 'plan' ? selectedPlanId.value : null,
+      (planId: string) => {
+        selectedPlanId.value = planId
+      },
+      selectedPlanFinancials.value ?? undefined
+    )
   }
 
-  function selectTreatmentPlan(planId: string) {
-    selectedPlan.value = planId
-    planPopoverOpen.value = false
+  function handleSelectAll() {
+    selectedPlanId.value = 'all'
+  }
+
+  function handleSelectNoPlan() {
+    selectedPlanId.value = 'no-plan'
   }
 
   function handleOpenRecordPayment() {
-    const unpaidIds = appointments.value
+    const unpaidIds = currentSessions.value
       .filter((s) => s.paymentStatus === 'unpaid' || s.paymentStatus === 'partially_paid')
       .map((s) => s.id)
     openRecordPayment(patientId.value, unpaidIds)
@@ -97,7 +161,6 @@
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <h3 class="flex items-center gap-3 font-bold">
-          <!-- <span class="bg-primary h-8 w-2 rounded-full" /> -->
           Séances
         </h3>
 
@@ -105,53 +168,46 @@
           {{ appointmentCounts.unpaid + appointmentCounts.partial }} en attente
         </UBadge>
       </div>
-      <div class="bg-muted flex items-center gap-0.5 rounded-xl p-1">
+
+      <!-- Plan selector: trigger + chips -->
+      <div class="flex flex-wrap items-center gap-2">
         <UButton
-          :variant="activePlanSegment === 'all' ? 'soft' : 'ghost'"
-          :color="activePlanSegment === 'all' ? 'primary' : 'neutral'"
+          :color="currentMode === 'plan' ? 'primary' : 'neutral'"
+          :variant="currentMode === 'plan' ? 'soft' : 'outline'"
+          size="sm"
+          trailing-icon="i-hugeicons-arrow-down-01"
+          @click="handleOpenPlanPicker"
+        >
+          <span class="flex items-center gap-2">
+            <UIcon
+              v-if="triggerStatusIcon"
+              :name="triggerStatusIcon"
+              :class="`text-${triggerStatusColor}`"
+            />
+            <span class="max-w-45 truncate">{{ triggerLabel }}</span>
+          </span>
+        </UButton>
+
+        <USeparator orientation="vertical" class="mx-1 h-5" />
+
+        <UButton
+          :variant="selectedPlanId === 'all' ? 'soft' : 'ghost'"
+          :color="selectedPlanId === 'all' ? 'primary' : 'neutral'"
           size="xs"
           class="rounded-lg"
-          @click="selectPlanFilter('all')"
+          @click="handleSelectAll"
         >
-          Toutes ({{ appointmentCounts.total }})
+          Toutes
         </UButton>
         <UButton
-          :variant="activePlanSegment === 'no-plan' ? 'soft' : 'ghost'"
-          :color="activePlanSegment === 'no-plan' ? 'primary' : 'neutral'"
+          :variant="selectedPlanId === 'no-plan' ? 'soft' : 'ghost'"
+          :color="selectedPlanId === 'no-plan' ? 'primary' : 'neutral'"
           size="xs"
           class="rounded-lg"
-          @click="selectPlanFilter('no-plan')"
+          @click="handleSelectNoPlan"
         >
-          Sans plan ({{ appointmentCounts.noPlan }})
+          Sans plan
         </UButton>
-        <UPopover v-model:open="planPopoverOpen">
-          <UButton
-            :variant="activePlanSegment === 'by-plan' ? 'soft' : 'ghost'"
-            :color="activePlanSegment === 'by-plan' ? 'primary' : 'neutral'"
-            size="xs"
-            class="rounded-lg"
-            :trailing-icon="activePlanSegment === 'by-plan' ? 'i-lucide-check' : 'i-lucide-chevron-down'"
-          >
-            {{ activePlanSegment === 'by-plan' && selectedPlanName ? selectedPlanName : 'Par plan' }}
-          </UButton>
-          <template #content>
-            <div class="flex min-w-56 flex-col gap-1 p-1">
-              <UButton
-                v-for="plan in plans"
-                :key="plan.id"
-                color="neutral"
-                type="button"
-                :variant="selectedPlan === plan.id ? 'soft' : 'ghost'"
-                @click="selectTreatmentPlan(plan.id)"
-              >
-                <UIcon v-if="selectedPlan === plan.id" name="i-lucide-check" class="size-4 shrink-0" />
-                <span v-else class="size-4 shrink-0" />
-                {{ plan.name }}
-                <UBadge size="xs" variant="subtle" class="ml-auto">{{ plan.count }}</UBadge>
-              </UButton>
-            </div>
-          </template>
-        </UPopover>
       </div>
     </div>
 
@@ -177,7 +233,7 @@
               @click="openPaymentHistory(patientId)"
             />
           </div>
-          <div v-if="isAppointmentsLoading" class="py-8 text-center">
+          <div v-if="isLoading" class="py-8 text-center">
             <AppSpinner />
           </div>
           <div v-else class="space-y-2">
@@ -189,7 +245,7 @@
             <p v-if="filteredAppointments.length === 0" class="text-muted py-4 text-center text-sm">
               Aucune séance trouvée
             </p>
-            <div v-if="hasNextPage" class="pt-2 text-center">
+            <div v-if="canLoadMore" class="pt-2 text-center">
               <UButton
                 label="Charger plus"
                 icon="i-hugeicons-arrow-down-01"
@@ -215,10 +271,11 @@
         </div>
         <PaymentBillingBalanceCard
           :patient-id="patientId"
+          :sessions="currentSessions"
           @add-deposit="openAddDeposit(patientId)"
           @refund-balance="openRefundBalance(patientId)"
         />
-        <PaymentBillingFinancialSummaryCard :sessions="planFilteredAppointments" :patient-id="patientId" />
+        <PaymentBillingFinancialSummaryCard :sessions="currentSessions" :patient-id="patientId" />
       </aside>
     </div>
   </div>

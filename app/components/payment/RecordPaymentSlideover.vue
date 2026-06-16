@@ -24,7 +24,7 @@
   const creditBalanceCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unbilledSessions = computed(() => {
-    const items = sessionsData.value?.data ?? []
+    const items = sessionsData.value?.pages.flatMap((page) => page.data) ?? []
     return items.filter((s) => {
       const status = s.paymentStatus
       return status === 'unpaid' || status === 'partially_paid'

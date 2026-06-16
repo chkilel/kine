@@ -1,22 +1,19 @@
 <script setup lang="ts">
-  import type { AppointmentPaymentStatus } from '~~/shared/types/base.types'
-
   // ─── Props / Emits ───────────────────────────────────────────
-  const props = defineProps<{ patientId: string }>()
+  const props = defineProps<{
+    patientId: string
+    sessions: AppointmentWithPaymentStatus[]
+  }>()
 
   // ─── Composables ─────────────────────────────────────────────
   const { data: balanceData, isLoading: balancePending } = usePatientBalance(computed(() => props.patientId))
-  const { data: sessionsData } = useAppointmentsPaymentStatus()
   const { openAddDeposit, openRefundBalance } = useBillingSlideover()
 
   // ─── Computed state ──────────────────────────────────────────
   const depositCents = computed(() => (balanceData.value as number) ?? 0)
 
   const unpaidSessions = computed(() => {
-    const items = sessionsData.value?.data
-
-    if (!items) return { count: 0, totalDueCents: 0 }
-    const unpaid = items.filter((a) => {
+    const unpaid = props.sessions.filter((a) => {
       const status = a.paymentStatus
       return status === 'unpaid' || status === 'partially_paid'
     })
@@ -61,10 +58,6 @@
           <span class="font-bold">
             {{ unpaidSessions.count }} {{ unpaidSessions.count > 1 ? 'Séances' : 'Séance' }}
           </span>
-
-          <!-- <UBadge color="info" variant="subtle" size="sm">
-            {{ unpaidSessions.count }} {{ unpaidSessions.count > 1 ? 'Séances' : 'Séance' }}
-          </UBadge> -->
         </div>
         <div class="flex items-center justify-between text-sm">
           <span class="text-muted">Total à encaisser</span>

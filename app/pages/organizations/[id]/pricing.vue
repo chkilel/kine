@@ -1,8 +1,6 @@
 <script setup lang="ts">
   import { v7 as uuidv7 } from 'uuid'
   import type { FormSubmitEvent } from '@nuxt/ui'
-  import type { PriceItem } from '~~/shared/types/org.types'
-  import { RESERVED_PRICE_ITEM_CODE, priceItemSchema } from '~~/shared/types/org.types'
 
   const route = useRoute()
   const { data: organization, isPending } = useFullOrganization(() => route.params.id as string)

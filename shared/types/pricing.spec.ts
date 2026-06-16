@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { RESERVED_PRICE_ITEM_CODE, priceItemSchema, orgPricingSchema } from '~~/shared/types/org.types'
 
 describe('priceItemSchema', () => {
   const validItem = {

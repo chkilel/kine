@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { calculateInheritedPrice } from './pricing'
+import { resolveAppointmentPrice, toPriceItemSnapshot } from './pricing'
 import type { Appointment } from '~~/shared/types/appointment.type'
 import type { Organization } from '~~/shared/types/org.types'
 import type { TreatmentPlan } from '~~/shared/types/treatment-plan'
 
-describe('calculateInheritedPrice', () => {
+describe('resolveAppointmentPrice', () => {
   const mockOrganization: Organization = {
     id: 'org-1',
     name: 'Test Org',
@@ -21,6 +21,17 @@ describe('calculateInheritedPrice', () => {
             telehealth: 4000
           },
           isDefault: true
+        },
+        {
+          id: 'item-2',
+          code: 'MASSAGE',
+          description: 'Massage 30min',
+          rateCent: {
+            clinic: 3000,
+            home: 4500,
+            telehealth: 2000
+          },
+          isDefault: false
         }
       ],
       packages: []
@@ -48,133 +59,186 @@ describe('calculateInheritedPrice', () => {
     updatedAt: new Date()
   } as any as Appointment
 
-  const mockTreatmentPlan: TreatmentPlan = {
-    id: 'plan-1',
-    organizationId: 'org-1',
-    patientId: 'patient-1',
-    therapistId: 'therapist-1',
-    title: 'Test Plan',
-    diagnosis: 'Test diagnosis',
-    objective: null,
-    startDate: '2024-01-01',
-    endDate: null,
-    numberOfSessions: null,
-    sessionFrequency: null,
-    status: 'planned',
-    prescribingDoctor: null,
-    prescriptionDate: '2024-01-01',
-    coverageStatus: null,
-    insuranceInfo: null,
-    pricing: {
-      clinic: 5500,
-      home: 7000,
-      telehealth: 4500
-    },
-    priceItem: null,
-    notes: [],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
+  it('should inherit priceItem from treatment plan when plan has a priceItem snapshot', () => {
+    const planWithPriceItem: TreatmentPlan = {
+      id: 'plan-1',
+      organizationId: 'org-1',
+      patientId: 'patient-1',
+      therapistId: 'therapist-1',
+      title: 'Test Plan',
+      diagnosis: 'Test diagnosis',
+      objective: null,
+      startDate: '2024-01-01',
+      endDate: null,
+      numberOfSessions: null,
+      sessionFrequency: null,
+      status: 'planned',
+      prescribingDoctor: null,
+      prescriptionDate: '2024-01-01',
+      coverageStatus: null,
+      insuranceInfo: null,
+      pricing: {
+        clinic: 8000,
+        home: 10000,
+        telehealth: 6000
+      },
+      priceItem: {
+        code: 'SUIVI',
+        description: 'Suivi post-op',
+        rateCent: {
+          clinic: 8000,
+          home: 10000,
+          telehealth: 6000
+        }
+      },
+      notes: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
 
-  it('should return plan pricing when treatment plan exists and has pricing for location', () => {
-    const result = calculateInheritedPrice({
+    const result = resolveAppointmentPrice({
       appointment: mockAppointmentClinic,
-      treatmentPlan: mockTreatmentPlan,
+      treatmentPlan: planWithPriceItem,
       organization: mockOrganization
     })
 
-    expect(result).toBe(5500)
+    expect(result.priceCents).toBe(8000)
+    expect(result.priceItem).toEqual({
+      code: 'SUIVI',
+      description: 'Suivi post-op',
+      rateCent: { clinic: 8000, home: 10000, telehealth: 6000 }
+    })
   })
 
-  it('should fallback to organization pricing when treatment plan does not exist', () => {
-    const result = calculateInheritedPrice({
+  it('should derive priceCents from location for plan priceItem', () => {
+    const appointmentHome: Appointment = {
+      ...mockAppointmentClinic,
+      location: 'home'
+    } as any as Appointment
+
+    const planWithPriceItem: TreatmentPlan = {
+      id: 'plan-1',
+      organizationId: 'org-1',
+      patientId: 'patient-1',
+      therapistId: 'therapist-1',
+      title: 'Test Plan',
+      diagnosis: 'Test diagnosis',
+      objective: null,
+      startDate: '2024-01-01',
+      endDate: null,
+      numberOfSessions: null,
+      sessionFrequency: null,
+      status: 'planned',
+      prescribingDoctor: null,
+      prescriptionDate: '2024-01-01',
+      coverageStatus: null,
+      insuranceInfo: null,
+      pricing: {
+        clinic: 8000,
+        home: 10000,
+        telehealth: 6000
+      },
+      priceItem: {
+        code: 'SUIVI',
+        description: 'Suivi post-op',
+        rateCent: { clinic: 8000, home: 10000, telehealth: 6000 }
+      },
+      notes: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    const result = resolveAppointmentPrice({
+      appointment: appointmentHome,
+      treatmentPlan: planWithPriceItem,
+      organization: mockOrganization
+    })
+
+    expect(result.priceCents).toBe(10000)
+  })
+
+  it('should fallback to org default price item when no treatment plan', () => {
+    const result = resolveAppointmentPrice({
       appointment: mockAppointmentClinic,
       treatmentPlan: null,
       organization: mockOrganization
     })
 
-    expect(result).toBe(5000)
-  })
-
-  it('should return correct price for home location', () => {
-    const appointmentHome: Appointment = {
-      ...mockAppointmentClinic,
-      location: 'home'
-    }
-
-    const result = calculateInheritedPrice({
-      appointment: appointmentHome,
-      treatmentPlan: mockTreatmentPlan,
-      organization: mockOrganization
+    expect(result.priceCents).toBe(5000)
+    expect(result.priceItem).toEqual({
+      code: 'DEFAULT',
+      description: 'Tarif de séance',
+      rateCent: { clinic: 5000, home: 6500, telehealth: 4000 }
     })
-
-    expect(result).toBe(7000)
   })
 
-  it('should return correct price for telehealth location', () => {
-    const appointmentTelehealth: Appointment = {
-      ...mockAppointmentClinic,
-      location: 'telehealth'
-    }
-
-    const result = calculateInheritedPrice({
-      appointment: appointmentTelehealth,
-      treatmentPlan: mockTreatmentPlan,
-      organization: mockOrganization
-    })
-
-    expect(result).toBe(4500)
-  })
-
-  it('should fallback to organization pricing when treatment plan has no pricing for location', () => {
-    const planWithMissingPricing: TreatmentPlan = {
-      ...mockTreatmentPlan,
+  it('should fallback to first price item when no default is set', () => {
+    const orgWithoutDefault: Organization = {
+      ...mockOrganization,
       pricing: {
-        clinic: 5500,
-        home: 7000,
-        telehealth: 0
+        ...mockOrganization.pricing!,
+        priceItems: mockOrganization.pricing!.priceItems.map((item) => ({ ...item, isDefault: false }))
       }
-    }
+    } as any as Organization
 
-    const result = calculateInheritedPrice({
+    const result = resolveAppointmentPrice({
       appointment: mockAppointmentClinic,
-      treatmentPlan: planWithMissingPricing,
-      organization: mockOrganization
+      treatmentPlan: null,
+      organization: orgWithoutDefault
     })
 
-    expect(result).toBe(5500)
+    expect(result.priceCents).toBe(5000)
+    expect(result.priceItem?.code).toBe('DEFAULT')
   })
 
-  it('should return null when organization has no pricing', () => {
+  it('should return null priceItem and 0 priceCents when no pricing data', () => {
     const orgWithoutPricing: Organization = {
       ...mockOrganization,
       pricing: null as any
-    }
+    } as any as Organization
 
-    const result = calculateInheritedPrice({
+    const result = resolveAppointmentPrice({
       appointment: mockAppointmentClinic,
-      treatmentPlan: mockTreatmentPlan,
+      treatmentPlan: null,
       organization: orgWithoutPricing
     })
 
-    expect(result).toBeNull()
+    expect(result.priceCents).toBe(0)
+    expect(result.priceItem).toBeNull()
   })
 
-  it('should return null when organization pricing has no priceItems', () => {
-    const orgWithoutPriceItems: Organization = {
-      ...mockOrganization,
-      pricing: {
-        priceItems: [],
-        packages: []
-      }
-    }
+  it('should select location-based rate for org default', () => {
+    const appointmentHome: Appointment = {
+      ...mockAppointmentClinic,
+      location: 'home'
+    } as any as Appointment
 
-    const result = calculateInheritedPrice({
-      appointment: mockAppointmentClinic,
-      treatmentPlan: mockTreatmentPlan,
-      organization: orgWithoutPriceItems
+    const result = resolveAppointmentPrice({
+      appointment: appointmentHome,
+      treatmentPlan: null,
+      organization: mockOrganization
     })
 
-    expect(result).toBeNull()
+    expect(result.priceCents).toBe(6500)
+  })
+})
+
+describe('toPriceItemSnapshot', () => {
+  it('should strip id and isDefault from a PriceItem', () => {
+    const snapshot = toPriceItemSnapshot({
+      id: 'item-1',
+      code: 'DEFAULT',
+      description: 'Tarif de séance',
+      rateCent: { clinic: 5000, home: 6500, telehealth: 4000 },
+      isDefault: true
+    })
+
+    expect(snapshot).toEqual({
+      code: 'DEFAULT',
+      description: 'Tarif de séance',
+      rateCent: { clinic: 5000, home: 6500, telehealth: 4000 }
+    })
+    expect((snapshot as any).id).toBeUndefined()
+    expect((snapshot as any).isDefault).toBeUndefined()
   })
 })
