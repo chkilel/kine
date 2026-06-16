@@ -6,7 +6,7 @@ import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
 import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/types/base.types'
-import type { RateCent } from '~~/shared/types/org.types'
+
 
 /**
  * ================================================================
@@ -51,6 +51,10 @@ export const treatmentPlans = sqliteTable(
 
     // Pricing for sessions (inherited from org at creation, can be overridden)
     pricing: text({ mode: 'json' }).$type<RateCent>().notNull(),
+
+    // Cached price item snapshot (code, description, rateCent) — decouples plan pricing from org price changes
+    priceItem: text({ mode: 'json' }).$type<Omit<PriceItem, 'id' | 'isDefault'>>(),
+
     notes: text({ mode: 'json' }).$type<{ author: string; date: Date; content: string }[]>().default([]), // General notes about the treatment plan — e.g., "Focus on strengthening after surgery"
 
     // CreatedAt, UpdatedAt

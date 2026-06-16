@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "19b03d08-a76e-4afe-b386-7d5238c67cee",
+  "id": "7168a85e-6658-4d9d-b8e4-95209df4df74",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -995,6 +995,16 @@
       "default": "0",
       "generated": null,
       "name": "priceCents",
+      "entityType": "columns",
+      "table": "appointments"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "priceItem",
       "entityType": "columns",
       "table": "appointments"
     },
@@ -2375,6 +2385,16 @@
       "default": null,
       "generated": null,
       "name": "pricing",
+      "entityType": "columns",
+      "table": "treatment_plans"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "priceItem",
       "entityType": "columns",
       "table": "treatment_plans"
     },

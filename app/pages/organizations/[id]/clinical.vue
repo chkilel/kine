@@ -79,7 +79,7 @@
       ref="form"
       :state="state"
       :schema="orgClinicalIntakeSchema"
-      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
+      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">

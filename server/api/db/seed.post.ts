@@ -1203,18 +1203,64 @@ async function createOrganization(
 
     const pricingData = isClinicA
       ? {
-          rateCent: {
-            clinic: 14400,
-            home: 25000,
-            telehealth: 11100
-          }
+          priceItems: [
+            {
+              id: crypto.randomUUID(),
+              code: 'DEFAULT',
+              description: 'Tarif de séance',
+              rateCent: {
+                clinic: 14400,
+                home: 25000,
+                telehealth: 11100
+              },
+              isDefault: true
+            },
+            {
+              id: crypto.randomUUID(),
+              code: 'MASSAGE_30',
+              description: 'Massage 30 minutes',
+              rateCent: {
+                clinic: 10000,
+                home: 18000,
+                telehealth: 8000
+              },
+              isDefault: false
+            }
+          ],
+          packages: [
+            { name: 'Pack 5 séances', sessionCount: 5, priceCent: 65000 },
+            { name: 'Pack 10 séances', sessionCount: 10, priceCent: 120000 }
+          ]
         }
       : {
-          rateCent: {
-            clinic: 13300,
-            home: 23000,
-            telehealth: 113000
-          }
+          priceItems: [
+            {
+              id: crypto.randomUUID(),
+              code: 'DEFAULT',
+              description: 'Tarif de séance',
+              rateCent: {
+                clinic: 13300,
+                home: 23000,
+                telehealth: 11300
+              },
+              isDefault: true
+            },
+            {
+              id: crypto.randomUUID(),
+              code: 'REEDUC_45',
+              description: 'Séance de rééducation 45min',
+              rateCent: {
+                clinic: 15000,
+                home: 25000,
+                telehealth: 12000
+              },
+              isDefault: false
+            }
+          ],
+          packages: [
+            { name: 'Pack 5 séances', sessionCount: 5, priceCent: 60000 },
+            { name: 'Pack 10 séances', sessionCount: 10, priceCent: 110000 }
+          ]
         }
 
     const schedulingData = isClinicA
@@ -1816,6 +1862,15 @@ function generateAppointments(
       status,
       location,
       priceCents: duration ? duration * 50 : 50,
+      priceItem: {
+        code: 'DEFAULT',
+        description: 'Tarif de séance',
+        rateCent: {
+          clinic: 14400,
+          home: 25000,
+          telehealth: 11100
+        }
+      },
       primaryConcern: randomItem(medicalConditions),
       notes: status === 'completed' ? 'Session terminée avec succès' : null,
       sessionNotes:
@@ -1970,6 +2025,15 @@ function generateAppointments(
       status,
       location,
       priceCents: durationValue * 50,
+      priceItem: {
+        code: 'DEFAULT',
+        description: 'Tarif de séance',
+        rateCent: {
+          clinic: 14400,
+          home: 25000,
+          telehealth: 11100
+        }
+      },
       primaryConcern: randomItem(medicalConditions),
       notes: null,
       sessionNotes: null,

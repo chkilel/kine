@@ -147,18 +147,32 @@ type AppointmentsPaymentStatusPage = {
   nextCursor: { date: string; id: string } | null
 }
 
-const _useAppointmentsPaymentStatus = () => {
+export type AppointmentsPaymentMode = 'all' | 'no-plan'
+
+/**
+ * Paginated query for the "all" and "no-plan" modes of the facturation page.
+ *
+ * - `mode: 'all'` (default) → all billable sessions for the patient, paginated.
+ * - `mode: 'no-plan'` → only sessions without a treatment plan (`onlyIndependent`).
+ *
+ * For plan-scoped "load-all" mode, use `usePlanBillingSessions`.
+ *
+ * Note: this composable reads `patientId` from the current route (`patients/[id]/*`).
+ */
+const _useAppointmentsPaymentStatus = (mode: MaybeRefOrGetter<AppointmentsPaymentMode> = 'all') => {
   const route = useRoute()
   const patientId = computed(() => route.params.id as string)
+  const modeValue = computed(() => toValue(mode))
   const requestFetch = useRequestFetch()
   return useInfiniteQuery<AppointmentsPaymentStatusPage, Error, { date: string; id: string } | null>({
-    key: () => PAYMENT_KEYS.patientAppointmentsPaymentStatus(patientId.value),
+    key: () => [...PAYMENT_KEYS.patientAppointmentsPaymentStatus(patientId.value), modeValue.value],
     query: async ({ pageParam }): Promise<AppointmentsPaymentStatusPage> => {
       return requestFetch<AppointmentsPaymentStatusPage>('/api/appointments/payments', {
         query: {
           patientId: patientId.value,
           status: ['finished', 'completed'],
           limit: 5,
+          onlyIndependent: modeValue.value === 'no-plan' ? true : undefined,
           cursorDate: pageParam?.date,
           cursorId: pageParam?.id
         }

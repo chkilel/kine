@@ -6,15 +6,13 @@ import { treatmentPlans } from '~~/server/database/schema/treatment-plan'
 
 z.config(fr())
 
-import { calendarDateSchema, noteSchema, treatmentPlanStatusSchema, insuranceCoverageSchema } from './base.types'
-import { rateCentSchema } from './org.types'
-
 // =============================================================================
 // Treatment Plan Schemas and Types
 // =============================================================================
 
 const treatmentPlanSchemaShape = {
   pricing: rateCentSchema,
+  priceItem: priceItemSnapshotSchema.nullable(),
   notes: z.array(noteSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
@@ -39,6 +37,7 @@ const treatmentPlanCreateShape = {
   insuranceInfo: z.string().optional(),
   coverageStatus: insuranceCoverageSchema.optional(),
   pricing: rateCentSchema,
+  priceItem: priceItemSnapshotSchema.optional(),
   notes: z.array(noteSchema).optional()
 }
 
@@ -64,7 +63,8 @@ export const treatmentPlanUpdateSchema = createInsertSchema(treatmentPlans, {
   diagnosis: z.string().min(3),
   objective: z.string().optional(),
 
-  pricing: rateCentSchema
+  pricing: rateCentSchema,
+  priceItem: priceItemSnapshotSchema.optional()
 }).partial()
 
 // Query schemas

@@ -21,13 +21,72 @@
   const loading = computed(() => (isEditMode.value ? isUpdating.value : isCreating.value))
   const formSchema = computed(() => (isEditMode.value ? treatmentPlanUpdateSchema : treatmentPlanCreateSchema))
 
-  // Get default pricing from organization (in DH for display)
+  // Org price items for the selector (4.2)
+  const orgPriceItems = computed<PriceItem[]>(() => {
+    return activeOrganization.value.data?.pricing?.priceItems || []
+  })
+
+  // Price items with snapshot fallback for edit mode
+  const priceItemOptions = computed<PriceItem[]>(() => {
+    const items = orgPriceItems.value
+    if (isEditMode.value && selectedPriceItem.value) {
+      const exists = items.some((i) => i.code === selectedPriceItem.value!.code)
+      if (!exists) {
+        return [
+          ...items,
+          {
+            id: 'snapshot',
+            code: selectedPriceItem.value.code,
+            description: selectedPriceItem.value.description,
+            rateCent: selectedPriceItem.value.rateCent,
+            isDefault: false
+          }
+        ]
+      }
+    }
+    return items
+  })
+
+  // Get default price item from organization
+  const getDefaultPriceItem = (): PriceItem | null => {
+    return orgPriceItems.value.find((item: PriceItem) => item.isDefault) || orgPriceItems.value[0] || null
+  }
+
+  // Current selected price item snapshot (full object, cached)
+  const selectedPriceItem = ref<PriceItemSnapshot | null>(
+    treatmentPlan?.priceItem || (getDefaultPriceItem() ? toPriceItemSnapshot(getDefaultPriceItem()!) : null)
+  )
+
+  // Pricing selector code — used to match selected item in dropdown
+  const selectedPriceItemCode = computed({
+    get: () => selectedPriceItem.value?.code,
+    set: (code: string | null) => {
+      if (!code) {
+        selectedPriceItem.value = null
+        return
+      }
+      const item = orgPriceItems.value.find((i) => i.code === code)
+      if (item) {
+        selectedPriceItem.value = toPriceItemSnapshot(item)
+      }
+    }
+  })
+
+  // Get default pricing from organization (in DH for display, as fallback)
   const getDefaultPricing = () => {
-    const pricing = activeOrganization.value.data?.pricing?.rateCent
+    const orgPricing = activeOrganization.value.data?.pricing
+    if (!orgPricing) {
+      return { clinic: 150, home: 200, telehealth: 100 }
+    }
+
+    const defaultItem = orgPricing.priceItems?.find((item: PriceItem) => item.isDefault) || orgPricing.priceItems?.[0]
+    if (!defaultItem?.rateCent) {
+      return { clinic: 150, home: 200, telehealth: 100 }
+    }
     return {
-      clinic: pricing?.clinic ? centsToCurrency(pricing.clinic) : 100,
-      home: pricing?.home ? centsToCurrency(pricing.home) : 100,
-      telehealth: pricing?.telehealth ? centsToCurrency(pricing.telehealth) : 100
+      clinic: defaultItem.rateCent.clinic ? centsToCurrency(defaultItem.rateCent.clinic) : 150,
+      home: defaultItem.rateCent.home ? centsToCurrency(defaultItem.rateCent.home) : 200,
+      telehealth: defaultItem.rateCent.telehealth ? centsToCurrency(defaultItem.rateCent.telehealth) : 100
     }
   }
 
@@ -77,13 +136,21 @@
     set: (val) => (formState.prescriptionDate = val ? val.toString() : getTodayAsString())
   })
 
+  const estimatedEndDate = computed(() => {
+    if (!formState.startDate || !formState.numberOfSessions || !formState.sessionFrequency) return null
+    const weeks = Math.ceil(formState.numberOfSessions / formState.sessionFrequency)
+    const date = parseDate(formState.startDate).add({ weeks })
+    return df.format(date.toDate(getLocalTimeZone()))
+  })
+
   async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate | TreatmentPlanUpdate>) {
     const data = event.data
 
-    // Convert pricing from DH to cents before submitting
-    const dataWithCents = {
+    // Build payload with priceItem snapshot and derived pricing
+    const payload = {
       ...data,
-      pricing: {
+      priceItem: selectedPriceItem.value,
+      pricing: selectedPriceItem.value?.rateCent || {
         clinic: currencyToCents(formState.pricing.clinic),
         home: currencyToCents(formState.pricing.home),
         telehealth: currencyToCents(formState.pricing.telehealth)
@@ -94,7 +161,7 @@
     if (isEditMode.value) {
       updateTreatmentPlan({
         planId: treatmentPlan!.id,
-        data: dataWithCents as TreatmentPlanUpdate,
+        data: payload as TreatmentPlanUpdate,
         onSuccess: () => {
           emit('close')
           resetForm()
@@ -103,7 +170,7 @@
     } else {
       // Create
       createTreatmentPlan({
-        data: dataWithCents as TreatmentPlanCreate,
+        data: payload as TreatmentPlanCreate,
         onSuccess: () => {
           emit('close')
           resetForm()
@@ -113,6 +180,9 @@
   }
 
   function resetForm() {
+    // Reset price item to org default
+    selectedPriceItem.value = getDefaultPriceItem() ? toPriceItemSnapshot(getDefaultPriceItem()!) : null
+
     Object.assign(formState, {
       patientId: '',
       prescribingDoctor: '',
@@ -145,108 +215,34 @@
   >
     <template #body>
       <UForm ref="planFormRef" :schema="formSchema" :state="formState" class="space-y-6" @submit="handleSubmit">
-        <div class="space-y-4">
-          <div class="grid-col-1 grid gap-4 lg:grid-cols-2">
-            <!-- Medical Data and Insurance -->
-            <AppCard title="Prescription et couverture">
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <UFormField label="Médecin" name="prescribingDoctor" required>
-                  <UInput v-model="formState.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
-                </UFormField>
-
-                <UFormField label="Date de prescription" name="prescriptionDate" required>
-                  <UPopover>
-                    <UButton
-                      color="neutral"
-                      variant="subtle"
-                      icon="i-lucide-calendar"
-                      class="w-full justify-start"
-                      block
-                    >
-                      {{
-                        prescriptionDateModel
-                          ? df.format(prescriptionDateModel.toDate(getLocalTimeZone()))
-                          : 'Sélectionner une date'
-                      }}
-                    </UButton>
-                    <template #content>
-                      <UCalendar v-model="prescriptionDateModel" class="p-2" />
-                    </template>
-                  </UPopover>
-                </UFormField>
-
-                <UFormField label="Assurance/Mutuelle" name="insuranceInfo">
-                  <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
-                </UFormField>
-
-                <UFormField label="Statut de couverture">
-                  <USelectMenu
-                    v-model="formState.coverageStatus"
-                    :items="INSURANCE_COVERAGE_OPTIONS"
-                    value-key="value"
-                    label-key="label"
-                    placeholder="Selectionner ..."
-                    class="w-full"
-                  />
-                </UFormField>
-              </div>
-            </AppCard>
-
-            <!-- Organisation du plan -->
-            <AppCard title="Organisation du plan">
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <UFormField label="Kinésithérapeute responsable" name="therapistId" required>
-                  <USelectMenu
-                    v-model="formState.therapistId"
-                    value-key="id"
-                    label-key="name"
-                    :items="therapists"
-                    class="w-full"
-                  />
-                </UFormField>
-
-                <UFormField label="Date de début" name="startDate" required>
-                  <UPopover>
-                    <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start">
-                      {{
-                        startDateModel ? df.format(startDateModel.toDate(getLocalTimeZone())) : 'Sélectionner une date'
-                      }}
-                    </UButton>
-                    <template #content>
-                      <UCalendar v-model="startDateModel" class="p-2" />
-                    </template>
-                  </UPopover>
-                </UFormField>
-
-                <UFormField label="Nombre total des séances" name="numberOfSessions">
-                  <UInputNumber v-model="formState.numberOfSessions" :min="1" :max="100" class="w-full" />
-                </UFormField>
-                <UFormField label="Séances/semaine" name="sessionFrequency">
-                  <UInputNumber v-model="formState.sessionFrequency" :min="1" :max="6" class="w-full" />
-                </UFormField>
-
-                <UFormField label="Statut du plan" name="status" class="md:col-span-2">
-                  <URadioGroup
-                    v-model="formState.status"
-                    :items="[...TREATMENT_PLAN_STATUS_OPTIONS]"
-                    orientation="horizontal"
-                    indicator="hidden"
-                    variant="table"
-                    size="sm"
-                    :ui="{ item: 'p-2 flex-1 items-center' }"
-                  />
-                </UFormField>
-              </div>
-            </AppCard>
-          </div>
-          <!-- Informations cliniques -->
-          <AppCard title="Informations cliniques">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Card 1 — Contexte clinique -->
+          <AppCard title="Contexte clinique">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField label="Médecin prescripteur" name="prescribingDoctor" required>
+                <UInput v-model="formState.prescribingDoctor" placeholder="Dr. Leblanc" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Date de prescription" name="prescriptionDate" required>
+                <UPopover>
+                  <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start" block>
+                    {{
+                      prescriptionDateModel
+                        ? df.format(prescriptionDateModel.toDate(getLocalTimeZone()))
+                        : 'Sélectionner une date'
+                    }}
+                  </UButton>
+                  <template #content>
+                    <UCalendar v-model="prescriptionDateModel" class="p-2" />
+                  </template>
+                </UPopover>
+              </UFormField>
+
               <UFormField label="Titre du plan de traitement" name="title" required class="md:col-span-2">
                 <UInput v-model="formState.title" placeholder="Ex: Rééducation épaule droite" class="w-full" />
               </UFormField>
 
-              <UFormField label="Diagnostic" name="diagnosis" required class="col-span-1">
+              <UFormField label="Diagnostic" name="diagnosis" required class="md:col-span-2">
                 <UTextarea
                   v-model="formState.diagnosis"
                   placeholder="Tendinopathie du supra-épineux..."
@@ -255,7 +251,7 @@
                 />
               </UFormField>
 
-              <UFormField label="Objectifs de rééducation" name="objective" class="col-span-1">
+              <UFormField v-if="isEditMode" label="Objectifs de rééducation" name="objective" class="md:col-span-2">
                 <UTextarea
                   v-model="formState.objective"
                   placeholder="Améliorer l'amplitude, réduire la douleur..."
@@ -266,17 +262,135 @@
             </div>
           </AppCard>
 
-          <!-- Pricing -->
-          <AppCard title="Tarifs des séances">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
-              <UFormField label="Clinique (DH)" name="pricing.clinic" required>
-                <UInputNumber v-model="formState.pricing.clinic" :min="1" class="col-span-1 w-full" />
+          <!-- Card 2 — Organisation et prise en charge -->
+          <AppCard title="Organisation et prise en charge">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField label="Kinésithérapeute responsable" name="therapistId" required>
+                <USelectMenu
+                  v-model="formState.therapistId"
+                  value-key="id"
+                  label-key="name"
+                  :items="therapists"
+                  class="w-full"
+                />
               </UFormField>
-              <UFormField label="Domicile (DH)" name="pricing.home" required>
-                <UInputNumber v-model="formState.pricing.home" :min="1" class="col-span-1 w-full" />
+
+              <UFormField label="Date de début" name="startDate" required>
+                <UPopover>
+                  <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start">
+                    {{
+                      startDateModel ? df.format(startDateModel.toDate(getLocalTimeZone())) : 'Sélectionner une date'
+                    }}
+                  </UButton>
+                  <template #content>
+                    <UCalendar v-model="startDateModel" class="p-2" />
+                  </template>
+                </UPopover>
               </UFormField>
-              <UFormField label="Téléconsultation (DH)" name="pricing.telehealth" required>
-                <UInputNumber v-model="formState.pricing.telehealth" :min="1" class="col-span-1 w-full" />
+
+              <UFormField label="Nombre de séances" name="numberOfSessions">
+                <UInputNumber v-model="formState.numberOfSessions" :min="1" :max="100" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Séances/semaine" name="sessionFrequency">
+                <UInputNumber v-model="formState.sessionFrequency" :min="1" :max="6" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Fin estimée" class="cursor-not-allowed md:col-span-2">
+                <div
+                  class="bg-elevated border-accented flex h-9 w-full items-center gap-2 rounded-md border px-3 text-sm"
+                >
+                  <UIcon name="i-hugeicons-calendar-03" class="text-muted size-4" />
+                  <span class="text-dimmed">
+                    {{ estimatedEndDate || '—' }}
+                  </span>
+                </div>
+              </UFormField>
+
+              <UFormField label="Assurance / Mutuelle" name="insuranceInfo">
+                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+              </UFormField>
+
+              <UFormField label="Statut de couverture">
+                <USelectMenu
+                  v-model="formState.coverageStatus"
+                  :items="INSURANCE_COVERAGE_OPTIONS"
+                  value-key="value"
+                  label-key="label"
+                  placeholder="Sélectionner..."
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField v-if="priceItemOptions.length > 0" label="Tarif" class="md:col-span-2">
+                <USelectMenu
+                  v-model="selectedPriceItemCode"
+                  :items="priceItemOptions"
+                  value-key="code"
+                  label-key="code"
+                  class="w-full"
+                  placeholder="Sélectionner un tarif..."
+                >
+                  <template #default="{ modelValue }">
+                    <div class="flex w-full items-center justify-between gap-x-5 text-sm">
+                      <span class="font-medium">{{ modelValue }}</span>
+                      <div class="divide-accented grid grid-cols-3 divide-x">
+                        <span class="text-muted flex items-center gap-1 px-1.5">
+                          <UIcon name="i-hugeicons-hospital-02" class="size-3.5" />
+                          {{
+                            formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.clinic)
+                          }}
+                        </span>
+                        <span class="text-muted flex items-center gap-1 px-1.5">
+                          <UIcon name="i-hugeicons-home-03" class="size-3.5" />
+                          {{ formatCurrency(priceItemOptions.find((item) => item.code === modelValue)?.rateCent.home) }}
+                        </span>
+                        <span class="text-muted flex items-center gap-1 px-1.5">
+                          <UIcon name="i-hugeicons-video-02" class="size-3.5" />
+                          {{
+                            formatCurrency(
+                              priceItemOptions.find((item) => item.code === modelValue)?.rateCent.telehealth
+                            )
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </template>
+                  <template #item="{ item }">
+                    <div class="w-full space-y-1">
+                      <div class="flex items-center justify-between gap-x-4 text-sm">
+                        <span class="font-medium">{{ item?.code }}</span>
+                        <div class="divide-accented grid grid-cols-3 divide-x">
+                          <span class="text-muted flex items-center gap-1 px-2">
+                            <UIcon name="i-hugeicons-clinic" class="size-3.5" />
+                            {{ item?.rateCent ? `${centsToCurrency(item.rateCent.clinic)} Dh` : '-' }}
+                          </span>
+                          <span class="text-muted flex items-center gap-1 px-2">
+                            <UIcon name="i-hugeicons-home-03" class="size-3.5" />
+                            {{ item?.rateCent ? `${centsToCurrency(item.rateCent.home)} Dh` : '-' }}
+                          </span>
+                          <span class="text-muted flex items-center gap-1 px-2">
+                            <UIcon name="i-hugeicons-video-02" class="size-3.5" />
+                            {{ item?.rateCent ? `${centsToCurrency(item.rateCent.telehealth)} Dh` : '-' }}
+                          </span>
+                        </div>
+                      </div>
+                      <p v-if="item?.description" class="text-muted text-xs">{{ item.description }}</p>
+                    </div>
+                  </template>
+                </USelectMenu>
+              </UFormField>
+
+              <UFormField v-if="isEditMode" label="Statut du plan" name="status" class="md:col-span-2">
+                <URadioGroup
+                  v-model="formState.status"
+                  :items="[...TREATMENT_PLAN_STATUS_OPTIONS]"
+                  orientation="horizontal"
+                  indicator="hidden"
+                  variant="table"
+                  size="sm"
+                  :ui="{ item: 'p-2 flex-1 items-center' }"
+                />
               </UFormField>
             </div>
           </AppCard>

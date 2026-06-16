@@ -5,7 +5,7 @@ TBD - created by archiving change add-invoicing-and-session-pricing. Update Purp
 ## Requirements
 ### Requirement: Treatment Plan Pricing
 
-The system SHALL store pricing for each treatment plan as a single pricing JSON object. When a treatment plan is created, pricing SHALL be automatically inherited from organization's default session rates. The plan's pricing can be overridden at any time using the standard update endpoint, and changes to organization pricing SHALL NOT affect existing treatment plans.
+The system SHALL store pricing for each treatment plan as a single pricing JSON object. When a treatment plan is created, pricing SHALL be automatically inherited from organization's default session rates. The plan's pricing can be overridden at any time using the standard update endpoint, and changes to organization pricing SHALL NOT affect existing treatment plans. The plan SHALL additionally store an optional `priceItem` JSON object caching the full selected price item snapshot (code, description, rateCent) at creation or update time. This snapshot decouples plan pricing from org price changes — the plan's pricing is only updated when the user explicitly selects a different price item.
 
 The pricing object SHALL have following structure:
 
@@ -124,4 +124,20 @@ All fields are required and must be numbers >= 100 representing cost in cents (m
 - **THEN** HTTP response is 201 Created
 - **AND** treatment plan has complete pricing: { clinic: 5000, home: 6500, telehealth: 4000 }
 - **AND** missing home pricing is populated with a sensible default value
+
+#### Scenario: priceItem snapshot is stored alongside pricing on creation
+
+- **GIVEN** an organization has price items including one with code "POST_OP" and rates { clinic: 8000, home: 10000, telehealth: 6000 }
+- **WHEN** POST /api/treatment-plans is called with `priceItem: { code: "POST_OP", description: "Suivi post-op", rateCent: { clinic: 8000, home: 10000, telehealth: 6000 } }`
+- **THEN** HTTP response is 201 Created
+- **AND** treatment plan has the full `priceItem` snapshot stored
+- **AND** pricing is derived from `priceItem.rateCent`
+
+#### Scenario: priceItem snapshot update replaces pricing on treatment plan update
+
+- **GIVEN** a treatment plan exists with `priceItem: { code: "DEFAULT", rateCent: { clinic: 5000, home: 6500, telehealth: 4000 } }`
+- **WHEN** PATCH /api/treatment-plans/plan-123 is called with body { priceItem: { code: "POST_OP", description: "Suivi post-op", rateCent: { clinic: 8000, home: 10000, telehealth: 6000 } } }
+- **THEN** HTTP response is 200 OK
+- **AND** `priceItem` snapshot is updated to the new item
+- **AND** pricing is updated from `priceItem.rateCent`
 

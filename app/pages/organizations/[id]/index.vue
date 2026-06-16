@@ -84,7 +84,7 @@
       ref="form"
       :state="state"
       :schema="orgGeneralesSchema"
-      class="columns-1 gap-6 pt-6 md:columns-2"
+      class="columns-1 gap-6 md:columns-2"
       @submit="onSubmit"
     >
       <!-- Identité -->

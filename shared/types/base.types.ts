@@ -183,7 +183,7 @@ export type OrganizationStatus = z.infer<typeof organizationStatusSchema>
 // =============================================================================
 
 export const ORGANIZATION_TYPES = ['cabinet', 'medical-center', 'clinic', 'rehabilitation-center'] as const
-export const organizationTypeSchema = z.enum(ORGANIZATION_TYPES)
+export const organizationTypeSchema = z.string()
 export type OrganizationType = z.infer<typeof organizationTypeSchema>
 
 // =============================================================================
@@ -305,6 +305,33 @@ export type PaymentType = z.infer<typeof paymentTypeSchema>
 export const APPOINTMENT_PAYMENT_STATUSES = ['unpaid', 'copay_paid', 'partially_paid', 'paid'] as const
 export const appointmentPaymentStatusSchema = z.enum(APPOINTMENT_PAYMENT_STATUSES)
 export type AppointmentPaymentStatus = z.infer<typeof appointmentPaymentStatusSchema>
+
+
+// =============================================================================
+// Pricing Constants
+// =============================================================================
+
+export const rateCentSchema = z.object({
+  clinic: z.number().min(1, 'Le tarif doit être positif'),
+  home: z.number().min(1, 'Le tarif doit être positif'),
+  telehealth: z.number().min(1, 'Le tarif doit être positif')
+})
+export type RateCent = z.infer<typeof rateCentSchema>
+
+export const priceItemSchema = z.object({
+  id: z.string(),
+  code: z.string().min(1, 'Le code est requis'),
+  description: z.string().min(1, 'La description est requise'),
+  rateCent: rateCentSchema,
+  isDefault: z.boolean().default(false)
+})
+export type PriceItem = z.infer<typeof priceItemSchema>
+
+export const RESERVED_PRICE_ITEM_CODE = 'DEFAULT'
+
+export const priceItemSnapshotSchema = priceItemSchema.omit({ id: true, isDefault: true })
+export type PriceItemSnapshot = z.infer<typeof priceItemSnapshotSchema>
+
 
 // =============================================================================
 // Emergency Contact Schema

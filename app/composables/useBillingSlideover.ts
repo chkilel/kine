@@ -3,10 +3,17 @@ import {
   LazyPaymentAddDepositSlideover,
   LazyPaymentCancelPaymentModal,
   LazyPaymentHistorySlideover,
+  LazyPaymentPlanPickerSlideover,
   LazyPaymentRecordPaymentSlideover,
   LazyPaymentRefundBalanceSlideover,
   LazyAppReceiptModal
 } from '#components'
+
+type PlanPickerFinancials = {
+  billedCents: number
+  collectedCents: number
+  remainingCents: number
+}
 
 const _useBillingSlideover = () => {
   // ─── Overlays ────────────────────────────────────────────────
@@ -17,6 +24,7 @@ const _useBillingSlideover = () => {
   const paymentHistoryOverlay = overlay.create(LazyPaymentHistorySlideover)
   const cancelPaymentOverlay = overlay.create(LazyPaymentCancelPaymentModal)
   const receiptOverlay = overlay.create(LazyAppReceiptModal)
+  const planPickerOverlay = overlay.create(LazyPaymentPlanPickerSlideover)
 
   // ─── Open functions ─────────────────────────────────────────
   const openRecordPayment = (patientId: string, preselectedSessionIds?: string[]) => {
@@ -43,13 +51,28 @@ const _useBillingSlideover = () => {
     receiptOverlay.open({ paymentId })
   }
 
+  const openPlanPicker = (
+    patientId: string,
+    selectedPlanId: string | null,
+    onSelect: (planId: string) => void,
+    selectedPlanFinancials?: PlanPickerFinancials
+  ) => {
+    planPickerOverlay.open({
+      patientId,
+      selectedPlanId,
+      selectedPlanFinancials,
+      onSelect
+    })
+  }
+
   return {
     openRecordPayment,
     openAddDeposit,
     openRefundBalance,
     openPaymentHistory,
     openCancelPayment,
-    viewPaymentReceipt
+    viewPaymentReceipt,
+    openPlanPicker
   }
 }
 

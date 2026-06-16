@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { appointments, patients, users, rooms } from '~~/server/database/schema'
+import { appointments, patients, users, rooms, treatmentPlans, organizations } from '~~/server/database/schema'
+import { resolveAppointmentPrice } from '~~/server/utils/pricing'
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
@@ -68,12 +69,39 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const appointmentData = {
-      ...body,
-      organizationId
+    let linkedPlan: any = null
+    if (body.treatmentPlanId) {
+      ;[linkedPlan] = await db
+        .select()
+        .from(treatmentPlans)
+        .where(and(eq(treatmentPlans.id, body.treatmentPlanId), eq(treatmentPlans.organizationId, organizationId)))
+        .limit(1)
     }
 
-    const [newAppointment] = await db.insert(appointments).values(appointmentData).returning()
+    const [organization] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1)
+
+    const resolved = organization
+      ? resolveAppointmentPrice({
+          appointment: body as any,
+          treatmentPlan: linkedPlan,
+          organization
+        })
+      : { priceCents: 0, priceItem: null }
+
+
+    const [newAppointment] = await db
+      .insert(appointments)
+      .values({
+        ...body,
+        organizationId,
+        priceCents: resolved.priceCents,
+        priceItem: resolved.priceItem
+      })
+      .returning()
 
     return successResponse(newAppointment, 'Rendez-vous créé avec succès')
   } catch (error: unknown) {

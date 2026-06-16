@@ -1,6 +1,41 @@
 import { eq } from 'drizzle-orm'
 import { organizations } from '~~/server/database/schema'
 
+function validatePriceItems(priceItems: PriceItem[]) {
+  const codes = priceItems.map((item) => item.code?.trim())
+  const uniqueCodes = new Set(codes)
+
+  if (codes.length !== uniqueCodes.size) {
+    throw createError({
+      statusCode: 400,
+      message: 'Les codes de tarifs doivent être uniques'
+    })
+  }
+
+  const defaultCount = codes.filter((c: string) => c === RESERVED_PRICE_ITEM_CODE).length
+  if (defaultCount > 1) {
+    throw createError({
+      statusCode: 400,
+      message: 'Le code "DEFAULT" est réservé et ne peut être utilisé qu\'une fois'
+    })
+  }
+
+  const defaults = priceItems.filter((item) => item.isDefault)
+  if (defaults.length > 1) {
+    throw createError({
+      statusCode: 400,
+      message: 'Un seul tarif peut être défini par défaut'
+    })
+  }
+
+  if (priceItems.length === 0) {
+    throw createError({
+      statusCode: 400,
+      message: 'Au moins un tarif est requis'
+    })
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')
@@ -19,22 +54,23 @@ export default defineEventHandler(async (event) => {
 
     const updateData = { ...body }
 
-    if (updateData.pricing?.rateCent) {
-      if (updateData.pricing.rateCent.clinic !== undefined) {
-        updateData.pricing.rateCent.clinic = currencyToCents(updateData.pricing.rateCent.clinic)
-      }
-      if (updateData.pricing.rateCent.home !== undefined) {
-        updateData.pricing.rateCent.home = currencyToCents(updateData.pricing.rateCent.home)
-      }
-      if (updateData.pricing.rateCent.telehealth !== undefined) {
-        updateData.pricing.rateCent.telehealth = currencyToCents(updateData.pricing.rateCent.telehealth)
-      }
+    if (updateData.pricing?.priceItems) {
+      validatePriceItems(updateData.pricing.priceItems)
+
+      updateData.pricing.priceItems = updateData.pricing.priceItems.map((item) => ({
+        ...item,
+        rateCent: {
+          clinic: currencyToCents(item.rateCent.clinic),
+          home: currencyToCents(item.rateCent.home),
+          telehealth: currencyToCents(item.rateCent.telehealth)
+        }
+      }))
     }
 
     if (updateData.pricing?.packages) {
-      updateData.pricing.packages = updateData.pricing.packages.map((pkg: any) => ({
+      updateData.pricing.packages = updateData.pricing.packages.map((pkg) => ({
         ...pkg,
-        priceCent: pkg.priceCent !== undefined ? currencyToCents(pkg.priceCent) : undefined
+        priceCent: currencyToCents(pkg.priceCent)
       }))
     }
 

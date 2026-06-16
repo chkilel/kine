@@ -67,7 +67,7 @@
       ref="form"
       :state="state"
       :schema="orgNotificationsSchema"
-      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
+      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
@@ -109,9 +109,9 @@
                 <span class="text-highlighted text-sm font-bold">Confirmation de rendez-vous</span>
                 <p class="text-muted text-xs">Envoyé automatiquement après la réservation</p>
               </div>
-               <UFormField name="patient.appointmentConfirmation">
-                 <USwitch v-model="state.patient.appointmentConfirmation" />
-               </UFormField>
+              <UFormField name="patient.appointmentConfirmation">
+                <USwitch v-model="state.patient.appointmentConfirmation" />
+              </UFormField>
             </div>
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
               <div class="flex flex-col gap-1">
@@ -141,9 +141,9 @@
                 <span class="text-highlighted text-sm font-bold">Nouveau rendez-vous</span>
                 <p class="text-muted text-xs">Averti lors de la réservation d'un nouveau rendez-vous</p>
               </div>
-               <UFormField name="staff.newAppointment">
-                 <USwitch v-model="state.staff.newAppointment" />
-               </UFormField>
+              <UFormField name="staff.newAppointment">
+                <USwitch v-model="state.staff.newAppointment" />
+              </UFormField>
             </div>
             <div class="bg-elevated/50 border-border flex items-center justify-between rounded-md border p-4">
               <div class="flex flex-col gap-1">
@@ -187,8 +187,8 @@
               <div>
                 <p class="text-primary text-sm font-bold">Conseil</p>
                 <p class="text-muted mt-1 text-xs">
-                  Les notifications par email sont envoyées automatiquement. Configurez également les intervalles
-                  de rappels dans la page de planification.
+                  Les notifications par email sont envoyées automatiquement. Configurez également les intervalles de
+                  rappels dans la page de planification.
                 </p>
               </div>
             </div>

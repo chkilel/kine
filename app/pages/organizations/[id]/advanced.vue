@@ -57,7 +57,7 @@
       ref="form"
       :state="state"
       :schema="orgMetadataSchema"
-      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 pt-6 lg:grid-cols-2"
+      class="grid grid-cols-1 items-start gap-x-12 gap-y-6 lg:grid-cols-2"
       @submit="onSubmit"
     >
       <div class="flex w-full flex-col gap-6">
@@ -97,8 +97,8 @@
         <AppCard variant="outline" title="À propos des métadonnées">
           <div class="flex flex-col gap-y-4">
             <p class="text-muted text-sm">
-              Les métadonnées permettent d'ajouter des informations personnalisées à votre organisation. Ces données sont
-              stockées au format JSON et peuvent être utilisées par des intégrations tierces ou des fonctionnalités
+              Les métadonnées permettent d'ajouter des informations personnalisées à votre organisation. Ces données
+              sont stockées au format JSON et peuvent être utilisées par des intégrations tierces ou des fonctionnalités
               futures.
             </p>
             <div class="bg-primary/5 border-primary/20 flex items-start gap-3 rounded-lg border p-4">

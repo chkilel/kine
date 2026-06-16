@@ -79,15 +79,10 @@ export const orgBankingSchema = z.object({
 })
 export type OrgBanking = z.infer<typeof orgBankingSchema>
 
-export const rateCentSchema = z.object({
-  clinic: z.number().min(1, 'Le tarif doit être positif'),
-  home: z.number().min(1, 'Le tarif doit être positif'),
-  telehealth: z.number().min(1, 'Le tarif doit être positif')
-})
-export type RateCent = z.infer<typeof rateCentSchema>
+
 
 export const orgPricingSchema = z.object({
-  rateCent: rateCentSchema,
+  priceItems: z.array(priceItemSchema).min(1, 'Au moins un tarif est requis'),
   packages: z
     .array(
       z.object({
@@ -188,8 +183,8 @@ export const organizationResponseSchema = createSelectSchema(organizations, {
   id: z.string(),
   name: orgNameSchema,
   slug: orgSlugSchema,
-  type: organizationTypeSchema,
-  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères'),
+  type: organizationTypeSchema.nullable(),
+  description: z.string().max(500, 'La description ne peut pas dépasser 500 caractères').nullable(),
   logo: z.string().nullable(),
   contact: orgContactSchema.nullable(),
   address: orgAddressSchema.nullable(),
@@ -203,7 +198,7 @@ export const organizationResponseSchema = createSelectSchema(organizations, {
   intake: orgIntakeSchema.nullable(),
   branding: orgBrandingSchema.nullable(),
   status: z.enum(ORGANIZATION_STATUS).nullable(),
-  timezone: z.string(),
+  timezone: z.string().nullable(),
   metadata: z.any()
 })
 

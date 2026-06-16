@@ -32,39 +32,48 @@
 
 <template>
   <AppDashboardPage id="organization-profile" title="Cabinet" :breadcrumbs="breadcrumbItems">
-    <AppCard variant="soft">
-      <div v-if="isPending" class="flex items-center justify-center py-12">
-        <UIcon name="i-hugeicons-loading-03" class="text-muted size-8 animate-spin" />
-      </div>
-      <div v-else-if="organization" class="flex flex-col gap-4 sm:flex-row sm:gap-6">
-        <div class="mx-auto shrink-0 sm:mx-0">
-          <UAvatar icon="i-hugeicons-building-02" :alt="organization.name" class="size-24 bg-blue-100 text-4xl" />
-        </div>
-        <div class="flex flex-1 flex-col gap-3 text-center sm:text-left">
-          <div class="flex flex-col justify-center gap-4 sm:flex-row sm:items-center sm:justify-start">
-            <h1 class="text-2xl leading-tight font-bold md:text-3xl">{{ organization.name }}</h1>
-            <UBadge
-              :color="organization.status === 'active' ? 'success' : 'neutral'"
-              size="lg"
-              variant="subtle"
-              class="self-center rounded-full uppercase"
-            >
-              {{ organization.status === 'active' ? 'Active' : 'Inactive' }}
-            </UBadge>
-          </div>
-          <div class="text-muted flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm sm:justify-start">
-            <div class="flex items-center gap-1.5">
-              <UIcon name="i-hugeicons-hashtag" class="text-base" />
-              <span>{{ organization.slug }}</span>
+    <div v-if="isPending" class="flex items-center justify-center py-12">
+      <UIcon name="i-hugeicons-loading-03" class="text-muted size-8 animate-spin" />
+    </div>
+    <UCard v-else-if="organization" :ui="{ body: 'sm:py-4 py-3' }">
+      <!-- Organization Header -->
+      <div class="relative z-10 flex flex-col gap-4 md:flex-row">
+        <div class="flex flex-1 gap-x-4">
+          <div class="flex flex-1 items-start gap-x-4">
+            <div class="mx-auto shrink-0 sm:mx-0">
+              <UAvatar
+                icon="i-hugeicons-building-02"
+                :alt="organization.name"
+                color="primary"
+                class="size-16 text-3xl"
+              />
             </div>
-
-            <span>•</span>
-
-            <div>Créé le: {{ new Date(organization.createdAt).toLocaleDateString('fr-FR') }}</div>
+            <div class="flex-1 space-y-1.5">
+              <div class="flex items-center gap-2">
+                <h1 class="text-xl tracking-tight">{{ organization.name }}</h1>
+                <UBadge
+                  :color="organization.status === 'active' ? 'success' : 'neutral'"
+                  variant="subtle"
+                  class="rounded-full uppercase"
+                >
+                  {{ organization.status === 'active' ? 'Active' : 'Inactive' }}
+                </UBadge>
+              </div>
+              <div class="text-muted flex flex-wrap items-start gap-x-5 gap-y-1 text-[13px]">
+                <div class="flex items-center gap-1.5">
+                  <AppIconBox size="md" name="i-hugeicons-hashtag" class="p-1" />
+                  <span>{{ organization.slug }}</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <AppIconBox size="md" name="i-hugeicons-calendar-user" class="p-1" />
+                  <span>Créé le: {{ new Date(organization.createdAt).toLocaleDateString('fr-FR') }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </AppCard>
+    </UCard>
 
     <NuxtPage />
   </AppDashboardPage>

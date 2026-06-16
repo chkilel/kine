@@ -1,84 +1,57 @@
 <script setup lang="ts">
   const props = defineProps<{ appointment: Appointment }>()
 
-  // ─── Composables ─────────────────────────────────────────────────────────────
-
-  const activeOrganization = authClient.useActiveOrganization()
   const { mutate: updatePrice, isLoading: isUpdating } = useUpdateAppointmentPrice()
+  const { data: fullOrg } = useFullOrganization(() => props.appointment.organizationId)
 
-  // ─── Reactive state ──────────────────────────────────────────────────────────
+  const orgPriceItems = computed(() => fullOrg.value?.pricing?.priceItems ?? [])
 
-  const isEditingPrice = ref(false)
-  const priceInputRaw = ref(100)
-  const inputRef = ref<HTMLInputElement | null>(null)
+  const currentPriceItemCode = computed(() => {
+    const priceItem = props.appointment.priceItem as PriceItemSnapshot | null
+    return priceItem?.code ?? null
+  })
 
-  // ─── Derived state ──────────────────────────────────────────────────────────
+  const selectedPriceItem = computed(() => {
+    if (!currentPriceItemCode.value) return undefined
+    return orgPriceItems.value.find((item: PriceItem) => item.code === currentPriceItemCode.value)
+  })
 
-  const organization = computed(() => activeOrganization.value.data)
-
-  const inheritedPrice = computed(() => {
+  const currentPriceCents = computed(() => {
     const location = props.appointment.location
-    return activeOrganization.value.data?.pricing.rateCent[location] ?? null
+    if (selectedPriceItem.value?.rateCent) {
+      return selectedPriceItem.value.rateCent[location] ?? 0
+    }
+    const snapshot = props.appointment.priceItem as PriceItemSnapshot | null
+    return snapshot?.rateCent?.[location] ?? props.appointment.priceCents ?? 0
   })
 
-  const hasCustomCost = computed(() => {
-    const priceCents = props.appointment.priceCents
-    return priceCents !== null && priceCents !== undefined
+  const displayPriceFormatted = computed(() => formatCurrency(currentPriceCents.value))
+
+  const priceLabel = computed(() => {
+    if (!selectedPriceItem.value && !currentPriceItemCode.value) return 'Tarif estimé'
+    return 'Tarif appliqué'
   })
 
-  const displayPrice = computed(() => (hasCustomCost.value ? props.appointment.priceCents : inheritedPrice.value))
-
-  const displayPriceFormatted = computed(() =>
-    displayPrice.value !== null && displayPrice.value !== undefined ? formatCurrency(displayPrice.value) : '-'
-  )
-
-  const priceLabel = computed(() => (hasCustomCost.value ? 'Tarif appliqué' : 'Tarif estimé'))
-
-  const isValidInput = computed(() => {
-    const parsed = priceInputRaw.value
-    return !isNaN(parsed) && parsed > 0
+  const priceDescription = computed(() => {
+    if (selectedPriceItem.value) return selectedPriceItem.value.description
+    const snapshot = props.appointment.priceItem as PriceItemSnapshot | null
+    return snapshot?.description ?? null
   })
 
-  // ─── Handlers ────────────────────────────────────────────────────────────────
-
-  async function handleStartPriceEdit() {
-    const currentPrice = props.appointment.priceCents ?? inheritedPrice.value
-    priceInputRaw.value = currentPrice !== null && currentPrice !== undefined ? centsToCurrency(currentPrice) : 1
-    isEditingPrice.value = true
-    await nextTick()
-    inputRef.value?.focus()
-  }
-
-  function handleSavePrice() {
-    if (props.appointment.status !== 'in_progress' || !isValidInput.value) return
-
-    const priceInCents = currencyToCents(priceInputRaw.value)
-
-    updatePrice({
-      appointmentId: props.appointment.id,
-      priceCents: priceInCents
-    })
-    isEditingPrice.value = false
-  }
-
-  function handleResetPrice() {
+  function handleSelectPriceItem(option: string) {
     if (props.appointment.status !== 'in_progress') return
-
     updatePrice({
       appointmentId: props.appointment.id,
-      priceCents: inheritedPrice.value
+      priceItemCode: option
     })
-    isEditingPrice.value = false
   }
 
-  function handleCancelPriceEdit() {
-    isEditingPrice.value = false
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') handleSavePrice()
-    if (e.key === 'Escape') handleCancelPriceEdit()
-  }
+  const selectMenuOptions = computed(() =>
+    orgPriceItems.value.map((item: PriceItem) => ({
+      label: item.description,
+      value: item.code
+    }))
+  )
 </script>
 
 <template>
@@ -89,68 +62,22 @@
         <div>
           <p class="text-muted text-xs font-bold uppercase">{{ priceLabel }}</p>
           <p class="text-xl font-bold tabular-nums">{{ displayPriceFormatted }}</p>
+          <p v-if="priceDescription" class="text-muted text-xs">{{ priceDescription }}</p>
         </div>
       </div>
-      <UButton
-        v-if="appointment.status === 'in_progress' && !isEditingPrice"
-        size="xs"
+      <USelectMenu
+        v-if="appointment.status === 'in_progress' && selectMenuOptions.length > 0"
+        :model-value="currentPriceItemCode"
+        :options="selectMenuOptions"
+        value-key="value"
+        placeholder="Sélectionner un tarif"
+        :loading="isUpdating"
         color="primary"
+        size="xs"
         variant="ghost"
-        icon="i-hugeicons-pencil-edit-01"
-        @click="handleStartPriceEdit"
-      >
-        Modifier
-      </UButton>
-    </div>
-
-    <div v-if="appointment.status === 'in_progress' && isEditingPrice" class="mt-4 space-y-2">
-      <div class="flex gap-2">
-        <UFieldGroup>
-          <UInputNumber
-            ref="inputRef"
-            v-model="priceInputRaw"
-            inputmode="decimal"
-            :step="10"
-            :min="10"
-            placeholder="Prix personnalisé (en Dh)"
-            :color="priceInputRaw && !isValidInput ? 'error' : undefined"
-            class="iiw-full"
-            @keydown="handleKeydown"
-          />
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            icon="i-hugeicons-cancel-01"
-            class="w-12"
-            block
-            @click="handleCancelPriceEdit"
-          />
-          <UButton
-            color="primary"
-            icon="i-hugeicons-tick-02"
-            :loading="isUpdating"
-            :disabled="!isValidInput"
-            class="w-12"
-            block
-            @click="handleSavePrice"
-          />
-        </UFieldGroup>
-      </div>
-
-      <!-- Hint: inherited fallback price -->
-      <p v-if="inheritedPrice !== null" class="text-muted text-xs">
-        Tarif par défaut : {{ formatCurrency(inheritedPrice) }}
-        <UButton
-          v-if="hasCustomCost"
-          size="xs"
-          variant="link"
-          class="text-primary ml-1 underline underline-offset-2"
-          @click="handleResetPrice"
-        >
-          Réinitialiser
-        </UButton>
-      </p>
+        icon="i-hugeicons-price-tag-01"
+        @update:model-value="handleSelectPriceItem"
+      />
     </div>
   </UCard>
 </template>

@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { members, organizations } from '~~/server/database/schema'
+import { v7 as uuidv7 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
   const { name, slug, contact, address, sessionRates } = await readValidatedBody(event, onboardingSchema.parse)
@@ -28,13 +29,21 @@ export default defineEventHandler(async (event) => {
       contact,
       address,
       pricing: {
-        rateCent: {
-          clinic: sessionRates.clinic ? currencyToCents(sessionRates.clinic) : undefined,
-          home: sessionRates.home ? currencyToCents(sessionRates.home) : undefined,
-          telehealth: sessionRates.telehealth ? currencyToCents(sessionRates.telehealth) : undefined
-        },
+        priceItems: [
+          {
+            id: uuidv7(),
+            code: 'DEFAULT',
+            description: 'Tarif de séance',
+            rateCent: {
+              clinic: currencyToCents(sessionRates.clinic),
+              home: currencyToCents(sessionRates.home),
+              telehealth: currencyToCents(sessionRates.telehealth)
+            },
+            isDefault: true
+          }
+        ],
         packages: []
-      } as any,
+      },
       status: 'active',
       timezone: 'Africa/Casablanca'
     })
