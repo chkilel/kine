@@ -17,7 +17,15 @@
     preferredDays: [] as string[],
     location: 'clinic',
     therapistId: props.treatmentPlan.therapistId,
-    type: 'follow_up'
+    type: 'FOLLOW_UP'
+  })
+
+  const { orgTypes } = useAppointmentTypes()
+  const typeOptions = computed(() => {
+    if (orgTypes.value.length > 0) {
+      return orgTypes.value.map((t) => ({ label: t.title, value: t.code }))
+    }
+    return APPOINTMENT_TYPES_OPTIONS
   })
   const minDate = computed(() => convertToCalendarDate(new Date()))
   // Computed property for calendar date model
@@ -72,7 +80,7 @@
       <UFormField label="Type de séance">
         <USelect
           v-model="planningSettings.type"
-          :items="APPOINTMENT_TYPES_OPTIONS"
+          :items="typeOptions"
           option-attribute="label"
           value-attribute="value"
           class="w-full"

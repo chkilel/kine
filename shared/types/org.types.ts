@@ -176,6 +176,16 @@ export const orgBrandingSchema = z.object({
 })
 export type OrgBranding = z.infer<typeof orgBrandingSchema>
 
+export const orgAppointmentTypeItemSchema = z.object({
+  id: z.string(),
+  code: z.string().regex(/^[A-Z][A-Z0-9_]*$/, 'Code invalide (majuscules, chiffres et underscores uniquement)'),
+  title: z.string().min(3, 'Le titre est requis et doit avoir au moins 3 caractères'),
+  isDefault: z.boolean().default(false)
+})
+export type OrgAppointmentTypeItem = z.infer<typeof orgAppointmentTypeItemSchema>
+
+export const orgAppointmentTypesSchema = z.array(orgAppointmentTypeItemSchema)
+
 // =============================================================================
 // Organization Schema
 // =============================================================================
@@ -197,6 +207,7 @@ export const organizationResponseSchema = createSelectSchema(organizations, {
   notifications: orgNotificationsSchema.nullable(),
   intake: orgIntakeSchema.nullable(),
   branding: orgBrandingSchema.nullable(),
+  appointmentTypes: orgAppointmentTypesSchema.nullable(),
   status: z.enum(ORGANIZATION_STATUS).nullable(),
   timezone: z.string().nullable(),
   metadata: z.any()
@@ -219,6 +230,7 @@ export const organizationInsertSchema = createInsertSchema(organizations, {
   notifications: orgNotificationsSchema.optional(),
   intake: orgIntakeSchema.optional(),
   branding: orgBrandingSchema.optional(),
+  appointmentTypes: orgAppointmentTypesSchema.nullable().optional(),
   status: z.enum(['active', 'inactive', 'suspended']).default('active'),
   timezone: z.string().default('Africa/Casablanca'),
   metadata: z.any().optional()

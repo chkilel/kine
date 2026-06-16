@@ -41,6 +41,12 @@
           ariaCurrent: currentPath === `/organizations/${id}/pricing` ? 'page' : undefined
         },
         {
+          label: 'Types de rendez-vous',
+          icon: 'i-hugeicons-calendar-03',
+          to: `/organizations/${id}/appointment-types`,
+          ariaCurrent: currentPath === `/organizations/${id}/appointment-types` ? 'page' : undefined
+        },
+        {
           label: 'Planification',
           icon: 'i-hugeicons-calendar-check-in-01',
           to: `/organizations/${id}/scheduling`,

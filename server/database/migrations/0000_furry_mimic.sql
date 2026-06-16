@@ -116,8 +116,8 @@ CREATE TABLE `appointments` (
 	`pauseStartTime` text,
 	`extendedDurationMinutes` integer DEFAULT 0,
 	`tags` text,
-	`priceCents` integer DEFAULT 0 NOT NULL,
-	`priceItem` text,
+	`priceCents` integer NOT NULL,
+	`priceItem` text NOT NULL,
 	`isLocked` integer DEFAULT false,
 	`lockedAt` integer,
 	`lockedById` text,
@@ -198,6 +198,7 @@ CREATE TABLE `organizations` (
 	`notifications` text,
 	`intake` text,
 	`branding` text,
+	`appointmentTypes` text,
 	`metadata` text,
 	`createdAt` integer NOT NULL,
 	`updatedAt` integer NOT NULL

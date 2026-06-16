@@ -15,6 +15,7 @@
     '': 'Profil',
     legal: 'Informations légales',
     pricing: 'Tarifs',
+    'appointment-types': 'Types de rendez-vous',
     scheduling: 'Planification',
     clinical: 'Configuration clinique',
     notifications: 'Notifications',

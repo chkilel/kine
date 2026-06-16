@@ -29,7 +29,7 @@ const appointmentCreateSchemaShape = {
   startTime: z.string(),
   endTime: z.string(),
   duration: z.int().min(1, 'Duration must be at least 1 minute'),
-  type: appointmentTypeSchema.optional(),
+  type: z.string().min(1, 'Type is required'),
   location: locationSchema.default('clinic'),
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
@@ -63,7 +63,7 @@ export const appointmentStatusUpdateSchema = z.object({
     .string()
     .transform((v) => v?.split(',').filter(Boolean))
     .optional(),
-  type: appointmentTypeSchema.optional(),
+  type: z.string().optional(),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   date: calendarDateSchema.optional(),
@@ -97,7 +97,7 @@ export const appointmentQuerySchema = z
       })
       .optional(),
 
-    type: appointmentTypeSchema.optional(),
+    type: z.string().optional(),
 
     // ---- Date filtering ----
     dateFrom: calendarDateSchema.optional(),

@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "7168a85e-6658-4d9d-b8e4-95209df4df74",
+  "id": "ef533431-f713-4e7c-8467-ca10bf2cb136",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -992,7 +992,7 @@
       "type": "integer",
       "notNull": true,
       "autoincrement": false,
-      "default": "0",
+      "default": null,
       "generated": null,
       "name": "priceCents",
       "entityType": "columns",
@@ -1000,7 +1000,7 @@
     },
     {
       "type": "text",
-      "notNull": false,
+      "notNull": true,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -1545,6 +1545,16 @@
       "default": null,
       "generated": null,
       "name": "branding",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "appointmentTypes",
       "entityType": "columns",
       "table": "organizations"
     },

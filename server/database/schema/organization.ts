@@ -15,7 +15,8 @@ import type {
   OrgClinical,
   OrgNotifications,
   OrgIntake,
-  OrgBranding
+  OrgBranding,
+  OrgAppointmentTypeItem
 } from '~~/shared/types/org.types'
 
 /** ================================================================
@@ -45,6 +46,7 @@ export const organizations = sqliteTable('organizations', {
   notifications: text({ mode: 'json' }).$type<OrgNotifications>(),
   intake: text({ mode: 'json' }).$type<OrgIntake>(),
   branding: text({ mode: 'json' }).$type<OrgBranding>(),
+  appointmentTypes: text({ mode: 'json' }).$type<OrgAppointmentTypeItem[]>(),
   metadata: text({ mode: 'json' }),
   ...creationAndUpdateTimestamps
 })

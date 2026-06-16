@@ -44,6 +44,7 @@
   })
 
   const { data, isLoading } = useAppointmentsList(queryParams)
+  const { resolveTitle } = useAppointmentTypes()
   const appointments = computed(() => data.value?.data)
   const appointmentCount = computed(() => appointments.value?.length || 0)
 
@@ -53,7 +54,7 @@
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
       filtered = filtered.filter((c) =>
-        getAppointmentTypeLabel(c.type || 'follow_up')
+        resolveTitle(c.type)
           .toLowerCase()
           .includes(query)
       )

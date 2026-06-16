@@ -78,11 +78,19 @@ export default defineEventHandler(async (event) => {
         .limit(1)
     }
 
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, organizationId))
-      .limit(1)
+    const [organization] = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)
+
+    if (body.type) {
+      const validCodes = organization?.appointmentTypes
+        ? organization.appointmentTypes.map((t) => t.code)
+        : VALID_APPOINTMENT_TYPES.map((t) => t.code)
+      if (!validCodes.includes(body.type)) {
+        throw createError({
+          statusCode: 400,
+          message: 'Type de rendez-vous invalide'
+        })
+      }
+    }
 
     const resolved = organization
       ? resolveAppointmentPrice({
@@ -92,14 +100,17 @@ export default defineEventHandler(async (event) => {
         })
       : { priceCents: 0, priceItem: null }
 
-
     const [newAppointment] = await db
       .insert(appointments)
       .values({
         ...body,
         organizationId,
         priceCents: resolved.priceCents,
-        priceItem: resolved.priceItem
+        priceItem: resolved.priceItem ?? {
+          code: 'DEFAULT',
+          description: 'Tarif par défaut',
+          rateCent: { clinic: 0, home: 0, telehealth: 0 }
+        }
       })
       .returning()
 
