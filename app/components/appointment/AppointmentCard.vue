@@ -19,6 +19,7 @@
 
   // ─── Composables ─────────────────────────────────────────────
   const { getTherapistName } = useOrganizationMembers()
+  const { resolveTitle } = useAppointmentTypes()
 
   // ─── Computed state ──────────────────────────────────────────
   const menuItems = computed<DropdownMenuItem[]>(() => [
@@ -56,7 +57,7 @@
           <div class="flex items-center gap-2">
             <UIcon :name="getLocationIcon(appointment.location || 'clinic')" />
             <p class="truncate text-sm font-semibold">
-              {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }}
+              {{ resolveTitle(appointment.type) }}
             </p>
           </div>
           <UBadge

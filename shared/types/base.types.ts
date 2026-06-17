@@ -213,21 +213,19 @@ export type DocumentCategory = z.infer<typeof documentCategorySchema>
 // Appointment Types Constants
 // =============================================================================
 
-export const VALID_APPOINTMENT_TYPES = [
-  'initial',
-  'follow_up',
-  'treatment',
-  'mobilization',
-  'reinforcement',
-  'reeducation',
-  'exercise_supervision',
-  'post_op_follow_up',
-  'urgent_visit',
-  'consultation',
-  'discharge'
-] as const
-export const appointmentTypeSchema = z.enum(VALID_APPOINTMENT_TYPES)
-export type AppointmentType = z.infer<typeof appointmentTypeSchema>
+export const VALID_APPOINTMENT_TYPES: Omit<OrgAppointmentTypeItem, 'id'>[] = [
+  { code: 'INITIAL', title: 'Évaluation initiale', isDefault: true },
+  { code: 'FOLLOW_UP', title: 'Suivi', isDefault: true },
+  { code: 'TREATMENT', title: 'Séance de traitement', isDefault: true },
+  { code: 'MOBILIZATION', title: 'Mobilisation', isDefault: true },
+  { code: 'REINFORCEMENT', title: 'Renforcement', isDefault: true },
+  { code: 'REEDUCATION', title: 'Rééducation', isDefault: true },
+  { code: 'EXERCISE_SUPERVISION', title: "Supervision d'exercices", isDefault: true },
+  { code: 'POST_OP_FOLLOW_UP', title: 'Suivi post-opératoire', isDefault: true },
+  { code: 'URGENT_VISIT', title: 'Consultation urgente', isDefault: true },
+  { code: 'CONSULTATION', title: 'Consultation individuelle', isDefault: true },
+  { code: 'DISCHARGE', title: 'Sortie', isDefault: true }
+]
 
 // =============================================================================
 // Appointment Status Constants
@@ -306,7 +304,6 @@ export const APPOINTMENT_PAYMENT_STATUSES = ['unpaid', 'copay_paid', 'partially_
 export const appointmentPaymentStatusSchema = z.enum(APPOINTMENT_PAYMENT_STATUSES)
 export type AppointmentPaymentStatus = z.infer<typeof appointmentPaymentStatusSchema>
 
-
 // =============================================================================
 // Pricing Constants
 // =============================================================================
@@ -331,7 +328,6 @@ export const RESERVED_PRICE_ITEM_CODE = 'DEFAULT'
 
 export const priceItemSnapshotSchema = priceItemSchema.omit({ id: true, isDefault: true })
 export type PriceItemSnapshot = z.infer<typeof priceItemSnapshotSchema>
-
 
 // =============================================================================
 // Emergency Contact Schema

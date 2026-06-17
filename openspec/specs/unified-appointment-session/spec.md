@@ -201,17 +201,6 @@ The system SHALL support locking an appointment to prevent further modifications
 - **THEN** HTTP response is 403 Forbidden
 - **AND** error message states appointment is locked
 
-### Requirement: Tags on Appointment
-
-The system SHALL support updating tags on the appointment record via dedicated endpoint.
-
-#### Scenario: Update appointment tags
-
-- **GIVEN** an appointment exists with status "in_progress"
-- **WHEN** PATCH /api/appointments/[id]/tags is called with body { tags: ["Douleur Diminuée", "Renforcement"] }
-- **THEN** tags are stored as JSON string
-- **AND** HTTP response is 200 OK
-
 ### Requirement: Price and Extend on Appointment
 
 The system SHALL support updating the price by selecting a pricing code from the organization's catalog (via `priceItemCode`), NOT by entering a free-form amount. The system resolves the code to a price item snapshot and derives `priceCents` from the selected item's rate for the session's location. Extending duration is unchanged.
@@ -259,7 +248,8 @@ The system SHALL store all scheduling, clinical, timer, billing, and locking dat
 
 - **GIVEN** the database schema is migrated
 - **WHEN** the appointments table is inspected
-- **THEN** it contains columns: primaryConcern, treatmentSummary, observations, nextSteps, painLevelBefore, painLevelAfter, actualStartTime, actualDurationSeconds, totalPausedSeconds, pauseStartTime, extendedDurationMinutes, tags, priceCents, isLocked, lockedAt, lockedById, cancelledAt, cancellationReason
+- **THEN** it contains columns: primaryConcern, treatmentSummary, observations, nextSteps, painLevelBefore, painLevelAfter, actualStartTime, actualDurationSeconds, totalPausedSeconds, pauseStartTime, extendedDurationMinutes, priceCents, isLocked, lockedAt, lockedById, cancelledAt, cancellationReason
+- **AND** it does NOT contain a `tags` column
 
 #### Scenario: Appointments table includes pricing code column
 

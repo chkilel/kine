@@ -1,4 +1,4 @@
-import type { AppointmentStatus, AppointmentType } from '../types/base.types'
+import { v7 as uuidv7 } from 'uuid'
 
 // =============================================================================
 // Appointment Duration Constants
@@ -59,29 +59,36 @@ export const getAppointmentStatusIcon = (status: AppointmentStatus) => APPOINTME
 export const getAppointmentStatusConfig = (status: AppointmentStatus) => APPOINTMENT_STATUS_CONFIG[status]
 
 // =============================================================================
-// Appointment Types Configuration
+// Appointment Types — Seed, Options, Resolution
 // =============================================================================
 
-export const APPOINTMENT_TYPES_CONFIG = {
-  initial: { label: 'Évaluation initiale', icon: 'i-hugeicons-start-up-02' },
-  follow_up: { label: 'Suivi', icon: 'i-hugeicons-calendar-user' },
-  treatment: { label: 'Séance de traitement', icon: 'i-hugeicons-patient' },
-  mobilization: { label: 'Mobilisation', icon: 'i-hugeicons-account-recovery' },
-  reinforcement: { label: 'Renforcement', icon: 'i-hugeicons-body-part-muscle' },
-  reeducation: { label: 'Rééducation', icon: 'i-hugeicons-back-muscle-body' },
-  exercise_supervision: { label: "Supervision d'exercices", icon: 'i-hugeicons-dumbbell-01' },
-  post_op_follow_up: { label: 'Suivi post-opératoire', icon: 'i-hugeicons-hospital-bed-02' },
-  urgent_visit: { label: 'Consultation urgente', icon: 'i-hugeicons-ambulance' },
-  consultation: { label: 'Consultation individuelle', icon: 'i-hugeicons-stethoscope' },
-  discharge: { label: 'Sortie', icon: 'i-hugeicons-square-arrow-left-02' }
-} as const
+export function DEFAULT_APPOINTMENT_TYPES_SEED(): OrgAppointmentTypeItem[] {
+  return VALID_APPOINTMENT_TYPES.map((item) => ({
+    id: uuidv7(),
+    code: item.code,
+    title: item.title,
+    isDefault: true
+  }))
+}
 
-export const APPOINTMENT_TYPES_OPTIONS = Object.entries(APPOINTMENT_TYPES_CONFIG).map(([key, item]) => ({
-  label: item.label,
-  value: key
+export const APPOINTMENT_TYPES_OPTIONS = VALID_APPOINTMENT_TYPES.map((item) => ({
+  label: item.title,
+  value: item.code
 }))
 
-export const getAppointmentTypeLabel = (type: AppointmentType) => APPOINTMENT_TYPES_CONFIG[type].label
-export const getAppointmentTypeIcon = (type: AppointmentType | null) => {
-  return type ? APPOINTMENT_TYPES_CONFIG[type]?.icon : 'i-hugeicons-calendar-remove-01'
+export function getAppointmentTypeTitle(
+  code: string | null,
+  orgTypes?: OrgAppointmentTypeItem[]
+): string {
+  if (!code) return 'Suivi'
+
+  if (orgTypes) {
+    const found = orgTypes.find((t) => t.code === code)
+    if (found) return found.title
+  }
+
+  const defaultType = VALID_APPOINTMENT_TYPES.find((t) => t.code.toUpperCase() === code.toUpperCase())
+  if (defaultType) return defaultType.title
+
+  return code
 }

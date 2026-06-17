@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
         ],
         packages: []
       },
+      appointmentTypes: DEFAULT_APPOINTMENT_TYPES_SEED(),
       status: 'active',
       timezone: 'Africa/Casablanca'
     })

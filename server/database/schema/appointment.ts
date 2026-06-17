@@ -10,7 +10,6 @@ import { rooms } from './rooms'
 import {
   APPOINTMENT_STATUSES,
   PriceItemSnapshot,
-  VALID_APPOINTMENT_TYPES,
   VALID_LOCATIONS
 } from '~~/shared/types/base.types'
 
@@ -43,7 +42,7 @@ export const appointments = sqliteTable(
     startTime: text().notNull(),
     endTime: text().notNull(),
     duration: integer().notNull(),
-    type: text({ enum: VALID_APPOINTMENT_TYPES }),
+    type: text(),
     location: text({ enum: VALID_LOCATIONS }).notNull().default('clinic'),
 
     // ---- Unified status ----
@@ -68,7 +67,6 @@ export const appointments = sqliteTable(
     totalPausedSeconds: integer(),
     pauseStartTime: text(),
     extendedDurationMinutes: integer().default(0),
-    tags: text(),
 
     // ---- Billing ----
     priceCents: integer().notNull().notNull(),

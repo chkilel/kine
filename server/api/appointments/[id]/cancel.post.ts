@@ -42,7 +42,6 @@ export default defineEventHandler(async (event) => {
       totalPausedSeconds: null,
       pauseStartTime: null,
       extendedDurationMinutes: 0,
-      tags: null,
       priceCents: 0,
       cancelledAt: new Date()
     })

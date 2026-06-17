@@ -11,6 +11,7 @@
 
   const { mutateAsync: startAppointmentAsync, isLoading: isSessionStarting } = useStartAppointment()
   const { data: patient } = usePatientById(() => props.patientId)
+  const { resolveTitle } = useAppointmentTypes()
 
   const {
     data: appointment,
@@ -60,7 +61,7 @@
 
   const headerDescription = computed(() => {
     if (!appointment.value) return ''
-    const typeLabel = getAppointmentTypeLabel(appointment.value.type || 'follow_up')
+    const typeLabel = resolveTitle(appointment.value.type)
     const totalDuration = appointment.value.duration + (appointment.value?.extendedDurationMinutes || 0)
     const durationLabel = totalDuration ? `${totalDuration} min` : ''
     return [typeLabel, durationLabel].filter(Boolean).join(' • ')

@@ -36,6 +36,44 @@ function validatePriceItems(priceItems: PriceItem[]) {
   }
 }
 
+function validateAppointmentTypes(
+  types: OrgAppointmentTypeItem[],
+  existingTypes: OrgAppointmentTypeItem[] | null
+) {
+  const codes = types.map((t) => t.code?.toUpperCase())
+  const uniqueCodes = new Set(codes)
+  if (codes.length !== uniqueCodes.size) {
+    throw createError({
+      statusCode: 400,
+      message: 'Les codes doivent être uniques'
+    })
+  }
+
+  for (const t of types) {
+    if (!/^[A-Z][A-Z0-9_]*$/.test(t.code)) {
+      throw createError({
+        statusCode: 400,
+        message: `Le code "${t.code}" est invalide (majuscules, chiffres et underscores uniquement)`
+      })
+    }
+  }
+
+  if (existingTypes) {
+    const existingDefaults = existingTypes.filter((t) => t.isDefault)
+    for (const def of existingDefaults) {
+      const stillPresent = types.some(
+        (t) => t.id === def.id || t.code.toUpperCase() === def.code.toUpperCase()
+      )
+      if (!stillPresent) {
+        throw createError({
+          statusCode: 400,
+          message: `Le type par défaut "${def.title}" ne peut pas être supprimé`
+        })
+      }
+    }
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
   const id = getRouterParam(event, 'id')
@@ -72,6 +110,15 @@ export default defineEventHandler(async (event) => {
         ...pkg,
         priceCent: currencyToCents(pkg.priceCent)
       }))
+    }
+
+    if (updateData.appointmentTypes) {
+      const [existing] = await db
+        .select({ appointmentTypes: organizations.appointmentTypes })
+        .from(organizations)
+        .where(eq(organizations.id, id))
+        .limit(1)
+      validateAppointmentTypes(updateData.appointmentTypes, existing?.appointmentTypes ?? null)
     }
 
     const [updatedOrganization] = await db

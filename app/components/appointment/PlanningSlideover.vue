@@ -29,6 +29,14 @@
 
   const { data: activeOrg } = useFullOrganization(() => props.patient.organizationId)
 
+  const typeOptions = computed(() => {
+    const orgTypes = activeOrg.value?.appointmentTypes
+    if (orgTypes && orgTypes.length > 0) {
+      return orgTypes.map((t) => ({ label: t.title, value: t.code }))
+    }
+    return APPOINTMENT_TYPES_OPTIONS
+  })
+
   // ─── Edit mode detection ─────────────────────────────────────
   // When an `appointment` prop is provided the slideover operates
   // in edit mode. The session can only be started from an
@@ -75,7 +83,7 @@
     startTime: '',
     endTime: '',
     duration: 45,
-    type: 'follow_up',
+    type: 'FOLLOW_UP',
     location: 'clinic',
     status: 'scheduled'
   })
@@ -152,7 +160,7 @@
         startTime: appointment.startTime,
         endTime: appointment.endTime,
         duration: appointment.duration,
-        type: appointment.type || 'follow_up',
+        type: appointment.type || 'FOLLOW_UP',
         location: appointment.location || 'clinic',
         status: appointment.status
       }
@@ -424,7 +432,7 @@
                 <UFormField label="Type de séance">
                   <USelect
                     v-model="appointmentDetails.type"
-                    :items="APPOINTMENT_TYPES_OPTIONS"
+                    :items="typeOptions"
                     option-attribute="label"
                     value-attribute="value"
                     placeholder="Sélectionner un type"

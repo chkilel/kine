@@ -25,7 +25,11 @@ import {
   VALID_COVERAGE_STATUSES,
   VALID_TREATMENT_PLAN_STATUSES
 } from '~~/shared/types/base.types'
-import { MINIMUM_APPOINTMENT_GAP_MINUTES, APPOINTMENT_DURATIONS } from '~~/shared/utils/constants.appointment'
+import {
+  MINIMUM_APPOINTMENT_GAP_MINUTES,
+  APPOINTMENT_DURATIONS,
+  DEFAULT_APPOINTMENT_TYPES_SEED
+} from '~~/shared/utils/constants.appointment'
 
 import { createAuth } from '~~/server/utils/auth'
 import { getEffectiveAvailability } from '~~/shared/utils/planning-utils'
@@ -1355,6 +1359,7 @@ async function createOrganization(
           }
         },
         branding: brandingData,
+        appointmentTypes: DEFAULT_APPOINTMENT_TYPES_SEED(),
         metadata: {}
       } as any)
       .returning()
@@ -1673,7 +1678,8 @@ function generateAppointments(
   availableRoomIds: string[],
   roomBookings: Map<string, string>,
   therapistTemplates: any[],
-  therapistExceptions: any[]
+  therapistExceptions: any[],
+  orgAppointmentTypeCodes: string[]
 ): any[] {
   const activePlanIds = new Set(
     treatmentPlansMeta.filter((plan) => ['ongoing', 'paused'].includes(plan.status)).map((plan) => plan.id)
@@ -1858,7 +1864,7 @@ function generateAppointments(
       startTime,
       endTime,
       duration,
-      type: randomItem(VALID_APPOINTMENT_TYPES) || 'follow_up',
+      type: randomItem(orgAppointmentTypeCodes) || 'FOLLOW_UP',
       status,
       location,
       priceCents: duration ? duration * 50 : 50,
@@ -2021,7 +2027,7 @@ function generateAppointments(
       startTime,
       endTime,
       duration: durationValue,
-      type: randomItem(VALID_APPOINTMENT_TYPES),
+      type: randomItem(orgAppointmentTypeCodes),
       status,
       location,
       priceCents: durationValue * 50,
@@ -2253,6 +2259,20 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
+  // ─── Org appointment type codes ────────────────────────────────────────────
+
+  const orgTypeCodes: Record<string, string[]> = {}
+  const orgRecords = await db
+    .select({ id: organizations.id, appointmentTypes: organizations.appointmentTypes })
+    .from(organizations)
+  for (const org of orgRecords) {
+    if (org.appointmentTypes && org.appointmentTypes.length > 0) {
+      orgTypeCodes[org.id] = org.appointmentTypes.map((t: any) => t.code)
+    } else {
+      orgTypeCodes[org.id] = VALID_APPOINTMENT_TYPES.map((t) => t.code)
+    }
+  }
+
   // ─── Availability (Templates & Exceptions) ─────────────────────────────
 
   const templatesByUserId: Record<string, any[]> = {}
@@ -2411,7 +2431,8 @@ export default defineEventHandler(async (event: H3Event) => {
         availableRoomIds,
         roomBookings,
         therapistTemplates,
-        therapistExceptions
+        therapistExceptions,
+        orgTypeCodes[patientOrgId] || VALID_APPOINTMENT_TYPES.map((t) => t.code)
       )
       if (appointmentsData.length > 0) {
         for (const appointment of appointmentsData) {

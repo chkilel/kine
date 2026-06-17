@@ -9,6 +9,7 @@
   const activeConsultationOverlay = overlay.create(LazyTreatmentSessionSlideover)
 
   const { data: paginatedAppointments } = useAppointmentsList(() => ({ patientId: patient.id, limit: 5 }))
+  const { resolveTitle } = useAppointmentTypes()
 
   // ─── Computed state ──────────────────────────────────────────
   const nextAppointment = computed(() => {
@@ -51,7 +52,7 @@
 
         <div class="min-w-0 flex-1">
           <p class="text-default truncate font-semibold">
-            {{ getAppointmentTypeLabel(nextAppointment.type || 'follow_up') }}
+            {{ resolveTitle(nextAppointment.type) }}
           </p>
           <p class="text-muted text-sm">
             <span class="font-medium capitalize">

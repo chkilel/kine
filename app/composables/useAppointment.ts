@@ -414,30 +414,6 @@ const _useCancelAppointment = () => {
   })
 }
 
-const _useUpdateAppointmentTags = () => {
-  const toast = useToast()
-  const requestFetch = useRequestFetch()
-  const invalidate = useAppointmentInvalidation()
-
-  return useMutation({
-    mutation: async ({ appointmentId, ...body }: WithOnSuccess<{ appointmentId: string } & UpdateTagsAction>) => {
-      const resp = await requestFetch(`/api/appointments/${appointmentId}/tags`, { method: 'PATCH', body })
-      return resp
-    },
-    onSuccess: (_data, { appointmentId, onSuccess }) => {
-      onSuccess?.()
-      invalidate(appointmentId)
-    },
-    onError: (error: unknown) => {
-      toast.add({
-        title: 'Erreur',
-        description: parseError(error, 'Impossible de mettre à jour les tags').message,
-        color: 'error'
-      })
-    }
-  })
-}
-
 const _useExtendAppointment = () => {
   const toast = useToast()
   const requestFetch = useRequestFetch()
@@ -528,7 +504,6 @@ export const usePauseAppointment = createSharedComposable(_usePauseAppointment)
 export const useResumeAppointment = createSharedComposable(_useResumeAppointment)
 export const useEndAppointment = createSharedComposable(_useEndAppointment)
 export const useCancelAppointment = createSharedComposable(_useCancelAppointment)
-export const useUpdateAppointmentTags = createSharedComposable(_useUpdateAppointmentTags)
 export const useExtendAppointment = createSharedComposable(_useExtendAppointment)
 export const useUpdateAppointmentPrice = createSharedComposable(_useUpdateAppointmentPrice)
 export const useUpdateAppointmentClinicalNotes = createSharedComposable(_useUpdateAppointmentClinicalNotes)

@@ -5,6 +5,7 @@
 
   const { openRecordPayment, viewPaymentReceipt } = useBillingSlideover()
   const { getTherapistName } = useOrganizationMembers()
+  const { resolveTitle } = useAppointmentTypes()
 
   const isPaid = computed(
     () => props.appointment.paymentStatus === 'paid' || props.appointment.paymentStatus === 'copay_paid'
@@ -49,7 +50,7 @@
     <div class="flex flex-1 items-center justify-between gap-3">
       <div class="min-w-0">
         <h4 class="text-on-background truncate text-sm font-semibold">
-          {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }}
+          {{ resolveTitle(appointment.type) }}
         </h4>
         <div v-if="therapistName" class="flex items-center gap-1 text-xs">
           <UIcon name="i-hugeicons-user" />

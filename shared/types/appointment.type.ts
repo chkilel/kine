@@ -29,7 +29,7 @@ const appointmentCreateSchemaShape = {
   startTime: z.string(),
   endTime: z.string(),
   duration: z.int().min(1, 'Duration must be at least 1 minute'),
-  type: appointmentTypeSchema.optional(),
+  type: z.string().min(1, 'Type is required'),
   location: locationSchema.default('clinic'),
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
@@ -63,7 +63,7 @@ export const appointmentStatusUpdateSchema = z.object({
     .string()
     .transform((v) => v?.split(',').filter(Boolean))
     .optional(),
-  type: appointmentTypeSchema.optional(),
+  type: z.string().optional(),
   dateFrom: calendarDateSchema.optional(),
   dateTo: calendarDateSchema.optional(),
   date: calendarDateSchema.optional(),
@@ -97,7 +97,7 @@ export const appointmentQuerySchema = z
       })
       .optional(),
 
-    type: appointmentTypeSchema.optional(),
+    type: z.string().optional(),
 
     // ---- Date filtering ----
     dateFrom: calendarDateSchema.optional(),
@@ -171,10 +171,6 @@ export const endActionSchema = z.object({
   painLevelAfter: z.number().int().min(0).max(10)
 })
 
-export const updateTagsActionSchema = z.object({
-  tags: z.array(z.string())
-})
-
 export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
@@ -230,7 +226,6 @@ export type StartAction = z.infer<typeof startActionSchema>
 export type PauseAction = z.infer<typeof pauseActionSchema>
 export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
-export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
 export type UpdateClinicalNotesAction = z.infer<typeof updateClinicalNotesActionSchema>
 export type UpdatePriceAction = z.infer<typeof updatePriceActionSchema>

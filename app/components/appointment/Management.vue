@@ -5,6 +5,7 @@
   // ─── Composables ─────────────────────────────────────────────
   const deleteAppointmentMutation = useDeleteAppointment()
   const { data: appointmentsData } = useAppointmentsList(() => ({ patientId: props.patientId }))
+  const { resolveTitle } = useAppointmentTypes()
 
   // ─── Base state ──────────────────────────────────────────────
   const selectedAppointments = ref<string[]>([])
@@ -63,7 +64,7 @@
                   </p>
                 </div>
                 <div class="text-muted text-xs">
-                  {{ getAppointmentTypeLabel(appointment.type || 'follow_up') }} ·
+                  {{ resolveTitle(appointment.type) }} ·
                   {{ appointment.duration + (appointment.extendedDurationMinutes || 0) }} min
                 </div>
               </div>
