@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "ef533431-f713-4e7c-8467-ca10bf2cb136",
+  "id": "f9317921-50a7-46a0-8cba-08b50a215b9c",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -975,16 +975,6 @@
       "default": "0",
       "generated": null,
       "name": "extendedDurationMinutes",
-      "entityType": "columns",
-      "table": "appointments"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "tags",
       "entityType": "columns",
       "table": "appointments"
     },

@@ -67,7 +67,6 @@ export const appointments = sqliteTable(
     totalPausedSeconds: integer(),
     pauseStartTime: text(),
     extendedDurationMinutes: integer().default(0),
-    tags: text(),
 
     // ---- Billing ----
     priceCents: integer().notNull().notNull(),

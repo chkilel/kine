@@ -171,10 +171,6 @@ export const endActionSchema = z.object({
   painLevelAfter: z.number().int().min(0).max(10)
 })
 
-export const updateTagsActionSchema = z.object({
-  tags: z.array(z.string())
-})
-
 export const extendActionSchema = z.object({
   extendedDurationMinutes: z.number().int().min(1)
 })
@@ -230,7 +226,6 @@ export type StartAction = z.infer<typeof startActionSchema>
 export type PauseAction = z.infer<typeof pauseActionSchema>
 export type ResumeAction = z.infer<typeof resumeActionSchema>
 export type EndAction = z.infer<typeof endActionSchema>
-export type UpdateTagsAction = z.infer<typeof updateTagsActionSchema>
 export type ExtendAction = z.infer<typeof extendActionSchema>
 export type UpdateClinicalNotesAction = z.infer<typeof updateClinicalNotesActionSchema>
 export type UpdatePriceAction = z.infer<typeof updatePriceActionSchema>

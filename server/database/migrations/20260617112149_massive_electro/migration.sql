@@ -115,7 +115,6 @@ CREATE TABLE `appointments` (
 	`totalPausedSeconds` integer,
 	`pauseStartTime` text,
 	`extendedDurationMinutes` integer DEFAULT 0,
-	`tags` text,
 	`priceCents` integer NOT NULL,
 	`priceItem` text NOT NULL,
 	`isLocked` integer DEFAULT false,
