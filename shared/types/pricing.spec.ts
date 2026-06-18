@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { priceItemSchema, RESERVED_PRICE_ITEM_CODE } from './base.types'
+import { orgPricingSchema } from './org.types'
 
 describe('priceItemSchema', () => {
   const validItem = {
