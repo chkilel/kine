@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { getInsurerLabel, isInsurerSlug } from '~~/shared/utils/constants.insurers'
+
   const props = defineProps<{
     patient: Patient
     treatmentPlan: TreatmentPlanWithProgress
@@ -30,7 +32,8 @@
       label: 'Assurance',
       value: props.treatmentPlan.insuranceInfo || 'Non spécifié',
       icon: 'i-hugeicons-security-check',
-      color: 'success' as UIColor
+      color: 'success' as UIColor,
+      isInsurer: true
     }
   ])
 
@@ -143,15 +146,15 @@
       <div class="grid grid-cols-1 gap-x-2 gap-y-2">
         <div v-for="detail in planDetails" :key="detail.label" class="flex items-start gap-3">
           <AppIconBox size="md" color="primary" :name="detail.icon" class="p-1" />
-          <div class="flex-1">
-            <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
-            <div class="flex items-baseline gap-2">
-              <p class="text-[13px] font-medium">
-                {{ detail.value }}
-              </p>
-              <span v-if="detail.suffix" class="text-[11px]">le {{ detail.suffix }}</span>
-            </div>
-          </div>
+           <div class="flex-1">
+             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
+             <div class="flex items-baseline gap-2">
+               <p class="text-[13px] font-medium">
+                 {{ detail.isInsurer && isInsurerSlug(detail.value) ? getInsurerLabel(detail.value) : detail.value }}
+               </p>
+               <span v-if="detail.suffix" class="text-[11px]">le {{ detail.suffix }}</span>
+             </div>
+           </div>
         </div>
       </div>
     </div>

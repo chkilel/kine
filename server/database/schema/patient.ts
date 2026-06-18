@@ -45,7 +45,6 @@ export const patients = sqliteTable(
 
     // ---- Insurance and referral ----
     insuranceProvider: text(), // Optional insurance company name — e.g., "AXA Assurance"
-    insuranceNumber: text(), // Optional insurance number — e.g., "INS-123456789"
     referralSource: text(), // Who referred the patient — e.g., "Dr. Smith" or "Online Ad"
 
     // ---- Record management ----

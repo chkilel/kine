@@ -52,7 +52,6 @@ const patientCreateShape = {
   allergies: z.array(z.string()).default([]),
   medications: z.array(z.string()).default([]),
   insuranceProvider: z.string().optional(),
-  insuranceNumber: z.string().optional(),
   referralSource: z.string().optional(),
   notes: z.array(noteSchema).default([])
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
   import type { Form, FormSubmitEvent } from '@nuxt/ui'
+  import { toPriceItemSnapshot } from '~~/server/utils/pricing'
 
   const { patient, treatmentPlan } = defineProps<{ patient: Patient; treatmentPlan?: TreatmentPlan }>()
   const emit = defineEmits<{ close: [data?: any] }>()

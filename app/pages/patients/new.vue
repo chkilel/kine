@@ -5,6 +5,7 @@
   import { getLocalTimeZone, parseDate } from '@internationalized/date'
 
   import { SEX_OPTIONS } from '~~/shared/utils/constants.patient'
+  import { INSURER_OPTIONS, isInsurerSlug } from '~~/shared/utils/constants.insurers'
 
   const breadcrumbItems = [
     { label: 'Dashboard', to: '/' },
@@ -15,21 +16,32 @@
   const { activeOrganization } = useOrganization()
   const { mutate: createPatient, isLoading } = useCreatePatient()
 
+  const INSURER_DROPDOWN_OPTIONS = [
+    ...INSURER_OPTIONS.map((opt) => ({ label: opt.label, value: opt.slug })),
+    { label: 'Autre', value: 'other' }
+  ]
+
+  interface PatientFormState extends PatientCreate {
+    insurerSelectionType: 'catalog' | 'custom'
+    customInsurerName?: string
+  }
+
   const formRef = useTemplateRef<HTMLFormElement>('createPatientForm')
-  const formState = reactive<PatientCreate>({
+  const formState = reactive<PatientFormState>({
     organizationId: '',
     firstName: '',
     lastName: '',
     dateOfBirth: '',
     sex: 'male',
     phone: '',
-    status: 'active',
     medicalConditions: [],
     surgeries: [],
     allergies: [],
     medications: [],
     emergencyContacts: [],
-    notes: []
+    notes: [],
+    insurerSelectionType: 'catalog',
+    customInsurerName: undefined
   })
 
   // Computed property for calendar date model
@@ -37,6 +49,19 @@
     get: () => (formState.dateOfBirth ? parseDate(formState.dateOfBirth) : null),
     set: (val) => {
       if (val) formState.dateOfBirth = val.toString()
+    }
+  })
+
+  const selectedInsurerSlug = computed({
+    get: () => (formState.insurerSelectionType === 'catalog' ? formState.insuranceProvider : 'other'),
+    set: (val) => {
+      if (val === 'other') {
+        formState.insurerSelectionType = 'custom'
+        formState.insuranceProvider = formState.customInsurerName
+      } else {
+        formState.insurerSelectionType = 'catalog'
+        formState.insuranceProvider = val
+      }
     }
   })
 
@@ -51,8 +76,12 @@
       console.error('Organization ID is missing')
       return
     }
-    const submitData = {
-      ...formState,
+    const { insurerSelectionType, customInsurerName, ...submitData } = formState
+    const finalInsuranceProvider = insurerSelectionType === 'custom' ? customInsurerName : formState.insuranceProvider
+
+    const preparedData = {
+      ...submitData,
+      insuranceProvider: finalInsuranceProvider,
       medicalConditions: formState.medicalConditions?.filter((item) => item !== '') || [],
       surgeries: formState.surgeries?.filter((item) => item !== '') || [],
       allergies: formState.allergies?.filter((item) => item !== '') || [],
@@ -61,7 +90,7 @@
       notes: formState.notes?.filter((note) => note.content.trim() !== '') || []
     }
 
-    createPatient(submitData)
+    createPatient(preparedData)
   }
 
   async function onError(_event: FormErrorEvent) {
@@ -217,11 +246,16 @@
 
               <template #content>
                 <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
-                  <UFormField label="Nom de l'assurance/mutuelle" name="insuranceProvider">
-                    <UInput v-model="formState.insuranceProvider" placeholder="ex: Mutuelle SantéPlus" class="w-full" />
+                  <UFormField label="Nom de l'assurance/mutuelle" name="insuranceProvider" class="sm:col-span-2">
+                    <USelect v-model="selectedInsurerSlug" :items="INSURER_DROPDOWN_OPTIONS" class="w-full" />
                   </UFormField>
-                  <UFormField label="Numéro de police" name="insuranceNumber">
-                    <UInput v-model="formState.insuranceNumber" placeholder="ex: 987654321" class="w-full" />
+                  <UFormField
+                    v-if="formState.insurerSelectionType === 'custom'"
+                    label="Nom de l'assureur"
+                    name="customInsurerName"
+                    class="sm:col-span-2"
+                  >
+                    <UInput v-model="formState.customInsurerName" placeholder="ex: Mutuelle SantéPlus" class="w-full" />
                   </UFormField>
                 </div>
               </template>
@@ -246,8 +280,8 @@
               </UButton>
 
               <template #content>
-                <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
-                  <UFormField label="Médecin/Praticien" name="referralSource">
+                <div class="border-default border-t p-4 sm:p-6">
+                  <UFormField label="Médecin/Praticien" name="referralSource" class="sm:col-span-2">
                     <UInput v-model="formState.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
                   </UFormField>
                 </div>

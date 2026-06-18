@@ -2355,7 +2355,6 @@ export default defineEventHandler(async (event: H3Event) => {
           allergies: Math.random() > 0.8 ? [randomItem(allergies) || 'Penicillin'] : [],
           medications: Math.random() > 0.6 ? [randomItem(medications) || 'Metformin'] : [],
           insuranceProvider: 'AXA Assurance',
-          insuranceNumber: `INS-${randomInt(100000, 999999)}`,
           referralSource: 'Online',
           notes: []
         })
