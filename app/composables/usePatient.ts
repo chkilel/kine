@@ -125,7 +125,7 @@ const _useUpdatePatient = () => {
 
       toast.add({
         title: 'Succès',
-        description: `Patient ${patientData.firstName} ${patientData.lastName} mis à jour avec succès`,
+        description: 'Patient mis à jour avec succès',
         color: 'success'
       })
 

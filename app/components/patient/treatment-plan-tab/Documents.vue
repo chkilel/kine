@@ -120,7 +120,7 @@
                 v-if="!hasDocuments"
                 icon="i-hugeicons-file-add"
                 size="xs"
-                variant="subtle"
+                variant="naked"
                 title="Aucun document"
                 description="Aucun document n’est associé à ce plan de traitement."
                 :actions="[
