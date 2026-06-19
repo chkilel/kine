@@ -76,7 +76,8 @@ describe('resolveAppointmentPrice', () => {
       prescribingDoctor: null,
       prescriptionDate: '2024-01-01',
       coverageStatus: null,
-      insuranceInfo: null,
+      insuranceProvider: null,
+      
       pricing: {
         clinic: 8000,
         home: 10000,
@@ -132,7 +133,8 @@ describe('resolveAppointmentPrice', () => {
       prescribingDoctor: null,
       prescriptionDate: '2024-01-01',
       coverageStatus: null,
-      insuranceInfo: null,
+      insuranceProvider: null,
+      
       pricing: {
         clinic: 8000,
         home: 10000,

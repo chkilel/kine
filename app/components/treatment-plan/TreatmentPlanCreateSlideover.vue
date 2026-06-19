@@ -1,15 +1,29 @@
 <script setup lang="ts">
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
   import type { Form, FormSubmitEvent } from '@nuxt/ui'
+  import { INSURER_OPTIONS, isInsurerSlug } from '~~/shared/utils/constants.insurers'
+  import { INSURANCE_COVERAGE_OPTIONS } from '~~/shared/utils/constants.patient'
   import { toPriceItemSnapshot } from '~~/server/utils/pricing'
 
   const { patient, treatmentPlan } = defineProps<{ patient: Patient; treatmentPlan?: TreatmentPlan }>()
   const emit = defineEmits<{ close: [data?: any] }>()
 
+  // Form state interface with insurer selection type (UI-level only)
+  interface TreatmentPlanFormState extends TreatmentPlanUpdate {
+    insurerSelectionType: 'catalog' | 'custom'
+    customInsurerName?: string
+  }
+
   type TreatmentPlanFormType = typeof treatmentPlan extends TreatmentPlan ? TreatmentPlanUpdate : TreatmentPlanCreate
 
   // Date formatter
   const df = new DateFormatter('fr-FR', { dateStyle: 'long' })
+
+  // Insurer dropdown options
+  const INSURER_DROPDOWN_OPTIONS = [
+    ...INSURER_OPTIONS.map((opt) => ({ label: opt.label, value: opt.slug })),
+    { label: 'Autre', value: 'other' }
+  ]
 
   const { user } = await useAuth()
   const { activeOrganization } = useOrganization()
@@ -91,34 +105,61 @@
     }
   }
 
-  const formState = reactive<TreatmentPlanFormType>({
-    // Form state with pricing in DH for user-friendly display
-    patientId: patient.id,
-    organizationId: activeOrganization.value.data!.id,
+  // Initialize form state
+  const buildFormState = (): TreatmentPlanFormState => {
+    const currentInsurer = treatmentPlan?.insuranceProvider || patient.insuranceProvider || ''
+    const isCatalogInsurer = currentInsurer && isInsurerSlug(currentInsurer)
 
-    prescribingDoctor: treatmentPlan?.prescribingDoctor || '',
-    prescriptionDate: treatmentPlan?.prescriptionDate || getTodayAsString(),
-    insuranceInfo: treatmentPlan?.insuranceInfo || '',
-    coverageStatus: treatmentPlan?.coverageStatus || 'not_required',
+    return {
+      // Basic fields
+      patientId: patient.id,
+      organizationId: activeOrganization.value.data!.id,
 
-    therapistId: treatmentPlan?.therapistId || user.value!.id,
-    startDate: treatmentPlan?.startDate || getTodayAsString(),
-    endDate: treatmentPlan?.endDate,
-    numberOfSessions: treatmentPlan?.numberOfSessions || 1,
-    sessionFrequency: treatmentPlan?.sessionFrequency || 1,
-    status: treatmentPlan?.status || 'planned',
+      prescribingDoctor: treatmentPlan?.prescribingDoctor || '',
+      prescriptionDate: treatmentPlan?.prescriptionDate || getTodayAsString(),
 
-    title: treatmentPlan?.title || '',
-    diagnosis: treatmentPlan?.diagnosis || '',
-    objective: treatmentPlan?.objective || '',
+      // Insurance fields - inherit from patient when creating, use plan data when editing
+      insuranceProvider: isCatalogInsurer ? currentInsurer : undefined,
+      insurerSelectionType: isCatalogInsurer ? 'catalog' : currentInsurer ? 'custom' : 'catalog',
+      customInsurerName: !isCatalogInsurer && currentInsurer ? currentInsurer : undefined,
+      coverageStatus: treatmentPlan?.coverageStatus || undefined,
 
-    pricing: treatmentPlan?.pricing
-      ? {
-          clinic: centsToCurrency(treatmentPlan.pricing.clinic),
-          home: centsToCurrency(treatmentPlan.pricing.home),
-          telehealth: centsToCurrency(treatmentPlan.pricing.telehealth)
-        }
-      : getDefaultPricing()
+      therapistId: treatmentPlan?.therapistId || user.value!.id,
+      startDate: treatmentPlan?.startDate || getTodayAsString(),
+      endDate: treatmentPlan?.endDate,
+      numberOfSessions: treatmentPlan?.numberOfSessions || 1,
+      sessionFrequency: treatmentPlan?.sessionFrequency || 1,
+      status: treatmentPlan?.status || 'planned',
+
+      title: treatmentPlan?.title || '',
+      diagnosis: treatmentPlan?.diagnosis || '',
+      objective: treatmentPlan?.objective || '',
+
+      // Pricing
+      pricing: treatmentPlan?.pricing
+        ? {
+            clinic: centsToCurrency(treatmentPlan.pricing.clinic),
+            home: centsToCurrency(treatmentPlan.pricing.home),
+            telehealth: centsToCurrency(treatmentPlan.pricing.telehealth)
+          }
+        : getDefaultPricing()
+    }
+  }
+
+  const formState = reactive<TreatmentPlanFormState>(buildFormState())
+
+  // Computed property for insurer dropdown sync (UI-level only)
+  const selectedInsurerSlug = computed({
+    get: () => (formState.insurerSelectionType === 'catalog' ? formState.insuranceProvider : 'other'),
+    set: (val) => {
+      if (val === 'other') {
+        formState.insurerSelectionType = 'custom'
+        formState.insuranceProvider = undefined
+      } else {
+        formState.insurerSelectionType = 'catalog'
+        formState.insuranceProvider = val
+      }
+    }
   })
 
   // Calendar model for date picker
@@ -144,17 +185,17 @@
     return df.format(date.toDate(getLocalTimeZone()))
   })
 
-  async function handleSubmit(event: FormSubmitEvent<TreatmentPlanCreate | TreatmentPlanUpdate>) {
-    const data = event.data
+  async function handleSubmit(_event: FormSubmitEvent<TreatmentPlanCreate | TreatmentPlanUpdate>) {
+    const { insuranceProvider, ...submitData } = formState
 
-    // Build payload with priceItem snapshot and derived pricing
     const payload = {
-      ...data,
+      ...submitData,
+      insuranceProvider: formState.insurerSelectionType === 'custom' ? formState.customInsurerName : insuranceProvider,
       priceItem: selectedPriceItem.value,
       pricing: selectedPriceItem.value?.rateCent || {
-        clinic: currencyToCents(formState.pricing.clinic),
-        home: currencyToCents(formState.pricing.home),
-        telehealth: currencyToCents(formState.pricing.telehealth)
+        clinic: currencyToCents(formState.pricing!.clinic),
+        home: currencyToCents(formState.pricing!.home),
+        telehealth: currencyToCents(formState.pricing!.telehealth)
       }
     }
 
@@ -197,8 +238,10 @@
       endDate: undefined,
       numberOfSessions: 4,
       sessionFrequency: undefined,
-      coverageStatus: 'not_required',
-      insuranceInfo: '',
+      insuranceProvider: undefined,
+      insurerSelectionType: 'catalog',
+      customInsurerName: undefined,
+      coverageStatus: undefined,
       pricing: getDefaultPricing()
     })
 
@@ -308,8 +351,8 @@
                 </div>
               </UFormField>
 
-              <UFormField label="Assurance / Mutuelle" name="insuranceInfo">
-                <UInput v-model="formState.insuranceInfo" placeholder="Mutuelle SantéPlus..." class="w-full" />
+              <UFormField label="Assureur" name="insuranceProvider">
+                <USelect v-model="selectedInsurerSlug" :items="INSURER_DROPDOWN_OPTIONS" class="w-full" />
               </UFormField>
 
               <UFormField label="Statut de couverture">
@@ -319,6 +362,19 @@
                   value-key="value"
                   label-key="label"
                   placeholder="Sélectionner..."
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField
+                v-if="formState.insurerSelectionType === 'custom'"
+                label="Nom de l'assureur"
+                name="customInsurerName"
+                class="md:col-span-2"
+              >
+                <UInput
+                  v-model="formState.customInsurerName"
+                  placeholder="Nom de l'assureur personnalisé"
                   class="w-full"
                 />
               </UFormField>
