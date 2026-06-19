@@ -1608,7 +1608,7 @@ function generateTreatmentPlans(patientId: string, organizationId: string, thera
       prescribingDoctor: 'Dr. Smith',
       prescriptionDate: startDate,
       coverageStatus: randomItem([VALID_COVERAGE_STATUSES[4], VALID_COVERAGE_STATUSES[1], VALID_COVERAGE_STATUSES[2]]),
-      insuranceInfo: 'Insurance Co. Ltd.',
+      insuranceProvider: 'cnss',
       pricing: {
         clinic: randomInt(10000, 15000),
         home: randomInt(20000, 30000),
@@ -2355,7 +2355,6 @@ export default defineEventHandler(async (event: H3Event) => {
           allergies: Math.random() > 0.8 ? [randomItem(allergies) || 'Penicillin'] : [],
           medications: Math.random() > 0.6 ? [randomItem(medications) || 'Metformin'] : [],
           insuranceProvider: 'AXA Assurance',
-          insuranceNumber: `INS-${randomInt(100000, 999999)}`,
           referralSource: 'Online',
           notes: []
         })

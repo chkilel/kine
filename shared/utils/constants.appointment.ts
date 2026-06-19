@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
+import { VALID_APPOINTMENT_TYPES } from '../types/base.types'
 
 // =============================================================================
 // Appointment Duration Constants

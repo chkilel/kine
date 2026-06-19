@@ -2,6 +2,16 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-orm/zod'
 import { z } from 'zod'
 import { fr } from 'zod/locales'
 import { organizations } from '~~/server/database/schema'
+import {
+  ORGANIZATION_STATUS,
+  legalFormSchema,
+  organizationTypeSchema,
+  paymentDelaySchema,
+  paymentFundingMethodSchema,
+  phoneEntrySchema,
+  priceItemSchema,
+  rateCentSchema
+} from './base.types'
 
 z.config(fr())
 

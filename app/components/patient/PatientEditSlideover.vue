@@ -1,20 +1,33 @@
 <script setup lang="ts">
   import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date'
   import { SEX_OPTIONS } from '~~/shared/utils/constants.patient'
+  import { INSURER_OPTIONS, isInsurerSlug } from '~~/shared/utils/constants.insurers'
 
   // --- Props & Emits ---
   const props = defineProps<{ patient: Patient }>()
   const emit = defineEmits<{ close: [] }>()
 
+  // --- Types ---
+  interface PatientFormState extends PatientUpdate {
+    insurerSelectionType: 'catalog' | 'custom'
+    customInsurerName?: string
+  }
+
   // --- Constants ---
   const DATE_FORMATTER = new DateFormatter('fr-FR', { dateStyle: 'medium' })
+  const INSURER_DROPDOWN_OPTIONS = [
+    ...INSURER_OPTIONS.map((opt) => ({ label: opt.label, value: opt.slug })),
+    { label: 'Autre', value: 'other' }
+  ]
 
   // --- Helpers ---
   function deepCloneArray<T>(arr: T[] | null): T[] {
     return arr ? JSON.parse(JSON.stringify(arr)) : []
   }
 
-  function buildInitialFormState(patient: Patient): PatientUpdate {
+  function buildInitialFormState(patient: Patient): PatientFormState {
+    const currentInsurer = patient.insuranceProvider || ''
+    const isCatalogInsurer = currentInsurer && isInsurerSlug(currentInsurer)
     return {
       firstName: patient.firstName,
       lastName: patient.lastName,
@@ -26,7 +39,9 @@
       city: patient.city ?? '',
       postalCode: patient.postalCode || undefined,
       referralSource: patient.referralSource || undefined,
-      insuranceProvider: patient.insuranceProvider || undefined,
+      insuranceProvider: isCatalogInsurer ? currentInsurer : undefined,
+      customInsurerName: isCatalogInsurer ? undefined : currentInsurer || undefined,
+      insurerSelectionType: isCatalogInsurer ? 'catalog' : currentInsurer ? 'custom' : 'catalog',
       emergencyContacts: deepCloneArray(patient.emergencyContacts)
     }
   }
@@ -36,7 +51,7 @@
 
   // --- State ---
   const formRef = ref<HTMLFormElement>()
-  const formState = reactive<PatientUpdate>(buildInitialFormState(props.patient))
+  const formState = reactive<PatientFormState>(buildInitialFormState(props.patient))
 
   // --- Computed ---
   const dobModel = computed({
@@ -50,14 +65,30 @@
     dobModel.value ? DATE_FORMATTER.format(dobModel.value.toDate(getLocalTimeZone())) : 'Sélectionner une date'
   )
 
+  const selectedInsurerSlug = computed({
+    get: () => (formState.insurerSelectionType === 'catalog' ? formState.insuranceProvider : 'other'),
+    set: (val) => {
+      if (val === 'other') {
+        formState.insurerSelectionType = 'custom'
+        formState.insuranceProvider = formState.customInsurerName || undefined
+      } else {
+        formState.insurerSelectionType = 'catalog'
+        formState.insuranceProvider = val
+      }
+    }
+  })
+
   // --- Handlers ---
   async function onSubmit() {
     const isValid = await formRef.value?.validate()
     if (!isValid) return
 
+    const { insurerSelectionType, customInsurerName, ...submitData } = formState
+    const finalInsuranceProvider = insurerSelectionType === 'custom' ? customInsurerName : formState.insuranceProvider
+
     updatePatient({
       patientId: props.patient.id,
-      patientData: formState,
+      patientData: { ...submitData, insuranceProvider: finalInsuranceProvider },
       onSuccess: () => emit('close')
     })
   }
@@ -129,7 +160,20 @@
             </UFormField>
 
             <UFormField label="Assureur" name="insuranceProvider">
-              <UInput v-model="formState.insuranceProvider" placeholder="Assurance" class="w-full" />
+              <USelect v-model="selectedInsurerSlug" :items="INSURER_DROPDOWN_OPTIONS" class="w-full" />
+            </UFormField>
+
+            <UFormField
+              v-if="formState.insurerSelectionType === 'custom'"
+              label="Nom de l'assureur"
+              name="customInsurerName"
+              class="md:col-span-2"
+            >
+              <UInput
+                v-model="formState.customInsurerName"
+                placeholder="Nom de l'assureur personnalisé"
+                class="w-full"
+              />
             </UFormField>
           </div>
         </AppCard>

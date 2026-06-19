@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "f9317921-50a7-46a0-8cba-08b50a215b9c",
+  "id": "3d1e93ad-fab2-4d31-91a9-95cea3283e07",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -1864,16 +1864,6 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "insuranceNumber",
-      "entityType": "columns",
-      "table": "patients"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
       "name": "referralSource",
       "entityType": "columns",
       "table": "patients"
@@ -2374,7 +2364,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "insuranceInfo",
+      "name": "insuranceProvider",
       "entityType": "columns",
       "table": "treatment_plans"
     },

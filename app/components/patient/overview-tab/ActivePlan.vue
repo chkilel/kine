@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { LazyTreatmentSessionSlideover, LazyTreatmentPlanCreateSlideover } from '#components'
+  import { getInsurerLabel, isInsurerSlug } from '~~/shared/utils/constants.insurers'
 
   // ─── Props ───────────────────────────────────────────────────
   const { patient } = defineProps<{ patient: Patient }>()
@@ -48,7 +49,8 @@
         label: 'Assurance',
         value: insuranceInfo || 'Non spécifié',
         icon: 'i-hugeicons-security-check',
-        color: 'success' as UIColor
+        color: 'success' as UIColor,
+        isInsurer: true
       }
     ]
   })
@@ -111,7 +113,7 @@
           <div class="flex-1">
             <h4 class="text-toned text-[10px] tracking-wide uppercase">{{ detail.label }}</h4>
             <p class="text-[13px] font-medium">
-              {{ detail.value }}
+              {{ detail.isInsurer && isInsurerSlug(detail.value) ? getInsurerLabel(detail.value) : detail.value }}
               <span v-if="detail.suffix" class="text-[11px]">• {{ detail.suffix }}</span>
             </p>
           </div>

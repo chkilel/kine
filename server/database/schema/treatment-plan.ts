@@ -47,7 +47,7 @@ export const treatmentPlans = sqliteTable(
 
     // Insurance and coverage
     coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
-    insuranceInfo: text(), // Additional details — e.g., "Mutuelle SantéPlus, N° POL123456"
+    insuranceProvider: text(), // Insurer slug or custom insurer name (inherited from patient)
 
     // Pricing for sessions (inherited from org at creation, can be overridden)
     pricing: text({ mode: 'json' }).$type<RateCent>().notNull(),

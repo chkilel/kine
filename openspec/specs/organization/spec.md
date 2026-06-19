@@ -184,3 +184,51 @@ The system SHALL store organization fiscal information in the `fiscal` JSON fiel
 - **AND** no duplicate receipt numbers are assigned
 - **AND** error handling ensures consistency
 
+---
+
+### Requirement: Organization appointment types column
+The `organizations` table SHALL include a new JSON column `appointmentTypes` typed as `text({ mode: 'json' }).$type<OrgAppointmentType[]>()` (nullable).
+
+#### Scenario: New column added
+- **WHEN** the database schema is updated
+- **THEN** the `organizations` table SHALL have an `appointmentTypes` column of type `text` with JSON mode
+- **THEN** the TypeScript type SHALL be `OrgAppointmentType[] | null`
+
+---
+
+### Requirement: Organization response and update schemas
+The `organizationResponseSchema` and `organizationInsertSchema` SHALL include the `appointmentTypes` field.
+
+#### Scenario: Organization response includes appointment types
+- **WHEN** the API returns an organization object
+- **THEN** the response SHALL include `appointmentTypes: OrgAppointmentTypeItem[] | null`
+
+#### Scenario: Organization update with appointment types
+- **WHEN** an admin updates the organization with a new `appointmentTypes` array
+- **THEN** the `updateOrganizationSchema` SHALL validate the array against `orgAppointmentTypeItemSchema`
+- **THEN** the API SHALL persist the updated array in the JSON column
+
+---
+
+### Requirement: Organization scheduling schema
+The `OrgScheduling` Zod schema SHALL be extended with three new optional fields:
+
+```ts
+export const orgSchedulingSchema = z.object({
+  bookingWindowDays: z.number().min(1).max(365).default(30),
+  cancellationHours: z.number().min(0).max(168).default(24),
+  allowSameDay: z.boolean().default(false),
+  requirePaymentUpfront: z.boolean().default(false),
+  remindersEnabled: z.boolean().default(true),
+  reminderIntervals: z.array(z.number()).default([24, 48]),
+  defaultAppointmentDuration: z.number().int().min(15).max(180).default(30),
+  appointmentGapMinutes: z.number().int().min(0).max(60).default(5),
+  slotIncrementMinutes: z.number().int().min(5).max(30).default(15),
+})
+```
+
+#### Scenario: Backwards compatibility
+- **WHEN** an existing organization has a `scheduling` JSON without the new fields
+- **THEN** the Zod parse SHALL succeed and apply defaults for the new fields
+- **THEN** existing scheduling data SHALL remain unchanged
+

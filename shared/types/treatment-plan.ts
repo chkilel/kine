@@ -34,8 +34,8 @@ const treatmentPlanCreateShape = {
   numberOfSessions: z.number().min(1).optional(),
   sessionFrequency: z.number().optional(),
   status: treatmentPlanStatusSchema.default('planned'),
-  insuranceInfo: z.string().optional(),
   coverageStatus: insuranceCoverageSchema.optional(),
+  insuranceProvider: z.string().optional(),
   pricing: rateCentSchema,
   priceItem: priceItemSnapshotSchema.optional(),
   notes: z.array(noteSchema).optional()
@@ -50,8 +50,8 @@ export const treatmentPlanCreateSchema = createInsertSchema(treatmentPlans, trea
 export const treatmentPlanUpdateSchema = createInsertSchema(treatmentPlans, {
   prescribingDoctor: z.string().min(1),
   prescriptionDate: calendarDateSchema,
-  insuranceInfo: z.string().optional(),
   coverageStatus: insuranceCoverageSchema.optional(),
+  insuranceProvider: z.string().optional(),
 
   therapistId: z.string().min(1),
   startDate: calendarDateSchema,
