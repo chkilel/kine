@@ -84,7 +84,7 @@
   }
 
   const navigateToPlans = async () => {
-    await navigateTo(`/patients/${route.params.id}/plan`)
+    await navigateTo(`/patients/${route.params.id}`)
   }
 
   const handleDeleteSession = async (appointment: Appointment) => {

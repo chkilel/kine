@@ -24,17 +24,11 @@ const isPatientContext = computed(() => {
     return [
       [
         {
-          label: "Vue d'Ensemble",
-          icon: 'i-hugeicons-user-account',
+          label: 'Plan de traitement',
+          icon: 'i-hugeicons-first-aid-kit',
           to: `/patients/${id}`,
           exact: true,
           ariaCurrent: currentPath === `/patients/${id}` ? 'page' : undefined
-        },
-        {
-          label: 'Plan de traitement',
-          icon: 'i-hugeicons-first-aid-kit',
-          to: `/patients/${id}/plan`,
-          ariaCurrent: currentPath === `/patients/${id}/plan` ? 'page' : undefined
         },
         {
           label: 'Hors Plan',
@@ -47,6 +41,12 @@ const isPatientContext = computed(() => {
           icon: 'i-hugeicons-folder-library',
           to: `/patients/${id}/documents`,
           ariaCurrent: currentPath === `/patients/${id}/documents` ? 'page' : undefined
+        },
+        {
+          label: 'Dossier médical',
+          icon: 'i-hugeicons-stethoscope-02',
+          to: `/patients/${id}/dossier`,
+          ariaCurrent: currentPath === `/patients/${id}/dossier` ? 'page' : undefined
         },
         {
           label: 'Facturation',
