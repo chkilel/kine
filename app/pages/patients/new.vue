@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { BreadcrumbItem, FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
+  import type { BreadcrumbItem, Form, FormError, FormErrorEvent, FormSubmitEvent, StepperItem } from '@nuxt/ui'
   import { format } from 'date-fns'
   import { fr } from 'date-fns/locale'
   import { getLocalTimeZone, parseDate } from '@internationalized/date'
@@ -15,6 +15,9 @@
 
   const { activeOrganization } = useOrganization()
   const { mutate: createPatient, isLoading } = useCreatePatient()
+  const { user } = await useAuth()
+
+  const generalNote = ref('')
 
   const INSURER_DROPDOWN_OPTIONS = [
     ...INSURER_OPTIONS.map((opt) => ({ label: opt.label, value: opt.slug })),
@@ -26,7 +29,18 @@
     customInsurerName?: string
   }
 
-  const formRef = useTemplateRef<HTMLFormElement>('createPatientForm')
+  interface StepperExpose {
+    next: () => void
+    prev: () => void
+    hasNext: Ref<boolean>
+    hasPrev: Ref<boolean>
+  }
+
+  const formRef = useTemplateRef<Form<PatientFormState>>('createPatientForm')
+  const stepperRef = useTemplateRef<StepperExpose>('stepper')
+  const formWrapperRef = useTemplateRef<HTMLDivElement>('formWrapper')
+  const stepIndex = ref(0)
+
   const formState = reactive<PatientFormState>({
     organizationId: '',
     firstName: '',
@@ -43,6 +57,49 @@
     insurerSelectionType: 'catalog',
     customInsurerName: undefined
   })
+
+  const steps = [
+    {
+      slot: 'identity' as const,
+      title: 'Identité',
+      description: 'État civil du patient',
+      icon: 'i-hugeicons-user'
+    },
+    {
+      slot: 'contact' as const,
+      title: 'Coordonnées',
+      description: 'Contact & urgence',
+      icon: 'i-hugeicons-map-pin'
+    },
+    {
+      slot: 'medical' as const,
+      title: 'Médical',
+      description: 'Antécédents & allergies',
+      icon: 'i-hugeicons-stethoscope'
+    },
+    {
+      slot: 'insurance' as const,
+      title: 'Assurance',
+      description: 'Mutuelle & notes',
+      icon: 'i-hugeicons-shield-user'
+    }
+  ] satisfies StepperItem[]
+
+  const isLastStep = computed(() => stepIndex.value === steps.length - 1)
+
+  const stepSchemas = [
+    patientCreateSchema.pick({ firstName: true, lastName: true, dateOfBirth: true, sex: true }),
+    patientCreateSchema.pick({
+      phone: true,
+      email: true,
+      address: true,
+      city: true,
+      postalCode: true,
+      country: true
+    }),
+    null,
+    null
+  ] as const
 
   // Computed property for calendar date model
   const dobModel = computed({
@@ -71,11 +128,43 @@
     }
   })
 
+  function validateCurrentStep(): FormError[] | null {
+    const schema = stepSchemas[stepIndex.value]
+    if (!schema) return []
+
+    const result = schema.safeParse(formState)
+    if (result.success) return []
+
+    return result.error.issues.map((issue) => ({
+      name: issue.path.join('.'),
+      message: issue.message
+    }))
+  }
+
+  function handleNext() {
+    const errors = validateCurrentStep()
+    if (errors && errors.length > 0) {
+      formRef.value?.setErrors(errors)
+      return
+    }
+
+    formRef.value?.clear()
+    stepperRef.value?.next()
+    stepIndex.value++
+  }
+
+  function handlePrev() {
+    formRef.value?.clear()
+    stepperRef.value?.prev()
+    stepIndex.value--
+  }
+
   async function onSubmit(_event: FormSubmitEvent<PatientCreate>) {
     if (!formState.organizationId) {
       console.error('Organization ID is missing')
       return
     }
+
     const { insurerSelectionType, customInsurerName, ...submitData } = formState
     const finalInsuranceProvider = insurerSelectionType === 'custom' ? customInsurerName : formState.insuranceProvider
 
@@ -87,230 +176,142 @@
       allergies: formState.allergies?.filter((item) => item !== '') || [],
       medications: formState.medications?.filter((item) => item !== '') || [],
       emergencyContacts: formState.emergencyContacts?.filter((contact) => contact.number.trim() !== '') || [],
-      notes: formState.notes?.filter((note) => note.content.trim() !== '') || []
+      notes:
+        generalNote.value.trim() && user.value
+          ? [
+              {
+                content: generalNote.value.trim(),
+                date: new Date(),
+                author: formatFullName(user.value)
+              }
+            ]
+          : []
     }
 
     createPatient(preparedData)
   }
 
   async function onError(_event: FormErrorEvent) {
-    nextTick(() => formRef.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    nextTick(() => formWrapperRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 </script>
 
 <template>
   <AppDashboardPage id="new-patient" title="Nouveau patient" :breadcrumbs="breadcrumbItems">
-    <header class="my-6">
-      <h1 class="text-xl leading-tight font-bold md:text-2xl">Nouvel Enregistrement Patient</h1>
+    <header class="mb-2">
+      <h1 class="text-highlighted text-lg leading-tight font-bold md:text-xl">Créer une fiche patient</h1>
+      <p class="text-muted mt-1 text-sm">Renseignez la fiche patient en quelques étapes.</p>
     </header>
 
-    <UForm
-      ref="createPatientForm"
-      :schema="patientCreateSchema"
-      :state="formState"
-      class="space-y-6"
-      @submit="onSubmit"
-      @error="onError"
-    >
-      <!-- Essential Information Section -->
-      <UCard variant="outline" class="ring-primary">
-        <h2 class="text-highlighted mb-4 text-lg font-bold">Informations Essentielles</h2>
-        <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-          <UFormField label="Prénom" name="firstName" required>
-            <UInput v-model="formState.firstName" placeholder="ex: Jean" class="w-full" />
-          </UFormField>
-          <UFormField label="Nom" name="lastName" required>
-            <UInput v-model="formState.lastName" placeholder="ex: Dupont" class="w-full" />
-          </UFormField>
-          <UFormField label="Date de naissance" name="dateOfBirth" required>
-            <UPopover>
-              <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start">
-                {{
-                  dobModel
-                    ? format(dobModel.toDate(getLocalTimeZone()), 'dd MMM yyyy', { locale: fr })
-                    : 'Sélectionner une date'
-                }}
-              </UButton>
-              <template #content>
-                <UCalendar v-model="dobModel" class="p-2" />
-              </template>
-            </UPopover>
-          </UFormField>
-          <UFormField label="Sexe" name="sex" required>
-            <USelect v-model="formState.sex" placeholder="Sélectionner..." class="w-full" :items="SEX_OPTIONS" />
-          </UFormField>
-          <div class="md:col-span-2">
-            <UFormField label="Téléphone" name="phone" required>
-              <UInput v-model="formState.phone" placeholder="ex: 06 12 34 56 78" type="tel" class="w-full" />
-            </UFormField>
-          </div>
-        </div>
-      </UCard>
-
-      <!-- Two Column Layout for Details -->
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Left Column -->
-        <div class="space-y-3">
-          <!-- Contact Information -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-house" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Coordonnées</h3>
+    <UPageCard variant="outline" class="mx-auto w-full max-w-5xl">
+      <div ref="formWrapper">
+        <UForm
+          ref="createPatientForm"
+          :schema="patientCreateSchema"
+          :state="formState"
+          class="space-y-0"
+          @submit="onSubmit"
+          @error="onError"
+        >
+          <UStepper ref="stepper" :items="steps" :disabled="true" class="w-full">
+            <!-- Step 1: Identité -->
+            <template #identity>
+              <div class="space-y-5 pt-2">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold">Identité du patient</h2>
+                  <p class="text-muted text-sm">Informations essentielles d'état civil.</p>
                 </div>
-              </UButton>
 
-              <template #content>
-                <div class="border-default space-y-4 border-t p-4 sm:p-6">
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                  <UFormField label="Prénom" name="firstName" required>
+                    <UInput v-model="formState.firstName" placeholder="ex : Jean" class="w-full" />
+                  </UFormField>
+                  <UFormField label="Nom" name="lastName" required>
+                    <UInput v-model="formState.lastName" placeholder="ex : Dupont" class="w-full" />
+                  </UFormField>
+                  <UFormField label="Date de naissance" name="dateOfBirth" required>
+                    <UPopover>
+                      <UButton
+                        color="neutral"
+                        variant="subtle"
+                        icon="i-hugeicons-calendar-03"
+                        class="w-full justify-start"
+                      >
+                        {{
+                          dobModel
+                            ? format(dobModel.toDate(getLocalTimeZone()), 'dd MMM yyyy', { locale: fr })
+                            : 'Sélectionner une date'
+                        }}
+                      </UButton>
+                      <template #content>
+                        <UCalendar v-model="dobModel" class="p-2" />
+                      </template>
+                    </UPopover>
+                  </UFormField>
+                  <UFormField label="Sexe" name="sex" required>
+                    <USelect
+                      v-model="formState.sex"
+                      placeholder="Sélectionner..."
+                      class="w-full"
+                      :items="SEX_OPTIONS"
+                    />
+                  </UFormField>
+                </div>
+              </div>
+            </template>
+
+            <!-- Step 2: Coordonnées -->
+            <template #contact>
+              <div class="space-y-6 pt-2">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold">Coordonnées</h2>
+                  <p class="text-muted text-sm">Comment joindre le patient et son contact d'urgence.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                  <UFormField label="Téléphone" name="phone" required>
+                    <UInput v-model="formState.phone" placeholder="ex : 06 12 34 56 78" type="tel" class="w-full" />
+                  </UFormField>
                   <UFormField label="Email" name="email">
                     <UInput
                       v-model="formState.email"
-                      placeholder="ex: jean.dupont@email.com"
+                      placeholder="ex : jean.dupont@email.com"
                       type="email"
                       class="w-full"
                     />
                   </UFormField>
-                  <UFormField label="Adresse" name="address">
+                  <UFormField label="Adresse" name="address" class="md:col-span-2">
                     <UTextarea
                       v-model="formState.address"
                       placeholder="123 Rue de la République, 75001 Paris, France"
-                      :rows="3"
+                      :rows="2"
                       class="w-full"
                     />
                   </UFormField>
-                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <UFormField label="Ville" name="city">
-                      <UInput v-model="formState.city" placeholder="Paris" class="w-full" />
-                    </UFormField>
-                    <UFormField label="Code Postal" name="postalCode">
-                      <UInput v-model="formState.postalCode" placeholder="75001" class="w-full" />
-                    </UFormField>
-                  </div>
-                  <UFormField label="Pays" name="country">
+                  <UFormField label="Ville" name="city">
+                    <UInput v-model="formState.city" placeholder="Paris" class="w-full" />
+                  </UFormField>
+                  <UFormField label="Code Postal" name="postalCode">
+                    <UInput v-model="formState.postalCode" placeholder="75001" class="w-full" />
+                  </UFormField>
+                  <UFormField label="Pays" name="country" class="md:col-span-2">
                     <UInput v-model="formState.country" placeholder="France" class="w-full" />
                   </UFormField>
                 </div>
-              </template>
-            </UCollapsible>
-          </UCard>
 
-          <!-- Emergency Contact -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-phone" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Contact d'Urgence</h3>
+                <PatientEmergencyContacts v-model="formState.emergencyContacts" />
+              </div>
+            </template>
+
+            <!-- Step 3: Médical -->
+            <template #medical>
+              <div class="space-y-5 pt-2">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold">Informations médicales</h2>
+                  <p class="text-muted text-sm">Antécédents, allergies et traitements en cours. Optionnel.</p>
                 </div>
-              </UButton>
 
-              <template #content>
-                <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                  <PatientEmergencyContacts v-model="formState.emergencyContacts" />
-                </div>
-              </template>
-            </UCollapsible>
-          </UCard>
-
-          <!-- Insurance -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-shield-user" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Assurance</h3>
-                </div>
-              </UButton>
-
-              <template #content>
-                <div class="border-default grid grid-cols-1 gap-x-6 gap-y-4 border-t p-4 sm:grid-cols-2 sm:p-6">
-                  <UFormField label="Nom de l'assurance/mutuelle" name="insuranceProvider" class="sm:col-span-2">
-                    <USelect v-model="selectedInsurerSlug" :items="INSURER_DROPDOWN_OPTIONS" class="w-full" />
-                  </UFormField>
-                  <UFormField
-                    v-if="formState.insurerSelectionType === 'custom'"
-                    label="Nom de l'assureur"
-                    name="customInsurerName"
-                    class="sm:col-span-2"
-                  >
-                    <UInput v-model="formState.customInsurerName" placeholder="ex: Mutuelle SantéPlus" class="w-full" />
-                  </UFormField>
-                </div>
-              </template>
-            </UCollapsible>
-          </UCard>
-
-          <!-- Referral -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-user-star" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Référé par</h3>
-                </div>
-              </UButton>
-
-              <template #content>
-                <div class="border-default border-t p-4 sm:p-6">
-                  <UFormField label="Médecin/Praticien" name="referralSource" class="sm:col-span-2">
-                    <UInput v-model="formState.referralSource" placeholder="ex: Dr. Leblanc" class="w-full" />
-                  </UFormField>
-                </div>
-              </template>
-            </UCollapsible>
-          </UCard>
-        </div>
-
-        <!-- Right Column -->
-        <div class="space-y-3">
-          <!-- Medical Information -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-briefcase-medical" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Informations Médicales</h3>
-                </div>
-              </UButton>
-
-              <template #content>
-                <div class="border-default space-y-4 border-t p-4 sm:p-6">
+                <div class="space-y-4">
                   <PatientMedicalInfoInput
                     v-model="formState.medicalConditions"
                     label="Antécédents médicaux"
@@ -318,7 +319,6 @@
                     placeholder="Ajouter une condition... ex : diabète de type 2, asthme"
                     badge-color="neutral"
                   />
-
                   <PatientMedicalInfoInput
                     v-model="formState.surgeries"
                     label="Chirurgies / Interventions"
@@ -326,7 +326,6 @@
                     placeholder="Décrire l'intervention... ex : opération du genou (2020)"
                     badge-color="primary"
                   />
-
                   <PatientMedicalInfoInput
                     v-model="formState.allergies"
                     label="Allergies"
@@ -334,7 +333,6 @@
                     placeholder="Ajouter une allergie... ex : pénicilline, latex, pollen"
                     badge-color="error"
                   />
-
                   <PatientMedicalInfoInput
                     v-model="formState.medications"
                     label="Médicaments actuels"
@@ -343,51 +341,92 @@
                     badge-color="info"
                   />
                 </div>
-              </template>
-            </UCollapsible>
-          </UCard>
+              </div>
+            </template>
 
-          <!-- Notes -->
-          <UCard :ui="{ body: 'p-0 sm:p-0' }">
-            <UCollapsible>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                class="group px-4 py-3 sm:px-6 sm:py-4"
-                :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-                trailing-icon="i-lucide-chevron-down"
-                block
-              >
-                <div class="flex items-center gap-3">
-                  <UIcon name="i-lucide-file-text" class="text-muted text-xl" />
-                  <h3 class="text-base font-bold">Notes Générales</h3>
+            <!-- Step 4: Assurance & Notes -->
+            <template #insurance>
+              <div class="space-y-6 pt-2">
+                <div class="space-y-1">
+                  <h2 class="text-lg font-semibold">Assurance &amp; notes</h2>
+                  <p class="text-muted text-sm">Mutuelle, prescripteur et notes libres.</p>
                 </div>
+
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4">
+                  <UFormField label="Nom de l'assurance / mutuelle" name="insuranceProvider">
+                    <USelect v-model="selectedInsurerSlug" :items="INSURER_DROPDOWN_OPTIONS" class="w-full" />
+                  </UFormField>
+                  <UFormField
+                    v-if="formState.insurerSelectionType === 'custom'"
+                    label="Nom de l'assureur"
+                    name="customInsurerName"
+                  >
+                    <UInput
+                      v-model="formState.customInsurerName"
+                      placeholder="ex : Mutuelle SantéPlus"
+                      class="w-full"
+                    />
+                  </UFormField>
+                  <UFormField label="Médecin / Praticien prescripteur" name="referralSource">
+                    <UInput v-model="formState.referralSource" placeholder="ex : Dr. Leblanc" class="w-full" />
+                  </UFormField>
+                </div>
+
+                <USeparator label="Notes générales" />
+
+                <UFormField label="Note générale" name="generalNote">
+                  <UTextarea
+                    v-model="generalNote"
+                    placeholder="Ajouter une note générale sur le patient..."
+                    :rows="4"
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
+            </template>
+          </UStepper>
+
+          <!-- Navigation -->
+          <div class="border-default mt-6 flex items-center justify-between border-t pt-6">
+            <UButton variant="soft" color="neutral" trailing-icon="i-hugeicons-cancel-01" to="/patients">
+              Annuler
+            </UButton>
+
+            <div class="flex items-center gap-2">
+              <UButton
+                v-if="stepIndex > 0"
+                type="button"
+                variant="soft"
+                color="neutral"
+                leading-icon="i-hugeicons-arrow-left-01"
+                @click="handlePrev"
+              >
+                Retour
               </UButton>
 
-              <template #content>
-                <div class="border-default space-y-4 border-t p-4 sm:p-6">
-                  <PatientNotes v-model="formState.notes" />
-                </div>
-              </template>
-            </UCollapsible>
-          </UCard>
-        </div>
-      </div>
-    </UForm>
+              <UButton
+                v-if="!isLastStep"
+                type="button"
+                color="primary"
+                trailing-icon="i-hugeicons-arrow-right-01"
+                @click="handleNext"
+              >
+                Suivant
+              </UButton>
 
-    <template #footer>
-      <div class="bg-default py-2 backdrop-blur-sm">
-        <div class="flex items-center justify-end gap-3">
-          <UButton label="Annuler" color="neutral" variant="subtle" to="/patients" />
-          <UButton
-            @click="formRef?.submit()"
-            :loading="isLoading"
-            :disabled="isLoading"
-            color="primary"
-            label="Enregistrer"
-          />
-        </div>
+              <UButton
+                v-else
+                type="submit"
+                color="primary"
+                icon="i-hugeicons-task-done-01"
+                :loading="isLoading"
+                :disabled="isLoading"
+                label="Enregistrer"
+              />
+            </div>
+          </div>
+        </UForm>
       </div>
-    </template>
+    </UPageCard>
   </AppDashboardPage>
 </template>
