@@ -10,6 +10,7 @@
   const { latestActiveTreatmentPlan } = usePatientTreatmentPlans(() => route.params.id as string)
 
   const { openCreateSlideover, openEditSlideover } = useTreatmentPlanSlideover()
+  const { openPlanPicker } = useBillingSlideover()
 
   const toast = useToast()
   const { getTherapistName } = useOrganizationMembers()
@@ -78,15 +79,38 @@
       })
     }
   })
+
+  function handleOpenPlanPicker() {
+    openPlanPicker(props.patient.id, selectedPlanId.value || null, (planId: string) => {
+      selectedPlanId.value = planId
+    })
+  }
 </script>
 
 <template>
   <AppCard title="Plan de traitement" class="relative">
-    <TreatmentPlanSelector
-      :patient-id="patient.id"
-      v-model:selected-plan-id="selectedPlanId"
-      class="min-h-18 rounded-lg ring"
-    />
+    <button
+      type="button"
+      class="border-default bg-muted hover:bg-elevated focus:border-primary/80 flex min-h-18 w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus:outline-none"
+      @click="handleOpenPlanPicker"
+    >
+      <AppIconBox
+        :name="getTreatmentPlanStatusIcon(treatmentPlan.status)"
+        :color="getTreatmentPlanStatusColor(treatmentPlan.status)"
+        size="xl"
+        variant="soft"
+        class="shrink-0"
+      />
+
+      <div class="min-w-0 flex-1">
+        <h3 class="text-sm font-semibold">{{ treatmentPlan.title || 'Plan sans titre' }}</h3>
+        <!-- <p class="text-muted text-xs">
+          {{ treatmentPlan.completedAppointments || 0 }} / {{ treatmentPlan.numberOfSessions || '?' }} séances
+        </p> -->
+      </div>
+
+      <UIcon name="i-hugeicons-folder-transfer" class="text-toned size-7 shrink-0" />
+    </button>
 
     <div class="flex flex-col gap-2 text-xs">
       <!-- <UBadge :color="getTreatmentPlanStatusColor(treatmentPlan.status)" variant="solid" size="md" class="rounded-full"> -->

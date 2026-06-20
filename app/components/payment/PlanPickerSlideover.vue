@@ -48,7 +48,9 @@
 
     const q = searchQuery.value.trim().toLowerCase()
     if (q) {
-      list = list.filter((p) => (p.title || '').toLowerCase().includes(q) || (p.diagnosis || '').toLowerCase().includes(q))
+      list = list.filter(
+        (p) => (p.title || '').toLowerCase().includes(q) || (p.diagnosis || '').toLowerCase().includes(q)
+      )
     }
 
     return list
@@ -65,9 +67,7 @@
     return groups
   })
 
-  const selectedPlanFinancialsSafe = computed<PlanFinancials | null>(
-    () => props.selectedPlanFinancials ?? null
-  )
+  const selectedPlanFinancialsSafe = computed<PlanFinancials | null>(() => props.selectedPlanFinancials ?? null)
 
   // ─── Event handlers ──────────────────────────────────────────
   function handleSelect(planId: string) {
@@ -77,9 +77,12 @@
 </script>
 
 <template>
-  <USlideover title="Choisir un plan" description="Sélectionnez le plan de traitement à afficher" @close="emit('close')">
+  <USlideover title="Choisir un plan" :ui="{ content: 'max-w-xl' }" @close="emit('close')">
     <template #body>
       <div class="flex h-full flex-col gap-4">
+        <!-- Status filter -->
+        <UTabs v-model="statusFilter" :items="statusFilterOptions" :content="false" size="xs" class="w-full" />
+
         <!-- Search -->
         <UInput
           v-model="searchQuery"
@@ -88,19 +91,6 @@
           size="md"
           variant="subtle"
         />
-
-        <!-- Status filter -->
-        <div class="flex flex-wrap gap-1">
-          <UButton
-            v-for="opt in statusFilterOptions"
-            :key="opt.value"
-            :variant="statusFilter === opt.value ? 'solid' : 'ghost'"
-            :color="statusFilter === opt.value ? 'primary' : 'neutral'"
-            size="xs"
-            :label="opt.label"
-            @click="statusFilter = opt.value"
-          />
-        </div>
 
         <!-- Loading -->
         <div v-if="plansLoading" class="py-8 text-center">
@@ -124,7 +114,7 @@
               v-for="plan in group.plans"
               :key="plan.id"
               type="button"
-              class="border-default bg-default hover:bg-muted focus:border-primary/80 flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors focus:outline-none"
+              class="border-default bg-muted hover:bg-elevated focus:border-primary/80 flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus:outline-none"
               :class="{ 'border-primary bg-primary/5': selectedPlanId === plan.id }"
               @click="handleSelect(plan.id)"
             >
@@ -132,7 +122,7 @@
               <AppIconBox
                 :name="getTreatmentPlanStatusIcon(plan.status)"
                 :color="getTreatmentPlanStatusColor(plan.status)"
-                size="md"
+                size="lg"
                 variant="soft"
                 class="shrink-0"
               />
@@ -140,13 +130,36 @@
               <!-- Title + meta -->
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold">{{ plan.title || 'Plan sans titre' }}</p>
-                <p class="text-muted text-xs">
+                <div class="flex items-center">
+                  <!-- Date range -->
+                  <div class="text-muted mt-0.5 flex items-center gap-1 text-xs">
+                    <UIcon name="i-hugeicons-calendar-03" class="size-3.5 shrink-0" />
+                    <span class="truncate">{{ formatDateRange(plan.startDate, plan.endDate) }}</span>
+                  </div>
+                  <USeparator v-if="plan.priceItem" orientation="vertical" color="neutral" class="mx-2 h-3" />
+
+                  <!-- Code + price(only clinic because it's the most used') -->
+                  <div class="text-muted mt-0.5 flex items-center gap-1 text-xs">
+                    <UIcon name="i-hugeicons-coins-02" class="size-3.5 shrink-0" />
+                    <UBadge
+                      v-if="plan.priceItem?.code"
+                      :label="plan.priceItem.code"
+                      size="sm"
+                      color="primary"
+                      variant="soft"
+                      class="text-muted"
+                    />
+                    <span class="font-semibold tabular-nums">{{ formatCurrency(plan.pricing.clinic) }}</span>
+                  </div>
+                </div>
+
+                <p class="text-muted mt-2 text-right text-xs">
                   {{ plan.completedAppointments }} / {{ plan.numberOfSessions || '?' }} séances
                 </p>
 
                 <!-- Progress -->
                 <div v-if="plan.numberOfSessions" class="mt-1.5">
-                  <UProgress :model-value="plan.progress" :max="100" size="xs" color="primary" />
+                  <UProgress :model-value="plan.progress" :max="100" size="sm" color="primary" />
                 </div>
 
                 <!-- Selected plan financials -->
@@ -157,17 +170,12 @@
                   <span class="text-muted">Encaissé</span>
                   <span class="font-bold tabular-nums">
                     {{ formatCurrency(selectedPlanFinancialsSafe.collectedCents) }}
-                    <span class="text-muted font-normal">/ {{ formatCurrency(selectedPlanFinancialsSafe.billedCents) }}</span>
+                    <span class="text-muted font-normal">
+                      / {{ formatCurrency(selectedPlanFinancialsSafe.billedCents) }}
+                    </span>
                   </span>
                 </div>
               </div>
-
-              <!-- Selected check -->
-              <UIcon
-                v-if="selectedPlanId === plan.id"
-                name="i-hugeicons-checkmark-circle-02"
-                class="text-primary size-5 shrink-0"
-              />
             </button>
           </section>
         </div>

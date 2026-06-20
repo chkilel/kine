@@ -3,9 +3,11 @@
   import { LazyDocumentCreateSlideover } from '#components'
 
   const route = useRoute()
+  const patientId = computed(() => route.params.id as string)
 
   const overlay = useOverlay()
   const documentCreateOverlay = overlay.create(LazyDocumentCreateSlideover)
+  const { openPlanPicker } = useBillingSlideover()
 
   const selectedDocumentType = ref<string>('all')
 
@@ -30,25 +32,52 @@
   ])
   const icon = computed(() => categorySelectItems.value.find((item) => item.value === selectedDocumentType.value)?.icon)
 
+  const { data: patient, isLoading: patientLoading } = usePatientById(() => route.params.id as string)
+  const {
+    latestActiveTreatmentPlan,
+    treatmentPlansGroupedByStatus,
+    loading: treatmentPlansLoading
+  } = usePatientTreatmentPlans(patientId)
+
+  // ─── Plan selection (URL-synced, defaults to active plan) ────
+  // Accepted values: 'all' | '<planId>'
   const selectedPlanId = computed<string>({
     get: () => {
-      const planId = route.query.planId as string | undefined
-      return planId || 'all'
+      const q = route.query.planId as string | undefined
+      if (q) return q
+      return latestActiveTreatmentPlan.value?.id ?? 'all'
     },
-    set: (id) => {
+    set: (v) =>
       navigateTo({
         path: route.path,
-        query: { ...route.query, planId: id === 'all' ? undefined : id }
+        query: { ...route.query, planId: v || 'all' }
       })
-    }
   })
 
-  const { data: patient, isLoading: patientLoading } = usePatientById(() => route.params.id as string)
-  const { treatmentPlans, loading: treatmentPlansLoading } = usePatientTreatmentPlans(() => route.params.id as string)
+  // Derive the current mode
+  const currentMode = computed<'all' | 'plan'>(() => {
+    return selectedPlanId.value === 'all' ? 'all' : 'plan'
+  })
 
-  const { data: documents, isLoading: documentsLoading } = useDocumentsList(
-    () => route.params.id as string,
-    () => (selectedPlanId.value === 'all' ? '' : selectedPlanId.value)
+  // Detect invalid (deleted) plan ID in URL and reset silently
+  const selectedPlan = computed(() => {
+    if (currentMode.value !== 'plan') return null
+    return treatmentPlansGroupedByStatus.value?.find((p) => p.id === selectedPlanId.value) ?? null
+  })
+
+  // Auto-reset if the URL points to a plan that no longer exists AND plans are loaded
+  watch(
+    [selectedPlan, treatmentPlansGroupedByStatus],
+    ([plan, plans]) => {
+      if (currentMode.value === 'plan' && !plan && plans && plans.length > 0) {
+        selectedPlanId.value = 'all'
+      }
+    },
+    { flush: 'post' }
+  )
+
+  const { data: documents, isLoading: documentsLoading } = useDocumentsList(patientId, () =>
+    currentMode.value === 'plan' ? selectedPlanId.value : ''
   )
 
   const filteredDocuments = computed(() => {
@@ -69,9 +98,38 @@
 
   const isLoading = computed(() => patientLoading.value || treatmentPlansLoading.value || documentsLoading.value)
 
+  // ─── Trigger button label ────────────────────────────────────
+  const selectedPlanName = computed(() => selectedPlan.value?.title ?? '')
+
+  const triggerLabel = computed(() => {
+    if (currentMode.value === 'all') return 'Tous les documents'
+    return selectedPlanName.value || 'Plan inconnu'
+  })
+
+  const triggerStatusIcon = computed(() => {
+    if (!selectedPlan.value) return null
+    return getTreatmentPlanStatusIcon(selectedPlan.value.status)
+  })
+
+  const triggerStatusColor = computed(() => {
+    if (!selectedPlan.value) return null
+    return getTreatmentPlanStatusColor(selectedPlan.value.status)
+  })
+
+  // ─── Event handlers ──────────────────────────────────────────
+  function handleOpenPlanPicker() {
+    openPlanPicker(patientId.value, currentMode.value === 'plan' ? selectedPlanId.value : null, (planId: string) => {
+      selectedPlanId.value = planId
+    })
+  }
+
+  function handleSelectAll() {
+    selectedPlanId.value = 'all'
+  }
+
   function handleAddDocument() {
     if (!patient.value) return
-    const planId = selectedPlanId.value === 'all' ? undefined : selectedPlanId.value
+    const planId = currentMode.value === 'plan' ? selectedPlanId.value : undefined
     documentCreateOverlay.open({
       patient: patient.value,
       treatmentPlanId: planId
@@ -82,25 +140,17 @@
 <template>
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
     <div class="lg:col-span-1">
-      <AppCard title="Filtres des documents" description="Affinez les documents par type et plan de traitement.">
-        <template v-if="patient">
-          <TreatmentPlanSelector
-            v-model:selected-plan-id="selectedPlanId"
-            :patient-id="patient.id"
-            show-all-option
-            all-option-label="Tous les documents"
-            all-option-description="Afficher tous les documents du patient"
-            class="min-h-18 rounded-lg ring"
-          />
-        </template>
-
-        <h3 class="text-muted mt-4 text-sm font-medium lg:hidden">Type de document</h3>
+      <AppCard
+        title="Filtres des documents"
+        description="Affinez les documents par type."
+        :ui="{ body: 'pt-0 sm:pt-0' }"
+      >
         <USelect
           v-model="selectedDocumentType"
           :items="categorySelectItems"
           :icon="icon"
           placeholder="Tous les types"
-          class="mt-2 w-full lg:hidden"
+          class="w-full lg:hidden"
         />
         <URadioGroup
           v-model="selectedDocumentType"
@@ -110,8 +160,8 @@
           :default-value="'all'"
           :items="categoryFilterItems"
           :ui="{
-            root: 'mt-4 hidden lg:block',
-            item: 'p-2 first-of-type:rounded-t-md first-of-type:rounded-t-md '
+            root: 'hidden lg:block',
+            item: 'p-2 first-of-type:rounded-t-md'
           }"
         />
       </AppCard>
@@ -128,6 +178,34 @@
             @click="handleAddDocument"
           />
         </template>
+
+        <!-- Plan selector: trigger + chips -->
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <UButton
+            :variant="selectedPlanId === 'all' ? 'soft' : 'ghost'"
+            :color="selectedPlanId === 'all' ? 'primary' : 'neutral'"
+            size="xs"
+            @click="handleSelectAll"
+          >
+            Tous
+          </UButton>
+
+          <USeparator orientation="vertical" class="mx-1 h-5" />
+
+          <UButton
+            :color="currentMode === 'plan' ? 'primary' : 'neutral'"
+            :variant="currentMode === 'plan' ? 'soft' : 'outline'"
+            size="xs"
+            trailing-icon="i-hugeicons-arrow-down-01"
+            @click="handleOpenPlanPicker"
+          >
+            <span class="flex items-center gap-2">
+              <UIcon v-if="triggerStatusIcon" :name="triggerStatusIcon" :class="`text-${triggerStatusColor}`" />
+              <span class="max-w-45 truncate">{{ triggerLabel }}</span>
+            </span>
+          </UButton>
+        </div>
+
         <div v-if="isLoading" class="flex justify-center py-8">
           <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl" />
         </div>
