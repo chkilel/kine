@@ -23,7 +23,13 @@
 </script>
 
 <template>
-  <UDashboardPanel :id="id" class="bg-muted">
+  <UDashboardPanel
+    :id="id"
+    :ui="{
+      root: 'bg-muted',
+      body: 'scrollbar-gutter-stable'
+    }"
+  >
     <template #header>
       <UDashboardNavbar
         :title="title"
