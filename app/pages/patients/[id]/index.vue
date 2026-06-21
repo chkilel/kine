@@ -111,7 +111,7 @@
           <PatientTreatmentPlanTabAppointments
             :patient="patient"
             :treatment-plan="selectedTreatmentPlan"
-            class="flex flex-col gap-6 lg:col-span-3"
+            class="lg:col-span-3"
           />
 
           <!-- Documents -->

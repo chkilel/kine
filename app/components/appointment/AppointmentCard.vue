@@ -61,9 +61,9 @@
     ]"
     @click="openSessionSlideover"
   >
-    <div class="flex flex-1 items-center gap-2">
+    <div class="flex flex-1 gap-2 md:items-center">
       <div class="flex">
-        <AppDateBadge :date="appointment.date" variant="soft" color="primary" class="rounded-r-none" />
+        <AppDateBadge :date="appointment.date" variant="soft" color="primary" class="h-auto min-h-12 rounded-r-none" />
       </div>
 
       <div class="min-w-0 flex-1">
@@ -79,7 +79,9 @@
           </UBadge>
         </div>
 
-        <div class="text-highlighted divide-muted mt-1.5 flex items-center divide-x text-xs">
+        <div
+          class="text-highlighted md:divide-muted mt-1.5 flex flex-col text-xs md:flex-row md:items-center md:divide-x"
+        >
           <div class="flex items-center gap-1 font-medium sm:pr-2">
             <UIcon name="i-hugeicons-clock-01" />
             <p>{{ formatTimeString(appointment.startTime) }}</p>
