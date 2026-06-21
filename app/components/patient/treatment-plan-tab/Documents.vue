@@ -54,11 +54,11 @@
 
           <div class="space-y-4">
             <!-- Staged Files -->
-            <div v-if="uploadedFiles.length > 0" class="">
+            <div v-if="uploadedFiles.length > 0" class="bg-muted">
               <div
                 v-for="(uploadedFile, index) in uploadedFiles"
                 :key="index"
-                class="border-default bg-muted space-y-3 border-b p-3"
+                class="border-default space-y-3 border-b p-3"
               >
                 <div class="flex w-full items-start gap-10">
                   <div class="min-w-0 flex-1">
@@ -98,19 +98,20 @@
                     />
                   </UFormField>
                 </div>
-                <!-- Upload Button -->
-                <div class="flex justify-end">
-                  <UButton
-                    icon="i-hugeicons-upload-01"
-                    color="primary"
-                    size="sm"
-                    :loading="documentLoading"
-                    :disabled="documentLoading || uploadedFiles.length === 0"
-                    @click="uploadDocuments"
-                  >
-                    Téléverser {{ uploadedFiles.length }} document(s)
-                  </UButton>
-                </div>
+              </div>
+
+              <!-- Upload Button -->
+              <div v-if="uploadedFiles.length > 0" class="flex justify-end p-3">
+                <UButton
+                  icon="i-hugeicons-upload-01"
+                  color="primary"
+                  size="sm"
+                  :loading="documentLoading"
+                  :disabled="documentLoading || uploadedFiles.length === 0"
+                  @click="uploadDocuments"
+                >
+                  Téléverser {{ uploadedFiles.length }} document(s)
+                </UButton>
               </div>
             </div>
 
