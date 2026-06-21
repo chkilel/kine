@@ -32,7 +32,11 @@ export default defineAppConfig({
         variant: 'subtle'
       }
     },
-
+    slideover: {
+      slots: {
+        overlay: 'fixed inset-0 backdrop-blur-xs bg-default/50'
+      }
+    },
     icons: {
       arrowDown: 'i-hugeicons-arrow-down-01',
       arrowLeft: 'i-hugeicons-arrow-left-01',
