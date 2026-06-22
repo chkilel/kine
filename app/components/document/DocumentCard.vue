@@ -208,7 +208,7 @@
   <!-- Extended Variant (Card) -->
   <UCard
     v-else
-    :ui="{ root: 'h-full bg-muted  transition-colors  group hover:shadow-xl', body: 'p-3 sm:p-4' }"
+    :ui="{ root: 'h-full bg-muted  transition-colors  group hover:shadow-md', body: 'p-3 sm:p-4' }"
     :class="{ 'ring-primary ring-2': isEditing }"
   >
     <!-- Edit Mode -->
@@ -287,7 +287,7 @@
               icon="i-hugeicons-more-vertical"
               variant="ghost"
               color="neutral"
-              size="md"
+              size="sm"
               square
               class="absolute -top-2 -right-2"
             />
