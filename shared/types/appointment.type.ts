@@ -34,15 +34,18 @@ const appointmentCreateSchemaShape = {
   status: appointmentStatusSchema.default('scheduled'),
   confirmedAt: z.coerce.date().nullable().optional(),
   cancelledAt: z.coerce.date().nullable().optional(),
-  noShowReason: z.string().nullable().optional(),
-  priceItem: priceItemSnapshotSchema.optional()
+  noShowReason: z.string().nullable().optional()
 }
 
 export const appointmentCreateSchema = createInsertSchema(appointments, appointmentCreateSchemaShape).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  lockedAt: true
+  lockedAt: true,
+  lockedById: true,
+  isLocked: true,
+  priceCents: true,
+  priceItem: true
 })
 
 export const appointmentUpdateSchema = createInsertSchema(appointments).partial()

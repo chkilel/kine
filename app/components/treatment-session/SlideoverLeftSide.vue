@@ -22,7 +22,7 @@
     const planId = appointment.treatmentPlanId
     if (!planId) return 0
 
-    return appointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'completed').length
+    return appointments.value.filter((c) => c.treatmentPlanId === planId && c.status === 'finished').length
   })
 
   const totalSessionsCount = computed(() => treatmentPlan.value?.numberOfSessions || 0)

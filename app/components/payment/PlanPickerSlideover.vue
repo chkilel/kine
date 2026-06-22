@@ -154,7 +154,7 @@
                 </div>
 
                 <p class="text-muted mt-2 text-right text-xs">
-                  {{ plan.completedAppointments }} / {{ plan.numberOfSessions || '?' }} séances
+                  {{ plan.finishedCount }} / {{ plan.numberOfSessions || '?' }} séances
                 </p>
 
                 <!-- Progress -->

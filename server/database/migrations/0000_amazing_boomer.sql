@@ -117,6 +117,7 @@ CREATE TABLE `appointments` (
 	`extendedDurationMinutes` integer DEFAULT 0,
 	`priceCents` integer NOT NULL,
 	`priceItem` text NOT NULL,
+	`paidCents` integer DEFAULT 0 NOT NULL,
 	`isLocked` integer DEFAULT false,
 	`lockedAt` integer,
 	`lockedById` text,

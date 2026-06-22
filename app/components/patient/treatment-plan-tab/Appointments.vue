@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { LazyAppointmentPlanningSlideover, LazyAppModalConfirm } from '#components'
+  import { cloneVNode } from 'vue'
 
   const props = defineProps<{ patient: Patient; treatmentPlan: TreatmentPlanWithProgress }>()
 
@@ -21,8 +22,8 @@
 
   const appointments = computed(() => data.value?.data)
   // Filter appointments by status
-  const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled']
-  const finishedStatuses: AppointmentStatus[] = ['completed', 'cancelled', 'no_show']
+  const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled', 'in_progress']
+  const finishedStatuses: AppointmentStatus[] = ['finished', 'cancelled', 'no_show']
 
   const upcomingAppointments = computed(
     () => appointments.value?.filter((c) => upcomingStatuses.includes(c.status)) || []

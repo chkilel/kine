@@ -115,7 +115,7 @@
             <div class="text-muted mt-1.5 flex justify-between gap-1 text-xs font-semibold tracking-wide uppercase">
               <span>Séances:</span>
               <span>
-                {{ latestActiveTreatmentPlan.completedAppointments || 0 }} sur
+                {{ latestActiveTreatmentPlan.finishedCount || 0 }} sur
                 {{ latestActiveTreatmentPlan.numberOfSessions || 0 }}
               </span>
             </div>

@@ -36,9 +36,13 @@
   )
 
   // ─── Computed state ──────────────────────────────────────────
-  const showPaymentCard = computed(() => appointment.value?.status === 'finished')
+  const showPaymentCard = computed(
+    () => appointment.value?.status === 'finished' && !isAppointmentPaid(appointment.value)
+  )
 
-  const showPaymentSummaryCard = computed(() => appointment.value?.status === 'completed')
+  const showPaymentSummaryCard = computed(
+    () => appointment.value?.status === 'finished' && isAppointmentPaid(appointment.value)
+  )
 
   const sessionNotStarted = computed(
     () => appointment.value?.status === 'confirmed' || appointment.value?.status === 'scheduled'
@@ -199,9 +203,7 @@
           <!-- Payment and summary cards -->
           <template
             v-if="
-              appointment?.status === 'in_progress' ||
-              appointment?.status === 'finished' ||
-              appointment?.status === 'completed'
+              appointment?.status === 'in_progress' || appointment?.status === 'finished'
             "
           >
             <PaymentSummaryCard v-if="showPaymentSummaryCard" :appointment />

@@ -1,4 +1,4 @@
-import { eq, and, isNull, inArray, ne } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { payments, appointmentPaymentItems, appointments } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -11,10 +11,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'Payment ID required' })
     }
 
-    const [paymentRows, sessionItemRows] = await db.batch([
+    const [paymentRows, appointmentItemRows] = await db.batch([
       db.select().from(payments).where(eq(payments.id, paymentId)).limit(1),
       db
-        .select({ appointmentId: appointmentPaymentItems.appointmentId })
+        .select({
+          appointmentId: appointmentPaymentItems.appointmentId,
+          amountCents: appointmentPaymentItems.amountCents
+        })
         .from(appointmentPaymentItems)
         .where(eq(appointmentPaymentItems.paymentId, paymentId))
     ])
@@ -38,35 +41,19 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const appointmentIds = sessionItemRows.map((i) => i.appointmentId)
-
-    const [, coveredRows] = await db.batch([
+    // Void the payment and decrement cached paidCents for each affected appointment.
+    // session_payment was added to the cache at creation, so subtract on void.
+    await db.batch([
       db.update(payments).set({ voidedAt: new Date(), voidedById: userId }).where(eq(payments.id, paymentId)),
-
-      ...(appointmentIds.length > 0
-        ? [
-            db
-              .selectDistinct({ appointmentId: appointmentPaymentItems.appointmentId })
-              .from(appointmentPaymentItems)
-              .innerJoin(payments, eq(payments.id, appointmentPaymentItems.paymentId))
-              .where(
-                and(
-                  inArray(appointmentPaymentItems.appointmentId, appointmentIds),
-                  eq(payments.type, 'session_payment'),
-                  isNull(payments.voidedAt),
-                  ne(appointmentPaymentItems.paymentId, paymentId)
-                )
-              )
-          ]
-        : [])
+      ...appointmentItemRows.map((item) =>
+        db
+          .update(appointments)
+          .set({
+            paidCents: sql<number>`MAX(${appointments.paidCents} - ${item.amountCents}, 0)`
+          })
+          .where(eq(appointments.id, item.appointmentId))
+      )
     ])
-
-    const stillCoveredIds = new Set((coveredRows ?? []).map((r) => r.appointmentId))
-    const toRevert = appointmentIds.filter((id) => !stillCoveredIds.has(id))
-
-    if (toRevert.length > 0) {
-      await db.update(appointments).set({ status: 'finished' }).where(inArray(appointments.id, toRevert))
-    }
 
     return { message: 'Payment voided successfully' }
   } catch (error) {

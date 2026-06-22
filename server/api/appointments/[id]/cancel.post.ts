@@ -21,8 +21,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Rendez-vous non trouvé' })
   }
 
-  if (appointment.status === 'finished' || appointment.status === 'completed') {
-    throw createError({ statusCode: 400, message: "Impossible d'annuler une séance terminée ou complétée" })
+  if (appointment.status === 'finished') {
+    throw createError({ statusCode: 400, message: "Impossible d'annuler une séance terminée" })
   }
   if (appointment.status === 'cancelled') {
     throw createError({ statusCode: 400, message: 'Le rendez-vous est déjà annulé' })

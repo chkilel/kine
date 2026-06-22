@@ -361,74 +361,226 @@
     })
     emit('close')
   }
+
+  // ─── Header / summary computeds ──────────────────────────────
+  const patientFullName = computed(() => formatFullName(props.patient))
+
+  const appointmentSummary = computed(() => {
+    const d = appointmentDetails.value
+    const parts: string[] = []
+    if (d.date) parts.push(formatShortDate(d.date))
+    if (d.startTime) parts.push(formatTimeString(d.startTime))
+    if (d.duration) parts.push(`${d.duration} min`)
+    return parts.join(' • ')
+  })
 </script>
 
 <template>
-  <USlideover
-    :ui="{
-      content: 'w-full max-w-7xl bg-elevated',
-      header: 'hidden'
-    }"
-    @close="emit('close', $event)"
-  >
+  <USlideover :ui="{ content: 'w-full max-w-7xl bg-elevated' }" @close="emit('close', $event)">
+    <!-- ─── Header: Patient context (two identifiers for safety) ─── -->
+    <template #header>
+      <div class="flex w-full items-center justify-between gap-4">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="shrink-0 rounded-full bg-neutral-300 p-1">
+            <UAvatar :alt="patientFullName" size="xl" />
+          </div>
+
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="truncate text-base leading-tight font-semibold">{{ patientFullName }}</h3>
+              <UBadge
+                v-if="isEditMode && appointment"
+                size="sm"
+                variant="subtle"
+                :color="getAppointmentStatusColor(appointment.status)"
+                :icon="getAppointmentStatusIcon(appointment.status)"
+                class="shrink-0"
+              >
+                {{ getAppointmentStatusLabel(appointment.status) }}
+              </UBadge>
+            </div>
+
+            <div class="text-muted flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+              <span class="inline-flex items-center gap-1">
+                <UIcon name="i-hugeicons-calendar-user" class="size-3.5" />
+                {{ formatShortDate(patient.dateOfBirth) }} ({{ calculateAge(patient.dateOfBirth) }} ans)
+              </span>
+              <template v-if="treatmentPlan">
+                <span class="text-dimmed">•</span>
+                <span class="inline-flex items-center gap-1 truncate">
+                  <UIcon name="i-hugeicons-note-03" class="size-3.5 shrink-0" />
+                  <span class="truncate">{{ treatmentPlan.title }}</span>
+                </span>
+              </template>
+            </div>
+
+            <UButton
+              v-if="canStartSession"
+              icon="i-hugeicons-play-circle"
+              color="primary"
+              variant="soft"
+              class="mt-2 sm:hidden"
+              @click="handleStartSession"
+            >
+              Démarrer
+            </UButton>
+          </div>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <UButton
+            v-if="canStartSession"
+            icon="i-hugeicons-play-circle"
+            color="primary"
+            variant="soft"
+            size="lg"
+            class="hidden sm:inline-flex"
+            @click="handleStartSession"
+          >
+            Démarrer la séance
+          </UButton>
+          <UButton
+            icon="i-hugeicons-panel-left-close"
+            color="neutral"
+            variant="soft"
+            square
+            :ui="{ base: 'bg-accented', leadingIcon: 'size-5' }"
+            aria-label="Fermer"
+            @click="emit('close')"
+          />
+        </div>
+      </div>
+    </template>
+
     <template #body>
-      <div class="grid grid-cols-1 gap-4">
-        <!-- ─── Appointment configuration form ─── -->
-        <!-- Two-column layout: LEFT = calendar + session settings,
-             RIGHT = therapist + location + room + availability -->
-        <UForm>
-          <div class="3xl:grid-cols-2 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- LEFT COLUMN -->
-            <!-- ─── Treatment plan card (or standalone alert) ─── -->
-            <AppCard :title="treatmentPlan ? 'Plan de traitement' : 'Séance hors plan de traitement'">
+      <UForm>
+        <div class="grid gap-4 lg:grid-cols-5">
+          <!-- ═══════════════════════════════════════════════════════════ -->
+          <!-- LEFT COLUMN — Configuration (2/5)                          -->
+          <!-- Plan context • Therapist • Location • Room • Type • Duration -->
+          <!-- ═══════════════════════════════════════════════════════════ -->
+          <div class="flex flex-col gap-4 lg:col-span-2">
+            <!-- Treatment plan progress (or standalone alert) -->
+            <AppCard compact>
+              <div v-if="treatmentPlan" class="space-y-2">
+                <div class="flex items-center justify-between text-sm font-medium">
+                  <span class="text-muted">Progression du plan</span>
+                  <UBadge variant="subtle" color="primary" size="sm">
+                    {{ treatmentPlan.finishedCount }} / {{ treatmentPlan.numberOfSessions || 0 }}
+                  </UBadge>
+                </div>
+                <UProgress :model-value="treatmentPlan.progress || 0" :max="100" size="md" />
+              </div>
+              <UAlert
+                v-else
+                color="info"
+                variant="subtle"
+                icon="i-hugeicons-stethoscope"
+                title="Séance hors plan"
+                description="Consultation indépendante — non liée à un plan de traitement."
+              />
+            </AppCard>
+
+            <!-- Therapist • Location • Room • Type • Duration -->
+            <AppCard compact>
               <div class="space-y-4">
-                <template v-if="treatmentPlan">
-                  <p class="font-semibold">{{ treatmentPlan.title }}</p>
-                  <!-- <div class="my-2 grid grid-cols-2 gap-4">
-                    <div class="bg-muted flex flex-col gap-1 rounded-md p-2">
-                      <p class="text-sm font-medium">Total de séances</p>
-                      <p class="font-title text-xl font-bold">{{ treatmentPlan.numberOfSessions || 0 }}</p>
-                    </div>
-                    <div class="bg-muted flex flex-col gap-1 rounded-md p-2">
-                      <p class="text-sm font-medium">Séances restantes</p>
-                      <p class="font-title text-xl font-bold">
-                        {{ Math.max(0, (treatmentPlan.numberOfSessions || 0) - treatmentPlan.completedAppointments) }}
-                      </p>
-                    </div>
-                  </div> -->
+                <!-- Therapist -->
+                <UFormField label="Thérapeute" required>
+                  <USelectMenu
+                    v-model="appointmentDetails.therapistId"
+                    value-key="id"
+                    label-key="name"
+                    :items="therapists"
+                    placeholder="Sélectionner un thérapeute"
+                    class="w-full"
+                    icon="i-hugeicons-user-02"
+                  />
+                </UFormField>
 
-                  <div class="col-span-full space-y-2">
-                    <div class="flex justify-between text-sm font-medium">
-                      <span>Progression du plan</span>
-                      <span>
-                        {{ treatmentPlan.completedAppointments }} / {{ treatmentPlan.numberOfSessions || 0 }} séances
-                      </span>
-                    </div>
-                    <UProgress :model-value="treatmentPlan.progress || 0" :max="100" size="lg" />
+                <!-- Location -->
+                <UFormField label="Lieu">
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <UButton
+                      v-for="loc in LOCATION_OPTIONS"
+                      :key="loc.value"
+                      :variant="appointmentDetails.location === loc.value ? 'subtle' : 'outline'"
+                      :color="appointmentDetails.location === loc.value ? 'primary' : 'neutral'"
+                      :icon="loc.icon"
+                      size="md"
+                      block
+                      class="justify-center"
+                      @click="appointmentDetails.location = loc.value"
+                    >
+                      <span class="hidden text-xs sm:inline">{{ loc.label }}</span>
+                    </UButton>
                   </div>
-                </template>
+                </UFormField>
 
-                <!-- Shown when no treatment plan is linked (standalone session) -->
+                <!-- Room (clinic only) -->
+                <UFormField v-if="appointmentDetails.location === 'clinic'" label="Salle" required>
+                  <div v-if="roomsData && roomsData.length > 0">
+                    <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                      <UButton
+                        v-for="room in roomsData"
+                        :key="room.id"
+                        :color="appointmentDetails.roomId === room.id ? 'primary' : 'neutral'"
+                        :variant="appointmentDetails.roomId === room.id ? 'subtle' : 'outline'"
+                        :icon="getRoomIcon(room.name)"
+                        size="md"
+                        block
+                        class="flex-col!"
+                        @click="appointmentDetails.roomId = room.id"
+                      >
+                        <span class="truncate text-[11px] leading-tight font-semibold tracking-tight uppercase">
+                          {{ room.name }}
+                        </span>
+                      </UButton>
+                    </div>
+
+                    <!-- Room-only availability toggle -->
+                    <div v-if="appointmentDetails.roomId" class="mt-2">
+                      <UCheckbox
+                        v-model="showOnlyRoomAvailability"
+                        label="Salle uniquement (ignorer le thérapeute)"
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- No rooms configured -->
+                  <UAlert
+                    v-else
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-hugeicons-door-01"
+                    title="Aucune salle configurée"
+                  >
+                    <template #description>
+                      <UButton
+                        icon="i-hugeicons-plus-sign"
+                        color="primary"
+                        variant="link"
+                        size="xs"
+                        :padded="false"
+                        @click="handleAddRoom"
+                      >
+                        Ajouter une salle
+                      </UButton>
+                    </template>
+                  </UAlert>
+                </UFormField>
+
+                <!-- Non-clinic info banner -->
                 <UAlert
-                  v-else
-                  color="info"
+                  v-if="appointmentDetails.location !== 'clinic'"
+                  color="neutral"
                   variant="subtle"
-                  icon="i-lucide-stethoscope"
-                  title="Consultation Indépendante"
-                  description="Cette séance n'est pas liée à un plan de traitement."
+                  icon="i-hugeicons-info"
+                  :title="appointmentDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation'"
+                  description="Les créneaux sont basés sur la disponibilité du thérapeute uniquement."
                 />
 
-                <!-- Date picker -->
-                <AppCard variant="soft">
-                  <UCalendar
-                    v-model="selectedDate"
-                    :year-controls="false"
-                    :min-value="minDate"
-                    :is-date-unavailable="isDateDisabled"
-                  />
-                </AppCard>
-
-                <!-- Session type + Duration slider -->
+                <!-- Session type -->
                 <UFormField label="Type de séance">
                   <USelect
                     v-model="appointmentDetails.type"
@@ -437,321 +589,183 @@
                     value-attribute="value"
                     placeholder="Sélectionner un type"
                     class="w-full"
-                    icon="i-lucide-tag"
+                    icon="i-hugeicons-tag-01"
                   />
                 </UFormField>
-                <div>
-                  <div class="flex items-center justify-between">
-                    <label class="text-muted text-xs font-bold uppercase">Durée</label>
-                    <span class="text-primary text-sm font-semibold">{{ appointmentDetails.duration }} min</span>
+
+                <!-- Duration — direct button grid instead of slider -->
+                <UFormField label="Durée">
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <UButton
+                      v-for="val in APPOINTMENT_DURATIONS"
+                      :key="val"
+                      :variant="appointmentDetails.duration === val ? 'solid' : 'subtle'"
+                      :color="appointmentDetails.duration === val ? 'primary' : 'neutral'"
+                      size="sm"
+                      block
+                      class="tabular-nums"
+                      @click="appointmentDetails.duration = val"
+                    >
+                      {{ val }}
+                    </UButton>
                   </div>
-                  <div class="relative py-1">
-                    <USlider
-                      v-model="appointmentDetails.duration"
-                      :min="APPOINTMENT_DURATIONS[0]"
-                      :max="APPOINTMENT_DURATIONS.at(-1)"
-                      :step="5"
-                      size="lg"
-                    />
-                    <div class="text-muted mt-2 flex justify-between text-xs font-medium">
-                      <span
-                        v-for="val in APPOINTMENT_DURATIONS"
-                        :key="val"
-                        class="inline-flex w-[3ch] justify-center tabular-nums"
-                      >
-                        {{ val.toFixed(0).padStart(3, ' ') }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                </UFormField>
               </div>
             </AppCard>
+          </div>
 
-            <!-- RIGHT COLUMN -->
-            <AppCard>
-              <div class="flex flex-col gap-6">
-                <!-- Therapist selector -->
-                <UFormField>
-                  <USelectMenu
-                    v-model="appointmentDetails.therapistId"
-                    value-key="id"
-                    label-key="name"
-                    :items="therapists"
-                    placeholder="Sélectionner un thérapeute"
-                    class="w-full"
-                    icon="i-lucide-user"
-                  />
-                </UFormField>
+          <!-- ═══════════════════════════════════════════════════════════ -->
+          <!-- RIGHT COLUMN — Scheduling (3/5)                             -->
+          <!-- Calendar • Availability • Time slots                        -->
+          <!-- ═══════════════════════════════════════════════════════════ -->
+          <div class="flex flex-col gap-4 lg:col-span-3">
+            <!-- Calendar -->
+            <AppCard compact>
+              <UCalendar
+                v-model="selectedDate"
+                :year-controls="false"
+                :min-value="minDate"
+                :is-date-unavailable="isDateDisabled"
+                class="mx-auto"
+              />
+            </AppCard>
 
-                <!-- Location picker (clinic / home / teleconsultation) -->
-                <UFormField label="Lieu">
-                  <UFieldGroup class="w-full">
-                    <UButton
-                      v-for="loc in LOCATION_OPTIONS"
-                      :key="loc.value"
-                      :variant="appointmentDetails.location === loc.value ? 'subtle' : 'outline'"
-                      :color="appointmentDetails.location === loc.value ? 'primary' : 'neutral'"
-                      :icon="loc.icon"
-                      block
-                      @click="appointmentDetails.location = loc.value"
-                    >
-                      <span class="hidden lg:block">
-                        {{ loc.label }}
-                      </span>
-                    </UButton>
-                  </UFieldGroup>
-                </UFormField>
+            <!-- Availability + Time slots -->
+            <AppCard compact title="Créneaux disponibles" icon="i-hugeicons-clock-01" icon-color="primary">
+              <div class="space-y-3">
+                <!-- Guard: no therapist -->
+                <UAlert
+                  v-if="!appointmentDetails.therapistId"
+                  color="neutral"
+                  variant="subtle"
+                  icon="i-hugeicons-user-02"
+                  title="Sélectionnez un thérapeute pour voir les créneaux"
+                  size="sm"
+                />
 
-                <!-- Room selection (only when location = clinic) -->
-                <div>
-                  <!-- Has rooms → show room grid -->
-                  <div v-if="roomsData && roomsData.length > 0 && appointmentDetails.location === 'clinic'">
-                    <UFormField label="Salle de consultation">
-                      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                        <UButton
-                          v-for="room in roomsData"
-                          :key="room.id"
-                          :color="appointmentDetails.roomId === room.id ? 'primary' : 'neutral'"
-                          :variant="appointmentDetails.roomId === room.id ? 'subtle' : 'outline'"
-                          class="flex flex-col items-center justify-center"
-                          :icon="getRoomIcon(room.name)"
-                          @click="appointmentDetails.roomId = room.id"
-                        >
-                          <span class="text-center text-[10px] leading-tight font-semibold tracking-tight uppercase">
-                            {{ room.name }}
-                          </span>
-                        </UButton>
-                      </div>
-                    </UFormField>
+                <!-- Guard: clinic without room -->
+                <UAlert
+                  v-else-if="appointmentDetails.location === 'clinic' && !appointmentDetails.roomId"
+                  color="warning"
+                  variant="subtle"
+                  icon="i-hugeicons-door-01"
+                  title="Sélectionnez une salle pour voir les créneaux"
+                  size="sm"
+                />
 
-                    <!-- Toggle to show room-only availability (ignore therapist) -->
-                    <div v-if="appointmentDetails.roomId" class="mt-4">
-                      <UCheckbox
-                        v-model="showOnlyRoomAvailability"
-                        label="Disponibilités de la salle uniquement"
-                        size="sm"
-                        class="text-xs"
-                      />
-                      <p class="text-muted mt-1 text-[10px]">
-                        Affiche tous les créneaux disponibles pour cette salle, sans tenir compte de la disponibilité du
-                        thérapeute.
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Non-clinic location → info banner (no rooms needed) -->
-                  <div v-else-if="appointmentDetails.location !== 'clinic'">
-                    <UAlert color="neutral" variant="subtle" icon="i-lucide-info">
-                      <template #title>
-                        {{ appointmentDetails.location === 'home' ? 'Séance à domicile' : 'Téléconsultation' }}
-                      </template>
-                      <p class="text-muted-foreground text-sm">
-                        Les créneaux affichés sont basés sur la disponibilité du thérapeute uniquement.
-                      </p>
-                    </UAlert>
-                  </div>
-
-                  <!-- No rooms configured → prompt to add one -->
-                  <div v-else class="space-y-3">
-                    <UAlert color="neutral" variant="subtle" icon="i-lucide-door-open">
-                      <template #title>Vous n'avez pas encore configuré de salle de consultation</template>
-                      <template #description>
-                        <p class="text-muted-foreground text-sm">
-                          Ajoutez au moins une salle pour planifier des séances au cabinet.
-                        </p>
-                      </template>
-                    </UAlert>
-                    <UButton icon="i-lucide-plus" color="primary" variant="soft" block @click="handleAddRoom">
-                      Ajouter une salle
-                    </UButton>
-                  </div>
-                </div>
-
-                <!-- Therapist availability summary for the selected date -->
-                <div class="bg-muted space-y-2 rounded-md p-2">
-                  <h4 class="flex items-center gap-2 text-sm font-semibold">
-                    <span class="bg-success size-1.5 rounded-full" />
-                    Disponibilité du thérapeute
-                  </h4>
-
-                  <!-- Guard: no therapist selected -->
-                  <UAlert
-                    v-if="!appointmentDetails.therapistId"
-                    color="neutral"
-                    variant="subtle"
-                    icon="i-lucide-user"
-                    title="Veuillez sélectionner un thérapeute"
-                  />
-
-                  <UAlert
-                    v-if="appointmentDetails.location === 'clinic' && !appointmentDetails.roomId"
-                    color="error"
-                    variant="subtle"
-                    size="sm"
-                    icon="i-lucide-door-open"
-                    title="Veuillez d'abord sélectionner une salle de consultation"
-                  />
-
-                  <!-- Full-day exceptions (e.g. holiday, sick leave) -->
-                  <template v-if="fullDayExceptions.length">
+                <template v-else>
+                  <!-- Availability summary (templates + exceptions) -->
+                  <div v-if="fullDayExceptions.length" class="space-y-1.5">
                     <UAlert
                       v-for="exception in fullDayExceptions"
                       :key="exception.id"
                       :color="exception.isAvailable ? 'success' : 'error'"
-                      :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
+                      :icon="exception.isAvailable ? 'i-hugeicons-calendar-check-02' : 'i-hugeicons-calendar-03'"
                       variant="soft"
-                      class="px-2 py-1"
+                      size="sm"
                     >
                       <template #title>
-                        <div class="flex justify-between">
-                          <span>Journée entière</span>
-                          <span>
-                            {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
-                          </span>
-                        </div>
+                        {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }} — Journée entière
                       </template>
                       <template #description>
-                        <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
-                      </template>
-                    </UAlert>
-                  </template>
-
-                  <!-- Recurring templates + partial-day exceptions -->
-                  <div v-else-if="dayTemplatesForDate.length > 0 || exceptionsForDate.length > 0" class="space-y-2">
-                    <UBadge
-                      v-for="template in dayTemplatesForDate"
-                      :key="template.id"
-                      icon="i-lucide-calendar"
-                      variant="soft"
-                      size="lg"
-                      color="primary"
-                      class="flex"
-                    >
-                      {{ formatTimeString(template.startTime) }} - {{ formatTimeString(template.endTime) }} ({{
-                        getLocationLabel(template.location)
-                      }})
-                    </UBadge>
-                    <UAlert
-                      v-for="exception in partialDayExceptions"
-                      :key="exception.id"
-                      :color="exception.isAvailable ? 'success' : 'error'"
-                      :icon="exception.isAvailable ? 'i-lucide-calendar-check' : 'i-lucide-calendar-x'"
-                      variant="soft"
-                      class="px-2 py-1"
-                    >
-                      <template #title>
-                        <div class="flex justify-between">
-                          <span v-if="exception.startTime && exception.endTime">
-                            {{ formatTimeString(exception.startTime) }} - {{ formatTimeString(exception.endTime) }}
-                          </span>
-                          <span>
-                            {{ exception.isAvailable ? 'Disponible' : 'Indisponible' }}
-                          </span>
-                        </div>
-                      </template>
-                      <template #description>
-                        <p>{{ getExceptionTypeLabel(exception.reason ? exception.reason : 'other') }}</p>
+                        {{ getExceptionTypeLabel(exception.reason || 'other') }}
                       </template>
                     </UAlert>
                   </div>
 
-                  <!-- No availability defined at all for this date -->
-                  <UAlert
-                    v-else
-                    color="info"
-                    variant="subtle"
-                    icon="i-lucide-info"
-                    title="Aucune disponibilité pour cette date"
-                    class="px-2 py-1"
-                  />
-                </div>
-              </div>
-            </AppCard>
-
-            <!-- ─── Time slots grid ─── -->
-            <!-- Shows available slots grouped by Matin / Midi / Après-midi.
-             Multiple guard clauses handle loading, errors, missing
-             therapist, and no-room-selected states. -->
-
-            <AppCard
-              title="Créneaux disponibles"
-              icon="i-lucide-clock"
-              iconColor="primary"
-              class="3xl:col-span-2 col-span-2 lg:col-span-1"
-            >
-              <div class="mb-6 flex flex-col gap-4">
-                <!-- Legend chips -->
-                <div class="flex flex-wrap gap-3">
-                  <UChip position="top-left" color="success">
-                    <UBadge color="success" variant="subtle" label="Disponible" />
-                  </UChip>
-
-                  <UChip position="top-left" color="error">
-                    <UBadge color="error" variant="subtle" label="Occupé" />
-                  </UChip>
-
-                  <UChip position="top-left" color="neutral">
-                    <UBadge color="neutral" variant="subtle" label="Indisponible" />
-                  </UChip>
-                </div>
-              </div>
-
-              <div class="flex-1 space-y-4 overflow-y-auto">
-                <!-- Guard: no room selected for clinic location -->
-
-                <!-- Guard: slots are loading -->
-                <UAlert v-if="isLoadingSlots" color="neutral" variant="subtle">
-                  <template #title>
-                    <USkeleton class="h-4 w-full" />
-                  </template>
-                </UAlert>
-
-                <!-- Guard: error fetching slots -->
-                <UAlert
-                  v-else-if="slotsError"
-                  color="error"
-                  variant="subtle"
-                  :title="slotsError?.message || 'Impossible de charger les créneaux'"
-                />
-
-                <!-- Guard: no slots available -->
-                <UAlert
-                  v-else-if="availableSlots.length === 0"
-                  color="neutral"
-                  variant="subtle"
-                  icon="i-lucide-calendar-x"
-                  title="Aucun créneau disponible pour cette date"
-                />
-
-                <!-- Slot grid: 3 columns (Matin / Midi / Après-midi) -->
-                <template v-else>
-                  <div class="3xl:grid-cols-3 grid grid-cols-1 gap-6">
-                    <div
-                      v-for="(slots, period) in groupedSlots"
-                      :key="period"
-                      class="bg-muted border-default rounded-lg border p-3"
+                  <div
+                    v-else-if="dayTemplatesForDate.length > 0 || partialDayExceptions.length > 0"
+                    class="flex flex-wrap gap-1.5"
+                  >
+                    <UBadge
+                      v-for="template in dayTemplatesForDate"
+                      :key="template.id"
+                      icon="i-hugeicons-calendar-03"
+                      variant="soft"
+                      color="primary"
                     >
-                      <p class="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
+                      {{ formatTimeString(template.startTime) }} – {{ formatTimeString(template.endTime) }}
+                    </UBadge>
+                    <UBadge
+                      v-for="exception in partialDayExceptions"
+                      :key="exception.id"
+                      :color="exception.isAvailable ? 'success' : 'error'"
+                      :icon="exception.isAvailable ? 'i-hugeicons-checkmark-circle-02' : 'i-hugeicons-cancel-01'"
+                      variant="soft"
+                    >
+                      {{
+                        exception.startTime && exception.endTime
+                          ? `${formatTimeString(exception.startTime)} – ${formatTimeString(exception.endTime)}`
+                          : 'Exception'
+                      }}
+                    </UBadge>
+                  </div>
+
+                  <UAlert
+                    v-else-if="appointmentDetails.therapistId && !isLoadingSlots && availableSlots.length === 0"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-hugeicons-info"
+                    title="Aucune disponibilité définie pour cette date"
+                    size="sm"
+                  />
+
+                  <!-- Slots loading -->
+                  <div v-if="isLoadingSlots" class="grid grid-cols-3 gap-3">
+                    <div v-for="i in 3" :key="i" class="bg-muted rounded-lg p-2.5">
+                      <USkeleton class="mb-2 h-3 w-16" />
+                      <div class="flex flex-wrap gap-1.5">
+                        <USkeleton v-for="j in 4" :key="j" class="h-7 w-12" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Slots error -->
+                  <UAlert
+                    v-else-if="slotsError"
+                    color="error"
+                    variant="subtle"
+                    icon="i-hugeicons-alert-02"
+                    :title="slotsError?.message || 'Impossible de charger les créneaux'"
+                  />
+
+                  <!-- No slots available -->
+                  <UAlert
+                    v-else-if="availableSlots.length === 0 && appointmentDetails.therapistId"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-hugeicons-calendar-03"
+                    title="Aucun créneau disponible"
+                    description="Essayez une autre date ou ajustez la durée."
+                  />
+
+                  <!-- Slot grid: Matin / Midi / Après-midi -->
+                  <div v-else-if="availableSlots.length > 0" class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div v-for="(slots, period) in groupedSlots" :key="period" class="bg-muted rounded-lg p-2.5">
+                      <p
+                        class="text-muted mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase"
+                      >
                         <UIcon
                           :name="
                             period === 'Matin'
-                              ? 'i-lucide-sunrise'
+                              ? 'i-hugeicons-sunrise'
                               : period === 'Midi'
-                                ? 'i-lucide-sun'
-                                : 'i-lucide-sunset'
+                                ? 'i-hugeicons-sun-02'
+                                : 'i-hugeicons-sunset'
                           "
-                          class="size-4"
+                          class="size-3.5"
                         />
                         {{ period }}
                       </p>
-                      <div class="flex flex-wrap gap-2 tabular-nums">
+                      <div class="flex flex-wrap gap-1 tabular-nums">
                         <UButton
                           v-for="time in slots"
                           :key="time"
                           :variant="appointmentDetails.startTime === time ? 'solid' : 'subtle'"
-                          :color="appointmentDetails.startTime === time ? 'primary' : 'success'"
-                          size="md"
+                          :color="appointmentDetails.startTime === time ? 'primary' : 'neutral'"
+                          size="xs"
                           :label="formatTimeString(time)"
+                          class="rounded-sm"
                           @click="appointmentDetails.startTime = time"
                         />
                       </div>
@@ -759,52 +773,40 @@
                   </div>
                 </template>
               </div>
-
-              <!-- Submit button -->
-              <div class="border-default mt-4 border-t pt-4">
-                <UButton
-                  :icon="isEditMode ? 'i-lucide-check-circle' : 'i-lucide-plus-circle'"
-                  color="primary"
-                  size="xl"
-                  block
-                  :loading="isCreating"
-                  :disabled="
-                    isCreating ||
-                    (appointmentDetails.location === 'clinic' && !appointmentDetails.roomId) ||
-                    !appointmentDetails.startTime
-                  "
-                  @click="addAppointment"
-                >
-                  {{ isEditMode ? 'Mettre à jour cette séance' : 'Ajouter cette séance au plan' }}
-                </UButton>
-              </div>
             </AppCard>
           </div>
-        </UForm>
-      </div>
+        </div>
+      </UForm>
     </template>
 
-    <!-- ─── Footer actions ─── -->
-    <!-- Left: "Démarrer" button to start a session (edit mode only,
-         when status is scheduled or confirmed).
-         Right: Cancel + confirm buttons. -->
-    <template #footer="{ close }">
-      <div class="flex w-full justify-between gap-3">
-        <div class="flex gap-3">
+    <!-- ─── Footer: Cancel + Submit with inline summary ─── -->
+    <template #footer>
+      <div class="flex w-full items-center justify-between gap-3">
+        <UButton variant="subtle" color="neutral" size="lg" @click="emit('close')">Fermer</UButton>
+
+        <div class="flex items-center gap-3">
+          <!-- Selected appointment summary -->
+          <div v-if="appointmentSummary" class="hidden text-right sm:block">
+            <p class="text-xs leading-none font-semibold">{{ appointmentSummary }}</p>
+            <p class="text-muted mt-0.5 text-[11px] leading-none">
+              {{ getLocationLabel(appointmentDetails.location) }}
+            </p>
+          </div>
+          <USeparator v-if="appointmentSummary" orientation="vertical" class="hidden h-8 sm:block" />
           <UButton
-            v-if="canStartSession"
-            icon="i-hugeicons-play-circle"
+            :icon="isEditMode ? 'i-hugeicons-checkmark-circle-02' : 'i-hugeicons-plus-sign'"
             color="primary"
             size="lg"
-            @click="handleStartSession"
+            :loading="isCreating"
+            :disabled="
+              isCreating ||
+              (appointmentDetails.location === 'clinic' && !appointmentDetails.roomId) ||
+              !appointmentDetails.startTime
+            "
+            @click="addAppointment"
           >
-            Démarrer
+            {{ isEditMode ? 'Mettre à jour' : 'Ajouter la séance' }}
           </UButton>
-        </div>
-
-        <div class="flex gap-3">
-          <UButton variant="outline" color="neutral" size="lg" @click="close">Annuler</UButton>
-          <UButton color="primary" size="lg">{{ appointment ? 'Terminer' : 'Mettre à jour la séance' }}</UButton>
         </div>
       </div>
     </template>

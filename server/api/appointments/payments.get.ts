@@ -84,12 +84,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // =========================
-    // 5. PAYMENTS (SPLIT QUERY) - WITH RECEIPTS
+    // 5. PAYMENT DETAILS (SPLIT QUERY) - WITH RECEIPTS
     // =========================
+    // Note: paidCents is now cached on the appointments row itself (maintained by
+    // payment create/void endpoints), so we no longer aggregate from
+    // appointmentPaymentItems for the totals. We still join for paymentDetails
+    // (receipts) used in the UI.
     let paymentsMap: Record<
       string,
       {
-        paidCents: number
         paymentDetails: Array<{
           id: string
           amountCents: number
@@ -123,12 +126,9 @@ export default defineEventHandler(async (event) => {
         (acc, row) => {
           if (!acc[row.appointmentId]) {
             acc[row.appointmentId] = {
-              paidCents: 0,
-              receipts: [],
               paymentDetails: []
             }
           }
-          acc[row.appointmentId]!.paidCents += row.amountCents
           acc[row.appointmentId]!.paymentDetails.push({
             id: row.paymentId,
             amountCents: row.amountCents,
@@ -141,8 +141,6 @@ export default defineEventHandler(async (event) => {
         {} as Record<
           string,
           {
-            paidCents: number
-            receipts: string[]
             paymentDetails: Array<{
               id: string
               amountCents: number
@@ -159,8 +157,8 @@ export default defineEventHandler(async (event) => {
     // 6. FINAL RESPONSE
     // =========================
     const data: AppointmentWithPaymentStatus[] = appointmentsRows.map((a) => {
-      const paymentData = paymentsMap[a.id] ?? { paidCents: 0, receipts: [], paymentDetails: [] }
-      const paid = paymentData.paidCents
+      const paymentData = paymentsMap[a.id] ?? { paymentDetails: [] }
+      const paid = a.paidCents
       const priceItemData = a.priceItem
 
       return {

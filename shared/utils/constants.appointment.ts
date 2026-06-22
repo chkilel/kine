@@ -35,13 +35,7 @@ export const APPOINTMENT_STATUS_CONFIG = {
     color: 'success',
     label: 'Terminée',
     icon: 'i-hugeicons-checkmark-circle-02',
-    description: 'Séance terminée (en attente de complétion)'
-  },
-  completed: {
-    color: 'success',
-    label: 'Complétée',
-    icon: 'i-hugeicons-checkmark-circle-02',
-    description: 'Séance terminée et complétée'
+    description: 'Séance terminée cliniquement (le paiement peut être en cours)'
   },
   cancelled: { color: 'error', label: 'Annulée', icon: 'i-hugeicons-cancel-01', description: 'Rendez-vous annulé' },
   no_show: { color: 'error', label: 'Absence', icon: 'i-hugeicons-user-remove-01', description: 'Patient absent' }

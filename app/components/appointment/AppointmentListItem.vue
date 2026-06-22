@@ -18,7 +18,7 @@
 
   // ─── Status flags ─────────────────────────────────────────────
   const status = computed(() => ({
-    completed: ['completed', 'finished'].includes(appointment.status),
+    completed: appointment.status === 'finished',
     scheduled: ['scheduled', 'confirmed'].includes(appointment.status),
     inProgress: appointment.status === 'in_progress',
     cancelled: appointment.status === 'cancelled'

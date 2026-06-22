@@ -1,7 +1,7 @@
-import { eq, and, desc, sql } from 'drizzle-orm'
+import { eq, and, desc, getColumns, count } from 'drizzle-orm'
 import { treatmentPlans, appointments } from '~~/server/database/schema'
 
-// GET /api/treatment-plans - Get treatment plans with optional patient filter and progress
+// GET /api/treatment-plans - Get treatment plans with optional patient/status filter and progress
 export default defineEventHandler(async (event) => {
   const db = useDrizzle(event)
 
@@ -12,57 +12,47 @@ export default defineEventHandler(async (event) => {
     // 2. Validate query parameters
     const validatedQuery = await getValidatedQuery(event, treatmentPlanQuerySchema.parse)
 
-    // Get treatment plans with appointment counts for progress calculation
-    const treatmentPlansData = await db
+    // 3. Build filters — always scoped to the current organization
+    const filters = [eq(treatmentPlans.organizationId, organizationId)]
+
+    if (validatedQuery.patientId) {
+      filters.push(eq(treatmentPlans.patientId, validatedQuery.patientId))
+    }
+
+    if (validatedQuery.status) {
+      filters.push(eq(treatmentPlans.status, validatedQuery.status))
+    }
+
+    // 4. Get treatment plans with finished-appointment counts for progress calculation.
+    //    The LEFT JOIN already restricts to status = 'finished', so COUNT(appointments.id)
+    //    is enough — no need for a redundant CASE WHEN.
+    //    'finished' means the clinical session has ended (regardless of payment state);
+    //    payment state lives on appointments.paidCents (see isAppointmentPaid()).
+    const rows = await db
       .select({
-        id: treatmentPlans.id,
-        organizationId: treatmentPlans.organizationId,
-        patientId: treatmentPlans.patientId,
-        therapistId: treatmentPlans.therapistId,
-        title: treatmentPlans.title,
-        diagnosis: treatmentPlans.diagnosis,
-        objective: treatmentPlans.objective,
-        startDate: treatmentPlans.startDate,
-        endDate: treatmentPlans.endDate,
-        numberOfSessions: treatmentPlans.numberOfSessions,
-        sessionFrequency: treatmentPlans.sessionFrequency,
-        status: treatmentPlans.status,
-        prescribingDoctor: treatmentPlans.prescribingDoctor,
-        prescriptionDate: treatmentPlans.prescriptionDate,
-        coverageStatus: treatmentPlans.coverageStatus,
-        insuranceProvider: treatmentPlans.insuranceProvider,
-        pricing: treatmentPlans.pricing,
-        priceItem: treatmentPlans.priceItem,
-        notes: treatmentPlans.notes,
-        createdAt: treatmentPlans.createdAt,
-        updatedAt: treatmentPlans.updatedAt,
-        // Count completed appointments for each treatment plan
-        completedAppointments: sql<number>`COUNT(CASE WHEN ${appointments.status} = 'completed' THEN ${appointments.id} END)`
+        ...getColumns(treatmentPlans),
+        finishedCount: count(appointments.id)
       })
       .from(treatmentPlans)
-      .where(
-        and(
-          eq(treatmentPlans.organizationId, organizationId),
-          validatedQuery.patientId ? eq(treatmentPlans.patientId, validatedQuery.patientId) : undefined
-        )
-      )
       .leftJoin(
         appointments,
-        and(eq(appointments.treatmentPlanId, treatmentPlans.id), eq(appointments.status, 'completed'))
+        and(eq(appointments.treatmentPlanId, treatmentPlans.id), eq(appointments.status, 'finished'))
       )
+      .where(and(...filters))
       .groupBy(treatmentPlans.id)
       .orderBy(desc(treatmentPlans.createdAt))
 
-    const treatmentPlansWithProgress = treatmentPlansData.map((plan) => ({
-      ...plan,
-      progress:
-        plan.numberOfSessions && plan.numberOfSessions > 0
-          ? Math.round((Number(plan.completedAppointments) / plan.numberOfSessions) * 100)
-          : 0,
-      completedAppointments: Number(plan.completedAppointments)
-    }))
+    // 5. Compute progress percentage per plan
+    return rows.map((plan) => {
+      const finished = Number(plan.finishedCount)
+      const total = plan.numberOfSessions ?? 0
 
-    return treatmentPlansWithProgress
+      return {
+        ...plan,
+        finishedCount: finished,
+        progress: total > 0 ? Math.min(100, Math.round((finished / total) * 100)) : 0
+      }
+    })
   } catch (error) {
     handleApiError(error, 'Erreur lors de la récupération des plans de traitement')
   }

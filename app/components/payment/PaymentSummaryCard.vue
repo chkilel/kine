@@ -13,7 +13,7 @@
 
   // ─── Event handlers ──────────────────────────────────────────
   function handleViewReceipt() {
-    if (props.appointment.status !== 'completed' || !latestPayment.value) return
+    if (!isAppointmentPaid(props.appointment) || !latestPayment.value) return
     viewPaymentReceipt(latestPayment.value.id)
   }
 </script>

@@ -100,19 +100,22 @@
       <!-- Selected Plan Content -->
       <div v-if="selectedTreatmentPlan">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
-          <!-- Left Column -->
-          <div class="flex flex-col gap-6 lg:col-span-2">
-            <PatientTreatmentPlanTabSummary :patient="patient" :treatment-plan="selectedTreatmentPlan" />
+          <!-- Summary -->
+          <PatientTreatmentPlanTabSummary
+            :patient="patient"
+            :treatment-plan="selectedTreatmentPlan"
+            class="lg:col-span-2"
+          />
 
-            <!-- Documents -->
-            <PatientTreatmentPlanTabDocuments :treatment-plan="selectedTreatmentPlan" />
-          </div>
+          <!-- Appointments -->
+          <PatientTreatmentPlanTabAppointments
+            :patient="patient"
+            :treatment-plan="selectedTreatmentPlan"
+            class="lg:col-span-3"
+          />
 
-          <!-- Right Column -->
-          <div class="flex flex-col gap-6 lg:col-span-3">
-            <!-- Appointments -->
-            <PatientTreatmentPlanTabAppointments :patient="patient" :treatment-plan="selectedTreatmentPlan" />
-          </div>
+          <!-- Documents -->
+          <PatientTreatmentPlanTabDocuments :treatment-plan="selectedTreatmentPlan" class="lg:col-span-2" />
         </div>
       </div>
 

@@ -31,7 +31,7 @@
   const sessionStatus = computed(() => props.appointment.status)
   const isPaused = computed(() => pauseStartTime.value !== null)
   const isInProgress = computed(() => sessionStatus.value === 'in_progress')
-  const isEnded = computed(() => sessionStatus.value === 'finished' || sessionStatus.value === 'completed')
+  const isEnded = computed(() => sessionStatus.value === 'finished')
 
   const consultationDurationSeconds = computed(() => {
     const base = props.appointment.duration ?? 0
@@ -102,8 +102,7 @@
   watch(
     () => props.appointment,
     (value) => {
-      if (!value || (value.status !== 'in_progress' && value.status !== 'finished' && value.status !== 'completed'))
-        return
+      if (!value || (value.status !== 'in_progress' && value.status !== 'finished')) return
 
       actualStartTime.value = value.actualStartTime ?? null
       pauseStartTime.value = value.pauseStartTime ?? null

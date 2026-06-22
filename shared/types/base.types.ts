@@ -236,7 +236,6 @@ export const APPOINTMENT_STATUSES = [
   'confirmed',
   'in_progress',
   'finished',
-  'completed',
   'cancelled',
   'no_show'
 ] as const

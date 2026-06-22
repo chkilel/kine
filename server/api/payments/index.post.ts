@@ -121,21 +121,21 @@ export default defineEventHandler(async (event) => {
           amountCents: item.amountCents
         }))
       ),
+      // Maintain cached paidCents on each affected appointment.
+      // - session_payment adds to the cache.
+      // - session_refund subtracts (subtracts a positive amountCents).
       ...(requiresSessionItems
-        ? [
+        ? appointmentItems.map((item) =>
             db
               .update(appointments)
-              .set({ status: 'completed' })
-              .where(
-                and(
-                  inArray(
-                    appointments.id,
-                    appointmentItems.map((i) => i.appointmentId)
-                  ),
-                  eq(appointments.status, 'finished')
-                )
-              )
-          ]
+              .set({
+                paidCents:
+                  type === 'session_refund'
+                    ? sql<number>`MAX(${appointments.paidCents} - ${item.amountCents}, 0)`
+                    : sql<number>`${appointments.paidCents} + ${item.amountCents}`
+              })
+              .where(eq(appointments.id, item.appointmentId))
+          )
         : [])
     ])
   } catch {

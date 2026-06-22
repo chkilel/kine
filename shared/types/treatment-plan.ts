@@ -86,5 +86,5 @@ export type TreatmentPlanQuery = z.infer<typeof treatmentPlanQuerySchema>
 // Extended types/interfaces
 export type TreatmentPlanWithProgress = TreatmentPlan & {
   progress: number
-  completedAppointments: number
+  finishedCount: number
 }

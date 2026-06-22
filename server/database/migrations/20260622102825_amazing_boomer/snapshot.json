@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "3d1e93ad-fab2-4d31-91a9-95cea3283e07",
+  "id": "a6e8e3a2-fe24-4ec7-b192-321f2bc0bae6",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -995,6 +995,16 @@
       "default": null,
       "generated": null,
       "name": "priceItem",
+      "entityType": "columns",
+      "table": "appointments"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "paidCents",
       "entityType": "columns",
       "table": "appointments"
     },

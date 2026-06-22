@@ -21,10 +21,9 @@
 
 <template>
   <USlideover
-    :dismissible="false"
     title="Ajouter des documents"
     description="Téléversez des documents pour ce patient."
-    :ui="{ content: 'w-full md:w-1/2  max-w-4xl bg-elevated' }"
+    :ui="{ content: 'max-w-xl' }"
   >
     <template #body>
       <div class="space-y-6">
