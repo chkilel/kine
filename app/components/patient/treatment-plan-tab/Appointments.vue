@@ -23,7 +23,7 @@
   const appointments = computed(() => data.value?.data)
   // Filter appointments by status
   const upcomingStatuses: AppointmentStatus[] = ['confirmed', 'scheduled', 'in_progress']
-  const finishedStatuses: AppointmentStatus[] = ['finished', 'completed', 'cancelled', 'no_show']
+  const finishedStatuses: AppointmentStatus[] = ['finished', 'cancelled', 'no_show']
 
   const upcomingAppointments = computed(
     () => appointments.value?.filter((c) => upcomingStatuses.includes(c.status)) || []

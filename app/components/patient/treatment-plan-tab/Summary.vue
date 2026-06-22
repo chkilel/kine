@@ -143,7 +143,7 @@
       <div class="bg-muted rounded-lg p-2.5">
         <div class="mb-1 flex items-end justify-between">
           <div class="text-xs font-medium tracking-wide uppercase">
-            Séances: {{ treatmentPlan.completedAppointments || 0 }}/{{ treatmentPlan.numberOfSessions || 0 }}
+            Séances: {{ treatmentPlan.finishedCount || 0 }}/{{ treatmentPlan.numberOfSessions || 0 }}
           </div>
 
           <span class="text-primary text-sm font-bold">{{ treatmentPlan.progress || 0 }}%</span>

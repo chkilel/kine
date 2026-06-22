@@ -30,7 +30,7 @@ const _usePlanBillingSessions = (
         query: {
           patientId: toValue(patientId),
           treatmentPlanId: toValue(planId),
-          status: ['finished', 'completed']
+          status: ['finished']
         }
       })
       return resp.data

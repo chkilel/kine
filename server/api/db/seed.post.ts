@@ -1655,12 +1655,13 @@ function getAppointmentStatus(isPastDate: boolean, isToday: boolean): string {
 
   if (isPastDate) {
     const rand = Math.random()
-    if (rand < 0.5) return 'completed'
-    if (rand < 0.65) return 'finished'
-    if (rand < 0.8) return 'cancelled'
-    if (rand < 0.9) return 'no_show'
-    if (rand < 0.95) return 'in_progress'
-    return 'completed'
+    // 'completed' is no longer a stored status; finished appointments are
+    // either paid (paidCents >= priceCents) or unpaid. Seed simulates this
+    // by emitting 'finished' for both cases and setting paidCents downstream.
+    if (rand < 0.8) return 'finished'
+    if (rand < 0.9) return 'cancelled'
+    if (rand < 0.95) return 'no_show'
+    return 'in_progress'
   }
 
   return Math.random() > 0.3 ? 'confirmed' : 'scheduled'
@@ -1878,9 +1879,9 @@ function generateAppointments(
         }
       },
       primaryConcern: randomItem(medicalConditions),
-      notes: status === 'completed' ? 'Session terminée avec succès' : null,
+      notes: status === 'finished' ? 'Session terminée avec succès' : null,
       sessionNotes:
-        status === 'completed'
+        status === 'finished'
           ? randomItem([
               'Thérapie manuelle et étirements',
               'Exercices de renforcement',
@@ -1897,7 +1898,7 @@ function generateAppointments(
         : {})
     }
 
-    if (status === 'completed' || status === 'finished') {
+    if (status === 'finished') {
       const painBefore = randomInt(3, 8)
       appointment.painLevelBefore = painBefore
       appointment.painLevelAfter = randomInt(0, Math.min(painBefore - 1, 5))
@@ -1907,6 +1908,10 @@ function generateAppointments(
         'Patient motivé',
         'Progrès significatifs'
       ])
+      // Simulate ~60% of finished appointments being fully paid.
+      if (Math.random() < 0.6) {
+        appointment.paidCents = appointment.priceCents
+      }
     }
 
     appointmentsData.push(appointment)
@@ -2031,6 +2036,8 @@ function generateAppointments(
       status,
       location,
       priceCents: durationValue * 50,
+      // Simulate ~60% of finished appointments being fully paid.
+      paidCents: status === 'finished' && Math.random() < 0.6 ? durationValue * 50 : 0,
       priceItem: {
         code: 'DEFAULT',
         description: 'Tarif de séance',

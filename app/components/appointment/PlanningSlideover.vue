@@ -466,7 +466,7 @@
                 <div class="flex items-center justify-between text-sm font-medium">
                   <span class="text-muted">Progression du plan</span>
                   <UBadge variant="subtle" color="primary" size="sm">
-                    {{ treatmentPlan.completedAppointments }} / {{ treatmentPlan.numberOfSessions || 0 }}
+                    {{ treatmentPlan.finishedCount }} / {{ treatmentPlan.numberOfSessions || 0 }}
                   </UBadge>
                 </div>
                 <UProgress :model-value="treatmentPlan.progress || 0" :max="100" size="md" />

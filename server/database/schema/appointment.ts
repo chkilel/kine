@@ -18,8 +18,12 @@ import {
  * APPOINTMENTS TABLE (UNIFIED — SCHEDULING + CLINICAL SESSION)
  * ================================================================
  * Represents both scheduled appointments and clinical sessions.
- * Unified status machine: scheduled → confirmed → in_progress → finished → completed
+ * Unified status machine: scheduled → confirmed → in_progress → finished
  * Plus cancelled and no_show terminal states.
+ *
+ * Note: "paid" state is derived, not stored as a status.
+ * An appointment is considered fully paid when `paidCents >= priceCents`
+ * while in the `finished` state. See `isAppointmentPaid()` in shared/utils.
  */
 export const appointments = sqliteTable(
   'appointments',
@@ -71,6 +75,10 @@ export const appointments = sqliteTable(
     // ---- Billing ----
     priceCents: integer().notNull().notNull(),
     priceItem: text({ mode: 'json' }).$type<PriceItemSnapshot>().notNull(),
+    // Cached total paid amount (in cents) from non-voided session_payment rows,
+    // minus session_refund rows. Maintained by payment create/void endpoints.
+    // An appointment is "completed" (derived) when paidCents >= priceCents.
+    paidCents: integer().notNull().default(0),
 
     // ---- Locking ----
     isLocked: integer({ mode: 'boolean' }).default(false),

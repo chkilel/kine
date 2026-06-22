@@ -29,7 +29,7 @@
   // ─── Computed ───────────────────────────────────────────────────────────────
   const statistics = computed(() => {
     const list = appointments.value || []
-    const completed = list.filter((a) => ['finished', 'completed'].includes(a.status))
+    const completed = list.filter((a) => a.status === 'finished')
     const upcoming = list.filter((a) => ['scheduled', 'confirmed'].includes(a.status) && a.status !== 'in_progress')
     const inProgress = list.filter((a) => a.status === 'in_progress')
     const cancelled = list.filter((a) => ['cancelled', 'no_show'].includes(a.status))
@@ -51,7 +51,7 @@
   )
 
   const finishedAppointments = computed(
-    () => appointments.value?.filter((a) => ['finished', 'completed', 'cancelled', 'no_show'].includes(a.status)) || []
+    () => appointments.value?.filter((a) => ['finished', 'cancelled', 'no_show'].includes(a.status)) || []
   )
 
   const activeTab = ref<'upcoming' | 'finished'>('upcoming')
@@ -65,7 +65,7 @@
       badge: upcomingAppointments.value.length
     },
     {
-      label: 'Terminé / Annulé',
+      label: 'Terminé/Annulé',
       value: 'finished',
       slot: 'finished',
       icon: 'i-hugeicons-checkmark-circle-02',

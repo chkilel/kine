@@ -5,7 +5,7 @@
   // ─── Computed state (timing info) ───────────────────────────
   const timingInfo = computed(() => {
     const apt = props.appointment
-    const isSessionFinished = apt.status === 'finished' || apt.status === 'completed'
+    const isSessionFinished = apt.status === 'finished'
     return {
       appointmentDate: formatDate(apt.date),
       appointmentStartTime: formatTimeString(apt.startTime),

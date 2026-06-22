@@ -170,7 +170,7 @@ const _useAppointmentsPaymentStatus = (mode: MaybeRefOrGetter<AppointmentsPaymen
       return requestFetch<AppointmentsPaymentStatusPage>('/api/appointments/payments', {
         query: {
           patientId: patientId.value,
-          status: ['finished', 'completed'],
+          status: ['finished'],
           limit: 5,
           onlyIndependent: modeValue.value === 'no-plan' ? true : undefined,
           cursorDate: pageParam?.date,
