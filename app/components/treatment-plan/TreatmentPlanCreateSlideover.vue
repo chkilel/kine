@@ -269,7 +269,14 @@
 
               <UFormField label="Date de prescription" name="prescriptionDate" required>
                 <UPopover>
-                  <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start" block>
+                  <UButton
+                    color="neutral"
+                    size="sm"
+                    variant="subtle"
+                    icon="i-hugeicons-calendar-03"
+                    class="w-full justify-start"
+                    block
+                  >
                     {{
                       prescriptionDateModel
                         ? df.format(prescriptionDateModel.toDate(getLocalTimeZone()))
@@ -321,7 +328,13 @@
 
               <UFormField label="Date de début" name="startDate" required>
                 <UPopover>
-                  <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full justify-start">
+                  <UButton
+                    size="sm"
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-hugeicons-calendar-03"
+                    class="w-full justify-start"
+                  >
                     {{
                       startDateModel ? df.format(startDateModel.toDate(getLocalTimeZone())) : 'Sélectionner une date'
                     }}
@@ -342,7 +355,7 @@
 
               <UFormField label="Fin estimée" class="cursor-not-allowed md:col-span-2">
                 <div
-                  class="bg-elevated border-accented flex h-9 w-full items-center gap-2 rounded-md border px-3 text-sm"
+                  class="bg-elevated border-accented flex h-7 w-full items-center gap-2 rounded-md border px-3 text-xs"
                 >
                   <UIcon name="i-hugeicons-calendar-03" class="text-muted size-4" />
                   <span class="text-dimmed">

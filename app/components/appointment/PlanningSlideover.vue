@@ -285,17 +285,6 @@
     return periods
   })
 
-  // ─── Room icon heuristic ─────────────────────────────────────
-  // Picks an icon based on keywords in the room name so each
-  // room button gets a contextual icon (door, dumbbell, waves…).
-  const getRoomIcon = (roomName: string) => {
-    const name = roomName.toLowerCase()
-    if (name.includes('1') || name.includes('cabinet')) return 'i-lucide-door-open'
-    if (name.includes('rééduc') || name.includes('ree') || name.includes('fitness')) return 'i-lucide-dumbbell'
-    if (name.includes('balnéo') || name.includes('piscine') || name.includes('bain')) return 'i-lucide-waves'
-    return 'i-lucide-door-open'
-  }
-
   // ─── Create / Update appointment ─────────────────────────────
   // Validates that a room is selected when location is `clinic`,
   // then delegates to the create or update mutation. In create
@@ -307,7 +296,7 @@
       toast.add({
         title: 'Erreur',
         description: 'Veuillez sélectionner une salle du Rendez-vous',
-        icon: 'i-lucide-alert-circle',
+        icon: 'i-hugeicons-alert-circle',
         color: 'error'
       })
       return
@@ -337,7 +326,7 @@
           error,
           isEditMode.value ? 'Impossible de mettre à jour le Rendez-vous' : 'Impossible de créer le Rendez-vous'
         ).message,
-        icon: 'i-lucide-alert-circle',
+        icon: 'i-hugeicons-alert-circle',
         color: 'error'
       })
     } finally {
@@ -525,7 +514,7 @@
                         :key="room.id"
                         :color="appointmentDetails.roomId === room.id ? 'primary' : 'neutral'"
                         :variant="appointmentDetails.roomId === room.id ? 'subtle' : 'outline'"
-                        :icon="getRoomIcon(room.name)"
+                        icon="i-hugeicons-meeting-room"
                         size="md"
                         block
                         class="flex-col!"
@@ -624,6 +613,8 @@
               <UCalendar
                 v-model="selectedDate"
                 :year-controls="false"
+                :number-of-months="2"
+                :view-control="false"
                 :min-value="minDate"
                 :is-date-unavailable="isDateDisabled"
                 class="mx-auto"

@@ -37,6 +37,11 @@ export default defineAppConfig({
         overlay: 'fixed inset-0 backdrop-blur-xs bg-default/50'
       }
     },
+    formField: {
+      defaultVariants: {
+        size: 'sm'
+      }
+    },
     icons: {
       arrowDown: 'i-hugeicons-arrow-down-01',
       arrowLeft: 'i-hugeicons-arrow-left-01',
