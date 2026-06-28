@@ -1,0 +1,26 @@
+# Project-local Helix overrides — merged on top of ~/.config/helix/languages.toml
+# This project uses OXC (oxfmt + oxlint).
+
+# VUE oxlint
+[[language]]
+name = "vue"
+auto-format = true
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "dummy.vue"] }
+language-servers = [
+  { name = "typescript-language-server", except-features = ["format"] },
+  "tailwindcss-ls",
+  "emmet",
+  "oxlint",
+  "scls",
+]
+
+# TYPESCRIPT oxlint
+[[language]]
+name = "typescript"
+auto-format = true
+roots = ["package.json", "tsconfig.json", "jsconfig.json"]
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "dummy.ts"] }
+language-servers = [
+  { name = "typescript-language-server", except-features = ["format"] },
+  "oxlint",
+]
