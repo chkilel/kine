@@ -5,8 +5,7 @@ import { calendarDateField, creationAndUpdateTimestamps } from './columns.helper
 import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
-import { VALID_COVERAGE_STATUSES, VALID_TREATMENT_PLAN_STATUSES } from '~~/shared/types/base.types'
-
+import { COVERAGE_STATUSES, TREATMENT_PLAN_STATUSES } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -39,14 +38,14 @@ export const treatmentPlans = sqliteTable(
     numberOfSessions: integer(), // Total number of sessions prescribed — e.g., 12
     sessionFrequency: integer(), // Session frequency — e.g., 1,...,7
 
-    status: text({ enum: VALID_TREATMENT_PLAN_STATUSES }).notNull().default('planned'),
+    status: text({ enum: TREATMENT_PLAN_STATUSES }).notNull().default('planned'),
 
     // Medical staff and prescription info
     prescribingDoctor: text(), // Doctor who prescribed the treatment — e.g., "Dr. Martin"
     prescriptionDate: calendarDateField().notNull(), // YYYY-MM-DD
 
     // Insurance and coverage
-    coverageStatus: text({ enum: VALID_COVERAGE_STATUSES }),
+    coverageStatus: text({ enum: COVERAGE_STATUSES }),
     insuranceProvider: text(), // Insurer slug or custom insurer name (inherited from patient)
 
     // Pricing for sessions (inherited from org at creation, can be overridden)

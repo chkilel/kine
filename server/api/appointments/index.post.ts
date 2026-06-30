@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
     if (body.type) {
       const validCodes = organization?.appointmentTypes
         ? organization.appointmentTypes.map((t) => t.code)
-        : VALID_APPOINTMENT_TYPES.map((t) => t.code)
+        : APPOINTMENT_TYPES.map((t) => t.code)
       if (!validCodes.includes(body.type)) {
         throw createError({
           statusCode: 400,

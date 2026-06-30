@@ -7,11 +7,7 @@ import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
 import { rooms } from './rooms'
-import {
-  APPOINTMENT_STATUSES,
-  PriceItemSnapshot,
-  VALID_LOCATIONS
-} from '~~/shared/types/base.types'
+import { APPOINTMENT_STATUSES, PriceItemSnapshot, LOCATIONS } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -47,7 +43,7 @@ export const appointments = sqliteTable(
     endTime: text().notNull(),
     duration: integer().notNull(),
     type: text(),
-    location: text({ enum: VALID_LOCATIONS }).notNull().default('clinic'),
+    location: text({ enum: LOCATIONS }).notNull().default('clinic'),
 
     // ---- Unified status ----
     status: text({ enum: APPOINTMENT_STATUSES }).notNull().default('scheduled'),
@@ -73,7 +69,7 @@ export const appointments = sqliteTable(
     extendedDurationMinutes: integer().default(0),
 
     // ---- Billing ----
-    priceCents: integer().notNull().notNull(),
+    priceCents: integer().notNull(),
     priceItem: text({ mode: 'json' }).$type<PriceItemSnapshot>().notNull(),
     // Cached total paid amount (in cents) from non-voided session_payment rows,
     // minus session_refund rows. Maintained by payment create/void endpoints.

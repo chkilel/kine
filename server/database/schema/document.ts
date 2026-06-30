@@ -6,7 +6,7 @@ import { organizations } from './organization'
 import { users } from './auth'
 import { patients } from './patient'
 import { treatmentPlans } from './treatment-plan'
-import { VALID_DOCUMENT_TYPES } from '~~/shared/types/base.types'
+import { DOCUMENT_TYPES } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -38,7 +38,7 @@ export const patientDocuments = sqliteTable(
     fileSize: integer().notNull(), // Size in bytes — e.g., 2048576 (2MB)
     storageKey: text().notNull().unique(), // Unique key for S3/storage — e.g., "orgs/org_123/patients/pat_456/doc_789.pdf"
 
-    category: text({ enum: VALID_DOCUMENT_TYPES }).notNull(), // Document category for filtering
+    category: text({ enum: DOCUMENT_TYPES }).notNull(), // Document category for filtering
     description: text(), // Optional description — e.g., "MRI results showing improvement"
 
     // CreatedAt and UpdatedAt timestamps

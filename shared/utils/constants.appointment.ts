@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
-import { VALID_APPOINTMENT_TYPES } from '../types/base.types'
+import { APPOINTMENT_TYPES } from '../types/base.types'
 
 // =============================================================================
 // Appointment Duration Constants
@@ -58,7 +58,7 @@ export const getAppointmentStatusConfig = (status: AppointmentStatus) => APPOINT
 // =============================================================================
 
 export function DEFAULT_APPOINTMENT_TYPES_SEED(): OrgAppointmentTypeItem[] {
-  return VALID_APPOINTMENT_TYPES.map((item) => ({
+  return APPOINTMENT_TYPES.map((item) => ({
     id: uuidv7(),
     code: item.code,
     title: item.title,
@@ -66,15 +66,12 @@ export function DEFAULT_APPOINTMENT_TYPES_SEED(): OrgAppointmentTypeItem[] {
   }))
 }
 
-export const APPOINTMENT_TYPES_OPTIONS = VALID_APPOINTMENT_TYPES.map((item) => ({
+export const APPOINTMENT_TYPES_OPTIONS = APPOINTMENT_TYPES.map((item) => ({
   label: item.title,
   value: item.code
 }))
 
-export function getAppointmentTypeTitle(
-  code: string | null,
-  orgTypes?: OrgAppointmentTypeItem[]
-): string {
+export function getAppointmentTypeTitle(code: string | null, orgTypes?: OrgAppointmentTypeItem[]): string {
   if (!code) return 'Suivi'
 
   if (orgTypes) {
@@ -82,7 +79,7 @@ export function getAppointmentTypeTitle(
     if (found) return found.title
   }
 
-  const defaultType = VALID_APPOINTMENT_TYPES.find((t) => t.code.toUpperCase() === code.toUpperCase())
+  const defaultType = APPOINTMENT_TYPES.find((t) => t.code.toUpperCase() === code.toUpperCase())
   if (defaultType) return defaultType.title
 
   return code

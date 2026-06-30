@@ -3,7 +3,7 @@ import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { calendarDateField, softDeleteTimestamps } from './columns.helpers'
 import { organizations } from './organization'
-import { VALID_RELATIONSHIP_TYPES, VALID_SEX_VALUES } from '~~/shared/types/base.types'
+import { RELATIONSHIP_TYPES, SEX_VALUES } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -25,7 +25,7 @@ export const patients = sqliteTable(
     firstName: text().notNull(),
     lastName: text().notNull(),
     dateOfBirth: calendarDateField().notNull(), // YYYY-MM-DD (date-only)
-    sex: text({ enum: VALID_SEX_VALUES }).notNull(),
+    sex: text({ enum: SEX_VALUES }).notNull(),
     email: text(), // Optional
     phone: text().notNull(),
     address: text(),
@@ -35,7 +35,7 @@ export const patients = sqliteTable(
 
     // ---- Medical information ----
     emergencyContacts: text({ mode: 'json' })
-      .$type<{ name?: string; number: string; relationship?: (typeof VALID_RELATIONSHIP_TYPES)[number] }[]>()
+      .$type<{ name?: string; number: string; relationship?: (typeof RELATIONSHIP_TYPES)[number] }[]>()
       .notNull()
       .default([]), // [{ "name": "Jane Doe", "phone": "+212612345678", "relationship": "wife" }]
     medicalConditions: text({ mode: 'json' }).$type<string[]>().notNull(), // ["Hypertension", "Diabetes"]

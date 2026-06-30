@@ -67,8 +67,8 @@ export type Note = z.infer<typeof noteSchema>
 // Phone Category Constants
 // =============================================================================
 
-export const VALID_PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
-export const phoneCategorySchema = z.enum(VALID_PHONE_CATEGORIES)
+export const PHONE_CATEGORIES = ['personal', 'clinic', 'emergency', 'mobile', 'whatsapp'] as const
+export const phoneCategorySchema = z.enum(PHONE_CATEGORIES)
 export type PhoneCategory = z.infer<typeof phoneCategorySchema>
 
 // =============================================================================
@@ -100,7 +100,7 @@ export type PhoneEntry = z.infer<typeof phoneEntrySchema>
 // Relationship Types Constants
 // =============================================================================
 
-export const VALID_RELATIONSHIP_TYPES = [
+export const RELATIONSHIP_TYPES = [
   'husband',
   'wife',
   'mother',
@@ -125,22 +125,22 @@ export const VALID_RELATIONSHIP_TYPES = [
   'acquaintance',
   'other'
 ] as const
-export const relationshipSchema = z.enum(VALID_RELATIONSHIP_TYPES)
+export const relationshipSchema = z.enum(RELATIONSHIP_TYPES)
 export type Relationship = z.infer<typeof relationshipSchema>
 
 // =============================================================================
 // Sex Values Constants
 // =============================================================================
 
-export const VALID_SEX_VALUES = ['male', 'female'] as const
-export const sexSchema = z.enum(VALID_SEX_VALUES)
+export const SEX_VALUES = ['male', 'female'] as const
+export const sexSchema = z.enum(SEX_VALUES)
 export type Sex = z.infer<typeof sexSchema>
 
 // =============================================================================
 // Insurance Coverage Status Constants
 // =============================================================================
 
-export const VALID_COVERAGE_STATUSES = [
+export const COVERAGE_STATUSES = [
   'not_required',
   'not_provided',
   'to_verify',
@@ -151,23 +151,23 @@ export const VALID_COVERAGE_STATUSES = [
   'expired',
   'cancelled'
 ] as const
-export const insuranceCoverageSchema = z.enum(VALID_COVERAGE_STATUSES)
+export const insuranceCoverageSchema = z.enum(COVERAGE_STATUSES)
 export type InsuranceCoverageStatus = z.infer<typeof insuranceCoverageSchema>
 
 // =============================================================================
 // Treatment Plan Status Constants
 // =============================================================================
 
-export const VALID_TREATMENT_PLAN_STATUSES = ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] as const
-export const treatmentPlanStatusSchema = z.enum(VALID_TREATMENT_PLAN_STATUSES)
+export const TREATMENT_PLAN_STATUSES = ['planned', 'ongoing', 'completed', 'paused', 'cancelled'] as const
+export const treatmentPlanStatusSchema = z.enum(TREATMENT_PLAN_STATUSES)
 export type TreatmentPlanStatus = z.infer<typeof treatmentPlanStatusSchema>
 
 // =============================================================================
 // Location Constants
 // =============================================================================
 
-export const VALID_LOCATIONS = ['clinic', 'home', 'telehealth'] as const
-export const locationSchema = z.enum(VALID_LOCATIONS)
+export const LOCATIONS = ['clinic', 'home', 'telehealth'] as const
+export const locationSchema = z.enum(LOCATIONS)
 export type Location = z.infer<typeof locationSchema>
 
 // =============================================================================
@@ -198,7 +198,7 @@ export type LegalForm = z.infer<typeof legalFormSchema>
 // Document Category Constants
 // =============================================================================
 
-export const VALID_DOCUMENT_TYPES = [
+export const DOCUMENT_TYPES = [
   'referral',
   'imaging',
   'lab_results',
@@ -206,14 +206,14 @@ export const VALID_DOCUMENT_TYPES = [
   'prescriptions',
   'other'
 ] as const
-export const documentCategorySchema = z.enum(VALID_DOCUMENT_TYPES)
+export const documentCategorySchema = z.enum(DOCUMENT_TYPES)
 export type DocumentCategory = z.infer<typeof documentCategorySchema>
 
 // =============================================================================
 // Appointment Types Constants
 // =============================================================================
 
-export const VALID_APPOINTMENT_TYPES: Omit<OrgAppointmentTypeItem, 'id'>[] = [
+export const APPOINTMENT_TYPES: Omit<OrgAppointmentTypeItem, 'id'>[] = [
   { code: 'INITIAL', title: 'Évaluation initiale', isDefault: true },
   { code: 'FOLLOW_UP', title: 'Suivi', isDefault: true },
   { code: 'TREATMENT', title: 'Séance de traitement', isDefault: true },
@@ -246,15 +246,15 @@ export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>
 // Schedule Days Constants
 // =============================================================================
 
-export const VALID_SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
-export const dayOfWeekSchema = z.enum(VALID_SCHEDULE_DAYS)
+export const SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+export const dayOfWeekSchema = z.enum(SCHEDULE_DAYS)
 export type DayOfWeek = z.infer<typeof dayOfWeekSchema>
 
 // =============================================================================
 // Schedule Exception Types Constants
 // =============================================================================
 
-export const VALID_SCHEDULE_EXCEPTION_TYPES = [
+export const SCHEDULE_EXCEPTION_TYPES = [
   'vacation',
   'holiday',
   'sick',
@@ -264,7 +264,7 @@ export const VALID_SCHEDULE_EXCEPTION_TYPES = [
   'reduced_hours',
   'other'
 ] as const
-export const reasonSchema = z.enum(VALID_SCHEDULE_EXCEPTION_TYPES)
+export const reasonSchema = z.enum(SCHEDULE_EXCEPTION_TYPES)
 export type Reason = z.infer<typeof reasonSchema>
 
 // =============================================================================

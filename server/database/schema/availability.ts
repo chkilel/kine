@@ -4,7 +4,7 @@ import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqli
 import { calendarDateField, creationAndUpdateTimestamps } from './columns.helpers'
 import { organizations } from './organization'
 import { users as authUsers } from './auth'
-import { VALID_SCHEDULE_DAYS, VALID_SCHEDULE_EXCEPTION_TYPES, VALID_LOCATIONS } from '~~/shared/types/base.types'
+import { SCHEDULE_DAYS, SCHEDULE_EXCEPTION_TYPES, LOCATIONS } from '~~/shared/types/base.types'
 
 /**
  * ================================================================
@@ -26,10 +26,10 @@ export const weeklyAvailabilityTemplates = sqliteTable(
       .references(() => authUsers.id, { onDelete: 'cascade' }), // related therapist user
 
     // ---- Weekly schedule fields ----
-    dayOfWeek: text({ enum: VALID_SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
+    dayOfWeek: text({ enum: SCHEDULE_DAYS }).notNull(), // Day of week — e.g., 'Mon'
     startTime: text().notNull(), // HH:MM:SS format — e.g., '09:00:00'
     endTime: text().notNull(), // HH:MM:SS format — e.g., '12:00:00'
-    location: text({ enum: VALID_LOCATIONS }).notNull(), // Appointment location — e.g., 'clinic'
+    location: text({ enum: LOCATIONS }).notNull(), // Appointment location — e.g., 'clinic'
 
     // Created and Updated timestamp
     ...creationAndUpdateTimestamps
@@ -81,7 +81,7 @@ export const availabilityExceptions = sqliteTable(
     startTime: text(), // Optional start time for partial day exceptions — e.g., '09:00:00'
     endTime: text(), // Optional end time for partial day exceptions — e.g., '12:00:00'
     isAvailable: integer({ mode: 'boolean' }).notNull(), // Whether available during this exception — e.g., false for vacation
-    reason: text({ enum: VALID_SCHEDULE_EXCEPTION_TYPES }), // Reason for exception — e.g., 'vacation'
+    reason: text({ enum: SCHEDULE_EXCEPTION_TYPES }), // Reason for exception — e.g., 'vacation'
     notes: text(), // Optional notes about the exception if other reason is selected
 
     // Created and Updated timestamp
